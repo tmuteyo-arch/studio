@@ -27,13 +27,14 @@ interface BackOfficeDashboardProps {
 export default function BackOfficeDashboard({ applications, setApplications }: BackOfficeDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     // Back office reviews applications submitted by ATLs
-    const queue = applications.filter(app => app.status === 'Submitted' || app.status === 'In Review');
+    const queue = applications.filter(app => app.status === 'Submitted' || app.status === 'In Review' || app.status === 'Returned to ATL');
 
     if (selectedApplication) {
         return <ApplicationReview 
                   application={selectedApplication} 
                   setApplications={setApplications}
-                  onBack={() => setSelectedApplication(null)} 
+                  onBack={() => setSelectedApplication(null)}
+                  role="back-office"
                />;
     }
 
@@ -69,8 +70,7 @@ export default function BackOfficeDashboard({ applications, setApplications }: B
                     <TableCell>
                       <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-right space-x-2">
-                       <Button variant="destructive" size="sm">Return to Applicant</Button>
+                    <TableCell className="text-right">
                        <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review</Button>
                     </TableCell>
                   </TableRow>

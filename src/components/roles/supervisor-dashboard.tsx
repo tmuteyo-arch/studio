@@ -24,7 +24,7 @@ export default function SupervisorDashboard({ applications, setApplications }: S
                   application={selectedApplication} 
                   setApplications={setApplications}
                   onBack={() => setSelectedApplication(null)} 
-                  showActions={true} />;
+                  role="supervisor" />;
     }
 
   return (
@@ -61,10 +61,8 @@ export default function SupervisorDashboard({ applications, setApplications }: S
                             <TableCell>
                                 <Badge variant="secondary">{app.status}</Badge>
                             </TableCell>
-                            <TableCell className="text-right space-x-2">
+                            <TableCell className="text-right">
                                <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review</Button>
-                               <Button variant="destructive" size="sm"><X className="mr-1 h-4 w-4"/>Reject</Button>
-                               <Button variant="default" size="sm" className="bg-green-600 hover:bg-green-700"><Check className="mr-1 h-4 w-4"/>Approve</Button>
                             </TableCell>
                         </TableRow>
                     ))}

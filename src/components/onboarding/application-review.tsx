@@ -3,22 +3,24 @@
 import * as React from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Application, Comment } from '@/lib/mock-data';
+import { Application, Comment, HistoryLog } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare, Download } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare, Download, Send, CornerUpLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
 import ApplicationPrintView from './application-print-view';
+import { useToast } from '@/hooks/use-toast';
+import { Role } from '@/app/page';
 
 
 interface ApplicationReviewProps {
   application: Application;
   setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
   onBack: () => void;
-  showActions?: boolean;
+  role?: Role;
 }
 
 const DetailItem = ({ label, value }: { label: string; value: string | undefined }) => (
@@ -28,10 +30,45 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
     </div>
 );
 
-export default function ApplicationReview({ application, setApplications, onBack, showActions = false }: ApplicationReviewProps) {
+export default function ApplicationReview({ application, setApplications, onBack, role }: ApplicationReviewProps) {
+  const { toast } = useToast();
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
   const printRef = React.useRef<HTMLDivElement>(null);
+
+  const updateApplication = (updatedApp: Application) => {
+     setApplications(prev => 
+        prev.map(app => 
+            app.id === updatedApp.id 
+            ? updatedApp
+            : app
+        )
+    );
+    onBack();
+  };
+
+  const handleStatusChange = (status: Application['status'], notes?: string) => {
+    const newHistoryLog: HistoryLog = {
+      action: status,
+      user: `${role?.replace('-', ' ')} User`,
+      timestamp: new Date().toISOString(),
+      notes: notes,
+    };
+
+    const updatedApp = {
+      ...application,
+      status: status,
+      history: [newHistoryLog, ...application.history],
+      lastUpdated: new Date().toISOString().split('T')[0]
+    };
+    
+    updateApplication(updatedApp);
+    
+    toast({
+        title: `Application ${status}`,
+        description: `Application for ${application.clientName} has been updated.`,
+    });
+  };
 
 
   const handleAddComment = () => {
@@ -77,6 +114,31 @@ export default function ApplicationReview({ application, setApplications, onBack
     pdf.save(`Application-${application.id}.pdf`);
     setIsPrinting(false);
   };
+  
+  const renderActions = () => {
+    switch (role) {
+      case 'back-office':
+        return (
+          <div className="space-x-2">
+            <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}>
+              <CornerUpLeft className="mr-2 h-4 w-4" />Return to ATL
+            </Button>
+            <Button onClick={() => handleStatusChange('Pending Supervisor')}>
+              <Send className="mr-2 h-4 w-4" />Send to Supervisor
+            </Button>
+          </div>
+        );
+      case 'supervisor':
+        return (
+          <div className="space-x-2">
+            <Button variant="destructive" onClick={() => handleStatusChange('Rejected')}><X className="mr-2 h-4 w-4" />Reject</Button>
+            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved')}><Check className="mr-2 h-4 w-4" />Approve</Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
 
   return (
@@ -91,12 +153,7 @@ export default function ApplicationReview({ application, setApplications, onBack
                     <Download className="mr-2 h-4 w-4" />
                     {isPrinting ? 'Generating...' : 'Download PDF'}
                 </Button>
-                {showActions && (
-                    <div className="space-x-2">
-                        <Button variant="destructive"><X className="mr-2 h-4 w-4" />Reject</Button>
-                        <Button className="bg-green-600 hover:bg-green-700"><Check className="mr-2 h-4 w-4" />Approve</Button>
-                    </div>
-                )}
+                {renderActions()}
             </div>
         </div>
         <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
@@ -114,7 +171,6 @@ export default function ApplicationReview({ application, setApplications, onBack
                 <TabsList>
                     <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Customer Details</TabsTrigger>
                     <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
-                    <TabsTrigger value="chart"><BarChart2 className="mr-2 h-4 w-4"/>Chart</TabsTrigger>
                     <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                     <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
                 </TabsList>
@@ -159,19 +215,6 @@ export default function ApplicationReview({ application, setApplications, onBack
                                     </li>
                                 ))}
                             </ul>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                 <TabsContent value="chart" className="pt-4">
-                   <Card>
-                        <CardHeader>
-                            <CardTitle>Chart</CardTitle>
-                            <CardDescription>Visual representation of application data.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-center h-96 border-2 border-dashed rounded-md">
-                                <p className="text-muted-foreground">Chart placeholder</p>
-                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
