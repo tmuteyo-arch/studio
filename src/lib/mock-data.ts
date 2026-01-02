@@ -21,6 +21,14 @@ export type HistoryLog = {
     notes?: string;
 }
 
+export type Comment = {
+  id: string;
+  user: string;
+  role: 'ATL' | 'Back Office' | 'Supervisor';
+  timestamp: string;
+  content: string;
+};
+
 export type Application = {
   id: string;
   clientName: string;
@@ -37,6 +45,7 @@ export type Application = {
   };
   documents: Document[];
   history: HistoryLog[];
+  comments: Comment[];
 };
 
 export const mockApplications: Application[] = [
@@ -63,7 +72,11 @@ export const mockApplications: Application[] = [
         { action: 'Approved', user: 'Supervisor-01', timestamp: '2023-10-05' },
         { action: 'Submitted to Supervisor', user: 'BackOffice-01', timestamp: '2023-10-03' },
         { action: 'Submitted', user: 'ATL-01', timestamp: '2023-10-01' },
-    ]
+    ],
+    comments: [
+        { id: 'c1', user: 'BackOffice-01', role: 'Back Office', timestamp: '2023-10-03', content: 'All documents seem to be in order. Forwarding for final approval.' },
+        { id: 'c2', user: 'Supervisor-01', role: 'Supervisor', timestamp: '2023-10-05', content: 'Looks good. Approved.' },
+    ],
   },
   {
     id: 'APP002',
@@ -86,7 +99,8 @@ export const mockApplications: Application[] = [
     history: [
         { action: 'Reviewed', user: 'BackOffice-01', timestamp: '2023-10-04' },
         { action: 'Submitted', user: 'ATL-01', timestamp: '2023-10-02' },
-    ]
+    ],
+    comments: [],
   },
   {
     id: 'APP003',
@@ -108,6 +122,10 @@ export const mockApplications: Application[] = [
     history: [
         { action: 'Rejected', user: 'Supervisor-02', timestamp: '2023-10-01', notes: 'Missing Certificate of Incorporation.' },
         { action: 'Submitted', user: 'ATL-02', timestamp: '2023-09-28' },
+    ],
+    comments: [
+      { id: 'c3', user: 'Supervisor-02', role: 'Supervisor', timestamp: '2023-10-01', content: 'Rejected. The Certificate of Incorporation is a mandatory document and it is missing from the submission.' },
+      { id: 'c4', user: 'ATL-02', role: 'ATL', timestamp: '2023-10-01', content: 'Understood. Will retrieve from client and resubmit.' },
     ]
   },
   {
@@ -130,7 +148,8 @@ export const mockApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'ATL-01', timestamp: '2023-10-04' },
-    ]
+    ],
+    comments: [],
   },
   {
     id: 'APP005',
@@ -153,7 +172,8 @@ export const mockApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'ATL-03', timestamp: '2023-10-05' },
-    ]
+    ],
+    comments: [],
   },
   {
     id: 'APP007',
@@ -175,7 +195,8 @@ export const mockApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'ATL-01', timestamp: '2023-10-06' },
-    ]
+    ],
+    comments: [],
   },
   {
     id: 'APP008',
@@ -198,6 +219,7 @@ export const mockApplications: Application[] = [
     history: [
         { action: 'Reviewed', user: 'BackOffice-02', timestamp: '2023-10-08' },
         { action: 'Submitted', user: 'ATL-02', timestamp: '2023-10-07' },
-    ]
+    ],
+    comments: [],
   }
 ];

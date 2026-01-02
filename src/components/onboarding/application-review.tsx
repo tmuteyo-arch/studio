@@ -1,12 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { Application } from '@/lib/mock-data';
+import { Application, Comment } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Check, FileText, History, User, X } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ArrowLeft, Check, FileText, History, MessageSquare, Send, User, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -21,7 +23,30 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
     </div>
 );
 
-export default function ApplicationReview({ application, onBack, showActions = false }: ApplicationReviewProps) {
+const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('');
+}
+
+export default function ApplicationReview({ application: initialApplication, onBack, showActions = false }: ApplicationReviewProps) {
+  const [application, setApplication] = React.useState(initialApplication);
+  const [newComment, setNewComment] = React.useState('');
+
+  const handleAddComment = () => {
+    if (newComment.trim() === '') return;
+
+    const comment: Comment = {
+      id: `c${application.comments.length + 10}`,
+      user: 'Current User', // This would be dynamic in a real app
+      role: 'ATL', // This would also be dynamic
+      timestamp: new Date().toISOString(),
+      content: newComment.trim(),
+    };
+
+    setApplication(prev => ({ ...prev, comments: [...prev.comments, comment] }));
+    setNewComment('');
+  };
+
+
   return (
     <div>
         <div className="mb-6 flex items-center justify-between">
@@ -48,6 +73,7 @@ export default function ApplicationReview({ application, onBack, showActions = f
                 <TabsList>
                     <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Customer Details</TabsTrigger>
                     <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
+                    <TabsTrigger value="communication"><MessageSquare className="mr-2 h-4 w-4"/>Communication</TabsTrigger>
                     <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                 </TabsList>
                 <TabsContent value="details" className="pt-4">
@@ -91,6 +117,58 @@ export default function ApplicationReview({ application, onBack, showActions = f
                                     </li>
                                 ))}
                             </ul>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                 <TabsContent value="communication" className="pt-4">
+                   <Card>
+                        <CardHeader>
+                            <CardTitle>Internal Communication</CardTitle>
+                            <CardDescription>Discuss the application with other team members.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="space-y-4 max-h-96 overflow-y-auto pr-4">
+                                {application.comments.map((comment) => (
+                                    <div key={comment.id} className="flex items-start gap-4">
+                                        <Avatar>
+                                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${comment.user}`} />
+                                            <AvatarFallback>{getInitials(comment.user)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="w-full rounded-md border p-3">
+                                            <div className="flex items-center justify-between">
+                                                <p className="font-semibold">{comment.user} <span className="text-xs text-muted-foreground ml-2">{comment.role}</span></p>
+                                                <p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p>
+                                            </div>
+                                            <p className="text-sm mt-1">{comment.content}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {application.comments.length === 0 && (
+                                    <div className="text-center text-muted-foreground py-8">
+                                        No comments yet.
+                                    </div>
+                                )}
+                                </div>
+                                <Separator />
+                                <div className="flex items-start gap-4">
+                                    <Avatar>
+                                        <AvatarImage src="https://api.dicebear.com/7.x/initials/svg?seed=Current User" />
+                                        <AvatarFallback>CU</AvatarFallback>
+                                    </Avatar>
+                                    <div className="w-full space-y-2">
+                                        <Textarea 
+                                          placeholder="Type your comment here..."
+                                          value={newComment}
+                                          onChange={(e) => setNewComment(e.target.value)}
+                                        />
+                                        <Button onClick={handleAddComment} size="sm">
+                                            <Send className="mr-2 h-4 w-4"/>
+                                            Post Comment
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
