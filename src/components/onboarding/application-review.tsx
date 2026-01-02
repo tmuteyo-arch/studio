@@ -1,14 +1,18 @@
 'use client';
 
 import * as React from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Application, Comment } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare, Download } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
+import ApplicationPrintView from './application-print-view';
+
 
 interface ApplicationReviewProps {
   application: Application;
@@ -26,6 +30,9 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
 
 export default function ApplicationReview({ application, setApplications, onBack, showActions = false }: ApplicationReviewProps) {
   const [newComment, setNewComment] = React.useState('');
+  const [isPrinting, setIsPrinting] = React.useState(false);
+  const printRef = React.useRef<HTMLDivElement>(null);
+
 
   const handleAddComment = () => {
     if (newComment.trim() === '') return;
@@ -49,6 +56,28 @@ export default function ApplicationReview({ application, setApplications, onBack
     setNewComment('');
   };
 
+  const handleDownloadPdf = async () => {
+    const element = printRef.current;
+    if (!element) return;
+    
+    setIsPrinting(true);
+    const canvas = await html2canvas(element, { scale: 2 });
+    const data = canvas.toDataURL('image/png');
+
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 10; 
+
+    pdf.addImage(data, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    pdf.save(`Application-${application.id}.pdf`);
+    setIsPrinting(false);
+  };
+
 
   return (
     <div>
@@ -57,12 +86,21 @@ export default function ApplicationReview({ application, setApplications, onBack
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Dashboard
             </Button>
-            {showActions && (
-                 <div className="space-x-2">
-                    <Button variant="destructive"><X className="mr-2 h-4 w-4" />Reject</Button>
-                    <Button className="bg-green-600 hover:bg-green-700"><Check className="mr-2 h-4 w-4" />Approve</Button>
-                </div>
-            )}
+            <div className="flex items-center gap-2">
+                 <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting}>
+                    <Download className="mr-2 h-4 w-4" />
+                    {isPrinting ? 'Generating...' : 'Download PDF'}
+                </Button>
+                {showActions && (
+                    <div className="space-x-2">
+                        <Button variant="destructive"><X className="mr-2 h-4 w-4" />Reject</Button>
+                        <Button className="bg-green-600 hover:bg-green-700"><Check className="mr-2 h-4 w-4" />Approve</Button>
+                    </div>
+                )}
+            </div>
+        </div>
+        <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+          <ApplicationPrintView ref={printRef} application={application} />
         </div>
       <Card>
         <CardHeader>
@@ -206,5 +244,3 @@ export default function ApplicationReview({ application, setApplications, onBack
     </div>
   );
 }
-
-    
