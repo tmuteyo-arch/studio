@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
+import { Card } from '@/components/ui/card';
 
 type Role = 'atl' | 'back-office' | 'supervisor' | null;
 
@@ -26,43 +27,43 @@ export default function Home() {
   };
 
   const renderRoleSelection = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-secondary/50 p-4 sm:p-8">
        <header className="mb-8 flex items-center gap-3">
         <Logo className="h-10 w-10 text-primary" />
-        <h1 className="text-3xl font-bold text-foreground">InnBucks Agent Onboarding App</h1>
+        <h1 className="text-3xl font-bold text-foreground">InnBucks Agent Onboarding</h1>
       </header>
-      <div className="text-center">
+      <div className="text-center max-w-5xl mx-auto">
         <h2 className="text-2xl font-semibold mb-2">Select a Role to Continue</h2>
         <p className="text-muted-foreground mb-6">Simulate the login for different user roles in the system.</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm flex flex-col items-center text-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6 text-card-foreground shadow-lg flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300">
                 <h3 className="text-xl font-bold mb-2">ATL</h3>
                 <p className="text-muted-foreground mb-4 flex-grow">Account Taking Leaders who submit applications.</p>
                 <Button onClick={() => setSelectedRole('atl')} className="w-full">Login as ATL</Button>
-            </div>
-            <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm flex flex-col items-center text-center">
+            </Card>
+            <Card className="p-6 text-card-foreground shadow-lg flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300">
                 <h3 className="text-xl font-bold mb-2">Back Office</h3>
                 <p className="text-muted-foreground mb-4 flex-grow">Officers who validate and process applications.</p>
                 <Button onClick={() => setSelectedRole('back-office')} className="w-full">Login as Back Office</Button>
-            </div>
-            <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm flex flex-col items-center text-center">
+            </Card>
+            <Card className="p-6 text-card-foreground shadow-lg flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300">
                 <h3 className="text-xl font-bold mb-2">Supervisor</h3>
                 <p className="text-muted-foreground mb-4 flex-grow">Supervisors who review, approve, or reject applications.</p>
                 <Button onClick={() => setSelectedRole('supervisor')} className="w-full">Login as Supervisor</Button>
-            </div>
+            </Card>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-background">
       {selectedRole ? (
-        <div className="p-4 sm:p-8">
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto">
             <header className="mb-8 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Logo className="h-8 w-8 text-primary" />
-                    <h1 className="text-2xl font-bold text-foreground">InnBucks Agent Onboarding App</h1>
+                    <h1 className="text-2xl font-bold text-foreground">InnBucks Agent Onboarding</h1>
                 </div>
                 <Button variant="outline" onClick={() => setSelectedRole(null)}>Log Out</Button>
             </header>
