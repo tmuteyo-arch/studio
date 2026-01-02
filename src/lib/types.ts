@@ -28,6 +28,7 @@ export const accountTypes = [
   'Proprietorship / Sole Trader',
   'Partnership',
   'Company (Private / Public Limited)',
+  'PBC Account',
   'Trust',
   'NGO / Non-Profit / Embassy',
   'Society / Association / Club',

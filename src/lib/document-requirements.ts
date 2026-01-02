@@ -50,7 +50,7 @@ const corporateAccountRequirements: DocumentRequirement[] = [
     },
     {
         document: 'Memorandum and Articles of Association',
-        details: 'Company\'s constitution documents.',
+        details: "Company's constitution documents.",
         comment: 'Submit copy which will be verified against original and certified by the bank.',
     },
      {
@@ -95,6 +95,54 @@ const corporateAccountRequirements: DocumentRequirement[] = [
     }
 ];
 
+const pbcAccountRequirements: DocumentRequirement[] = [
+    {
+        document: 'Company Profile',
+        details: 'A summary of the business.',
+        comment: 'Provide a complete company profile document.',
+    },
+    {
+        document: 'Declaration of Source of Income',
+        details: 'A document declaring the source of the company\'s income.',
+        comment: 'Must be signed by the directors.',
+    },
+    {
+        document: 'Proof of Residence',
+        details: 'For all signatories and directors.',
+        comment: 'Submit recent utility bills or equivalent.',
+    },
+    {
+        document: 'Passport size photos',
+        details: 'For all signatories and directors.',
+        comment: 'Submit recent photos.',
+    },
+    {
+        document: 'Board Resolution letter',
+        details: 'Minutes of the last meeting held authorizing account opening.',
+        comment: 'Must be on company letterhead and signed.',
+    },
+    {
+        document: 'Certified Tax Clearance',
+        details: 'A current and valid tax clearance certificate.',
+        comment: 'The certificate must be certified.',
+    },
+    {
+        document: 'Stamped Bank Statement',
+        details: 'Bank statements for the last 3 months.',
+        comment: 'Must be officially stamped by the bank.',
+    },
+    {
+        document: 'Certified National Identification',
+        details: 'For all signatories and directors.',
+        comment: 'Submit certified copies of National IDs.',
+    },
+    {
+        document: 'CR28',
+        details: 'Certified copy of the CR28 form.',
+        comment: 'Submit a certified and up-to-date copy.',
+    },
+];
+
 const ngoRequirements: DocumentRequirement[] = [
     {
         document: 'Constitution or Founding Document',
@@ -128,6 +176,7 @@ const requirementsMap: Record<string, DocumentRequirement[]> = {
     'Personal Account': personalAccountRequirements,
     'Proprietorship / Sole Trader': soleTraderRequirements,
     'Company (Private / Public Limited)': corporateAccountRequirements,
+    'PBC Account': pbcAccountRequirements,
     'NGO / Non-Profit / Embassy': ngoRequirements,
     'Society / Association / Club': ngoRequirements,
     'Trust': ngoRequirements,
