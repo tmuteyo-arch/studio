@@ -7,8 +7,8 @@ export type DocumentRequirement = {
 
 const personalAccountRequirements: DocumentRequirement[] = [
     {
-        document: 'Valid Identity Document',
-        details: 'Valid Passport, Driver’s License, or Plastic/Metal ID.',
+        document: 'Valid Identity Documents',
+        details: 'Valid Passport, Driver’s License, or National ID.',
         comment: 'Submit copies. The bank will verify them against originals and certify them.',
     },
     {
@@ -17,75 +17,99 @@ const personalAccountRequirements: DocumentRequirement[] = [
         comment: 'Must not be more than 3 months old. Submit original bills.',
     },
     {
-        document: 'Passport Size Photos',
+        document: 'Passport size photos',
         details: 'Recent color photographs.',
         comment: 'Submit recent photos.',
     },
 ];
 
 const soleTraderRequirements: DocumentRequirement[] = [
-    ...personalAccountRequirements,
     {
-        document: 'Tax Clearance Certificate',
+        document: 'Proof of residence',
+        details: 'Recent utility bill or equivalent.',
+        comment: 'Submit original bills, not older than 3 months.'
+    },
+    {
+        document: 'Current tax clearance certificate',
         details: 'Valid certificate from the tax authority.',
-        comment: 'Submit a valid and current tax clearance certificate.',
+        comment: 'Submit a valid and current tax clearance certificate.'
     },
     {
-        document: 'Trading License',
-        details: 'Valid license for the business.',
-        comment: 'Submit a copy of the trading license.',
+        document: 'Completed application form',
+        details: 'The official bank application form, fully completed.',
+        comment: 'Ensure all sections are filled.'
     },
+    {
+        document: 'Registrar of Companies Verification',
+        details: 'Proof that no other entity operates under the same name.',
+        comment: 'To be verified by the bank.'
+    },
+    {
+        document: 'Certified copy of National ID card',
+        details: 'Valid National ID card.',
+        comment: 'Must be a certified copy.'
+    },
+    {
+        document: 'Passport-size photos',
+        details: 'Recent color photographs.',
+        comment: 'Submit recent photos.'
+    },
+    {
+        document: 'Operating / Business license',
+        details: 'Valid license for the business.',
+        comment: 'Submit a copy of the trading license.'
+    }
 ];
 
 const corporateAccountRequirements: DocumentRequirement[] = [
     {
-        document: 'Board Resolution',
-        details: 'Stating agreement to open an account and list of authorized signatories.',
+        document: 'Board resolution',
+        details: 'Stating the board has agreed to open the account and list of authorized signatories.',
         comment: 'Must be on company letterhead.',
     },
     {
         document: 'Certificate of Incorporation',
         details: 'Official certificate of company registration.',
-        comment: 'Submit copy which will be verified against original and certified by the bank.',
+        comment: 'Submit copy; verified against original and certified by the bank.',
     },
     {
         document: 'Memorandum and Articles of Association',
         details: "Company's constitution documents.",
-        comment: 'Submit copy which will be verified against original and certified by the bank.',
+        comment: 'Submit copy; verified against original and certified by the bank.',
     },
      {
-        document: 'Zimra Tax Clearance Certificate',
-        details: 'Or a Certificate of Exemption from paying tax from Zimra.',
-        comment: 'Submit copy which will be verified against original and certified by the bank.',
+        document: 'ZIMRA Tax Clearance Certificate / Certificate of Exemption',
+        details: 'Valid certificate from the tax authority.',
+        comment: 'Submit copy; verified against original and certified by the bank.',
     },
     {
-        document: 'CR6/CR5',
+        document: 'CR6 / CR5',
         details: 'Documents showing the registered office address.',
-        comment: 'Physical Address must tally with current location. Submit verified copy.',
+        comment: 'Submit copy; verified against original and certified by the bank. Physical address must match current location.',
     },
     {
         document: 'CR14',
         details: 'List of company directors.',
-        comment: 'Must be up to date. Submit verified copy.',
+        comment: 'Submit copy; verified against original and certified by the bank. Must be up to date for current directors.',
     },
     {
-        document: 'CR 11',
-        details: 'Showing the current shareholding structure.',
+        document: 'CR11',
+        details: 'Showing current shareholding structure.',
         comment: 'Submit a verified copy.',
     },
     {
         document: 'Valid Identity Documents',
-        details: 'For all directors and signatories (Passport, Driver’s License, ID).',
-        comment: 'Submit copies. The bank will verify them against originals and certify them.',
+        details: 'Passport, Driver’s License, or National ID for all directors and signatories.',
+        comment: 'Submit copies; bank will verify against originals and certify.',
     },
     {
         document: 'Proof of Residence',
-        details: 'For all directors and signatories (e.g., utility bill).',
-        comment: 'Must not be more than 3 months old. Submit original bills.',
+        details: 'Utility bills (ZESA/TelOne/Water) or employer letter for all directors and signatories.',
+        comment: 'Submit originals; must not be older than 3 months.',
     },
     {
-        document: 'Passport size photos',
-        details: 'For all directors and signatories.',
+        document: 'Passport-size photos',
+        details: 'Recent photos for all directors and signatories.',
         comment: 'Submit recent photos.',
     },
     {
@@ -97,42 +121,42 @@ const corporateAccountRequirements: DocumentRequirement[] = [
 
 const pbcAccountRequirements: DocumentRequirement[] = [
     {
-        document: 'Company Profile',
+        document: 'Company profile',
         details: 'A summary of the business.',
         comment: 'Provide a complete company profile document.',
     },
     {
-        document: 'Declaration of Source of Income',
+        document: 'Declaration of source of income',
         details: 'A document declaring the source of the company\'s income.',
         comment: 'Must be signed by the directors.',
     },
     {
-        document: 'Proof of Residence',
+        document: 'Proof of residence',
         details: 'For all signatories and directors.',
         comment: 'Submit recent utility bills or equivalent.',
     },
     {
-        document: 'Passport size photos',
+        document: 'Passport-size photos',
         details: 'For all signatories and directors.',
         comment: 'Submit recent photos.',
     },
     {
-        document: 'Board Resolution letter',
+        document: 'Board resolution letter',
         details: 'Minutes of the last meeting held authorizing account opening.',
         comment: 'Must be on company letterhead and signed.',
     },
     {
-        document: 'Certified Tax Clearance',
+        document: 'Certified tax clearance (current)',
         details: 'A current and valid tax clearance certificate.',
         comment: 'The certificate must be certified.',
     },
     {
-        document: 'Stamped Bank Statement',
+        document: 'Stamped bank statement (last 3 months)',
         details: 'Bank statements for the last 3 months.',
         comment: 'Must be officially stamped by the bank.',
     },
     {
-        document: 'Certified National Identification',
+        document: 'Certified national identification',
         details: 'For all signatories and directors.',
         comment: 'Submit certified copies of National IDs.',
     },
@@ -145,29 +169,29 @@ const pbcAccountRequirements: DocumentRequirement[] = [
 
 const ngoRequirements: DocumentRequirement[] = [
     {
-        document: 'Constitution or Founding Document',
-        details: 'The official articles of association or constitution.',
+        document: 'Constitution',
+        details: 'The official articles of association or founding document.',
         comment: 'Submit a certified copy.',
     },
     {
-        document: 'Board Resolution Letter',
+        document: 'Board resolution letter',
         details: 'A letter from the board authorizing the opening of the account.',
         comment: 'Must be on official letterhead and signed by the board.',
     },
     {
         document: "Signatories' Documents",
-        details: "Certified copies of IDs and proof of residence for all account signatories.",
+        details: "Certified copies of ID’s and proof of residence for all account signatories.",
         comment: 'Proof of residence must not be more than 3 months old.',
     },
     {
-        document: 'Passport Size Photos',
+        document: 'Passport size photos of signatories',
         details: 'Recent color photographs of all signatories.',
         comment: 'Submit recent photos.',
     },
     {
-        document: 'Registration Certificate',
-        details: 'Official registration with the relevant authorities.',
-        comment: 'Provide government approval or registration certificate.',
+        document: 'All applicable charges',
+        details: 'Confirmation of payment for any required account opening fees.',
+        comment: 'Provide proof of payment.',
     },
 ];
 
@@ -180,6 +204,7 @@ const requirementsMap: Record<string, DocumentRequirement[]> = {
     'NGO / Non-Profit / Embassy': ngoRequirements,
     'Society / Association / Club': ngoRequirements,
     'Trust': ngoRequirements,
+    'Partnership': corporateAccountRequirements, // Defaulting to corporate for now
 };
 
 export function getDocumentRequirements(accountType: string): DocumentRequirement[] {
