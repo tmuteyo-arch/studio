@@ -9,6 +9,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressTracker } from './progress-tracker';
 
+import StepAccountType from './steps/step-account-type';
 import StepPersonalInfo from './steps/step-personal-info';
 import StepDocumentUpload from './steps/step-document-upload';
 import StepComplianceCheck from './steps/step-compliance-check';
@@ -16,6 +17,7 @@ import StepDigitalSignature from './steps/step-digital-signature';
 import StepReview from './steps/step-review';
 
 const steps: Step[] = [
+  { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
   { id: 'personal-info', name: 'Personal Info', fields: ['fullName', 'dateOfBirth', 'address'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'compliance-check', name: 'Compliance Check' },
@@ -24,6 +26,7 @@ const steps: Step[] = [
 ];
 
 const StepComponents: Record<string, React.ElementType> = {
+  'account-type': StepAccountType,
   'personal-info': StepPersonalInfo,
   'document-upload': StepDocumentUpload,
   'compliance-check': StepComplianceCheck,
@@ -42,6 +45,7 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
     defaultValues: {
+      clientType: '',
       fullName: '',
       dateOfBirth: '',
       address: '',

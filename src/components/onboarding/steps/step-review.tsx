@@ -44,6 +44,10 @@ export default function StepReview({ next }: StepReviewProps) {
       <div className="space-y-4 px-6">
         <div className="rounded-md border p-4 space-y-4">
            <div>
+            <p className="text-sm font-medium text-muted-foreground">Account Type</p>
+            <p className="font-semibold">{data.clientType || '-'}</p>
+          </div>
+           <div>
             <p className="text-sm font-medium text-muted-foreground">Full Name</p>
             <p className="font-semibold">{data.fullName || '-'}</p>
           </div>

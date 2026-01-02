@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const OnboardingFormSchema = z.object({
+  clientType: z.string().min(1, { message: 'Please select an account type.' }),
   fullName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
   dateOfBirth: z.string().refine((dob) => new Date(dob).toString() !== 'Invalid Date', {
     message: 'Please enter a valid date of birth.',
@@ -21,3 +22,16 @@ export type Step = {
   name: string;
   fields?: (keyof OnboardingFormData)[];
 };
+
+export const accountTypes = [
+  'Personal Account',
+  'Proprietorship / Sole Trader',
+  'Partnership',
+  'Company (Private / Public Limited)',
+  'Trust',
+  'NGO / Non-Profit / Embassy',
+  'Society / Association / Club',
+  'Government / Local Authority',
+  'Minors',
+  'Professional Intermediaries',
+];
