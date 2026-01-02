@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { FormProvider, useForm, type FieldName } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useSetAtom } from 'jotai';
 
 import { OnboardingFormData, OnboardingFormSchema, Step } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -15,6 +16,8 @@ import StepCorporateInfo from './steps/step-corporate-info';
 import StepDirectors from './steps/step-directors';
 import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
+import { applicationsAtom, Application } from '@/lib/mock-data';
+import { useToast } from '@/hooks/use-toast';
 
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
@@ -22,7 +25,7 @@ const baseSteps: Step[] = [
   { id: 'corporate-info', name: 'Corporate Info', isDynamic: true },
   { id: 'directors-signatories', name: 'Directors', isDynamic: true, fields: ['directors'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
-  { id: 'review-submit', name: 'Review & Submit' },
+  { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
 
 const StepComponents: Record<string, React.ElementType> = {
@@ -40,7 +43,9 @@ interface OnboardingFlowProps {
 
 export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { toast } = useToast();
+  const setApplications = useSetAtom(applicationsAtom);
+
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
@@ -56,6 +61,8 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
       agreedToTerms: false,
     },
   });
+  
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const clientType = form.watch('clientType');
   const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(clientType);
@@ -102,6 +109,47 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
     }
   };
   
+  const onSubmit = (data: OnboardingFormData) => {
+    setIsSubmitting(true);
+    
+    const newApplication: Application = {
+      id: `APP${String(Date.now()).slice(-4)}`,
+      clientName: data.fullName,
+      clientType: 'Company', // Simplified for now
+      status: 'Submitted',
+      submittedDate: new Date().toISOString().split('T')[0],
+      lastUpdated: new Date().toISOString().split('T')[0],
+      submittedBy: 'ATL-01',
+      details: {
+        address: data.address,
+        dateOfBirth: data.dateOfBirth,
+        contactNumber: data.directors?.[0]?.phoneNumber || 'N/A',
+        email: data.email || 'N/A',
+      },
+      documents: [
+        { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
+        { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
+      ],
+      history: [
+        { action: 'Submitted', user: 'ATL-01', timestamp: new Date().toISOString() },
+      ],
+      comments: [],
+    };
+
+    setApplications(prev => [...prev, newApplication]);
+    
+    toast({
+        title: "Application Submitted!",
+        description: `Application for ${data.fullName} has been successfully created.`,
+    });
+
+    // This will trigger the success view in the StepReview component
+    // And after a delay, we can close the flow.
+    setTimeout(() => {
+        onCancel();
+    }, 4000);
+  };
+
   const CurrentStepComponent = StepComponents[steps[currentStep].id];
 
   return (
@@ -110,10 +158,7 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
       <div className="flex-1 p-4 md:p-8">
         <FormProvider {...form}>
           <form
-            onSubmit={form.handleSubmit(() => {
-              setIsSubmitting(true);
-              // Actual submission logic will be handled inside StepReview
-            })}
+            onSubmit={form.handleSubmit(onSubmit)}
             className="h-full"
           >
             <Card className="h-full flex flex-col">
@@ -130,8 +175,8 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
                   </Button>
                 )}
                 {currentStep === steps.length - 1 && (
-                   <Button type="submit" disabled={isSubmitting}>
-                     Submit Application
+                   <Button type="submit" disabled={isSubmitting || form.formState.isSubmitting}>
+                     {isSubmitting ? 'Submitting...' : 'Submit Application'}
                    </Button>
                 )}
               </CardFooter>

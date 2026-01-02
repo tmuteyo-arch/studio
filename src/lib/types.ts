@@ -45,9 +45,10 @@ export const OnboardingFormSchema = z.object({
   document1Type: z.string().min(1, { message: 'Please select a document type.' }),
   document2Type: z.string().min(1, { message: 'Please select a document type.' }),
   
-  // Signature - Removed from required for now
-  signature: z.string().optional(),
-  agreedToTerms: z.boolean().optional(),
+  signature: z.string().min(3, { message: 'Please provide your full name as a signature.' }),
+  agreedToTerms: z.boolean().refine(val => val === true, {
+    message: 'You must agree to the terms and conditions.',
+  }),
 });
 
 export type OnboardingFormData = z.infer<typeof OnboardingFormSchema>;
