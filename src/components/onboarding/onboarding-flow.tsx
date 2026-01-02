@@ -14,6 +14,7 @@ import StepPersonalInfo from './steps/step-personal-info';
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepDirectors from './steps/step-directors'; // NEW
 import StepDocumentUpload from './steps/step-document-upload';
+import StepFacialRecognition from './steps/step-facial-recognition';
 import StepComplianceCheck from './steps/step-compliance-check';
 import StepDigitalSignature from './steps/step-digital-signature';
 import StepReview from './steps/step-review';
@@ -24,6 +25,7 @@ const baseSteps: Step[] = [
   { id: 'corporate-info', name: 'Corporate Info', isDynamic: true },
   { id: 'directors-signatories', name: 'Directors', isDynamic: true, fields: ['directors'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
+  { id: 'facial-recognition', name: 'Facial Capture' },
   { id: 'compliance-check', name: 'Compliance Check' },
   { id: 'digital-signature', name: 'Digital Signature', fields: ['signature', 'agreedToTerms'] },
   { id: 'review-submit', name: 'Review & Submit' },
@@ -35,6 +37,7 @@ const StepComponents: Record<string, React.ElementType> = {
   'corporate-info': StepCorporateInfo,
   'directors-signatories': StepDirectors,
   'document-upload': StepDocumentUpload,
+  'facial-recognition': StepFacialRecognition,
   'compliance-check': StepComplianceCheck,
   'digital-signature': StepDigitalSignature,
   'review-submit': StepReview,
@@ -104,7 +107,7 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step - 1);
+      setCurrentStep((step) => step + 1);
     }
   };
   
