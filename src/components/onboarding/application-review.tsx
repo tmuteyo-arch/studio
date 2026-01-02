@@ -1,13 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { Application } from '@/lib/mock-data';
+import { Application, Comment } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, BarChart2, User, X } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '../ui/textarea';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -24,6 +25,30 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
 );
 
 export default function ApplicationReview({ application, setApplications, onBack, showActions = false }: ApplicationReviewProps) {
+  const [newComment, setNewComment] = React.useState('');
+
+  const handleAddComment = () => {
+    if (newComment.trim() === '') return;
+
+    const newCommentObject: Comment = {
+      id: `c${Date.now()}`,
+      user: 'Current User', // This would be dynamic in a real app
+      role: 'Back Office', // This would also be dynamic
+      timestamp: new Date().toISOString(),
+      content: newComment.trim(),
+    };
+
+    setApplications(prev => 
+        prev.map(app => 
+            app.id === application.id 
+            ? { ...app, comments: [...app.comments, newCommentObject] }
+            : app
+        )
+    );
+
+    setNewComment('');
+  };
+
 
   return (
     <div>
@@ -53,6 +78,7 @@ export default function ApplicationReview({ application, setApplications, onBack
                     <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                     <TabsTrigger value="chart"><BarChart2 className="mr-2 h-4 w-4"/>Chart</TabsTrigger>
                     <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
+                    <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
                 </TabsList>
                 <TabsContent value="details" className="pt-4">
                      <Card>
@@ -131,8 +157,46 @@ export default function ApplicationReview({ application, setApplications, onBack
                                             {entry.notes && <p className="text-sm mt-1">{entry.notes}</p>}
                                         </div>
                                     </li>
+
                                 ))}
                             </ul>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="comments" className="pt-4">
+                   <Card>
+                        <CardHeader>
+                            <CardTitle>Internal Comments & Feedback</CardTitle>
+                             <CardDescription>Discuss the application with team members. Comments are not visible to the client.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-4">
+                                {application.comments.map((comment) => (
+                                    <div key={comment.id} className="flex items-start gap-3">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 rounded-md border bg-card p-3">
+                                            <div className="flex justify-between items-center">
+                                                <p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground">({comment.role})</span></p>
+                                                <p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p>
+                                            </div>
+                                            <p className="text-sm mt-1">{comment.content}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {application.comments.length === 0 && (
+                                    <p className="text-sm text-center text-muted-foreground py-4">No comments yet.</p>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Textarea 
+                                    placeholder="Type your comment here..."
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                />
+                                <Button onClick={handleAddComment}>Add Comment</Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -142,3 +206,5 @@ export default function ApplicationReview({ application, setApplications, onBack
     </div>
   );
 }
+
+    
