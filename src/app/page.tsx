@@ -52,10 +52,10 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-8">
        <header className="mb-8 flex items-center gap-4">
         <Logo className="h-12 w-12" />
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">InnBucks Agent Onboarding</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">Welcome</h1>
       </header>
       <div className="text-center max-w-5xl mx-auto">
-        <h2 className="text-2xl font-semibold mb-2 text-primary">Select a Profile to Continue</h2>
+        <h2 className="text-2xl font-semibold mb-2 text-primary">Please select a profile to continue</h2>
         <p className="text-muted-foreground mb-6">Simulate the login for different users in the system.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
            {users.map(user => (
