@@ -1,23 +1,33 @@
 'use client';
 
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { mockApplications, Application } from '@/lib/mock-data';
+import { Check, X } from 'lucide-react';
+import ApplicationReview from '../onboarding/application-review';
 
 export default function SupervisorDashboard() {
-    const approvalQueue = mockApplications.filter(app => app.status === 'In Review');
+    const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
+    // Supervisor reviews applications that the Back Office has already validated.
+    const approvalQueue = mockApplications.filter(app => app.status === 'Pending Supervisor');
+
+    if (selectedApplication) {
+        return <ApplicationReview application={selectedApplication} onBack={() => setSelectedApplication(null)} showActions={true} />;
+    }
+
   return (
     <div>
       <div className="mb-8">
         <h2 className="text-3xl font-bold">Supervisor Dashboard</h2>
-        <p className="text-muted-foreground">Review, approve, or reject applications.</p>
+        <p className="text-muted-foreground">Perform final review and approval for applications validated by the Back Office.</p>
       </div>
        <Card>
         <CardHeader>
           <CardTitle>Approval Queue</CardTitle>
-          <CardDescription>Applications waiting for your final approval.</CardDescription>
+          <CardDescription>Applications that have been reviewed by Back Office and are pending your final approval.</CardDescription>
         </CardHeader>
         <CardContent>
           {approvalQueue.length > 0 ? (
@@ -26,6 +36,7 @@ export default function SupervisorDashboard() {
                     <TableRow>
                         <TableHead>Client Name</TableHead>
                         <TableHead>Client Type</TableHead>
+                        <TableHead>Submitted By</TableHead>
                         <TableHead>Last Updated</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -36,12 +47,15 @@ export default function SupervisorDashboard() {
                         <TableRow key={app.id}>
                             <TableCell className="font-medium">{app.clientName}</TableCell>
                             <TableCell>{app.clientType}</TableCell>
+                            <TableCell>{app.submittedBy}</TableCell>
                             <TableCell>{app.lastUpdated}</TableCell>
                             <TableCell>
                                 <Badge variant="secondary">{app.status}</Badge>
                             </TableCell>
-                            <TableCell className="text-right">
-                               <Button variant="outline" size="sm">Review</Button>
+                            <TableCell className="text-right space-x-2">
+                               <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review</Button>
+                               <Button variant="destructive" size="sm"><X className="mr-1 h-4 w-4"/>Reject</Button>
+                               <Button variant="default" size="sm" className="bg-green-600 hover:bg-green-700"><Check className="mr-1 h-4 w-4"/>Approve</Button>
                             </TableCell>
                         </TableRow>
                     ))}

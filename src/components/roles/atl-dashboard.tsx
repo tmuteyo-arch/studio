@@ -5,17 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { mockApplications, Application } from '@/lib/mock-data';
+import { mockApplications, Application, ApplicationStatus } from '@/lib/mock-data';
 import { PlusCircle } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 
-const getStatusVariant = (status: Application['status']) => {
+const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
     case 'Approved':
-      return 'default';
+      return 'success';
+    case 'Pending Supervisor':
     case 'In Review':
       return 'secondary';
     case 'Rejected':
+    case 'Returned to ATL':
       return 'destructive';
     case 'Submitted':
       return 'outline';
