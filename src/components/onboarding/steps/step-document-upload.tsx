@@ -14,26 +14,9 @@ import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { getDocumentRequirements } from '@/lib/document-requirements';
 
-const documentTypes = ['Passport', "Driver's License", 'National ID Card', 'Utility Bill', 'Bank Statement'];
-
-const documentRequirements = [
-    {
-        document: 'Valid Identity Document',
-        details: 'Valid Passport, Driver’s License, or Plastic/Metal ID.',
-        comment: 'Submit copies. The bank will verify them against originals and certify them.',
-    },
-    {
-        document: 'Proof of Residence',
-        details: 'Utility bills (ZESA/TelOne/Water) or a signed letter from an employer on a letterhead.',
-        comment: 'Must not be more than 3 months old. Submit original bills.',
-    },
-    {
-        document: 'Passport Size Photos',
-        details: 'Recent color photographs.',
-        comment: 'Submit recent photos.',
-    },
-];
+const documentTypes = ['Passport', "Driver's License", 'National ID Card', 'Utility Bill', 'Bank Statement', 'Tax Clearance Certificate', 'Trading License'];
 
 export default function StepDocumentUpload() {
   const { toast } = useToast();
@@ -42,6 +25,9 @@ export default function StepDocumentUpload() {
   const [doc2, setDoc2] = React.useState<{ file: File | null; dataUri: string }>({ file: null, dataUri: '' });
   const [isLoading, setIsLoading] = React.useState(false);
   const [validationResult, setValidationResult] = React.useState<string | null>(null);
+
+  const clientType = form.watch('clientType');
+  const documentRequirements = getDocumentRequirements(clientType);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, docNumber: 1 | 2) => {
     const file = e.target.files?.[0];
@@ -118,7 +104,7 @@ export default function StepDocumentUpload() {
         
         <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>Document Guidelines</AlertTitle>
+            <AlertTitle>Document Guidelines for {clientType}</AlertTitle>
             <AlertDescription>
                 <Table className="mt-2">
                     <TableHeader>
