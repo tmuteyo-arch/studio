@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getDocumentRequirements } from '@/lib/document-requirements';
 
-const documentTypes = ['Passport', "Driver's License", 'National ID Card', 'Utility Bill', 'Bank Statement', 'Tax Clearance Certificate', 'Trading License'];
+const documentTypes = ['Passport', "Driver's License", 'National ID Card', 'Utility Bill', 'Bank Statement', 'Tax Clearance Certificate', 'Trading License', 'Board Resolution', 'Certificate of Incorporation', 'Memorandum and Articles of Association', 'CR6/CR5', 'CR14', 'CR11', 'Partnership Agreement'];
 
 export default function StepDocumentUpload() {
   const { toast } = useToast();
@@ -104,12 +104,12 @@ export default function StepDocumentUpload() {
         
         <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>Document Guidelines for {clientType}</AlertTitle>
+            <AlertTitle>Document Requirements for: {clientType || 'Not Selected'}</AlertTitle>
             <AlertDescription>
                 <Table className="mt-2">
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Document</TableHead>
+                            <TableHead>Document Required</TableHead>
                             <TableHead>Comment</TableHead>
                         </TableRow>
                     </TableHeader>
