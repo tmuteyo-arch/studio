@@ -37,11 +37,41 @@ const soleTraderRequirements: DocumentRequirement[] = [
     },
 ];
 
+const ngoRequirements: DocumentRequirement[] = [
+    {
+        document: 'Constitution or Founding Document',
+        details: 'The official articles of association or constitution.',
+        comment: 'Submit a certified copy.',
+    },
+    {
+        document: 'Board Resolution Letter',
+        details: 'A letter from the board authorizing the opening of the account.',
+        comment: 'Must be on official letterhead and signed by the board.',
+    },
+    {
+        document: "Signatories' Documents",
+        details: "Certified copies of IDs and proof of residence for all account signatories.",
+        comment: 'Proof of residence must not be more than 3 months old.',
+    },
+    {
+        document: 'Passport Size Photos',
+        details: 'Recent color photographs of all signatories.',
+        comment: 'Submit recent photos.',
+    },
+    {
+        document: 'Registration Certificate',
+        details: 'Official registration with the relevant authorities.',
+        comment: 'Provide government approval or registration certificate.',
+    },
+];
+
 
 const requirementsMap: Record<string, DocumentRequirement[]> = {
     'Personal Account': personalAccountRequirements,
     'Proprietorship / Sole Trader': soleTraderRequirements,
-    // Add other account types here
+    'NGO / Non-Profit / Embassy': ngoRequirements,
+    'Society / Association / Club': ngoRequirements,
+    'Trust': ngoRequirements,
 };
 
 export function getDocumentRequirements(accountType: string): DocumentRequirement[] {
