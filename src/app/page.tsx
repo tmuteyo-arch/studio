@@ -8,25 +8,19 @@ import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, User } from '@/lib/users';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 export default function Home() {
   const [loggedInUser, setLoggedInUser] = React.useState<User | null>(null);
-  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
   const [applications, setApplications] = useAtom(applicationsAtom);
 
-  const handleLogin = (user: User) => {
-    setLoggedInUser(user);
-    setSelectedUser(null); // Close the dialog
-  };
-
-  const handleUserCardClick = (user: User) => {
-    setSelectedUser(user);
+  const handleLogin = (role: User['role']) => {
+    // Find the first user with the selected role and log them in
+    const userToLogin = users.find(user => user.role === role);
+    if (userToLogin) {
+      setLoggedInUser(userToLogin);
+    }
   };
 
   const handleLogout = () => {
@@ -50,59 +44,51 @@ export default function Home() {
   
   const renderRoleSelection = () => (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-8">
-       <header className="mb-8 flex items-center gap-4">
-        <Logo className="h-12 w-12" />
-        <h1 className="text-4xl font-bold tracking-tight text-foreground">Welcome</h1>
-      </header>
-      <div className="text-center max-w-5xl mx-auto">
-        <h2 className="text-2xl font-semibold mb-2 text-primary">Please select a profile to continue</h2>
-        <p className="text-muted-foreground mb-6">Simulate the login for different users in the system.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-           {users.map(user => (
-                <Card key={user.id} onClick={() => handleUserCardClick(user)} className="p-6 text-card-foreground shadow-lg flex flex-col items-center text-center transition-transform duration-300 hover:scale-105 hover:border-primary cursor-pointer bg-card">
-                    <Avatar className="w-24 h-24 mb-4 border-2 border-muted">
-                        <AvatarFallback className="text-4xl bg-muted-foreground/20">{user.initials}</AvatarFallback>
-                    </Avatar>
-                    <h3 className="text-xl font-bold mb-1">{user.name}</h3>
-                    <p className="text-muted-foreground mb-4 flex-grow capitalize">{user.role.replace('-', ' ')}</p>
-                    <Button variant="outline" className="w-full">Select Profile</Button>
-                </Card>
-            ))}
+      <header className="mb-8 text-center">
+        <div className="flex justify-center items-center gap-4 mb-4">
+          <Logo className="h-12 w-12" />
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">InnBucks Agent Onboarding</h1>
         </div>
+        <h2 className="text-2xl font-semibold text-primary">Select a Role to Continue</h2>
+        <p className="text-muted-foreground mt-2">Simulate the login for different user roles in the system.</p>
+      </header>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+        <Card className="bg-card text-card-foreground flex flex-col">
+          <CardHeader>
+            <CardTitle className="text-center">ATL</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center flex-grow">
+            <CardDescription>Account Taking Leaders who submit applications.</CardDescription>
+          </CardContent>
+          <div className="p-6 pt-0">
+             <Button className="w-full" onClick={() => handleLogin('atl')}>Login as ATL</Button>
+          </div>
+        </Card>
+        
+        <Card className="bg-card text-card-foreground flex flex-col">
+          <CardHeader>
+            <CardTitle className="text-center">Back Office</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center flex-grow">
+            <CardDescription>Officers who validate and process applications.</CardDescription>
+          </CardContent>
+          <div className="p-6 pt-0">
+            <Button variant="secondary" className="w-full" onClick={() => handleLogin('back-office')}>Login as Back Office</Button>
+          </div>
+        </Card>
+
+        <Card className="bg-card text-card-foreground flex flex-col">
+          <CardHeader>
+            <CardTitle className="text-center">Supervisor</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center flex-grow">
+            <CardDescription>Supervisors who review, approve, or reject applications.</CardDescription>
+          </CardContent>
+          <div className="p-6 pt-0">
+            <Button variant="outline" className="w-full border-accent text-accent hover:bg-accent/10 hover:text-accent" onClick={() => handleLogin('supervisor')}>Login as Supervisor</Button>
+          </div>
+        </Card>
       </div>
-      {selectedUser && (
-        <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Login Confirmation</DialogTitle>
-                    <DialogDescription>
-                        Please confirm you want to log in as this user.
-                    </DialogDescription>
-                </DialogHeader>
-                 <div className="flex items-center space-x-4 rounded-md border p-4">
-                    <Avatar className="h-16 w-16">
-                        <AvatarFallback className="text-2xl">{selectedUser.initials}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <p className="text-lg font-medium leading-none">{selectedUser.name}</p>
-                        <p className="text-muted-foreground capitalize">{selectedUser.role.replace('-', ' ')}</p>
-                    </div>
-                </div>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="password-dummy" className="text-right">
-                            Password
-                        </Label>
-                        <Input id="password-dummy" type="password" value="fakepassword" disabled className="col-span-3" />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setSelectedUser(null)}>Cancel</Button>
-                    <Button type="submit" onClick={() => handleLogin(selectedUser)}>Login</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 
