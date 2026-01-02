@@ -8,17 +8,30 @@ import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, User } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function Home() {
   const [loggedInUser, setLoggedInUser] = React.useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
   const [applications, setApplications] = useAtom(applicationsAtom);
 
   const handleLogin = (user: User) => {
     setLoggedInUser(user);
+    setSelectedUser(null); // Close the dialog
   };
+
+  const handleUserCardClick = (user: User) => {
+    setSelectedUser(user);
+  };
+
+  const handleLogout = () => {
+    setLoggedInUser(null);
+  }
 
   const renderDashboard = () => {
     if (!loggedInUser) return null;
@@ -46,17 +59,50 @@ export default function Home() {
         <p className="text-muted-foreground mb-6">Simulate the login for different users in the system.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
            {users.map(user => (
-                <Card key={user.id} className="p-6 text-card-foreground shadow-lg flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300 hover:border-primary">
+                <Card key={user.id} onClick={() => handleUserCardClick(user)} className="p-6 text-card-foreground shadow-lg flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300 hover:border-primary cursor-pointer">
                     <Avatar className="w-20 h-20 mb-4 border-2 border-muted">
                         <AvatarFallback>{user.initials}</AvatarFallback>
                     </Avatar>
                     <h3 className="text-xl font-bold mb-1">{user.name}</h3>
                     <p className="text-muted-foreground mb-4 flex-grow capitalize">{user.role.replace('-', ' ')}</p>
-                    <Button onClick={() => handleLogin(user)} className="w-full">Login</Button>
+                    <Button variant="outline" className="w-full">Select Profile</Button>
                 </Card>
             ))}
         </div>
       </div>
+      {selectedUser && (
+        <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Login Confirmation</DialogTitle>
+                    <DialogDescription>
+                        Please confirm you want to log in as this user.
+                    </DialogDescription>
+                </DialogHeader>
+                 <div className="flex items-center space-x-4 rounded-md border p-4">
+                    <Avatar>
+                        <AvatarFallback>{selectedUser.initials}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="text-sm font-medium leading-none">{selectedUser.name}</p>
+                        <p className="text-sm text-muted-foreground capitalize">{selectedUser.role.replace('-', ' ')}</p>
+                    </div>
+                </div>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password-dummy" className="text-right">
+                            Password
+                        </Label>
+                        <Input id="password-dummy" type="password" value="fakepassword" disabled className="col-span-3" />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setSelectedUser(null)}>Cancel</Button>
+                    <Button type="submit" onClick={() => handleLogin(selectedUser)}>Login</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 
@@ -74,7 +120,7 @@ export default function Home() {
                       <p className="font-semibold">{loggedInUser.name}</p>
                       <p className="text-sm text-muted-foreground capitalize">{loggedInUser.role.replace('-', ' ')}</p>
                     </div>
-                    <Button variant="outline" onClick={() => setLoggedInUser(null)}>Log Out</Button>
+                    <Button variant="outline" onClick={handleLogout}>Log Out</Button>
                 </div>
             </header>
             <main>{renderDashboard()}</main>
