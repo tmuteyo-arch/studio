@@ -3,16 +3,13 @@ import * as React from 'react';
 export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    viewBox="0 0 40 40"
     {...props}
   >
-    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-    <path d="M15.5 14.5L22 12" />
-    <path d="M15.5 9.5L22 7" />
+    <rect width="40" height="40" rx="8" fill="none" />
+    <circle cx="12" cy="12" r="8" fill="#FBBF24" /> {/* Yellow */}
+    <circle cx="28" cy="12" r="8" fill="#A755F7" /> {/* Purple */}
+    <circle cx="12" cy="28" r="8" fill="#5EEAD4" /> {/* Teal */}
+    <circle cx="28" cy="28" r="8" fill="#F43F5E" /> {/* Red */}
   </svg>
 );
