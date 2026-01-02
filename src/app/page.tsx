@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { users, User } from '@/lib/users';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -59,9 +59,9 @@ export default function Home() {
         <p className="text-muted-foreground mb-6">Simulate the login for different users in the system.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
            {users.map(user => (
-                <Card key={user.id} onClick={() => handleUserCardClick(user)} className="p-6 text-card-foreground shadow-lg flex flex-col items-center text-center transform hover:scale-105 transition-transform duration-300 hover:border-primary cursor-pointer">
-                    <Avatar className="w-20 h-20 mb-4 border-2 border-muted">
-                        <AvatarFallback>{user.initials}</AvatarFallback>
+                <Card key={user.id} onClick={() => handleUserCardClick(user)} className="p-6 text-card-foreground shadow-lg flex flex-col items-center text-center transition-transform duration-300 hover:scale-105 hover:border-primary cursor-pointer bg-card">
+                    <Avatar className="w-24 h-24 mb-4 border-2 border-muted">
+                        <AvatarFallback className="text-4xl bg-muted-foreground/20">{user.initials}</AvatarFallback>
                     </Avatar>
                     <h3 className="text-xl font-bold mb-1">{user.name}</h3>
                     <p className="text-muted-foreground mb-4 flex-grow capitalize">{user.role.replace('-', ' ')}</p>
@@ -80,12 +80,12 @@ export default function Home() {
                     </DialogDescription>
                 </DialogHeader>
                  <div className="flex items-center space-x-4 rounded-md border p-4">
-                    <Avatar>
-                        <AvatarFallback>{selectedUser.initials}</AvatarFallback>
+                    <Avatar className="h-16 w-16">
+                        <AvatarFallback className="text-2xl">{selectedUser.initials}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="text-sm font-medium leading-none">{selectedUser.name}</p>
-                        <p className="text-sm text-muted-foreground capitalize">{selectedUser.role.replace('-', ' ')}</p>
+                        <p className="text-lg font-medium leading-none">{selectedUser.name}</p>
+                        <p className="text-muted-foreground capitalize">{selectedUser.role.replace('-', ' ')}</p>
                     </div>
                 </div>
                 <div className="grid gap-4 py-4">
