@@ -7,7 +7,7 @@ import { Application, Comment, HistoryLog } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { User as UserProfile } from '@/lib/users';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
+import { getDocumentRequirements } from '@/lib/document-requirements';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 
 interface ApplicationReviewProps {
@@ -39,6 +41,9 @@ export default function ApplicationReview({ application, setApplications, onBack
   const printRef = React.useRef<HTMLDivElement>(null);
   const [brNumber, setBrNumber] = React.useState('');
   const [walletAccount, setWalletAccount] = React.useState('');
+  
+  const documentRequirements = getDocumentRequirements(application.clientType);
+  const uploadedDocumentTypes = application.documents.map(d => d.type);
 
   const updateApplication = (updatedApp: Application) => {
      setApplications(prev => 
@@ -226,24 +231,57 @@ export default function ApplicationReview({ application, setApplications, onBack
                     </Card>
                 </TabsContent>
                 <TabsContent value="documents" className="pt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Uploaded Documents</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ul className="space-y-3">
-                                {application.documents.map(doc => (
-                                    <li key={doc.type} className="flex items-center justify-between p-3 rounded-md border">
-                                        <div>
-                                            <p className="font-medium">{doc.type}</p>
-                                            <p className="text-sm text-muted-foreground">{doc.fileName}</p>
-                                        </div>
-                                        <Button variant="outline" size="sm">View Document</Button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                    </Card>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Document Requirements</CardTitle>
+                                <CardDescription>Checklist for '{application.clientType}' account.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ul className="space-y-3">
+                                    {documentRequirements.map((req) => {
+                                        const isUploaded = uploadedDocumentTypes.includes(req.document);
+                                        return (
+                                            <li key={req.document} className="flex items-center">
+                                                {isUploaded ? (
+                                                    <CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
+                                                ) : (
+                                                    <AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />
+                                                )}
+                                                <div>
+                                                    <p className="font-medium">{req.document}</p>
+                                                    <p className="text-sm text-muted-foreground">{req.comment}</p>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Uploaded Documents</CardTitle>
+                                <CardDescription>Files submitted by the applicant.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {application.documents.length > 0 ? (
+                                    <ul className="space-y-3">
+                                        {application.documents.map(doc => (
+                                            <li key={doc.type} className="flex items-center justify-between p-3 rounded-md border">
+                                                <div>
+                                                    <p className="font-medium">{doc.type}</p>
+                                                    <p className="text-sm text-muted-foreground">{doc.fileName}</p>
+                                                </div>
+                                                <Button variant="outline" size="sm">View Document</Button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground text-center py-8">No documents were uploaded for this application.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
                 <TabsContent value="history" className="pt-4">
                    <Card>
