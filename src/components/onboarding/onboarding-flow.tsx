@@ -11,14 +11,16 @@ import { ProgressTracker } from './progress-tracker';
 
 import StepAccountType from './steps/step-account-type';
 import StepPersonalInfo from './steps/step-personal-info';
+import StepCorporateInfo from './steps/step-corporate-info'; // NEW
 import StepDocumentUpload from './steps/step-document-upload';
 import StepComplianceCheck from './steps/step-compliance-check';
 import StepDigitalSignature from './steps/step-digital-signature';
 import StepReview from './steps/step-review';
 
-const steps: Step[] = [
+const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
   { id: 'personal-info', name: 'Personal Info', fields: ['fullName', 'dateOfBirth', 'address'] },
+  { id: 'corporate-info', name: 'Corporate Info', isDynamic: true }, // NEW: Dynamic step
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'compliance-check', name: 'Compliance Check' },
   { id: 'digital-signature', name: 'Digital Signature', fields: ['signature', 'agreedToTerms'] },
@@ -28,6 +30,7 @@ const steps: Step[] = [
 const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
   'personal-info': StepPersonalInfo,
+  'corporate-info': StepCorporateInfo, // NEW
   'document-upload': StepDocumentUpload,
   'compliance-check': StepComplianceCheck,
   'digital-signature': StepDigitalSignature,
@@ -55,6 +58,21 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
       agreedToTerms: false,
     },
   });
+
+  const clientType = form.watch('clientType');
+  const isCorporate = ['Company (Private / Public Limited)', 'PBC Account'].includes(clientType);
+
+  const steps = React.useMemo(() => {
+    return baseSteps.filter(step => {
+      if (step.isDynamic) {
+        return isCorporate;
+      }
+      if (clientType === 'Personal Account' && step.id === 'personal-info') {
+         // for personal account, the main applicant IS the client
+      }
+      return true;
+    });
+  }, [clientType, isCorporate]);
 
   const next = async () => {
     const fields = steps[currentStep].fields;
