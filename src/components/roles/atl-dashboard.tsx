@@ -1,11 +1,13 @@
 'use client';
 
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { mockApplications, Application } from '@/lib/mock-data';
 import { PlusCircle } from 'lucide-react';
+import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 
 const getStatusVariant = (status: Application['status']) => {
   switch (status) {
@@ -23,7 +25,12 @@ const getStatusVariant = (status: Application['status']) => {
 };
 
 export default function AtlDashboard() {
+  const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
   const atlApplications = mockApplications.filter(app => app.submittedBy === 'ATL-01');
+
+  if (isCreatingApplication) {
+    return <OnboardingFlow onCancel={() => setIsCreatingApplication(false)} />;
+  }
 
   return (
     <div>
@@ -32,7 +39,7 @@ export default function AtlDashboard() {
             <h2 className="text-3xl font-bold">ATL Dashboard</h2>
             <p className="text-muted-foreground">Submit and track new account applications.</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsCreatingApplication(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
             New Application
         </Button>

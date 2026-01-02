@@ -26,7 +26,7 @@ export default function Home() {
   };
 
   const renderRoleSelection = () => (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] bg-background p-4 sm:p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-8">
        <header className="mb-8 flex items-center gap-3">
         <Logo className="h-10 w-10 text-primary" />
         <h1 className="text-3xl font-bold text-foreground">SwiftAccount</h1>
