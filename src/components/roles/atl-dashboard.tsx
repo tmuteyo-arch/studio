@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { mockApplications, Application, ApplicationStatus } from '@/lib/mock-data';
+import { Application, ApplicationStatus } from '@/lib/mock-data';
 import { PlusCircle } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
@@ -27,17 +27,26 @@ const getStatusVariant = (status: ApplicationStatus) => {
   }
 };
 
-export default function AtlDashboard() {
+interface AtlDashboardProps {
+    applications: Application[];
+    setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
+}
+
+export default function AtlDashboard({ applications, setApplications }: AtlDashboardProps) {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
-  const atlApplications = mockApplications.filter(app => app.submittedBy === 'ATL-01');
+  const atlApplications = applications.filter(app => app.submittedBy === 'ATL-01');
 
   if (isCreatingApplication) {
     return <OnboardingFlow onCancel={() => setIsCreatingApplication(false)} />;
   }
 
   if (selectedApplication) {
-    return <ApplicationReview application={selectedApplication} onBack={() => setSelectedApplication(null)} />;
+    return <ApplicationReview 
+                application={selectedApplication} 
+                setApplications={setApplications}
+                onBack={() => setSelectedApplication(null)} 
+            />;
   }
 
   return (

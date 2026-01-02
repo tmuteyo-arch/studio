@@ -5,17 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { mockApplications, Application } from '@/lib/mock-data';
+import { Application } from '@/lib/mock-data';
 import { Check, X } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 
-export default function SupervisorDashboard() {
+interface SupervisorDashboardProps {
+    applications: Application[];
+    setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
+}
+
+export default function SupervisorDashboard({ applications, setApplications }: SupervisorDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     // Supervisor reviews applications that the Back Office has already validated.
-    const approvalQueue = mockApplications.filter(app => app.status === 'Pending Supervisor');
+    const approvalQueue = applications.filter(app => app.status === 'Pending Supervisor');
 
     if (selectedApplication) {
-        return <ApplicationReview application={selectedApplication} onBack={() => setSelectedApplication(null)} showActions={true} />;
+        return <ApplicationReview 
+                  application={selectedApplication} 
+                  setApplications={setApplications}
+                  onBack={() => setSelectedApplication(null)} 
+                  showActions={true} />;
     }
 
   return (

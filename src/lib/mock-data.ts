@@ -1,5 +1,7 @@
 'use client';
 
+import { atom } from 'jotai';
+
 export type ApplicationStatus =
   | 'Submitted'
   | 'In Review'
@@ -48,7 +50,7 @@ export type Application = {
   comments: Comment[];
 };
 
-export const mockApplications: Application[] = [
+export const initialApplications: Application[] = [
   {
     id: 'APP001',
     clientName: 'IGLOOCORP Investments',
@@ -223,3 +225,5 @@ export const mockApplications: Application[] = [
     comments: [],
   }
 ];
+
+export const applicationsAtom = atom<Application[]>(initialApplications);

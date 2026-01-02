@@ -1,6 +1,8 @@
 'use client';
 
 import * as React from 'react';
+import { useAtom } from 'jotai';
+import { applicationsAtom } from '@/lib/mock-data';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
@@ -8,19 +10,20 @@ import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
 import { Card } from '@/components/ui/card';
 
-type Role = 'atl' | 'back-office' | 'supervisor' | null;
+export type Role = 'atl' | 'back-office' | 'supervisor' | null;
 
 export default function Home() {
   const [selectedRole, setSelectedRole] = React.useState<Role>(null);
+  const [applications, setApplications] = useAtom(applicationsAtom);
 
   const renderDashboard = () => {
     switch (selectedRole) {
       case 'atl':
-        return <AtlDashboard />;
+        return <AtlDashboard applications={applications} setApplications={setApplications} />;
       case 'back-office':
-        return <BackOfficeDashboard />;
+        return <BackOfficeDashboard applications={applications} setApplications={setApplications} />;
       case 'supervisor':
-        return <SupervisorDashboard />;
+        return <SupervisorDashboard applications={applications} setApplications={setApplications} />;
       default:
         return null;
     }

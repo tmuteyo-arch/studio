@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { mockApplications, Application, ApplicationStatus } from '@/lib/mock-data';
+import { Application, ApplicationStatus } from '@/lib/mock-data';
 import ApplicationReview from '../onboarding/application-review';
 
 const getStatusVariant = (status: ApplicationStatus) => {
@@ -18,13 +18,23 @@ const getStatusVariant = (status: ApplicationStatus) => {
   }
 };
 
-export default function BackOfficeDashboard() {
+interface BackOfficeDashboardProps {
+    applications: Application[];
+    setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
+}
+
+
+export default function BackOfficeDashboard({ applications, setApplications }: BackOfficeDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     // Back office reviews applications submitted by ATLs
-    const queue = mockApplications.filter(app => app.status === 'Submitted' || app.status === 'In Review');
+    const queue = applications.filter(app => app.status === 'Submitted' || app.status === 'In Review');
 
     if (selectedApplication) {
-        return <ApplicationReview application={selectedApplication} onBack={() => setSelectedApplication(null)} />;
+        return <ApplicationReview 
+                  application={selectedApplication} 
+                  setApplications={setApplications}
+                  onBack={() => setSelectedApplication(null)} 
+               />;
     }
 
   return (

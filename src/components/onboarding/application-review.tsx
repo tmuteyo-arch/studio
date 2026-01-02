@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface ApplicationReviewProps {
   application: Application;
+  setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
   onBack: () => void;
   showActions?: boolean;
 }
@@ -27,8 +28,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('');
 }
 
-export default function ApplicationReview({ application: initialApplication, onBack, showActions = false }: ApplicationReviewProps) {
-  const [application, setApplication] = React.useState(initialApplication);
+export default function ApplicationReview({ application, setApplications, onBack, showActions = false }: ApplicationReviewProps) {
   const [newComment, setNewComment] = React.useState('');
 
   const handleAddComment = () => {
@@ -42,7 +42,13 @@ export default function ApplicationReview({ application: initialApplication, onB
       content: newComment.trim(),
     };
 
-    setApplication(prev => ({ ...prev, comments: [...prev.comments, comment] }));
+    setApplications(prevApps => 
+        prevApps.map(app => 
+            app.id === application.id 
+            ? { ...app, comments: [...app.comments, comment] } 
+            : app
+        )
+    );
     setNewComment('');
   };
 
