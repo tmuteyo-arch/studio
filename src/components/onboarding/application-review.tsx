@@ -19,6 +19,7 @@ import { Input } from '../ui/input';
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { FormItem } from '../ui/form';
 
 
 interface ApplicationReviewProps {
