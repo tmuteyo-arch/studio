@@ -9,6 +9,7 @@ import { Application, ApplicationStatus } from '@/lib/mock-data';
 import { PlusCircle } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
+import { User } from '@/lib/users';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -30,15 +31,16 @@ const getStatusVariant = (status: ApplicationStatus) => {
 interface AtlDashboardProps {
     applications: Application[];
     setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
+    user: User;
 }
 
-export default function AtlDashboard({ applications, setApplications }: AtlDashboardProps) {
+export default function AtlDashboard({ applications, setApplications, user }: AtlDashboardProps) {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
-  const atlApplications = applications.filter(app => app.submittedBy === 'ATL-01');
+  const atlApplications = applications.filter(app => app.submittedBy === user.name);
 
   if (isCreatingApplication) {
-    return <OnboardingFlow onCancel={() => setIsCreatingApplication(false)} />;
+    return <OnboardingFlow user={user} onCancel={() => setIsCreatingApplication(false)} />;
   }
 
   if (selectedApplication) {
@@ -46,6 +48,7 @@ export default function AtlDashboard({ applications, setApplications }: AtlDashb
                 application={selectedApplication} 
                 setApplications={setApplications}
                 onBack={() => setSelectedApplication(null)} 
+                user={user}
             />;
   }
 

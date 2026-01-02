@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Application, ApplicationStatus } from '@/lib/mock-data';
 import ApplicationReview from '../onboarding/application-review';
+import { User } from '@/lib/users';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -21,10 +22,11 @@ const getStatusVariant = (status: ApplicationStatus) => {
 interface BackOfficeDashboardProps {
     applications: Application[];
     setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
+    user: User;
 }
 
 
-export default function BackOfficeDashboard({ applications, setApplications }: BackOfficeDashboardProps) {
+export default function BackOfficeDashboard({ applications, setApplications, user }: BackOfficeDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     // Back office reviews applications submitted by ATLs
     const queue = applications.filter(app => app.status === 'Submitted' || app.status === 'In Review' || app.status === 'Returned to ATL');
@@ -34,7 +36,7 @@ export default function BackOfficeDashboard({ applications, setApplications }: B
                   application={selectedApplication} 
                   setApplications={setApplications}
                   onBack={() => setSelectedApplication(null)}
-                  role="back-office"
+                  user={user}
                />;
     }
 

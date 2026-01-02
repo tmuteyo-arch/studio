@@ -13,14 +13,14 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
 import ApplicationPrintView from './application-print-view';
 import { useToast } from '@/hooks/use-toast';
-import { Role } from '@/app/page';
+import { User as UserProfile } from '@/lib/users';
 
 
 interface ApplicationReviewProps {
   application: Application;
   setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
   onBack: () => void;
-  role?: Role;
+  user: UserProfile;
 }
 
 const DetailItem = ({ label, value }: { label: string; value: string | undefined }) => (
@@ -30,7 +30,7 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
     </div>
 );
 
-export default function ApplicationReview({ application, setApplications, onBack, role }: ApplicationReviewProps) {
+export default function ApplicationReview({ application, setApplications, onBack, user }: ApplicationReviewProps) {
   const { toast } = useToast();
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
@@ -50,7 +50,7 @@ export default function ApplicationReview({ application, setApplications, onBack
   const handleStatusChange = (status: Application['status'], notes?: string) => {
     const newHistoryLog: HistoryLog = {
       action: status,
-      user: `${role?.replace('-', ' ')} User`,
+      user: user.name,
       timestamp: new Date().toISOString(),
       notes: notes,
     };
@@ -76,8 +76,8 @@ export default function ApplicationReview({ application, setApplications, onBack
 
     const newCommentObject: Comment = {
       id: `c${Date.now()}`,
-      user: 'Current User', // This would be dynamic in a real app
-      role: 'Back Office', // This would also be dynamic
+      user: user.name,
+      role: user.role,
       timestamp: new Date().toISOString(),
       content: newComment.trim(),
     };
@@ -116,7 +116,7 @@ export default function ApplicationReview({ application, setApplications, onBack
   };
   
   const renderActions = () => {
-    switch (role) {
+    switch (user.role) {
       case 'back-office':
         return (
           <div className="space-x-2">
@@ -234,7 +234,7 @@ export default function ApplicationReview({ application, setApplications, onBack
                                         </div>
                                         <div className="ml-4">
                                             <p className="font-medium">{entry.action} by {entry.user}</p>
-                                            <p className="text-sm text-muted-foreground">{entry.timestamp}</p>
+                                            <p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>
                                             {entry.notes && <p className="text-sm mt-1">{entry.notes}</p>}
                                         </div>
                                     </li>
@@ -259,7 +259,7 @@ export default function ApplicationReview({ application, setApplications, onBack
                                         </Avatar>
                                         <div className="flex-1 rounded-md border bg-card p-3">
                                             <div className="flex justify-between items-center">
-                                                <p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground">({comment.role})</span></p>
+                                                <p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p>
                                                 <p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p>
                                             </div>
                                             <p className="text-sm mt-1">{comment.content}</p>

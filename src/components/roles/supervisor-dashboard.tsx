@@ -8,13 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { Application } from '@/lib/mock-data';
 import { Check, X } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
+import { User } from '@/lib/users';
 
 interface SupervisorDashboardProps {
     applications: Application[];
     setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
+    user: User;
 }
 
-export default function SupervisorDashboard({ applications, setApplications }: SupervisorDashboardProps) {
+export default function SupervisorDashboard({ applications, setApplications, user }: SupervisorDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     // Supervisor reviews applications that the Back Office has already validated.
     const approvalQueue = applications.filter(app => app.status === 'Pending Supervisor');
@@ -24,7 +26,7 @@ export default function SupervisorDashboard({ applications, setApplications }: S
                   application={selectedApplication} 
                   setApplications={setApplications}
                   onBack={() => setSelectedApplication(null)} 
-                  role="supervisor" />;
+                  user={user} />;
     }
 
   return (

@@ -18,6 +18,7 @@ import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
+import { User } from '@/lib/users';
 
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
@@ -39,9 +40,10 @@ const StepComponents: Record<string, React.ElementType> = {
 
 interface OnboardingFlowProps {
   onCancel: () => void;
+  user: User;
 }
 
-export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
+export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
   const { toast } = useToast();
   const setApplications = useSetAtom(applicationsAtom);
@@ -105,7 +107,7 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step + 1);
+      setCurrentStep((step) => step - 1);
     }
   };
   
@@ -115,11 +117,11 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
     const newApplication: Application = {
       id: `APP${String(Date.now()).slice(-4)}`,
       clientName: data.fullName,
-      clientType: 'Company', // Simplified for now
+      clientType: data.clientType as any, // Simplified for now
       status: 'Submitted',
       submittedDate: new Date().toISOString().split('T')[0],
       lastUpdated: new Date().toISOString().split('T')[0],
-      submittedBy: 'ATL-01',
+      submittedBy: user.name,
       details: {
         address: data.address,
         dateOfBirth: data.dateOfBirth,
@@ -131,7 +133,7 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
       ],
       history: [
-        { action: 'Submitted', user: 'ATL-01', timestamp: new Date().toISOString() },
+        { action: 'Submitted', user: user.name, timestamp: new Date().toISOString() },
       ],
       comments: [],
     };

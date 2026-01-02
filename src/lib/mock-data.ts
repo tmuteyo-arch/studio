@@ -26,7 +26,7 @@ export type HistoryLog = {
 export type Comment = {
   id: string;
   user: string;
-  role: 'ATL' | 'Back Office' | 'Supervisor';
+  role: 'atl' | 'back-office' | 'supervisor';
   timestamp: string;
   content: string;
 };
@@ -34,7 +34,7 @@ export type Comment = {
 export type Application = {
   id: string;
   clientName: string;
-  clientType: 'Company' | 'Sole Trader' | 'Personal';
+  clientType: 'Company' | 'Sole Trader' | 'Personal' | string;
   status: ApplicationStatus;
   submittedDate: string;
   lastUpdated: string;
@@ -58,7 +58,7 @@ export const initialApplications: Application[] = [
     status: 'Approved',
     submittedDate: '2023-10-01',
     lastUpdated: '2023-10-05',
-    submittedBy: 'ATL-01',
+    submittedBy: 'Tashinga Muteyo',
     details: {
       address: '123 Business Rd, Harare',
       dateOfBirth: 'N/A',
@@ -71,13 +71,13 @@ export const initialApplications: Application[] = [
       { type: 'Proof of Residence', fileName: 'utility_bill.pdf', url: '#' },
     ],
     history: [
-        { action: 'Approved', user: 'Supervisor-01', timestamp: '2023-10-05' },
-        { action: 'Submitted to Supervisor', user: 'BackOffice-01', timestamp: '2023-10-03' },
-        { action: 'Submitted', user: 'ATL-01', timestamp: '2023-10-01' },
+        { action: 'Approved', user: 'Blessing Zulu', timestamp: '2023-10-05' },
+        { action: 'Submitted to Supervisor', user: 'Fadzai Zesa', timestamp: '2023-10-03' },
+        { action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2023-10-01' },
     ],
     comments: [
-        { id: 'c1', user: 'BackOffice-01', role: 'Back Office', timestamp: '2023-10-03', content: 'All documents seem to be in order. Forwarding for final approval.' },
-        { id: 'c2', user: 'Supervisor-01', role: 'Supervisor', timestamp: '2023-10-05', content: 'Looks good. Approved.' },
+        { id: 'c1', user: 'Fadzai Zesa', role: 'back-office', timestamp: '2023-10-03', content: 'All documents seem to be in order. Forwarding for final approval.' },
+        { id: 'c2', user: 'Blessing Zulu', role: 'supervisor', timestamp: '2023-10-05', content: 'Looks good. Approved.' },
     ],
   },
   {
@@ -87,7 +87,7 @@ export const initialApplications: Application[] = [
     status: 'Pending Supervisor',
     submittedDate: '2023-10-02',
     lastUpdated: '2023-10-04',
-    submittedBy: 'ATL-01',
+    submittedBy: 'Tashinga Muteyo',
      details: {
       address: '456 Tech Park, Harare',
       dateOfBirth: 'N/A',
@@ -99,8 +99,8 @@ export const initialApplications: Application[] = [
       { type: 'ZIMRA Tax Clearance', fileName: 'zimra.pdf', url: '#' },
     ],
     history: [
-        { action: 'Reviewed', user: 'BackOffice-01', timestamp: '2023-10-04' },
-        { action: 'Submitted', user: 'ATL-01', timestamp: '2023-10-02' },
+        { action: 'Reviewed', user: 'Fadzai Zesa', timestamp: '2023-10-04' },
+        { action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2023-10-02' },
     ],
     comments: [],
   },
@@ -111,7 +111,7 @@ export const initialApplications: Application[] = [
     status: 'Rejected',
     submittedDate: '2023-09-28',
     lastUpdated: '2023-10-01',
-    submittedBy: 'ATL-02',
+    submittedBy: 'Tendai Moyo',
     details: {
       address: '789 Fancy Lane, Bulawayo',
       dateOfBirth: 'N/A',
@@ -122,12 +122,12 @@ export const initialApplications: Application[] = [
       { type: 'CR14', fileName: 'cr14_form.pdf', url: '#' },
     ],
     history: [
-        { action: 'Rejected', user: 'Supervisor-02', timestamp: '2023-10-01', notes: 'Missing Certificate of Incorporation.' },
-        { action: 'Submitted', user: 'ATL-02', timestamp: '2023-09-28' },
+        { action: 'Rejected', user: 'Blessing Zulu', timestamp: '2023-10-01', notes: 'Missing Certificate of Incorporation.' },
+        { action: 'Submitted', user: 'Tendai Moyo', timestamp: '2023-09-28' },
     ],
     comments: [
-      { id: 'c3', user: 'Supervisor-02', role: 'Supervisor', timestamp: '2023-10-01', content: 'Rejected. The Certificate of Incorporation is a mandatory document and it is missing from the submission.' },
-      { id: 'c4', user: 'ATL-02', role: 'ATL', timestamp: '2023-10-01', content: 'Understood. Will retrieve from client and resubmit.' },
+      { id: 'c3', user: 'Blessing Zulu', role: 'supervisor', timestamp: '2023-10-01', content: 'Rejected. The Certificate of Incorporation is a mandatory document and it is missing from the submission.' },
+      { id: 'c4', user: 'Tendai Moyo', role: 'atl', timestamp: '2023-10-01', content: 'Understood. Will retrieve from client and resubmit.' },
     ]
   },
   {
@@ -137,7 +137,7 @@ export const initialApplications: Application[] = [
     status: 'Submitted',
     submittedDate: '2023-10-04',
     lastUpdated: '2023-10-04',
-    submittedBy: 'ATL-01',
+    submittedBy: 'Tashinga Muteyo',
      details: {
       address: '101 Lion St, Gweru',
       dateOfBirth: '1985-05-15',
@@ -149,7 +149,7 @@ export const initialApplications: Application[] = [
        { type: 'Proof of Residence', fileName: 'water_bill.pdf', url: '#' },
     ],
     history: [
-        { action: 'Submitted', user: 'ATL-01', timestamp: '2023-10-04' },
+        { action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2023-10-04' },
     ],
     comments: [],
   },
@@ -160,7 +160,7 @@ export const initialApplications: Application[] = [
     status: 'In Review',
     submittedDate: '2023-10-05',
     lastUpdated: '2023-10-05',
-    submittedBy: 'ATL-03',
+    submittedBy: 'Tendai Moyo',
      details: {
       address: '22 Innovation Drive, Harare',
       dateOfBirth: 'N/A',
@@ -173,7 +173,7 @@ export const initialApplications: Application[] = [
        { type: 'Bank Statement', fileName: 'bank_statement_q3.pdf', url: '#' },
     ],
     history: [
-        { action: 'Submitted', user: 'ATL-03', timestamp: '2023-10-05' },
+        { action: 'Submitted', user: 'Tendai Moyo', timestamp: '2023-10-05' },
     ],
     comments: [],
   },
@@ -184,7 +184,7 @@ export const initialApplications: Application[] = [
     status: 'Submitted',
     submittedDate: '2023-10-06',
     lastUpdated: '2023-10-06',
-    submittedBy: 'ATL-01',
+    submittedBy: 'Tashinga Muteyo',
     details: {
       address: '33 Cartwheel Ave, Mutare',
       dateOfBirth: '1990-02-20',
@@ -196,7 +196,7 @@ export const initialApplications: Application[] = [
        { type: 'Trading License', fileName: 'license.pdf', url: '#' },
     ],
     history: [
-        { action: 'Submitted', user: 'ATL-01', timestamp: '2023-10-06' },
+        { action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2023-10-06' },
     ],
     comments: [],
   },
@@ -207,7 +207,7 @@ export const initialApplications: Application[] = [
     status: 'Pending Supervisor',
     submittedDate: '2023-10-07',
     lastUpdated: '2023-10-08',
-    submittedBy: 'ATL-02',
+    submittedBy: 'Tendai Moyo',
     details: {
       address: '500 Future Ave, Harare',
       dateOfBirth: 'N/A',
@@ -219,8 +219,8 @@ export const initialApplications: Application[] = [
        { type: 'Board Resolution', fileName: 'board_res.pdf', url: '#' },
     ],
     history: [
-        { action: 'Reviewed', user: 'BackOffice-02', timestamp: '2023-10-08' },
-        { action: 'Submitted', user: 'ATL-02', timestamp: '2023-10-07' },
+        { action: 'Reviewed', user: 'Fadzai Zesa', timestamp: '2023-10-08' },
+        { action: 'Submitted', user: 'Tendai Moyo', timestamp: '2023-10-07' },
     ],
     comments: [],
   }
