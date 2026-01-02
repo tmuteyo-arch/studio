@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application } from '@/lib/mock-data';
-import { Check, X } from 'lucide-react';
+import { Check, Search, X } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
+import { Input } from '../ui/input';
 
 interface SupervisorDashboardProps {
     applications: Application[];
@@ -18,8 +19,14 @@ interface SupervisorDashboardProps {
 
 export default function SupervisorDashboard({ applications, setApplications, user }: SupervisorDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
+    const [searchTerm, setSearchTerm] = React.useState('');
+
     // Supervisor reviews applications that the Back Office has already validated.
     const approvalQueue = applications.filter(app => app.status === 'Pending Supervisor');
+
+    const filteredQueue = approvalQueue.filter(app =>
+        app.id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     if (selectedApplication) {
         return <ApplicationReview 
@@ -37,14 +44,28 @@ export default function SupervisorDashboard({ applications, setApplications, use
       </div>
        <Card>
         <CardHeader>
-          <CardTitle>Approval Queue</CardTitle>
-          <CardDescription>Applications that have been reviewed by Back Office and are pending your final approval.</CardDescription>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <CardTitle>Approval Queue</CardTitle>
+                    <CardDescription>Applications that have been reviewed by Back Office and are pending your final approval.</CardDescription>
+                </div>
+                 <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by Application ID..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+            </div>
         </CardHeader>
         <CardContent>
-          {approvalQueue.length > 0 ? (
+          {filteredQueue.length > 0 ? (
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead>App ID</TableHead>
                         <TableHead>Client Name</TableHead>
                         <TableHead>Client Type</TableHead>
                         <TableHead>Submitted By</TableHead>
@@ -54,8 +75,9 @@ export default function SupervisorDashboard({ applications, setApplications, use
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {approvalQueue.map((app) => (
+                    {filteredQueue.map((app) => (
                         <TableRow key={app.id}>
+                            <TableCell className="font-mono text-xs">{app.id}</TableCell>
                             <TableCell className="font-medium">{app.clientName}</TableCell>
                             <TableCell>{app.clientType}</TableCell>
                             <TableCell>{app.submittedBy}</TableCell>
@@ -72,7 +94,9 @@ export default function SupervisorDashboard({ applications, setApplications, use
             </Table>
             ) : (
             <div className="flex items-center justify-center p-12 text-center">
-                <p className="text-lg text-muted-foreground">There are no applications pending your approval.</p>
+                <p className="text-lg text-muted-foreground">
+                    {searchTerm ? 'No applications match your search.' : 'There are no applications pending your approval.'}
+                </p>
             </div>
             )}
         </CardContent>

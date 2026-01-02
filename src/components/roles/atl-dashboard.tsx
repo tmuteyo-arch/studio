@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
+import { Input } from '../ui/input';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -37,7 +38,13 @@ interface AtlDashboardProps {
 export default function AtlDashboard({ applications, setApplications, user }: AtlDashboardProps) {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
+  const [searchTerm, setSearchTerm] = React.useState('');
+
   const atlApplications = applications.filter(app => app.submittedBy === user.name);
+
+  const filteredApplications = atlApplications.filter(app => 
+    app.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (isCreatingApplication) {
     return <OnboardingFlow user={user} onCancel={() => setIsCreatingApplication(false)} />;
@@ -66,14 +73,28 @@ export default function AtlDashboard({ applications, setApplications, user }: At
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>My Applications</CardTitle>
-          <CardDescription>A list of applications you have submitted.</CardDescription>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <CardTitle>My Applications</CardTitle>
+                    <CardDescription>A list of applications you have submitted.</CardDescription>
+                </div>
+                 <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by Application ID..."
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+            </div>
         </CardHeader>
         <CardContent>
-           {atlApplications.length > 0 ? (
+           {filteredApplications.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>App ID</TableHead>
                   <TableHead>Client Name</TableHead>
                   <TableHead>Client Type</TableHead>
                   <TableHead>Submission Date</TableHead>
@@ -82,8 +103,9 @@ export default function AtlDashboard({ applications, setApplications, user }: At
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {atlApplications.map((app) => (
+                {filteredApplications.map((app) => (
                   <TableRow key={app.id}>
+                    <TableCell className="font-mono text-xs">{app.id}</TableCell>
                     <TableCell className="font-medium">{app.clientName}</TableCell>
                     <TableCell>{app.clientType}</TableCell>
                     <TableCell>{app.submittedDate}</TableCell>
@@ -99,7 +121,9 @@ export default function AtlDashboard({ applications, setApplications, user }: At
             </Table>
            ) : (
              <div className="flex flex-col items-center justify-center p-12 text-center">
-                <p className="text-lg text-muted-foreground mb-6">No active applications. Start by creating a new one.</p>
+                <p className="text-lg text-muted-foreground mb-6">
+                    {searchTerm ? 'No applications match your search.' : 'No active applications. Start by creating a new one.'}
+                </p>
             </div>
            )}
         </CardContent>
