@@ -29,7 +29,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-8">
        <header className="mb-8 flex items-center gap-3">
         <Logo className="h-10 w-10 text-primary" />
-        <h1 className="text-3xl font-bold text-foreground">SwiftAccount</h1>
+        <h1 className="text-3xl font-bold text-foreground">InnBucks Agent Onboarding App</h1>
       </header>
       <div className="text-center">
         <h2 className="text-2xl font-semibold mb-2">Select a Role to Continue</h2>
@@ -62,7 +62,7 @@ export default function Home() {
             <header className="mb-8 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Logo className="h-8 w-8 text-primary" />
-                    <h1 className="text-2xl font-bold text-foreground">SwiftAccount</h1>
+                    <h1 className="text-2xl font-bold text-foreground">InnBucks Agent Onboarding App</h1>
                 </div>
                 <Button variant="outline" onClick={() => setSelectedRole(null)}>Log Out</Button>
             </header>

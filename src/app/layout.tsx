@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'SwiftAccount',
+  title: 'InnBucks Agent Onboarding App',
   description: 'A digital account onboarding application.',
 };
 
