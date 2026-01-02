@@ -12,11 +12,8 @@ import { ProgressTracker } from './progress-tracker';
 import StepAccountType from './steps/step-account-type';
 import StepPersonalInfo from './steps/step-personal-info';
 import StepCorporateInfo from './steps/step-corporate-info';
-import StepDirectors from './steps/step-directors'; // NEW
+import StepDirectors from './steps/step-directors';
 import StepDocumentUpload from './steps/step-document-upload';
-import StepFacialRecognition from './steps/step-facial-recognition';
-import StepComplianceCheck from './steps/step-compliance-check';
-import StepDigitalSignature from './steps/step-digital-signature';
 import StepReview from './steps/step-review';
 
 const baseSteps: Step[] = [
@@ -25,9 +22,6 @@ const baseSteps: Step[] = [
   { id: 'corporate-info', name: 'Corporate Info', isDynamic: true },
   { id: 'directors-signatories', name: 'Directors', isDynamic: true, fields: ['directors'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
-  { id: 'facial-recognition', name: 'Facial Capture' },
-  { id: 'compliance-check', name: 'Compliance Check' },
-  { id: 'digital-signature', name: 'Digital Signature', fields: ['signature', 'agreedToTerms'] },
   { id: 'review-submit', name: 'Review & Submit' },
 ];
 
@@ -37,9 +31,6 @@ const StepComponents: Record<string, React.ElementType> = {
   'corporate-info': StepCorporateInfo,
   'directors-signatories': StepDirectors,
   'document-upload': StepDocumentUpload,
-  'facial-recognition': StepFacialRecognition,
-  'compliance-check': StepComplianceCheck,
-  'digital-signature': StepDigitalSignature,
   'review-submit': StepReview,
 };
 
@@ -107,7 +98,7 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step + 1);
+      setCurrentStep((step) => step - 1);
     }
   };
   
@@ -127,10 +118,10 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
           >
             <Card className="h-full flex flex-col">
               <CardContent className="flex-1 py-6">
-                <CurrentStepComponent next={next} />
+                <CurrentStepComponent />
               </CardContent>
               <CardFooter className="border-t px-6 py-4 justify-between">
-                <Button variant="outline" onClick={currentStep === 0 ? onCancel : prev}>
+                <Button variant="outline" type="button" onClick={currentStep === 0 ? onCancel : prev}>
                   {currentStep === 0 ? 'Cancel' : 'Back'}
                 </Button>
                 {currentStep < steps.length - 1 && (
