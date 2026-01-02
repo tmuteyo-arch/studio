@@ -11,7 +11,8 @@ import { ProgressTracker } from './progress-tracker';
 
 import StepAccountType from './steps/step-account-type';
 import StepPersonalInfo from './steps/step-personal-info';
-import StepCorporateInfo from './steps/step-corporate-info'; // NEW
+import StepCorporateInfo from './steps/step-corporate-info';
+import StepDirectors from './steps/step-directors'; // NEW
 import StepDocumentUpload from './steps/step-document-upload';
 import StepComplianceCheck from './steps/step-compliance-check';
 import StepDigitalSignature from './steps/step-digital-signature';
@@ -19,8 +20,9 @@ import StepReview from './steps/step-review';
 
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
-  { id: 'personal-info', name: 'Personal Info', fields: ['fullName', 'dateOfBirth', 'address'] },
-  { id: 'corporate-info', name: 'Corporate Info', isDynamic: true }, // NEW: Dynamic step
+  { id: 'personal-info', name: 'Applicant Info' },
+  { id: 'corporate-info', name: 'Corporate Info', isDynamic: true },
+  { id: 'directors-signatories', name: 'Directors', isDynamic: true, fields: ['directors'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'compliance-check', name: 'Compliance Check' },
   { id: 'digital-signature', name: 'Digital Signature', fields: ['signature', 'agreedToTerms'] },
@@ -30,7 +32,8 @@ const baseSteps: Step[] = [
 const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
   'personal-info': StepPersonalInfo,
-  'corporate-info': StepCorporateInfo, // NEW
+  'corporate-info': StepCorporateInfo,
+  'directors-signatories': StepDirectors,
   'document-upload': StepDocumentUpload,
   'compliance-check': StepComplianceCheck,
   'digital-signature': StepDigitalSignature,
@@ -52,6 +55,7 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
       fullName: '',
       dateOfBirth: '',
       address: '',
+      directors: [],
       document1Type: '',
       document2Type: '',
       signature: '',
@@ -60,15 +64,28 @@ export default function OnboardingFlow({ onCancel }: OnboardingFlowProps) {
   });
 
   const clientType = form.watch('clientType');
-  const isCorporate = ['Company (Private / Public Limited)', 'PBC Account'].includes(clientType);
+  const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(clientType);
 
   const steps = React.useMemo(() => {
-    return baseSteps.filter(step => {
+    let newSteps = [...baseSteps];
+
+    if (isCorporate) {
+        const personalInfoStep = newSteps.find(step => step.id === 'personal-info');
+        if (personalInfoStep) {
+            personalInfoStep.name = 'Applicant Details';
+            personalInfoStep.fields = ['fullName', 'dateOfBirth', 'address'];
+        }
+    } else {
+        const personalInfoStep = newSteps.find(step => step.id === 'personal-info');
+        if (personalInfoStep) {
+            personalInfoStep.name = 'Personal Info';
+            personalInfoStep.fields = ['fullName', 'dateOfBirth', 'address'];
+        }
+    }
+
+    return newSteps.filter(step => {
       if (step.isDynamic) {
         return isCorporate;
-      }
-      if (clientType === 'Personal Account' && step.id === 'personal-info') {
-         // for personal account, the main applicant IS the client
       }
       return true;
     });

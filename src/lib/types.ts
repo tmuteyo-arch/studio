@@ -1,5 +1,17 @@
 import { z } from 'zod';
 
+const DirectorSchema = z.object({
+  fullName: z.string().min(2, 'Director name is required.'),
+  idNumber: z.string().min(5, 'A valid ID number is required.'),
+  dateOfBirth: z.string().refine((dob) => new Date(dob).toString() !== 'Invalid Date', {
+    message: 'Please enter a valid date of birth.',
+  }),
+  address: z.string().min(10, 'Address is required.'),
+  designation: z.string().min(2, 'Designation is required.'),
+  phoneNumber: z.string().min(5, 'A valid phone number is required.'),
+  gender: z.string().min(1, 'Please select a gender.'),
+});
+
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   
@@ -26,6 +38,9 @@ export const OnboardingFormSchema = z.object({
   certificateOfIncorporationNumber: z.string().optional(),
   countryOfIncorporation: z.string().optional(),
 
+  // Directors
+  directors: z.array(DirectorSchema).optional(),
+
   // Document Info
   document1Type: z.string().min(1, { message: 'Please select a document type.' }),
   document2Type: z.string().min(1, { message: 'Please select a document type.' }),
@@ -38,6 +53,7 @@ export const OnboardingFormSchema = z.object({
 });
 
 export type OnboardingFormData = z.infer<typeof OnboardingFormSchema>;
+export type DirectorFormData = z.infer<typeof DirectorSchema>;
 
 export type Step = {
   id: string;
