@@ -7,13 +7,15 @@ import { Application, Comment, HistoryLog } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare, Download, Send, CornerUpLeft } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
 import ApplicationPrintView from './application-print-view';
 import { useToast } from '@/hooks/use-toast';
 import { User as UserProfile } from '@/lib/users';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
 
 
 interface ApplicationReviewProps {
@@ -35,6 +37,8 @@ export default function ApplicationReview({ application, setApplications, onBack
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
   const printRef = React.useRef<HTMLDivElement>(null);
+  const [brNumber, setBrNumber] = React.useState('');
+  const [walletAccount, setWalletAccount] = React.useState('');
 
   const updateApplication = (updatedApp: Application) => {
      setApplications(prev => 
@@ -115,6 +119,28 @@ export default function ApplicationReview({ application, setApplications, onBack
     setIsPrinting(false);
   };
   
+  const handleSendEmail = () => {
+    if (!brNumber || !walletAccount) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please enter both BR Number and Wallet Account before sending.',
+      });
+      return;
+    }
+
+    const subject = `Account Creation for Application: ${application.id}`;
+    const body = `Please create an account for the following applicant:\n\nClient Name: ${application.clientName}\nApplication ID: ${application.id}\n\nBR Number: ${brNumber}\nWallet Account: ${walletAccount}\n\nThank you.`;
+    const mailtoLink = `mailto:tmateoro@inbucks.co.zw?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    window.location.href = mailtoLink;
+
+     toast({
+        title: 'Redirecting to Email Client',
+        description: 'Please complete and send the email to finalize the account creation request.',
+    });
+  }
+
   const renderActions = () => {
     switch (user.role) {
       case 'back-office':
@@ -173,6 +199,7 @@ export default function ApplicationReview({ application, setApplications, onBack
                     <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                     <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                     <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
+                    {user.role === 'back-office' && <TabsTrigger value="account-creation"><Mail className="mr-2 h-4 w-4" />Account Creation</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="details" className="pt-4">
                      <Card>
@@ -281,9 +308,49 @@ export default function ApplicationReview({ application, setApplications, onBack
                         </CardContent>
                     </Card>
                 </TabsContent>
+                {user.role === 'back-office' && (
+                    <TabsContent value="account-creation" className="pt-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Account Creation Details</CardTitle>
+                                <CardDescription>
+                                    Enter the branch and wallet information, then send to the account creation team.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="br-number">BR Number</Label>
+                                        <Input
+                                            id="br-number"
+                                            placeholder="Enter BR number"
+                                            value={brNumber}
+                                            onChange={(e) => setBrNumber(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="wallet-account">Wallet Account</Label>
+                                        <Input
+                                            id="wallet-account"
+                                            placeholder="Enter wallet account number"
+                                            value={walletAccount}
+                                            onChange={(e) => setWalletAccount(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <Button onClick={handleSendEmail}>
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Send for Account Creation
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
             </Tabs>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+    
