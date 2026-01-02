@@ -9,6 +9,8 @@ export type ApplicationStatus =
   | 'Approved'
   | 'Rejected'
   | 'Returned to ATL';
+  
+export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse';
 
 export type Document = {
   type: string;
@@ -39,6 +41,7 @@ export type Application = {
   submittedDate: string;
   lastUpdated: string;
   submittedBy: string;
+  fcbStatus: FcbStatus;
   details: {
     address: string;
     dateOfBirth: string;
@@ -59,6 +62,7 @@ export const initialApplications: Application[] = [
     submittedDate: '2023-10-01',
     lastUpdated: '2023-10-05',
     submittedBy: 'Tashinga Muteyo',
+    fcbStatus: 'Good',
     details: {
       address: '123 Business Rd, Harare',
       dateOfBirth: 'N/A',
@@ -88,6 +92,7 @@ export const initialApplications: Application[] = [
     submittedDate: '2023-10-02',
     lastUpdated: '2023-10-04',
     submittedBy: 'Tashinga Muteyo',
+    fcbStatus: 'Good',
      details: {
       address: '456 Tech Park, Harare',
       dateOfBirth: 'N/A',
@@ -112,6 +117,7 @@ export const initialApplications: Application[] = [
     submittedDate: '2023-09-28',
     lastUpdated: '2023-10-01',
     submittedBy: 'Tendai Moyo',
+    fcbStatus: 'Adverse',
     details: {
       address: '789 Fancy Lane, Bulawayo',
       dateOfBirth: 'N/A',
@@ -138,6 +144,7 @@ export const initialApplications: Application[] = [
     submittedDate: '2023-10-04',
     lastUpdated: '2023-10-04',
     submittedBy: 'Tashinga Muteyo',
+    fcbStatus: 'Inclusive',
      details: {
       address: '101 Lion St, Gweru',
       dateOfBirth: '1985-05-15',
@@ -161,6 +168,7 @@ export const initialApplications: Application[] = [
     submittedDate: '2023-10-05',
     lastUpdated: '2023-10-05',
     submittedBy: 'Tendai Moyo',
+    fcbStatus: 'Inclusive',
      details: {
       address: '22 Innovation Drive, Harare',
       dateOfBirth: 'N/A',
@@ -185,6 +193,7 @@ export const initialApplications: Application[] = [
     submittedDate: '2023-10-06',
     lastUpdated: '2023-10-06',
     submittedBy: 'Tashinga Muteyo',
+    fcbStatus: 'Inclusive',
     details: {
       address: '33 Cartwheel Ave, Mutare',
       dateOfBirth: '1990-02-20',
@@ -208,6 +217,7 @@ export const initialApplications: Application[] = [
     submittedDate: '2023-10-07',
     lastUpdated: '2023-10-08',
     submittedBy: 'Tendai Moyo',
+    fcbStatus: 'Good',
     details: {
       address: '500 Future Ave, Harare',
       dateOfBirth: 'N/A',
@@ -227,3 +237,5 @@ export const initialApplications: Application[] = [
 ];
 
 export const applicationsAtom = atom<Application[]>(initialApplications);
+
+    

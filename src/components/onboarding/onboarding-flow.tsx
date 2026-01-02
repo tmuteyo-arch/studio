@@ -19,6 +19,7 @@ import StepReview from './steps/step-review';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
+import { ArrowLeft } from 'lucide-react';
 
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
@@ -122,6 +123,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       submittedDate: new Date().toISOString().split('T')[0],
       lastUpdated: new Date().toISOString().split('T')[0],
       submittedBy: user.name,
+      fcbStatus: 'Inclusive',
       details: {
         address: data.address,
         dateOfBirth: data.dateOfBirth,
@@ -169,6 +171,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
               </CardContent>
               <CardFooter className="border-t px-6 py-4 justify-between">
                 <Button variant="outline" type="button" onClick={currentStep === 0 ? onCancel : prev}>
+                   {currentStep > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
                   {currentStep === 0 ? 'Cancel' : 'Back'}
                 </Button>
                 {currentStep < steps.length - 1 && (
@@ -189,3 +192,5 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     </div>
   );
 }
+
+    

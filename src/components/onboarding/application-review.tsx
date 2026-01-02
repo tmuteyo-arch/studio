@@ -18,6 +18,7 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 
 interface ApplicationReviewProps {
@@ -77,6 +78,16 @@ export default function ApplicationReview({ application, setApplications, onBack
         title: `Application ${status}`,
         description: `Application for ${application.clientName} has been updated.`,
     });
+  };
+
+  const handleFcbStatusChange = (status: Application['fcbStatus']) => {
+     setApplications(prev => 
+        prev.map(app => 
+            app.id === application.id 
+            ? { ...app, fcbStatus: status }
+            : app
+        )
+    );
   };
 
 
@@ -229,6 +240,33 @@ export default function ApplicationReview({ application, setApplications, onBack
                             </div>
                         </CardContent>
                     </Card>
+                     {user.role === 'back-office' && (
+                        <Card className="mt-6">
+                            <CardHeader>
+                                <CardTitle>FCB Status Check</CardTitle>
+                                <CardDescription>Confirm the applicant's status from the Financial Clearing Bureau.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <RadioGroup 
+                                    defaultValue={application.fcbStatus}
+                                    onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)}
+                                    className="flex flex-col sm:flex-row gap-4">
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <RadioGroupItem value="Inclusive" id="fcb-inclusive" />
+                                        <Label htmlFor="fcb-inclusive" className="font-normal">Inclusive</Label>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <RadioGroupItem value="Good" id="fcb-good" />
+                                        <Label htmlFor="fcb-good" className="font-normal">Good</Label>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <RadioGroupItem value="Adverse" id="fcb-adverse" />
+                                        <Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label>
+                                    </FormItem>
+                                </RadioGroup>
+                            </CardContent>
+                        </Card>
+                    )}
                 </TabsContent>
                 <TabsContent value="documents" className="pt-4">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -390,5 +428,7 @@ export default function ApplicationReview({ application, setApplications, onBack
     </div>
   );
 }
+
+    
 
     
