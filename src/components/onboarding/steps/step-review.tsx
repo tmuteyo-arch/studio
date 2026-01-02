@@ -65,7 +65,7 @@ export default function StepReview({ next }: StepReviewProps) {
           </div>
            <div>
             <p className="text-sm font-medium text-muted-foreground">Digital Signature</p>
-            <p className="font-semibold font-serif italic">{data.signature || '-'}</p>
+            <p className="font-serif italic">{data.signature || '-'}</p>
           </div>
         </div>
       </div>

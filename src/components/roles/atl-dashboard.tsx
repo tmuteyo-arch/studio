@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { mockApplications, Application, ApplicationStatus } from '@/lib/mock-data';
 import { PlusCircle } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
+import ApplicationReview from '../onboarding/application-review';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -28,10 +29,15 @@ const getStatusVariant = (status: ApplicationStatus) => {
 
 export default function AtlDashboard() {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
+  const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
   const atlApplications = mockApplications.filter(app => app.submittedBy === 'ATL-01');
 
   if (isCreatingApplication) {
     return <OnboardingFlow onCancel={() => setIsCreatingApplication(false)} />;
+  }
+
+  if (selectedApplication) {
+    return <ApplicationReview application={selectedApplication} onBack={() => setSelectedApplication(null)} />;
   }
 
   return (
@@ -73,7 +79,7 @@ export default function AtlDashboard() {
                       <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                       <Button variant="outline" size="sm">View</Button>
+                       <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
                     </TableCell>
                   </TableRow>
                 ))}
