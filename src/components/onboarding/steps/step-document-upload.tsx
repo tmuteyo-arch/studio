@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AlertCircle, CheckCircle2, FileUp, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileUp, Info, Loader2 } from 'lucide-react';
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -13,8 +13,27 @@ import { verifyDocuments } from '@/lib/actions';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const documentTypes = ['Passport', "Driver's License", 'National ID Card', 'Utility Bill', 'Bank Statement'];
+
+const documentRequirements = [
+    {
+        document: 'Valid Identity Document',
+        details: 'Valid Passport, Driver’s License, or Plastic/Metal ID.',
+        comment: 'Submit copies. The bank will verify them against originals and certify them.',
+    },
+    {
+        document: 'Proof of Residence',
+        details: 'Utility bills (ZESA/TelOne/Water) or a signed letter from an employer on a letterhead.',
+        comment: 'Must not be more than 3 months old. Submit original bills.',
+    },
+    {
+        document: 'Passport Size Photos',
+        details: 'Recent color photographs.',
+        comment: 'Submit recent photos.',
+    },
+];
 
 export default function StepDocumentUpload() {
   const { toast } = useToast();
@@ -93,9 +112,33 @@ export default function StepDocumentUpload() {
     <div>
       <CardHeader>
         <CardTitle>Identity Verification</CardTitle>
-        <CardDescription>Upload two different types of documents for verification.</CardDescription>
+        <CardDescription>Upload the required documents for verification. Please see the table below for guidance.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
+        
+        <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Document Guidelines</AlertTitle>
+            <AlertDescription>
+                <Table className="mt-2">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Document</TableHead>
+                            <TableHead>Comment</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {documentRequirements.map((req) => (
+                            <TableRow key={req.document}>
+                                <TableCell className="font-medium">{req.document}<p className="text-xs text-muted-foreground font-normal">{req.details}</p></TableCell>
+                                <TableCell>{req.comment}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </AlertDescription>
+        </Alert>
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Document 1 */}
           <div className="space-y-2">
