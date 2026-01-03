@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AlertCircle, CheckCircle2, FileUp, Info, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Eye } from 'lucide-react';
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -94,6 +94,54 @@ export default function StepDocumentUpload() {
     }
   };
 
+  const renderFileUpload = (docNumber: 1 | 2, docState: { file: File | null; dataUri: string }, handler: (e: React.ChangeEvent<HTMLInputElement>, n: 1 | 2) => void, formFieldName: "document1Type" | "document2Type") => (
+     <div className="space-y-2 p-4 border rounded-lg">
+        <FormField
+          control={form.control}
+          name={formFieldName}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Document {docNumber} Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select document type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {documentTypes.map((type) => (
+                    <SelectItem key={`${type}-${docNumber}`} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {docState.file ? (
+             <div className="flex items-center justify-between p-3 rounded-md border bg-muted/50">
+                <div>
+                    <p className="font-medium text-sm">{docState.file.name}</p>
+                    <p className="text-xs text-muted-foreground">{Math.round(docState.file.size / 1024)} KB</p>
+                </div>
+                <Button variant="outline" size="sm"><Eye className="mr-2 h-4 w-4"/>View</Button>
+            </div>
+        ) : (
+            <FormItem>
+              <FormLabel>Upload Document {docNumber}</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Input type="file" className="pl-10" onChange={(e) => handler(e, docNumber)} />
+                  <FileUp className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                </div>
+              </FormControl>
+            </FormItem>
+        )}
+      </div>
+  );
+
   return (
     <div>
       <CardHeader>
@@ -126,86 +174,13 @@ export default function StepDocumentUpload() {
         </Alert>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Document 1 */}
-          <div className="space-y-2">
-            <FormField
-              control={form.control}
-              name="document1Type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Document 1 Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select document type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {documentTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormItem>
-              <FormLabel>Upload Document 1</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Input type="file" className="pl-10" onChange={(e) => handleFileChange(e, 1)} />
-                  <FileUp className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                </div>
-              </FormControl>
-               {doc1.file && <p className="text-sm text-muted-foreground">{doc1.file.name}</p>}
-            </FormItem>
-          </div>
-
-          {/* Document 2 */}
-          <div className="space-y-2">
-            <FormField
-              control={form.control}
-              name="document2Type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Document 2 Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select document type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {documentTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormItem>
-              <FormLabel>Upload Document 2</FormLabel>
-              <FormControl>
-                <div className="relative">
-                    <Input type="file" className="pl-10" onChange={(e) => handleFileChange(e, 2)} />
-                    <FileUp className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                </div>
-              </FormControl>
-              {doc2.file && <p className="text-sm text-muted-foreground">{doc2.file.name}</p>}
-            </FormItem>
-          </div>
+          {renderFileUpload(1, doc1, handleFileChange, "document1Type")}
+          {renderFileUpload(2, doc2, handleFileChange, "document2Type")}
         </div>
         
         <Button onClick={handleVerification} disabled={isLoading} className="w-full md:w-auto">
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Verify Documents
+          Verify Documents &amp; Pre-fill Form
         </Button>
 
         {validationResult && (

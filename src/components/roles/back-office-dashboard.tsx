@@ -34,10 +34,11 @@ export default function BackOfficeDashboard({ applications, setApplications, use
     const [searchTerm, setSearchTerm] = React.useState('');
     
     // Back office reviews applications submitted by ATLs
-    const queue = applications.filter(app => app.status === 'Submitted' || app.status === 'In Review' || app.status === 'Returned to ATL');
+    const queue = applications.filter(app => app.status === 'Submitted');
 
     const filteredQueue = queue.filter(app =>
-        app.id.toLowerCase().includes(searchTerm.toLowerCase())
+        app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (selectedApplication) {
@@ -65,7 +66,7 @@ export default function BackOfficeDashboard({ applications, setApplications, use
                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
-                        placeholder="Search by Application ID..."
+                        placeholder="Search by ID or Client..."
                         className="pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
