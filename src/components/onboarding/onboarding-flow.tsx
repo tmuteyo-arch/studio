@@ -52,6 +52,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
+    mode: 'onChange', // Validate on change to update submit button status
     defaultValues: {
       clientType: '',
       fullName: '',
@@ -95,12 +96,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     });
   }, [clientType, isCorporate]);
 
-  const next = async () => {
-    const fields = steps[currentStep].fields;
-    const output = await form.trigger(fields as FieldName<OnboardingFormData>[], { shouldFocus: true });
-    
-    if (!output) return;
-
+  const next = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep((step) => step + 1);
     }
@@ -180,7 +176,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
                   </Button>
                 )}
                 {currentStep === steps.length - 1 && (
-                   <Button type="submit" disabled={isSubmitting || form.formState.isSubmitting}>
+                   <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
                      {isSubmitting ? 'Submitting...' : 'Submit Application'}
                    </Button>
                 )}
