@@ -10,7 +10,7 @@ export type ApplicationStatus =
   | 'Rejected'
   | 'Returned to ATL';
   
-export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse';
+export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP';
 
 export type Document = {
   type: string;
@@ -237,5 +237,3 @@ export const initialApplications: Application[] = [
 ];
 
 export const applicationsAtom = atom<Application[]>(initialApplications);
-
-    

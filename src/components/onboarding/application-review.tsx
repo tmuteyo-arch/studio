@@ -295,6 +295,10 @@ export default function ApplicationReview({ application, setApplications, onBack
                                         <RadioGroupItem value="Adverse" id="fcb-adverse" />
                                         <Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label>
                                     </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <RadioGroupItem value="PEP" id="fcb-pep" />
+                                        <Label htmlFor="fcb-pep" className="font-normal">PEP</Label>
+                                    </FormItem>
                                 </RadioGroup>
                             </CardContent>
                         </Card>
