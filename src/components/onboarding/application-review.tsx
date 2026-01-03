@@ -33,6 +33,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { rejectionReasons } from '@/lib/types';
 import CorporateChecklist from './corporate-checklist';
+import { Badge } from '@/components/ui/badge';
 
 
 interface ApplicationReviewProps {
@@ -190,7 +191,7 @@ export default function ApplicationReview({ application, setApplications, onBack
         await addCanvasToPdf(checklistElement, true);
         await addCanvasToPdf(summaryElement, false);
     } else {
-        await addCanvasToPdf(summaryElenent, true);
+        await addCanvasToPdf(summaryElement, true);
     }
 
     pdf.save(`Application-${application.id}.pdf`);
