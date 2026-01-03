@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { rejectionReasons } from '@/lib/types';
+import CorporateChecklist from './corporate-checklist';
 
 
 interface ApplicationReviewProps {
@@ -53,6 +54,8 @@ export default function ApplicationReview({ application, setApplications, onBack
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
   const printRef = React.useRef<HTMLDivElement>(null);
+  const checklistRef = React.useRef<HTMLDivElement>(null);
+
   const [brNumber, setBrNumber] = React.useState('');
   const [walletAccount, setWalletAccount] = React.useState('');
   const [isRejecting, setIsRejecting] = React.useState(false);
@@ -70,7 +73,7 @@ export default function ApplicationReview({ application, setApplications, onBack
             : app
         )
     );
-    onBack();
+    // No onBack() here, so the user stays on the page
   };
 
   const handleStatusChange = (status: Application['status'], notes?: string) => {
@@ -81,19 +84,29 @@ export default function ApplicationReview({ application, setApplications, onBack
       notes: notes,
     };
 
-    const updatedApp = {
+    const updatedApp: Application = {
       ...application,
       status: status,
       history: [newHistoryLog, ...application.history],
       lastUpdated: new Date().toISOString().split('T')[0]
     };
     
-    updateApplication(updatedApp);
+     setApplications(prev => 
+        prev.map(app => 
+            app.id === updatedApp.id 
+            ? updatedApp
+            : app
+        )
+    );
     
     toast({
         title: `Application ${status}`,
         description: `Application for ${application.clientName} has been updated.`,
     });
+
+    if (status === 'Approved' || status === 'Rejected') {
+        setTimeout(() => onBack(), 1000);
+    }
   };
 
   const handleRejection = () => {
@@ -134,35 +147,52 @@ export default function ApplicationReview({ application, setApplications, onBack
       content: newComment.trim(),
     };
 
-    setApplications(prev => 
-        prev.map(app => 
-            app.id === application.id 
-            ? { ...app, comments: [...app.comments, newCommentObject] }
-            : app
-        )
-    );
+    const updatedApp = {
+      ...application,
+      comments: [...application.comments, newCommentObject]
+    }
 
+    updateApplication(updatedApp);
     setNewComment('');
   };
 
   const handleDownloadPdf = async () => {
-    const element = printRef.current;
-    if (!element) return;
-    
+    const checklistElement = checklistRef.current;
+    const summaryElement = printRef.current;
+
+    if (!summaryElement) {
+        console.error("Summary element not found");
+        return;
+    }
+
     setIsPrinting(true);
-    const canvas = await html2canvas(element, { scale: 2 });
-    const data = canvas.toDataURL('image/png');
 
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-    const imgX = (pdfWidth - imgWidth * ratio) / 2;
-    const imgY = 10; 
 
-    pdf.addImage(data, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    // Function to add a canvas to the PDF
+    const addCanvasToPdf = async (element: HTMLElement, isFirstPage: boolean) => {
+        const canvas = await html2canvas(element, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        
+        if (!isFirstPage) {
+            pdf.addPage();
+        }
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio);
+    };
+
+    // If it's a corporate account and approved, add the checklist first
+    if (application.clientType === 'Company (Private / Public Limited)' && checklistElement) {
+        await addCanvasToPdf(checklistElement, true);
+        await addCanvasToPdf(summaryElement, false);
+    } else {
+        await addCanvasToPdf(summaryElenent, true);
+    }
+
     pdf.save(`Application-${application.id}.pdf`);
     setIsPrinting(false);
   };
@@ -192,6 +222,7 @@ export default function ApplicationReview({ application, setApplications, onBack
   const renderActions = () => {
     switch (user.role) {
       case 'back-office':
+        if(application.status === 'Approved') return null;
         return (
           <div className="space-x-2">
             <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}>
@@ -203,6 +234,7 @@ export default function ApplicationReview({ application, setApplications, onBack
           </div>
         );
       case 'supervisor':
+        if(application.status === 'Approved' || application.status === 'Rejected') return null;
         return (
           <div className="space-x-2">
             <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject</Button>
@@ -213,7 +245,8 @@ export default function ApplicationReview({ application, setApplications, onBack
         return null;
     }
   };
-
+  
+  const supervisor = application.history.find(h => h.action === 'Approved')?.user;
 
   return (
     <div>
@@ -230,15 +263,31 @@ export default function ApplicationReview({ application, setApplications, onBack
                 {renderActions()}
             </div>
         </div>
-        <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-          <ApplicationPrintView ref={printRef} application={application} />
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1 }}>
+          <div ref={printRef}>
+              <ApplicationPrintView application={application} />
+          </div>
+           {application.clientType === 'Company (Private / Public Limited)' && (
+             <div ref={checklistRef}>
+               <CorporateChecklist application={application} supervisor={supervisor} />
+             </div>
+           )}
         </div>
       <Card>
         <CardHeader>
-          <CardTitle>Review Application: {application.id}</CardTitle>
-          <CardDescription>
-            Reviewing application for <strong>{application.clientName}</strong> submitted on {application.submittedDate}.
-          </CardDescription>
+          <div className="flex justify-between items-start">
+            <div>
+                <CardTitle>Review Application: {application.id}</CardTitle>
+                <CardDescription>
+                    Reviewing application for <strong>{application.clientName}</strong> submitted on {application.submittedDate}.
+                </CardDescription>
+            </div>
+            <Badge variant={
+                application.status === 'Approved' ? 'success' 
+                : application.status === 'Rejected' ? 'destructive' 
+                : 'secondary'
+            }>{application.status}</Badge>
+          </div>
         </CardHeader>
         <CardContent>
              <Tabs defaultValue="details" className="w-full">
@@ -247,7 +296,7 @@ export default function ApplicationReview({ application, setApplications, onBack
                     <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                     <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                     <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
-                    {user.role === 'back-office' && <TabsTrigger value="account-creation"><Mail className="mr-2 h-4 w-4" />Account Creation</TabsTrigger>}
+                    {user.role === 'back-office' && application.status !== 'Approved' && <TabsTrigger value="account-creation"><Mail className="mr-2 h-4 w-4" />Account Creation</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="details" className="pt-4">
                      <Card>
@@ -374,7 +423,7 @@ export default function ApplicationReview({ application, setApplications, onBack
                                         <div className="ml-4">
                                             <p className="font-medium">{entry.action} by {entry.user}</p>
                                             <p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>
-                                            {entry.notes && <p className="text-sm mt-1">{entry.notes}</p>}
+                                            {entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}
                                         </div>
                                     </li>
 
@@ -409,18 +458,20 @@ export default function ApplicationReview({ application, setApplications, onBack
                                     <p className="text-sm text-center text-muted-foreground py-4">No comments yet.</p>
                                 )}
                             </div>
-                            <div className="space-y-2">
-                                <Textarea 
-                                    placeholder="Type your comment here..."
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                />
-                                <Button onClick={handleAddComment}>Add Comment</Button>
-                            </div>
+                            {application.status !== 'Approved' && (
+                                <div className="space-y-2">
+                                    <Textarea 
+                                        placeholder="Type your comment here..."
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                    />
+                                    <Button onClick={handleAddComment}>Add Comment</Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
-                {user.role === 'back-office' && (
+                {user.role === 'back-office' && application.status !== 'Approved' && (
                     <TabsContent value="account-creation" className="pt-4">
                         <Card>
                             <CardHeader>

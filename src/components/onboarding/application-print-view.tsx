@@ -18,7 +18,7 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
 const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintViewProps>(({ application }, ref) => {
   return (
     <div ref={ref} className="bg-white text-black p-8" style={{ width: '210mm', minHeight: '297mm'}}>
-      <header className="flex items-center justify-between mb-8 border-b pb-4">
+      <header className="flex items-center justify-between mb-8 border-b pb-4 border-gray-300">
         <div className="flex items-center gap-3">
             <Logo className="h-10 w-10" />
             <div>
@@ -34,7 +34,7 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
 
       <main>
         <section className="mb-6">
-          <h2 className="text-lg font-semibold border-b mb-3 pb-1">Applicant Information</h2>
+          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Applicant Information</h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2">
             <DetailItem label="Client Name" value={application.clientName} />
             <DetailItem label="Client Type" value={application.clientType} />
@@ -48,7 +48,7 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
         </section>
 
         <section className="mb-6">
-          <h2 className="text-lg font-semibold border-b mb-3 pb-1">Uploaded Documents</h2>
+          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Uploaded Documents</h2>
           <ul className="list-disc list-inside space-y-1">
             {application.documents.map(doc => (
               <li key={doc.type} className="text-sm">
@@ -59,10 +59,10 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
         </section>
 
         <section className="mb-6">
-          <h2 className="text-lg font-semibold border-b mb-3 pb-1">Activity Log</h2>
+          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Activity Log</h2>
            <ul className="space-y-2">
             {application.history.map((entry, index) => (
-                <li key={index} className="text-sm flex justify-between border-b py-1">
+                <li key={index} className="text-sm flex justify-between border-b py-1 border-gray-200">
                     <span><strong>{entry.action}</strong> by {entry.user}</span>
                     <span className="text-gray-600">{entry.timestamp}</span>
                 </li>
@@ -71,11 +71,11 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
         </section>
 
          <section>
-          <h2 className="text-lg font-semibold border-b mb-3 pb-1">Comments</h2>
+          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Comments</h2>
            {application.comments.length > 0 ? (
             <ul className="space-y-2">
               {application.comments.map(comment => (
-                <li key={comment.id} className="text-sm border-b pb-2">
+                <li key={comment.id} className="text-sm border-b pb-2 border-gray-200">
                     <p>{comment.content}</p>
                     <p className="text-xs text-gray-500 text-right mt-1"> - {comment.user} ({comment.role}) on {new Date(comment.timestamp).toLocaleString()}</p>
                 </li>
@@ -87,7 +87,7 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
         </section>
       </main>
 
-      <footer className="text-center text-xs text-gray-400 mt-12 pt-4 border-t">
+      <footer className="text-center text-xs text-gray-400 mt-12 pt-4 border-t border-gray-200">
         <p>Generated on: {new Date().toLocaleString()}</p>
         <p>InnBucks Agent Onboarding System</p>
       </footer>
