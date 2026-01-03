@@ -74,3 +74,16 @@ export const accountTypes = [
   'Minors',
   'Professional Intermediaries',
 ];
+
+export const rejectionReasons = [
+    'Missing Documentation',
+    'Incorrect Information',
+    'Document(s) Unreadable or Poor Quality',
+    'Document(s) Expired',
+    'Information Mismatch Across Documents',
+    'Failed FCB Check',
+    'Incomplete Application Form',
+    'Suspected Fraudulent Activity',
+    'Client Does Not Meet Policy Requirements',
+    'Other (See Comments)',
+];

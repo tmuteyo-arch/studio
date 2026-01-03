@@ -19,7 +19,19 @@ import { Input } from '../ui/input';
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { FormItem } from '../ui/form';
+import { FormItem, Form, FormField, FormControl, FormLabel, FormMessage } from '../ui/form';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { rejectionReasons } from '@/lib/types';
 
 
 interface ApplicationReviewProps {
@@ -43,6 +55,9 @@ export default function ApplicationReview({ application, setApplications, onBack
   const printRef = React.useRef<HTMLDivElement>(null);
   const [brNumber, setBrNumber] = React.useState('');
   const [walletAccount, setWalletAccount] = React.useState('');
+  const [isRejecting, setIsRejecting] = React.useState(false);
+  const [rejectionReason, setRejectionReason] = React.useState('');
+  const [rejectionComment, setRejectionComment] = React.useState('');
   
   const documentRequirements = getDocumentRequirements(application.clientType);
   const uploadedDocumentTypes = application.documents.map(d => d.type);
@@ -80,6 +95,22 @@ export default function ApplicationReview({ application, setApplications, onBack
         description: `Application for ${application.clientName} has been updated.`,
     });
   };
+
+  const handleRejection = () => {
+    if (!rejectionReason || !rejectionComment) {
+        toast({
+            variant: 'destructive',
+            title: 'Rejection Failed',
+            description: 'Please select a reason and provide a comment.',
+        });
+        return;
+    }
+    const notes = `Reason: ${rejectionReason} - ${rejectionComment}`;
+    handleStatusChange('Rejected', notes);
+    setIsRejecting(false);
+    setRejectionReason('');
+    setRejectionComment('');
+};
 
   const handleFcbStatusChange = (status: Application['fcbStatus']) => {
      setApplications(prev => 
@@ -174,7 +205,7 @@ export default function ApplicationReview({ application, setApplications, onBack
       case 'supervisor':
         return (
           <div className="space-x-2">
-            <Button variant="destructive" onClick={() => handleStatusChange('Rejected')}><X className="mr-2 h-4 w-4" />Reject</Button>
+            <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject</Button>
             <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved')}><Check className="mr-2 h-4 w-4" />Approve</Button>
           </div>
         );
@@ -426,10 +457,48 @@ export default function ApplicationReview({ application, setApplications, onBack
             </Tabs>
         </CardContent>
       </Card>
+
+      <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle>Reject Application</AlertDialogTitle>
+            <AlertDialogDescription>
+                Please provide a reason and a comment for rejecting this application. This will be logged and sent back to the ATL.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                    <Label htmlFor="rejection-reason">Rejection Reason</Label>
+                    <Select onValueChange={setRejectionReason} value={rejectionReason}>
+                        <SelectTrigger id="rejection-reason">
+                            <SelectValue placeholder="Select a reason" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {rejectionReasons.map(reason => (
+                                <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="rejection-comment">Comment</Label>
+                    <Textarea 
+                        id="rejection-comment"
+                        placeholder="Provide a detailed explanation for the rejection..."
+                        value={rejectionComment}
+                        onChange={(e) => setRejectionComment(e.target.value)}
+                    />
+                </div>
+            </div>
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRejection} disabled={!rejectionReason || !rejectionComment}>
+                Confirm Rejection
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+        </AlertDialog>
+
     </div>
   );
 }
-
-    
-
-    
