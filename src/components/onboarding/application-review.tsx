@@ -85,17 +85,15 @@ export default function ApplicationReview({ application, setApplications, onBack
       notes: notes,
     };
 
-    const updatedApp: Application = {
-      ...application,
-      status: status,
-      history: [newHistoryLog, ...application.history],
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
-    
-     setApplications(prev => 
+    setApplications(prev => 
         prev.map(app => 
-            app.id === updatedApp.id 
-            ? updatedApp
+            app.id === application.id 
+            ? {
+                ...app,
+                status: status,
+                history: [newHistoryLog, ...app.history],
+                lastUpdated: new Date().toISOString().split('T')[0]
+              }
             : app
         )
     );
@@ -105,8 +103,8 @@ export default function ApplicationReview({ application, setApplications, onBack
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-    if (status === 'Approved' || status === 'Rejected') {
-        setTimeout(() => onBack(), 1000);
+    if (status === 'Approved' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL') {
+        setTimeout(() => onBack(), 500);
     }
   };
 
@@ -223,7 +221,7 @@ export default function ApplicationReview({ application, setApplications, onBack
   const renderActions = () => {
     switch (user.role) {
       case 'back-office':
-        if(application.status === 'Approved') return null;
+        if(application.status === 'Approved' || application.status === 'Pending Supervisor') return null;
         return (
           <div className="space-x-2">
             <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}>
@@ -558,3 +556,5 @@ export default function ApplicationReview({ application, setApplications, onBack
     </div>
   );
 }
+
+    
