@@ -7,7 +7,7 @@ import { Application, Comment, HistoryLog } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, BarChart2, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -19,7 +19,7 @@ import { Input } from '../ui/input';
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { FormItem, Form, FormField, FormControl, FormLabel, FormMessage } from '../ui/form';
+import { FormItem } from '../ui/form';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,8 +34,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { rejectionReasons } from '@/lib/types';
 import CorporateChecklist from './corporate-checklist';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { generateApplicationSummary } from '@/lib/actions';
 
 
 interface ApplicationReviewProps {
@@ -65,40 +63,8 @@ export default function ApplicationReview({ application, setApplications, onBack
   const [rejectionReason, setRejectionReason] = React.useState('');
   const [rejectionComment, setRejectionComment] = React.useState('');
   
-  const [summary, setSummary] = React.useState('');
-  const [isGeneratingSummary, setIsGeneratingSummary] = React.useState(false);
-
   const documentRequirements = getDocumentRequirements(application.clientType);
   const uploadedDocumentTypes = application.documents.map(d => d.type);
-
-  React.useEffect(() => {
-    const fetchSummary = async () => {
-      setIsGeneratingSummary(true);
-      const { clientName, clientType, status, fcbStatus, documents, history } = application;
-      const result = await generateApplicationSummary({
-        clientName,
-        clientType,
-        status,
-        fcbStatus,
-        documents,
-        history,
-      });
-
-      if (result.success && result.data) {
-        setSummary(result.data.summary);
-      } else {
-        setSummary('Could not generate AI summary for this application.');
-         toast({
-            variant: 'destructive',
-            title: 'AI Summary Failed',
-            description: result.error,
-        });
-      }
-      setIsGeneratingSummary(false);
-    };
-
-    fetchSummary();
-  }, [application, toast]);
 
   const updateApplication = (updatedApp: Application) => {
      setApplications(prev => 
@@ -303,17 +269,6 @@ export default function ApplicationReview({ application, setApplications, onBack
            )}
         </div>
         
-        <Alert className="mb-6">
-            <Sparkles className="h-4 w-4" />
-            <AlertTitle className="flex items-center gap-2">
-                AI Summary & Assessment
-                {isGeneratingSummary && <Loader2 className="h-4 w-4 animate-spin" />}
-            </AlertTitle>
-            <AlertDescription>
-                {isGeneratingSummary ? 'Generating summary, please wait...' : summary}
-            </AlertDescription>
-        </Alert>
-
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -599,4 +554,5 @@ export default function ApplicationReview({ application, setApplications, onBack
   );
 }
 
+    
     
