@@ -9,140 +9,110 @@ const personalAccountRequirements: DocumentRequirement[] = [
     {
         document: 'Valid Identity Documents',
         details: 'Valid Passport, Driver’s License, or National ID.',
-        comment: 'Submit copies. The bank will verify them against originals and certify them.',
+        comment: 'Submit certified copies. The bank will verify them against originals.',
     },
     {
         document: 'Proof of Residence',
-        details: 'Utility bills (ZESA/TelOne/Water) or a signed letter from an employer on a letterhead.',
-        comment: 'Must not be more than 3 months old. Submit original bills.',
+        details: 'Utility bills (e.g., ZESA, TelOne) or a valid lease agreement.',
+        comment: 'Must not be more than 3 months old. Submit original or certified copies.',
     },
     {
         document: 'Passport size photos',
         details: 'Recent color photographs.',
-        comment: 'Submit recent photos.',
+        comment: 'Required for client record.'
     },
 ];
 
 const soleTraderRequirements: DocumentRequirement[] = [
     {
-        document: 'Proof of residence',
-        details: 'Recent utility bill or equivalent.',
-        comment: 'Submit original bills, not older than 3 months.'
-    },
-    {
-        document: 'Current tax clearance certificate',
-        details: 'Valid certificate from the tax authority.',
-        comment: 'Submit a valid and current tax clearance certificate.'
-    },
-    {
-        document: 'Completed application form',
-        details: 'The official bank application form, fully completed.',
-        comment: 'Ensure all sections are filled.'
-    },
-    {
-        document: 'Registrar of Companies Verification',
-        details: 'Proof that no other entity operates under the same name.',
-        comment: 'To be verified by the bank.'
-    },
-    {
         document: 'National ID Card',
-        details: 'Valid National ID card.',
+        details: 'Valid National ID for the proprietor.',
         comment: 'Must be a certified copy.'
     },
     {
-        document: 'Passport-size photos',
-        details: 'Recent color photographs.',
-        comment: 'Submit recent photos.'
+        document: 'Proof of residence',
+        details: 'Recent utility bill for the proprietor.',
+        comment: 'Not older than 3 months.'
+    },
+    {
+        document: 'Current tax clearance certificate',
+        details: 'Valid IT F263 from the tax authority.',
+        comment: 'Submit a valid and current tax clearance certificate.'
     },
     {
         document: 'Trading License',
-        details: 'Valid license for the business.',
+        details: 'Valid license for the business (if applicable).',
         comment: 'Submit a copy of the trading license.'
-    }
+    },
+    {
+        document: 'Passport-size photos',
+        details: 'Recent color photographs of the proprietor.',
+        comment: 'Required for client record.'
+    },
 ];
 
 const corporateAccountRequirements: DocumentRequirement[] = [
+    {
+        document: 'Certificate of Incorporation',
+        details: 'Official certificate of company registration.',
+        comment: 'Submit copy; to be verified against original and certified by the bank.',
+    },
+    {
+        document: 'Memorandum and Articles of Association',
+        details: "Company's constitution documents.",
+        comment: 'Submit copy; to be verified against original and certified by the bank.',
+    },
+    {
+        document: 'CR6/CR5',
+        details: 'Documents showing the registered office address.',
+        comment: 'Submit copy; physical address must match current location.',
+    },
+    {
+        document: 'CR14',
+        details: 'List of company directors.',
+        comment: 'Submit copy; must be up to date for current directors.',
+    },
     {
         document: 'Board Resolution',
         details: 'Stating the board has agreed to open the account and list of authorized signatories.',
         comment: 'Must be on company letterhead.',
     },
     {
-        document: 'Certificate of Incorporation',
-        details: 'Official certificate of company registration.',
-        comment: 'Submit copy; verified against original and certified by the bank.',
-    },
-    {
-        document: 'Memorandum and Articles of Association',
-        details: "Company's constitution documents.",
-        comment: 'Submit copy; verified against original and certified by the bank.',
-    },
-     {
         document: 'Tax Clearance Certificate',
         details: 'Valid certificate from the tax authority.',
-        comment: 'Submit copy; verified against original and certified by the bank.',
+        comment: 'Submit current copy.',
     },
     {
-        document: 'CR6/CR5',
-        details: 'Documents showing the registered office address.',
-        comment: 'Submit copy; verified against original and certified by the bank. Physical address must match current location.',
+        document: 'Proof of operating address',
+        details: 'Utility bill or lease agreement for the business address.',
+        comment: 'Not older than 3 months.'
     },
     {
-        document: 'CR14',
-        details: 'List of company directors.',
-        comment: 'Submit copy; verified against original and certified by the bank. Must be up to date for current directors.',
+        document: 'Director & Signatory IDs',
+        details: 'Passport or National ID for all directors and signatories.',
+        comment: 'Submit certified copies for all individuals listed in CR14.',
     },
     {
-        document: 'CR11',
-        details: 'Showing current shareholding structure.',
-        comment: 'Submit a verified copy.',
-    },
-    {
-        document: 'National ID Card',
-        details: 'Passport, Driver’s License, or National ID for all directors and signatories.',
-        comment: 'Submit copies; bank will verify against originals and certify.',
-    },
-    {
-        document: 'Proof of Residence',
-        details: 'Utility bills (ZESA/TelOne/Water) or employer letter for all directors and signatories.',
+        document: "Director & Signatory Proof of Residence",
+        details: 'Utility bills for all directors and signatories.',
         comment: 'Submit originals; must not be older than 3 months.',
     },
-    {
-        document: 'Passport-size photos',
-        details: 'Recent photos for all directors and signatories.',
-        comment: 'Submit recent photos.',
-    },
-    {
-        document: 'Bank Statement',
-        details: 'Bank statements for the last 3 months.',
-        comment: 'Required to show financial history.',
-    }
 ];
 
 const pbcAccountRequirements: DocumentRequirement[] = [
     {
-        document: 'Company profile',
-        details: 'A summary of the business.',
-        comment: 'Provide a complete company profile document.',
+        document: 'Certificate of Incorporation',
+        details: 'Official certificate of company registration for the PBC.',
+        comment: 'Submit copy; to be verified against original.',
     },
     {
-        document: 'Declaration of source of income',
-        details: 'A document declaring the source of the company\'s income.',
-        comment: 'Must be signed by the directors.',
-    },
-    {
-        document: 'Proof of residence',
-        details: 'For all signatories and directors.',
-        comment: 'Submit recent utility bills or equivalent.',
-    },
-    {
-        document: 'Passport-size photos',
-        details: 'For all signatories and directors.',
-        comment: 'Submit recent photos.',
+        document: 'CR28',
+        details: 'Certified copy of the CR28 form for Private Business Corporations.',
+        comment: 'Submit a certified and up-to-date copy.',
     },
     {
         document: 'Board Resolution',
-        details: 'Minutes of the last meeting held authorizing account opening.',
+        details: 'Resolution authorizing account opening and listing signatories.',
         comment: 'Must be on company letterhead and signed.',
     },
     {
@@ -151,20 +121,15 @@ const pbcAccountRequirements: DocumentRequirement[] = [
         comment: 'The certificate must be certified.',
     },
     {
-        document: 'Bank Statement',
-        details: 'Bank statements for the last 3 months.',
-        comment: 'Must be officially stamped by the bank.',
+        document: "Signatories' ID & Proof of Residence",
+        details: 'Certified ID copies and recent utility bills for all signatories.',
+        comment: 'Proof of residence must not be more than 3 months old.',
     },
     {
-        document: 'National ID Card',
-        details: 'For all signatories and directors.',
-        comment: 'Submit certified copies of National IDs.',
-    },
-    {
-        document: 'CR28',
-        details: 'Certified copy of the CR28 form.',
-        comment: 'Submit a certified and up-to-date copy.',
-    },
+        document: 'Passport-size photos',
+        details: 'For all signatories.',
+        comment: 'Submit recent photos.',
+    }
 ];
 
 const ngoRequirements: DocumentRequirement[] = [
@@ -174,8 +139,13 @@ const ngoRequirements: DocumentRequirement[] = [
         comment: 'Submit a certified copy.',
     },
     {
+        document: 'Registration Certificate',
+        details: 'Certificate from the relevant Government Ministry.',
+        comment: 'Clearance should be sought with the concerned Ministry if not available.'
+    },
+    {
         document: 'Board Resolution',
-        details: 'A letter from the board authorizing the opening of the account.',
+        details: 'A letter from the board authorizing the opening of the account and listing signatories.',
         comment: 'Must be on official letterhead and signed by the board.',
     },
     {
@@ -202,8 +172,8 @@ const partnershipRequirements: DocumentRequirement[] = [
         comment: 'Not older than 3 months.'
     },
     {
-        document: 'National ID Card',
-        details: 'For all partners and authorized signatories.',
+        document: "Partners' & Signatories' IDs",
+        details: 'National ID or Passport for all partners and authorized signatories.',
         comment: 'Submit certified copies.'
     },
     {
