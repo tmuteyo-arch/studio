@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function StepCorporateInfo() {
   const form = useFormContext<OnboardingFormData>();
@@ -172,6 +173,49 @@ export default function StepCorporateInfo() {
             </FormItem>
           )}
         />
+        
+        <FormField
+          control={form.control}
+          name="sourceOfWealth"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Source of Wealth</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Describe the primary source of the company's funds..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="noOfEmployees"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of Employees</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="e.g. 25" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="economicSector"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Economic Sector</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Technology" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </div>
     </div>
   );

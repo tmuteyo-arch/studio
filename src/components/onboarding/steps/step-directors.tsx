@@ -8,6 +8,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function StepDirectors() {
   const form = useFormContext<OnboardingFormData>();
@@ -110,7 +111,7 @@ export default function StepDirectors() {
                         </FormItem>
                       )}
                     />
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField
                         control={form.control}
                         name={`directors.${index}.designation`}
@@ -118,7 +119,7 @@ export default function StepDirectors() {
                             <FormItem>
                             <FormLabel>Designation</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g. CEO, Finance Director" {...field} />
+                                <Input placeholder="e.g. CEO" {...field} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -136,6 +137,28 @@ export default function StepDirectors() {
                             <FormMessage />
                             </FormItem>
                         )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`directors.${index}.gender`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Gender</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select gender" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Male">Male</SelectItem>
+                                  <SelectItem value="Female">Female</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
                     </div>
                 </div>
