@@ -73,9 +73,9 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         comment: 'Submit copy; must be up to date for current directors.',
     },
     {
-        document: 'Board Resolution',
+        document: 'Account Resolution Form',
         details: 'Stating the board has agreed to open the account and list of authorized signatories.',
-        comment: 'Must be on company letterhead.',
+        comment: 'This is a specific Innbucks form to be completed.',
     },
     {
         document: 'Tax Clearance Certificate',
@@ -97,6 +97,26 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         details: 'Utility bills for all directors and signatories.',
         comment: 'Submit originals; must not be older than 3 months.',
     },
+    {
+        document: 'ADLA',
+        details: 'Anti-Money Laundering declaration form.',
+        comment: 'To be completed and signed.'
+    },
+    {
+        document: 'Agency Agreement',
+        details: 'Agreement for agency banking.',
+        comment: 'If applicable for the agent type.'
+    },
+    {
+        document: 'Write Up',
+        details: 'Business write-up or profile.',
+        comment: 'A summary of the business operations.'
+    },
+    {
+        document: 'Merchant Agreement',
+        details: 'Agreement for merchant services.',
+        comment: 'Optional, only if merchant services are required.'
+    }
 ];
 
 const pbcAccountRequirements: DocumentRequirement[] = [
@@ -111,7 +131,7 @@ const pbcAccountRequirements: DocumentRequirement[] = [
         comment: 'Submit a certified and up-to-date copy.',
     },
     {
-        document: 'Board Resolution',
+        document: 'Account Resolution Form',
         details: 'Resolution authorizing account opening and listing signatories.',
         comment: 'Must be on company letterhead and signed.',
     },

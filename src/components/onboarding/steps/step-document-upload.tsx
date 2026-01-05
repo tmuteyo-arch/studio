@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getDocumentRequirements } from '@/lib/document-requirements';
 
-const documentTypes = ['Passport', "Driver's License", 'National ID Card', 'Utility Bill', 'Bank Statement', 'Tax Clearance Certificate', 'Trading License', 'Board Resolution', 'Certificate of Incorporation', 'Memorandum and Articles of Association', 'CR6/CR5', 'CR14', 'CR11', 'Partnership Agreement'];
+const documentTypes = ['Passport', "Driver's License", 'National ID Card', 'Utility Bill', 'Bank Statement', 'Tax Clearance Certificate', 'Trading License', 'Board Resolution', 'Certificate of Incorporation', 'Memorandum and Articles of Association', 'CR6/CR5', 'CR14', 'CR11', 'Partnership Agreement', 'ADLA', 'Agency Agreement', 'Merchant Agreement', 'Write Up', 'Account Resolution Form'];
 
 export default function StepDocumentUpload() {
   const { toast } = useToast();
