@@ -9,18 +9,21 @@ import { useCollection } from './firestore/use-collection';
 import { useDoc } from './firestore/use-doc';
 import { useAuth as useFirebaseAuth, useFirebaseApp, useFirestore } from './provider';
 
+let firebaseApp: FirebaseApp | null = null;
+
 function initializeFirebase() {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && firebaseConfig.apiKey) {
     if (getApps().length === 0) {
-      return initializeApp(firebaseConfig);
+      firebaseApp = initializeApp(firebaseConfig);
     } else {
-      return getApp();
+      firebaseApp = getApp();
     }
   }
-  return null;
+  return firebaseApp;
 }
 
-const firebaseApp = initializeFirebase();
+// Initialize on first load
+initializeFirebase();
 
 export function useFirebase() {
   const auth = firebaseApp ? getAuth(firebaseApp) : null;
