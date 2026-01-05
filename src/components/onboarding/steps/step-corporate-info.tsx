@@ -39,7 +39,7 @@ export default function StepCorporateInfo() {
                 <FormItem>
                 <FormLabel>Trade Name (if different)</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g. Acme" {...field} />
+                    <Input placeholder="e.g. Acme" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -67,7 +67,7 @@ export default function StepCorporateInfo() {
             <FormItem>
               <FormLabel>Postal Address</FormLabel>
               <FormControl>
-                <Input placeholder="P.O. Box 123, Capital City" {...field} />
+                <Input placeholder="P.O. Box 123, Capital City" {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -110,7 +110,7 @@ export default function StepCorporateInfo() {
             <FormItem>
               <FormLabel>Web Address</FormLabel>
               <FormControl>
-                <Input placeholder="https://www.acme.com" {...field} />
+                <Input placeholder="https://www.acme.com" {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -138,7 +138,7 @@ export default function StepCorporateInfo() {
                     <FormItem>
                     <FormLabel>Country of Incorporation</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g. Zimbabwe" {...field} />
+                        <Input placeholder="e.g. Zimbabwe" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -167,7 +167,7 @@ export default function StepCorporateInfo() {
             <FormItem>
               <FormLabel>Nature of Business Activities</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Software Development" {...field} />
+                <Input placeholder="e.g. Software Development" {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -181,7 +181,7 @@ export default function StepCorporateInfo() {
             <FormItem>
               <FormLabel>Source of Wealth</FormLabel>
               <FormControl>
-                <Textarea placeholder="Describe the primary source of the company's funds..." {...field} />
+                <Textarea placeholder="Describe the primary source of the company's funds..." {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -196,7 +196,7 @@ export default function StepCorporateInfo() {
               <FormItem>
                 <FormLabel>Number of Employees</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="e.g. 25" {...field} />
+                  <Input type="number" placeholder="e.g. 25" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -209,7 +209,7 @@ export default function StepCorporateInfo() {
               <FormItem>
                 <FormLabel>Economic Sector</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Technology" {...field} />
+                  <Input placeholder="e.g. Technology" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

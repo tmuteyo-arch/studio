@@ -78,6 +78,22 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       fullName: '',
       dateOfBirth: '',
       address: '',
+      // Corporate fields
+      organisationLegalName: undefined,
+      tradeName: undefined,
+      physicalAddress: undefined,
+      postalAddress: undefined,
+      businessTelNumber: undefined,
+      email: undefined,
+      webAddress: undefined,
+      dateOfIncorporation: undefined,
+      countryOfIncorporation: undefined,
+      certificateOfIncorporationNumber: undefined,
+      natureOfBusiness: undefined,
+      sourceOfWealth: undefined,
+      noOfEmployees: undefined,
+      economicSector: undefined,
+      // End corporate fields
       directors: [],
       document1Type: '',
       document2Type: '',
@@ -97,8 +113,19 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     if (isCorporate) {
         const personalInfoStep = newSteps.find(step => step.id === 'personal-info');
         if (personalInfoStep) {
-            personalInfoStep.name = 'Applicant Details';
+            personalInfoStep.name = 'Primary Contact';
             personalInfoStep.fields = ['fullName', 'dateOfBirth', 'address'];
+        }
+        const corporateInfoStep = newSteps.find(step => step.id === 'corporate-info');
+        if (corporateInfoStep) {
+            corporateInfoStep.fields = [
+                'organisationLegalName', 
+                'physicalAddress', 
+                'businessTelNumber', 
+                'email',
+                'dateOfIncorporation',
+                'certificateOfIncorporationNumber'
+            ];
         }
     } else {
         const personalInfoStep = newSteps.find(step => step.id === 'personal-info');
@@ -172,7 +199,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const next = async () => {
     const stepFields = steps[currentStep].fields as FieldName<OnboardingFormData>[] | undefined;
     const isValid = await form.trigger(stepFields);
-
+    
     if (!isValid) {
       toast({
         title: "Incomplete Information",
@@ -266,7 +293,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
     toast({
         title: "Application Submitted!",
-        description: `Application for ${data.clientName || data.fullName} has been successfully created.`,
+        description: `Application for ${data.organisationLegalName || data.fullName} has been successfully created.`,
     });
 
     setTimeout(() => {

@@ -24,19 +24,19 @@ export const OnboardingFormSchema = z.object({
   
   // Corporate Info
   organisationLegalName: z.string().optional(),
-  postalAddress: z.string().optional(),
+  tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
+  postalAddress: z.string().optional(),
   webAddress: z.string().url().optional().or(z.literal('')),
-  natureOfBusiness: z.string().optional(),
-  sourceOfWealth: z.string().optional(),
   businessTelNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
+  natureOfBusiness: z.string().optional(),
+  dateOfIncorporation: z.string().optional(),
+  countryOfIncorporation: z.string().optional(),
+  certificateOfIncorporationNumber: z.string().optional(),
+  sourceOfWealth: z.string().optional(),
   noOfEmployees: z.coerce.number().optional(),
   economicSector: z.string().optional(),
-  dateOfIncorporation: z.string().optional(),
-  tradeName: z.string().optional(),
-  certificateOfIncorporationNumber: z.string().optional(),
-  countryOfIncorporation: z.string().optional(),
 
   // Directors
   directors: z.array(DirectorSchema).optional(),
@@ -49,6 +49,52 @@ export const OnboardingFormSchema = z.object({
   agreedToTerms: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and conditions.',
   }),
+}).superRefine((data, ctx) => {
+    const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(data.clientType);
+    if (isCorporate) {
+        if (!data.organisationLegalName) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['organisationLegalName'],
+                message: 'Organisation legal name is required.',
+            });
+        }
+        if (!data.physicalAddress) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['physicalAddress'],
+                message: 'Physical address is required.',
+            });
+        }
+         if (!data.businessTelNumber) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['businessTelNumber'],
+                message: 'Business phone number is required.',
+            });
+        }
+         if (!data.email) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['email'],
+                message: 'A valid email is required.',
+            });
+        }
+        if (!data.dateOfIncorporation) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['dateOfIncorporation'],
+                message: 'Date of incorporation is required.',
+            });
+        }
+         if (!data.certificateOfIncorporationNumber) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['certificateOfIncorporationNumber'],
+                message: 'Certificate of Incorporation number is required.',
+            });
+        }
+    }
 });
 
 export type OnboardingFormData = z.infer<typeof OnboardingFormSchema>;
