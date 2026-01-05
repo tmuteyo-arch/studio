@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useAtom } from 'jotai';
+import { motion } from 'framer-motion';
 import { applicationsAtom } from '@/lib/mock-data';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
@@ -53,41 +54,47 @@ export default function Home() {
         <p className="text-muted-foreground mt-2">Simulate the login for different user roles in the system.</p>
       </header>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
-        <Card className="bg-card text-card-foreground flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-center">ATL</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center flex-grow">
-            <CardDescription>Account Taking Leaders who submit applications.</CardDescription>
-          </CardContent>
-          <div className="p-6 pt-0">
-             <Button className="w-full" onClick={() => handleLogin('atl')}>Login as ATL</Button>
-          </div>
-        </Card>
+        <motion.div whileHover={{ scale: 1.05, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+          <Card className="bg-card text-card-foreground flex flex-col h-full">
+            <CardHeader>
+              <CardTitle className="text-center">ATL</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center flex-grow">
+              <CardDescription>Account Taking Leaders who submit applications.</CardDescription>
+            </CardContent>
+            <div className="p-6 pt-0">
+              <Button className="w-full" onClick={() => handleLogin('atl')}>Login as ATL</Button>
+            </div>
+          </Card>
+        </motion.div>
         
-        <Card className="bg-card text-card-foreground flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-center">Back Office</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center flex-grow">
-            <CardDescription>Officers who validate and process applications.</CardDescription>
-          </CardContent>
-          <div className="p-6 pt-0">
-            <Button variant="secondary" className="w-full" onClick={() => handleLogin('back-office')}>Login as Back Office</Button>
-          </div>
-        </Card>
+        <motion.div whileHover={{ scale: 1.05, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+          <Card className="bg-card text-card-foreground flex flex-col h-full">
+            <CardHeader>
+              <CardTitle className="text-center">Back Office</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center flex-grow">
+              <CardDescription>Officers who validate and process applications.</CardDescription>
+            </CardContent>
+            <div className="p-6 pt-0">
+              <Button variant="secondary" className="w-full" onClick={() => handleLogin('back-office')}>Login as Back Office</Button>
+            </div>
+          </Card>
+        </motion.div>
 
-        <Card className="bg-card text-card-foreground flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-center">Supervisor</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center flex-grow">
-            <CardDescription>Supervisors who review, approve, or reject applications.</CardDescription>
-          </CardContent>
-          <div className="p-6 pt-0">
-            <Button variant="outline" className="w-full border-accent text-accent hover:bg-accent/10 hover:text-accent" onClick={() => handleLogin('supervisor')}>Login as Supervisor</Button>
-          </div>
-        </Card>
+        <motion.div whileHover={{ scale: 1.05, y: -5 }} transition={{ type: 'spring', stiffness: 300 }}>
+          <Card className="bg-card text-card-foreground flex flex-col h-full">
+            <CardHeader>
+              <CardTitle className="text-center">Supervisor</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center flex-grow">
+              <CardDescription>Supervisors who review, approve, or reject applications.</CardDescription>
+            </CardContent>
+            <div className="p-6 pt-0">
+              <Button variant="outline" className="w-full border-accent text-accent hover:bg-accent/10 hover:text-accent" onClick={() => handleLogin('supervisor')}>Login as Supervisor</Button>
+            </div>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
