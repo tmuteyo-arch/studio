@@ -220,7 +220,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step - 1);
+      setCurrentStep((step) => step + 1);
     }
   };
   
@@ -245,25 +245,39 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
       details: {
-        fullName: data.fullName, // Primary Contact for corporate
+        // Personal info / Primary contact
+        fullName: data.fullName,
         address: data.address,
         dateOfBirth: data.dateOfBirth,
         contactNumber: data.businessTelNumber || data.directors?.[0]?.phoneNumber || 'N/A',
         email: data.email || 'N/A',
 
-        // Corporate details
+        // Corporate details from the new form
         organisationLegalName: data.organisationLegalName || null,
-        postalAddress: data.postalAddress || null,
+        tradeName: data.tradeName || null,
         physicalAddress: data.physicalAddress || null,
+        postalAddress: data.postalAddress || null,
         webAddress: data.webAddress || null,
+        faxNumber: data.faxNumber || null,
         natureOfBusiness: data.natureOfBusiness || null,
         sourceOfWealth: data.sourceOfWealth || null,
+        typeOfBusiness: data.typeOfBusiness || null,
         noOfEmployees: data.noOfEmployees || null,
         economicSector: data.economicSector || null,
+        authorisedCapital: data.authorisedCapital || null,
+        taxPayerNumber: data.taxPayerNumber || null,
         dateOfIncorporation: data.dateOfIncorporation || null,
-        tradeName: data.tradeName || null,
-        certificateOfIncorporationNumber: data.certificateOfIncorporationNumber || null,
         countryOfIncorporation: data.countryOfIncorporation || null,
+        certificateOfIncorporationNumber: data.certificateOfIncorporationNumber || null,
+        hasOtherAccounts: data.hasOtherAccounts || null,
+        otherAccountNumbers: data.otherAccountNumbers || null,
+        communicationPreference: data.communicationPreference || null,
+        requestedServices: data.requestedServices || null,
+        premisesStatus: data.premisesStatus || null,
+        premisesOtherDetails: data.premisesOtherDetails || null,
+        otherBank1Name: data.otherBank1Name || null,
+        otherBank1AccName: data.otherBank1AccName || null,
+        otherBank1AccNumber: data.otherBank1AccNumber || null,
       },
        directors: data.directors || [],
       documents: [

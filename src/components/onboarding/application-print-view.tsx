@@ -8,14 +8,21 @@ interface ApplicationPrintViewProps {
   application: Application;
 }
 
-const DetailItem = ({ label, value }: { label: string; value: string | undefined }) => (
-    <div className="mb-2">
-      <p className="text-xs text-gray-500 uppercase font-semibold">{label}</p>
-      <p className="text-sm">{value || '-'}</p>
-    </div>
-);
+const DetailItem = ({ label, value }: { label: string; value: string | undefined | null | boolean; }) => {
+    if (value === undefined || value === null || value === '') return null;
+    let displayValue = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value;
+    return (
+        <div className="mb-2">
+            <p className="text-xs text-gray-500 uppercase font-semibold">{label}</p>
+            <p className="text-sm">{displayValue || '-'}</p>
+        </div>
+    );
+};
+
 
 const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintViewProps>(({ application }, ref) => {
+  const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(application.clientType);
+  
   return (
     <div ref={ref} className="bg-white text-black p-8" style={{ width: '210mm', minHeight: '297mm'}}>
       <header className="flex items-center justify-between mb-8 border-b pb-4 border-gray-300">
@@ -40,12 +47,39 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
             <DetailItem label="Client Type" value={application.clientType} />
             <DetailItem label="Submission Date" value={application.submittedDate} />
             <DetailItem label="Submitted By" value={application.submittedBy} />
+            <DetailItem label={isCorporate ? "Primary Contact" : "Full Name"} value={application.details.fullName} />
             <DetailItem label="Contact Number" value={application.details.contactNumber} />
             <DetailItem label="Email" value={application.details.email} />
             <DetailItem label="Date of Birth" value={application.details.dateOfBirth} />
             <DetailItem label="Address" value={application.details.address} />
           </div>
         </section>
+
+        {isCorporate && application.details && (
+            <section className="mb-6">
+                <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Corporate Details</h2>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                    <DetailItem label="Trade Name" value={application.details.tradeName} />
+                    <DetailItem label="Physical Address" value={application.details.physicalAddress} />
+                    <DetailItem label="Postal Address" value={application.details.postalAddress} />
+                    <DetailItem label="Web Address" value={application.details.webAddress} />
+                    <DetailItem label="Nature of Business" value={application.details.natureOfBusiness} />
+                    <DetailItem label="Source of Wealth" value={application.details.sourceOfWealth} />
+                    <DetailItem label="Type of Business" value={application.details.typeOfBusiness} />
+                    <DetailItem label="No. of Employees" value={String(application.details.noOfEmployees)} />
+                    <DetailItem label="Economic Sector" value={application.details.economicSector} />
+                    <DetailItem label="Authorised Capital" value={application.details.authorisedCapital} />
+                    <DetailItem label="Tax Payer Number" value={application.details.taxPayerNumber} />
+                    <DetailItem label="Date of Incorporation" value={application.details.dateOfIncorporation} />
+                    <DetailItem label="Country of Incorporation" value={application.details.countryOfIncorporation} />
+                    <DetailItem label="Cert. of Incorporation Number" value={application.details.certificateOfIncorporationNumber} />
+                    <DetailItem label="Other InnBucks Accounts?" value={application.details.hasOtherAccounts} />
+                    <DetailItem label="Other Account Numbers" value={application.details.otherAccountNumbers} />
+                    <DetailItem label="Communication Preference" value={application.details.communicationPreference} />
+                    <DetailItem label="Premises Status" value={application.details.premisesStatus} />
+                </div>
+            </section>
+        )}
 
         <section className="mb-6">
           <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Uploaded Documents</h2>

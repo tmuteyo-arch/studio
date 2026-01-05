@@ -22,22 +22,41 @@ export const OnboardingFormSchema = z.object({
   }),
   address: z.string().min(10, { message: 'Address must be at least 10 characters.' }),
   
-  // Corporate Info
+  // Corporate Info - Based on detailed form
   organisationLegalName: z.string().optional(),
   tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
   postalAddress: z.string().optional(),
   webAddress: z.string().url().optional().or(z.literal('')),
   businessTelNumber: z.string().optional(),
+  faxNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   natureOfBusiness: z.string().optional(),
+  sourceOfWealth: z.string().optional(),
+  typeOfBusiness: z.string().optional(),
+  noOfEmployees: z.coerce.number().optional(),
+  economicSector: z.string().optional(),
+  authorisedCapital: z.string().optional(),
+  taxPayerNumber: z.string().optional(),
   dateOfIncorporation: z.string().optional(),
   countryOfIncorporation: z.string().optional(),
   certificateOfIncorporationNumber: z.string().optional(),
-  sourceOfWealth: z.string().optional(),
-  noOfEmployees: z.coerce.number().optional(),
-  economicSector: z.string().optional(),
-
+  hasOtherAccounts: z.enum(['Yes', 'No']).optional(),
+  otherAccountNumbers: z.string().optional(),
+  communicationPreference: z.enum(['Email', 'Fax', 'Letter', 'Telephone']).optional(),
+  requestedServices: z.object({
+    internetBanking: z.boolean().optional(),
+    standingOrder: z.boolean().optional(),
+    accountSweep: z.boolean().optional(),
+    salaryServices: z.boolean().optional(),
+    posInfrastructure: z.boolean().optional(),
+  }).optional(),
+  premisesStatus: z.enum(['Owned', 'Rented', 'Other']).optional(),
+  premisesOtherDetails: z.string().optional(),
+  otherBank1Name: z.string().optional(),
+  otherBank1AccName: z.string().optional(),
+  otherBank1AccNumber: z.string().optional(),
+  
   // Directors
   directors: z.array(DirectorSchema).optional(),
 
