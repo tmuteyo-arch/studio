@@ -22,12 +22,28 @@ export const OnboardingFormSchema = z.object({
   }),
   address: z.string().min(10, { message: 'Address must be at least 10 characters.' }),
   
+  // Account Specifications
+  accountCurrency: z.object({
+    usd: z.boolean().optional(),
+    zar: z.boolean().optional(),
+    gbp: z.boolean().optional(),
+    eur: z.boolean().optional(),
+    bwp: z.boolean().optional(),
+  }).optional(),
+
   // Corporate Info - Based on detailed form
   organisationLegalName: z.string().optional(),
   tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
   postalAddress: z.string().optional(),
   webAddress: z.string().url().optional().or(z.literal('')),
+  socials: z.object({
+    facebook: z.string().optional(),
+    twitter: z.string().optional(),
+    skype: z.string().optional(),
+    linkedin: z.string().optional(),
+    other: z.string().optional(),
+  }).optional(),
   businessTelNumber: z.string().optional(),
   faxNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
@@ -43,6 +59,13 @@ export const OnboardingFormSchema = z.object({
   certificateOfIncorporationNumber: z.string().optional(),
   hasOtherAccounts: z.enum(['Yes', 'No']).optional(),
   otherAccountNumbers: z.string().optional(),
+  accountTypeTick: z.object({
+    transactional: z.boolean().optional(),
+    savings: z.boolean().optional(),
+    termDeposit: z.boolean().optional(),
+    mMarket: z.boolean().optional(),
+    loan: z.boolean().optional(),
+  }).optional(),
   communicationPreference: z.enum(['Email', 'Fax', 'Letter', 'Telephone']).optional(),
   requestedServices: z.object({
     internetBanking: z.boolean().optional(),

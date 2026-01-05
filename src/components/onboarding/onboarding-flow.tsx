@@ -221,7 +221,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step - 1);
+      setCurrentStep((step) => step + 1);
     }
   };
   
@@ -279,6 +279,9 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
         otherBank1Name: data.otherBank1Name || null,
         otherBank1AccName: data.otherBank1AccName || null,
         otherBank1AccNumber: data.otherBank1AccNumber || null,
+        accountCurrency: data.accountCurrency || null,
+        accountTypeTick: data.accountTypeTick || null,
+        socials: data.socials || null,
       },
        directors: data.directors || [],
       documents: [

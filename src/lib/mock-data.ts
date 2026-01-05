@@ -66,6 +66,13 @@ export type Application = {
     physicalAddress?: string | null;
     postalAddress?: string | null;
     webAddress?: string | null;
+    socials?: {
+        facebook?: string;
+        twitter?: string;
+        skype?: string;
+        linkedin?: string;
+        other?: string;
+    } | null;
     faxNumber?: string | null;
     natureOfBusiness?: string | null;
     sourceOfWealth?: string | null;
@@ -77,8 +84,22 @@ export type Application = {
     dateOfIncorporation?: string | null;
     countryOfIncorporation?: string | null;
     certificateOfIncorporationNumber?: string | null;
+    accountCurrency?: {
+        usd?: boolean;
+        zar?: boolean;
+        gbp?: boolean;
+        eur?: boolean;
+        bwp?: boolean;
+    } | null;
     hasOtherAccounts?: 'Yes' | 'No' | null;
     otherAccountNumbers?: string | null;
+    accountTypeTick?: {
+        transactional?: boolean;
+        savings?: boolean;
+        termDeposit?: boolean;
+        mMarket?: boolean;
+        loan?: boolean;
+    } | null;
     communicationPreference?: 'Email' | 'Fax' | 'Letter' | 'Telephone' | null;
     requestedServices?: {
         internetBanking?: boolean;
