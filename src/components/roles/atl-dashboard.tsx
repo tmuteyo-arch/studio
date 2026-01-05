@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, ApplicationStatus } from '@/lib/mock-data';
+import { Application, ApplicationStatus, initialApplications } from '@/lib/mock-data';
 import { PlusCircle, Search } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
@@ -40,12 +40,17 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
 
-  const { data: applications, loading } = useCollection(
-    (firestore) => query(collection(firestore, 'applications'), where('submittedBy', '==', user.name))
-  );
+  // const { data: applications, loading } = useCollection(
+  //   (firestore) => firestore ? query(collection(firestore, 'applications'), where('submittedBy', '==', user.name)) : null
+  // );
+
+  const [applications, setApplications] = React.useState(initialApplications);
+  const loading = false;
+
 
   const filteredApplications = (applications || []).filter(app => 
-    app.id.toLowerCase().includes(searchTerm.toLowerCase())
+    app.submittedBy === user.name &&
+    (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const applicationForReview = selectedApplication 
@@ -86,7 +91,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
-                        placeholder="Search by Application ID..."
+                        placeholder="Search by ID or Client..."
                         className="pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}

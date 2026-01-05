@@ -117,6 +117,8 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   }, [clientType, isCorporate]);
   
   const handleDuplicateCheck = async (): Promise<boolean> => {
+    if (!firestore) return true; // Don't block if firebase isn't configured
+    
     const currentStepId = steps[currentStep].id;
     const data = form.getValues();
     let checks: Promise<{ isDuplicate: boolean, message: string }>[] = [];
@@ -125,17 +127,27 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
         checks.push(
             checkForDuplicates('fullName', data.fullName).then(res => ({...res, message: `A client with the name '${data.fullName}' already exists (ID: ${res.existingId}).`})),
         );
-    } else if (currentStepId === 'corporate-info') {
+    } else if (currentStepId === 'corporate-info' && data.organisationLegalName) {
          checks.push(
             checkForDuplicates('organisationLegalName', data.organisationLegalName).then(res => ({...res, message: `A company with the legal name '${data.organisationLegalName}' already exists (ID: ${res.existingId}).`})),
-            checkForDuplicates('certificateOfIncorporationNumber', data.certificateOfIncorporationNumber).then(res => ({...res, message: `A company with the incorporation number '${data.certificateOfIncorporationNumber}' already exists (ID: ${res.existingId}).`})),
-        );
+         );
+         if(data.certificateOfIncorporationNumber) {
+            checks.push(
+              checkForDuplicates('certificateOfIncorporationNumber', data.certificateOfIncorporationNumber).then(res => ({...res, message: `A company with the incorporation number '${data.certificateOfIncorporationNumber}' already exists (ID: ${res.existingId}).`}))
+            )
+         }
     } else if (currentStepId === 'directors-signatories') {
         data.directors?.forEach(director => {
-             checks.push(
-                checkForDuplicates('idNumber', director.idNumber).then(res => ({...res, message: `A director with the ID number '${director.idNumber}' already exists on another application (ID: ${res.existingId}).`})),
-                checkForDuplicates('phoneNumber', director.phoneNumber).then(res => ({...res, message: `A director with the phone number '${director.phoneNumber}' already exists on another application (ID: ${res.existingId}).`}))
-            );
+             if(director.idNumber) {
+                checks.push(
+                    checkForDuplicates('idNumber', director.idNumber).then(res => ({...res, message: `A director with the ID number '${director.idNumber}' already exists on another application (ID: ${res.existingId}).`})),
+                );
+             }
+             if(director.phoneNumber) {
+                checks.push(
+                    checkForDuplicates('phoneNumber', director.phoneNumber).then(res => ({...res, message: `A director with the phone number '${director.phoneNumber}' already exists on another application (ID: ${res.existingId}).`}))
+                );
+             }
         });
     }
 
@@ -186,24 +198,17 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   };
   
   const onSubmit = async (data: OnboardingFormData) => {
-    if (!firestore) {
-      toast({
-        title: "Error",
-        description: "Firestore is not available. Please try again later.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     
     // Final duplicate check before submission
-    const isDuplicateOnSubmit = !(await handleDuplicateCheck());
-    if (isDuplicateOnSubmit) {
-      setIsSubmitting(false);
-      return; // The dialog will be shown by handleDuplicateCheck
+    if (firestore) {
+      const isDuplicateOnSubmit = !(await handleDuplicateCheck());
+      if (isDuplicateOnSubmit) {
+        setIsSubmitting(false);
+        return; // The dialog will be shown by handleDuplicateCheck
+      }
     }
-
+    
     const newApplicationData = {
       clientName: data.organisationLegalName || data.fullName,
       clientType: data.clientType as any, // Simplified for now
@@ -237,34 +242,36 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       documents: [
         { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
-      ],
+      ].filter(doc => doc.type),
       history: [
         { action: 'Submitted', user: user.name, timestamp: new Date().toISOString() },
       ],
       comments: [],
     };
 
-    try {
-      await addDoc(collection(firestore, 'applications'), newApplicationData);
-      
-      toast({
-          title: "Application Submitted!",
-          description: `Application for ${data.fullName} has been successfully created.`,
-      });
-
-      setTimeout(() => {
-          onCancel();
-      }, 4000);
-
-    } catch (error) {
-      console.error("Error adding document: ", error);
-      toast({
-        title: "Submission Failed",
-        description: "Could not submit application. Please try again.",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
+    if (firestore) {
+      try {
+        await addDoc(collection(firestore, 'applications'), newApplicationData);
+      } catch (error) {
+        console.error("Error adding document: ", error);
+        toast({
+          title: "Submission Failed",
+          description: "Could not submit application to the database. Please try again.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
     }
+
+    toast({
+        title: "Application Submitted!",
+        description: `Application for ${data.clientName || data.fullName} has been successfully created.`,
+    });
+
+    setTimeout(() => {
+        onCancel();
+    }, 1000);
   };
 
   const CurrentStepComponent = StepComponents[steps[currentStep].id];
@@ -319,7 +326,9 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
             <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               setDuplicateInfo({ isDuplicate: false, message: '' });
-              setCurrentStep((step) => step + 1);
+              if (currentStep < steps.length - 1) {
+                setCurrentStep((step) => step + 1);
+              }
             }}>
               Continue Anyway
             </AlertDialogAction>

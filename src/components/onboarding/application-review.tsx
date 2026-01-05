@@ -51,9 +51,10 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
     </div>
 );
 
-export default function ApplicationReview({ application, onBack, user }: ApplicationReviewProps) {
+export default function ApplicationReview({ application: initialApplication, onBack, user }: ApplicationReviewProps) {
   const { toast } = useToast();
   const { firestore } = useFirestore();
+  const [application, setApplication] = React.useState(initialApplication);
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
   const printRef = React.useRef<HTMLDivElement>(null);
@@ -69,22 +70,21 @@ export default function ApplicationReview({ application, onBack, user }: Applica
   const uploadedDocumentTypes = application.documents.map(d => d.type);
 
   const handleStatusChange = async (status: Application['status'], notes?: string) => {
-    if (!firestore) return;
-
+    // With mock data, we just update the state
     const newHistoryLog: HistoryLog = {
       action: status,
       user: user.name,
       timestamp: new Date().toISOString(),
       notes: notes,
     };
-
-    const appRef = doc(firestore, 'applications', application.id);
-    await updateDoc(appRef, {
-      status: status,
-      history: arrayUnion(newHistoryLog),
-      lastUpdated: serverTimestamp(),
-    });
     
+    setApplication(prev => ({
+        ...prev,
+        status: status,
+        history: [...prev.history, newHistoryLog],
+        lastUpdated: new Date().toISOString(),
+    }));
+
     toast({
         title: `Application ${status}`,
         description: `Application for ${application.clientName} has been updated.`,
@@ -112,14 +112,12 @@ export default function ApplicationReview({ application, onBack, user }: Applica
 };
 
   const handleFcbStatusChange = async (status: Application['fcbStatus']) => {
-     if (!firestore) return;
-     const appRef = doc(firestore, 'applications', application.id);
-     await updateDoc(appRef, { fcbStatus: status });
+     setApplication(prev => ({...prev, fcbStatus: status}));
   };
 
 
   const handleAddComment = async () => {
-    if (newComment.trim() === '' || !firestore) return;
+    if (newComment.trim() === '') return;
 
     const newCommentObject: Comment = {
       id: `c${Date.now()}`,
@@ -128,12 +126,8 @@ export default function ApplicationReview({ application, onBack, user }: Applica
       timestamp: new Date().toISOString(),
       content: newComment.trim(),
     };
-
-    const appRef = doc(firestore, 'applications', application.id);
-    await updateDoc(appRef, {
-      comments: arrayUnion(newCommentObject)
-    });
-
+    
+    setApplication(prev => ({...prev, comments: [...prev.comments, newCommentObject]}));
     setNewComment('');
   };
 
@@ -290,7 +284,7 @@ export default function ApplicationReview({ application, onBack, user }: Applica
                              <DetailItem label="Submission Date" value={application.submittedDate} />
                              <DetailItem label="Submitted By" value={application.submittedBy} />
                              <DetailItem label="Status" value={application.status} />
-                             <DetailItem label="Last Updated" value={application.lastUpdated} />
+                             <DetailItem label="Last Updated" value={new Date(application.lastUpdated).toLocaleString()} />
                            </div>
                            <Separator/>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

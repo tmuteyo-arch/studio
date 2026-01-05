@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, ApplicationStatus } from '@/lib/mock-data';
+import { Application, ApplicationStatus, initialApplications } from '@/lib/mock-data';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
@@ -32,9 +32,12 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
     
-    const { data: applications, loading } = useCollection(
-      (firestore) => query(collection(firestore, 'applications'), or(where('status', '==', 'Submitted'), where('status', '==', 'Returned to ATL')))
-    );
+    // const { data: applications, loading } = useCollection(
+    //   (firestore) => firestore ? query(collection(firestore, 'applications'), or(where('status', '==', 'Submitted'), where('status', '==', 'Returned to ATL'))) : null
+    // );
+    const [applications, setApplications] = React.useState(initialApplications.filter(app => app.status === 'Submitted' || app.status === 'Returned to ATL'));
+    const loading = false;
+
 
     const filteredQueue = (applications || []).filter(app =>
         app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,11 +49,12 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     }
     
     const applicationForReview = selectedApplication 
-      ? applications?.find(app => app.id === selectedApplication.id) 
+      ? initialApplications.find(app => app.id === selectedApplication.id) 
       : null;
 
     if (applicationForReview && applicationForReview.status !== 'Submitted' && applicationForReview.status !== 'Returned to ATL') {
-      setSelectedApplication(null);
+      // This logic is tricky with mock data, let's just allow review
+      // setSelectedApplication(null);
     }
 
     if (applicationForReview) {

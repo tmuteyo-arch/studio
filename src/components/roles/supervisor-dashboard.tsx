@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application } from '@/lib/mock-data';
+import { Application, initialApplications } from '@/lib/mock-data';
 import { Search } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
@@ -21,20 +21,22 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
 
-    const { data: applications, loading } = useCollection(
-      (firestore) => query(collection(firestore, 'applications'), where('status', '==', 'Pending Supervisor'))
-    );
+    // const { data: applications, loading } = useCollection(
+    //   (firestore) => firestore ? query(collection(firestore, 'applications'), where('status', '==', 'Pending Supervisor')) : null
+    // );
+    const [applications, setApplications] = React.useState(initialApplications.filter(app => app.status === 'Pending Supervisor'));
+    const loading = false;
 
     const filteredQueue = (applications || []).filter(app =>
-        app.id.toLowerCase().includes(searchTerm.toLowerCase())
+        app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const applicationForReview = selectedApplication 
-      ? applications?.find(app => app.id === selectedApplication.id) 
+      ? initialApplications.find(app => app.id === selectedApplication.id) 
       : null;
 
     if (applicationForReview && applicationForReview.status !== 'Pending Supervisor') {
-      setSelectedApplication(null);
+      // setSelectedApplication(null);
     }
     
     if (applicationForReview) {
@@ -60,7 +62,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
-                        placeholder="Search by Application ID..."
+                        placeholder="Search by ID or Client..."
                         className="pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -89,7 +91,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                             <TableCell className="font-medium">{app.clientName}</TableCell>
                             <TableCell>{app.clientType}</TableCell>
                             <TableCell>{app.submittedBy}</TableCell>
-                            <TableCell>{app.lastUpdated.toString()}</TableCell>
+                            <TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
                             <TableCell>
                                 <Badge variant="secondary">{app.status}</Badge>
                             </TableCell>
