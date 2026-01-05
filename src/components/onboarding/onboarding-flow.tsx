@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { FormProvider, useForm, type FieldName } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSetAtom } from 'jotai';
 
 import { OnboardingFormData, OnboardingFormSchema, Step } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -16,10 +15,12 @@ import StepCorporateInfo from './steps/step-corporate-info';
 import StepDirectors from './steps/step-directors';
 import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
-import { applicationsAtom, Application } from '@/lib/mock-data';
+import { Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
 import { ArrowLeft } from 'lucide-react';
+import { useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
@@ -47,8 +48,7 @@ interface OnboardingFlowProps {
 export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
   const { toast } = useToast();
-  const setApplications = useSetAtom(applicationsAtom);
-
+  const { firestore } = useFirestore();
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
@@ -104,20 +104,28 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step + 1);
+      setCurrentStep((step) => step - 1);
     }
   };
   
-  const onSubmit = (data: OnboardingFormData) => {
+  const onSubmit = async (data: OnboardingFormData) => {
+    if (!firestore) {
+      toast({
+        title: "Error",
+        description: "Firestore is not available. Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
-    const newApplication: Application = {
-      id: `APP${String(Date.now()).slice(-4)}`,
+    const newApplicationData = {
       clientName: data.fullName,
       clientType: data.clientType as any, // Simplified for now
       status: 'Submitted',
       submittedDate: new Date().toISOString().split('T')[0],
-      lastUpdated: new Date().toISOString().split('T')[0],
+      lastUpdated: serverTimestamp(),
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
       details: {
@@ -136,18 +144,27 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       comments: [],
     };
 
-    setApplications(prev => [...prev, newApplication]);
-    
-    toast({
-        title: "Application Submitted!",
-        description: `Application for ${data.fullName} has been successfully created.`,
-    });
+    try {
+      await addDoc(collection(firestore, 'applications'), newApplicationData);
+      
+      toast({
+          title: "Application Submitted!",
+          description: `Application for ${data.fullName} has been successfully created.`,
+      });
 
-    // This will trigger the success view in the StepReview component
-    // And after a delay, we can close the flow.
-    setTimeout(() => {
-        onCancel();
-    }, 4000);
+      setTimeout(() => {
+          onCancel();
+      }, 4000);
+
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      toast({
+        title: "Submission Failed",
+        description: "Could not submit application. Please try again.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
   };
 
   const CurrentStepComponent = StepComponents[steps[currentStep].id];

@@ -7,7 +7,7 @@ import { Application, Comment, HistoryLog } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -34,11 +34,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { rejectionReasons } from '@/lib/types';
 import CorporateChecklist from './corporate-checklist';
 import { Badge } from '@/components/ui/badge';
+import { useFirestore } from '@/firebase';
+import { doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 
 
 interface ApplicationReviewProps {
   application: Application;
-  setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
   onBack: () => void;
   user: UserProfile;
 }
@@ -50,8 +51,9 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
     </div>
 );
 
-export default function ApplicationReview({ application, setApplications, onBack, user }: ApplicationReviewProps) {
+export default function ApplicationReview({ application, onBack, user }: ApplicationReviewProps) {
   const { toast } = useToast();
+  const { firestore } = useFirestore();
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
   const printRef = React.useRef<HTMLDivElement>(null);
@@ -66,18 +68,9 @@ export default function ApplicationReview({ application, setApplications, onBack
   const documentRequirements = getDocumentRequirements(application.clientType);
   const uploadedDocumentTypes = application.documents.map(d => d.type);
 
-  const updateApplication = (updatedApp: Application) => {
-     setApplications(prev => 
-        prev.map(app => 
-            app.id === updatedApp.id 
-            ? updatedApp
-            : app
-        )
-    );
-    // No onBack() here, so the user stays on the page
-  };
+  const handleStatusChange = async (status: Application['status'], notes?: string) => {
+    if (!firestore) return;
 
-  const handleStatusChange = (status: Application['status'], notes?: string) => {
     const newHistoryLog: HistoryLog = {
       action: status,
       user: user.name,
@@ -85,14 +78,12 @@ export default function ApplicationReview({ application, setApplications, onBack
       notes: notes,
     };
 
-    const updatedApp = {
-        ...application,
-        status: status,
-        history: [newHistoryLog, ...application.history],
-        lastUpdated: new Date().toISOString().split('T')[0]
-    };
-    
-    setApplications(prev => prev.map(app => (app.id === application.id ? updatedApp : app)));
+    const appRef = doc(firestore, 'applications', application.id);
+    await updateDoc(appRef, {
+      status: status,
+      history: arrayUnion(newHistoryLog),
+      lastUpdated: serverTimestamp(),
+    });
     
     toast({
         title: `Application ${status}`,
@@ -120,19 +111,15 @@ export default function ApplicationReview({ application, setApplications, onBack
     setRejectionComment('');
 };
 
-  const handleFcbStatusChange = (status: Application['fcbStatus']) => {
-     setApplications(prev => 
-        prev.map(app => 
-            app.id === application.id 
-            ? { ...app, fcbStatus: status }
-            : app
-        )
-    );
+  const handleFcbStatusChange = async (status: Application['fcbStatus']) => {
+     if (!firestore) return;
+     const appRef = doc(firestore, 'applications', application.id);
+     await updateDoc(appRef, { fcbStatus: status });
   };
 
 
-  const handleAddComment = () => {
-    if (newComment.trim() === '') return;
+  const handleAddComment = async () => {
+    if (newComment.trim() === '' || !firestore) return;
 
     const newCommentObject: Comment = {
       id: `c${Date.now()}`,
@@ -142,12 +129,11 @@ export default function ApplicationReview({ application, setApplications, onBack
       content: newComment.trim(),
     };
 
-    const updatedApp = {
-      ...application,
-      comments: [...application.comments, newCommentObject]
-    }
+    const appRef = doc(firestore, 'applications', application.id);
+    await updateDoc(appRef, {
+      comments: arrayUnion(newCommentObject)
+    });
 
-    updateApplication(updatedApp);
     setNewComment('');
   };
 
@@ -166,7 +152,6 @@ export default function ApplicationReview({ application, setApplications, onBack
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    // Function to add a canvas to the PDF
     const addCanvasToPdf = async (element: HTMLElement, isFirstPage: boolean) => {
         const canvas = await html2canvas(element, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
@@ -180,7 +165,6 @@ export default function ApplicationReview({ application, setApplications, onBack
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio);
     };
 
-    // If it's a corporate account and approved, add the checklist first
     if (application.clientType === 'Company (Private / Public Limited)' && checklistElement) {
         await addCanvasToPdf(checklistElement, true);
         await addCanvasToPdf(summaryElement, false);
@@ -553,6 +537,3 @@ export default function ApplicationReview({ application, setApplications, onBack
     </div>
   );
 }
-
-    
-    

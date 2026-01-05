@@ -11,6 +11,8 @@ import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
+import { useCollection } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -30,30 +32,33 @@ const getStatusVariant = (status: ApplicationStatus) => {
 };
 
 interface AtlDashboardProps {
-    applications: Application[];
-    setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
     user: User;
 }
 
-export default function AtlDashboard({ applications, setApplications, user }: AtlDashboardProps) {
+export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
 
-  const atlApplications = applications.filter(app => app.submittedBy === user.name);
+  const { data: applications, loading } = useCollection(
+    (firestore) => query(collection(firestore, 'applications'), where('submittedBy', '==', user.name))
+  );
 
-  const filteredApplications = atlApplications.filter(app => 
+  const filteredApplications = (applications || []).filter(app => 
     app.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const applicationForReview = selectedApplication 
+      ? applications?.find(app => app.id === selectedApplication.id) 
+      : null;
 
   if (isCreatingApplication) {
     return <OnboardingFlow user={user} onCancel={() => setIsCreatingApplication(false)} />;
   }
 
-  if (selectedApplication) {
+  if (applicationForReview) {
     return <ApplicationReview 
-                application={selectedApplication} 
-                setApplications={setApplications}
+                application={applicationForReview} 
                 onBack={() => setSelectedApplication(null)} 
                 user={user}
             />;
@@ -90,7 +95,9 @@ export default function AtlDashboard({ applications, setApplications, user }: At
             </div>
         </CardHeader>
         <CardContent>
-           {filteredApplications.length > 0 ? (
+           {loading ? (
+             <p>Loading applications...</p>
+           ) : filteredApplications.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>

@@ -9,6 +9,8 @@ import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
 import { Search } from 'lucide-react';
+import { useCollection } from '@/firebase';
+import { collection, query, where, or } from 'firebase/firestore';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -23,20 +25,18 @@ const getStatusVariant = (status: ApplicationStatus) => {
 };
 
 interface BackOfficeDashboardProps {
-    applications: Application[];
-    setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
     user: User;
 }
 
-
-export default function BackOfficeDashboard({ applications, setApplications, user }: BackOfficeDashboardProps) {
+export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
     
-    // Back office reviews applications submitted by ATLs or returned to them
-    const queue = applications.filter(app => app.status === 'Submitted' || app.status === 'Returned to ATL');
+    const { data: applications, loading } = useCollection(
+      (firestore) => query(collection(firestore, 'applications'), or(where('status', '==', 'Submitted'), where('status', '==', 'Returned to ATL')))
+    );
 
-    const filteredQueue = queue.filter(app =>
+    const filteredQueue = (applications || []).filter(app =>
         app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -45,25 +45,17 @@ export default function BackOfficeDashboard({ applications, setApplications, use
       setSelectedApplication(null);
     }
     
-    // When an application is selected, find the latest version of it from the main list
     const applicationForReview = selectedApplication 
-      ? applications.find(app => app.id === selectedApplication.id) 
+      ? applications?.find(app => app.id === selectedApplication.id) 
       : null;
 
     if (applicationForReview && applicationForReview.status !== 'Submitted' && applicationForReview.status !== 'Returned to ATL') {
-      // If the selected application's status has changed and is no longer in this queue,
-      // deselect it so the user is returned to the dashboard.
       setSelectedApplication(null);
-      return (
-        // The dashboard will re-render with the updated list
-         <DashboardContent />
-      );
     }
 
     if (applicationForReview) {
         return <ApplicationReview 
-                  application={applicationForReview} 
-                  setApplications={setApplications}
+                  application={applicationForReview}
                   onBack={handleBack}
                   user={user}
                />;
@@ -95,7 +87,7 @@ export default function BackOfficeDashboard({ applications, setApplications, use
               </div>
           </CardHeader>
           <CardContent>
-             {filteredQueue.length > 0 ? (
+             {loading ? <p>Loading queue...</p> : filteredQueue.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -139,5 +131,3 @@ export default function BackOfficeDashboard({ applications, setApplications, use
 
     return <DashboardContent />;
 }
-
-    

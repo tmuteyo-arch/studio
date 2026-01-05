@@ -1,9 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { useAtom } from 'jotai';
 import { motion } from 'framer-motion';
-import { applicationsAtom } from '@/lib/mock-data';
+
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
@@ -11,13 +10,14 @@ import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, User } from '@/lib/users';
+import { FirebaseProvider } from '@/firebase/provider';
+import { useAuth, useFirebase } from '@/firebase';
 
-export default function Home() {
+function AppContent() {
+  const { user: authUser, loading } = useAuth();
   const [loggedInUser, setLoggedInUser] = React.useState<User | null>(null);
-  const [applications, setApplications] = useAtom(applicationsAtom);
 
   const handleLogin = (role: User['role']) => {
-    // Find the first user with the selected role and log them in
     const userToLogin = users.find(user => user.role === role);
     if (userToLogin) {
       setLoggedInUser(userToLogin);
@@ -26,18 +26,18 @@ export default function Home() {
 
   const handleLogout = () => {
     setLoggedInUser(null);
-  }
+  };
 
   const renderDashboard = () => {
     if (!loggedInUser) return null;
 
     switch (loggedInUser.role) {
       case 'atl':
-        return <AtlDashboard applications={applications} setApplications={setApplications} user={loggedInUser} />;
+        return <AtlDashboard user={loggedInUser} />;
       case 'back-office':
-        return <BackOfficeDashboard applications={applications} setApplications={setApplications} user={loggedInUser} />;
+        return <BackOfficeDashboard user={loggedInUser} />;
       case 'supervisor':
-        return <SupervisorDashboard applications={applications} setApplications={setApplications} user={loggedInUser} />;
+        return <SupervisorDashboard user={loggedInUser} />;
       default:
         return null;
     }
@@ -99,6 +99,14 @@ export default function Home() {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-background">
       {loggedInUser ? (
@@ -122,5 +130,15 @@ export default function Home() {
         renderRoleSelection()
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  const { firebaseApp } = useFirebase();
+
+  return (
+    <FirebaseProvider firebaseApp={firebaseApp}>
+      <AppContent />
+    </FirebaseProvider>
   );
 }

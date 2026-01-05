@@ -6,32 +6,40 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application } from '@/lib/mock-data';
-import { Check, Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
+import { useCollection } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 interface SupervisorDashboardProps {
-    applications: Application[];
-    setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
     user: User;
 }
 
-export default function SupervisorDashboard({ applications, setApplications, user }: SupervisorDashboardProps) {
+export default function SupervisorDashboard({ user }: SupervisorDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
 
-    // Supervisor reviews applications that the Back Office has already validated.
-    const approvalQueue = applications.filter(app => app.status === 'Pending Supervisor');
+    const { data: applications, loading } = useCollection(
+      (firestore) => query(collection(firestore, 'applications'), where('status', '==', 'Pending Supervisor'))
+    );
 
-    const filteredQueue = approvalQueue.filter(app =>
+    const filteredQueue = (applications || []).filter(app =>
         app.id.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (selectedApplication) {
+    const applicationForReview = selectedApplication 
+      ? applications?.find(app => app.id === selectedApplication.id) 
+      : null;
+
+    if (applicationForReview && applicationForReview.status !== 'Pending Supervisor') {
+      setSelectedApplication(null);
+    }
+    
+    if (applicationForReview) {
         return <ApplicationReview 
-                  application={selectedApplication} 
-                  setApplications={setApplications}
+                  application={applicationForReview} 
                   onBack={() => setSelectedApplication(null)} 
                   user={user} />;
     }
@@ -61,7 +69,7 @@ export default function SupervisorDashboard({ applications, setApplications, use
             </div>
         </CardHeader>
         <CardContent>
-          {filteredQueue.length > 0 ? (
+          {loading ? <p>Loading queue...</p> : filteredQueue.length > 0 ? (
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -81,7 +89,7 @@ export default function SupervisorDashboard({ applications, setApplications, use
                             <TableCell className="font-medium">{app.clientName}</TableCell>
                             <TableCell>{app.clientType}</TableCell>
                             <TableCell>{app.submittedBy}</TableCell>
-                            <TableCell>{app.lastUpdated}</TableCell>
+                            <TableCell>{app.lastUpdated.toString()}</TableCell>
                             <TableCell>
                                 <Badge variant="secondary">{app.status}</Badge>
                             </TableCell>
