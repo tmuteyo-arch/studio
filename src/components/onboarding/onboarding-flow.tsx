@@ -15,6 +15,7 @@ import StepPersonalInfo from './steps/step-personal-info';
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepDirectors from './steps/step-directors';
 import StepDocumentUpload from './steps/step-document-upload';
+import StepLivenessCheck from './steps/step-liveness-check';
 import StepReview from './steps/step-review';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +28,7 @@ const baseSteps: Step[] = [
   { id: 'corporate-info', name: 'Corporate Info', isDynamic: true },
   { id: 'directors-signatories', name: 'Directors', isDynamic: true, fields: ['directors'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
+  { id: 'liveness-check', name: 'Liveness Check' },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
 
@@ -36,6 +38,7 @@ const StepComponents: Record<string, React.ElementType> = {
   'corporate-info': StepCorporateInfo,
   'directors-signatories': StepDirectors,
   'document-upload': StepDocumentUpload,
+  'liveness-check': StepLivenessCheck,
   'review-submit': StepReview,
 };
 
@@ -188,5 +191,3 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     </div>
   );
 }
-
-    

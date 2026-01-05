@@ -44,6 +44,9 @@ export const OnboardingFormSchema = z.object({
   // Document Info
   document1Type: z.string().min(1, { message: 'Please select a document type.' }),
   document2Type: z.string().min(1, { message: 'Please select a document type.' }),
+
+  // Liveness Check
+  livenessCheckPassed: z.boolean().optional(),
   
   signature: z.string().min(3, { message: 'Please provide your full name as a signature.' }),
   agreedToTerms: z.boolean().refine(val => val === true, {
