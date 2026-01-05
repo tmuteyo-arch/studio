@@ -8,7 +8,7 @@ import { Application, ApplicationStatus, initialApplications } from '@/lib/mock-
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { Search } from 'lucide-react';
+import { Search, Send, CheckCircle2, AlertCircle, Inbox } from 'lucide-react';
 import { useCollection } from '@/firebase';
 import { collection, query, where, or } from 'firebase/firestore';
 
@@ -35,27 +35,36 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     // const { data: applications, loading } = useCollection(
     //   (firestore) => firestore ? query(collection(firestore, 'applications'), or(where('status', '==', 'Submitted'), where('status', '==', 'Returned to ATL'))) : null
     // );
-    const [applications, setApplications] = React.useState(initialApplications.filter(app => app.status === 'Submitted' || app.status === 'Returned to ATL'));
+    const [allApplications, setAllApplications] = React.useState(initialApplications);
     const loading = false;
 
+    const queueApplications = allApplications.filter(app => app.status === 'Submitted' || app.status === 'Returned to ATL');
+    
+    const summaryStats = {
+        pendingReview: queueApplications.length,
+        pendingSupervisor: allApplications.filter(a => a.status === 'Pending Supervisor').length,
+        approved: allApplications.filter(a => a.status === 'Approved').length,
+        rejected: allApplications.filter(a => a.status === 'Rejected').length,
+    }
 
-    const filteredQueue = (applications || []).filter(app =>
+
+    const filteredQueue = queueApplications.filter(app =>
         app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleBack = () => {
       setSelectedApplication(null);
+      // This is a mock-data workaround to reflect status changes
+      const updatedApp = allApplications.find(a => a.id === selectedApplication?.id);
+      if (updatedApp && (updatedApp.status !== 'Submitted' && updatedApp.status !== 'Returned to ATL')) {
+        setAllApplications(initialApplications);
+      }
     }
     
     const applicationForReview = selectedApplication 
-      ? initialApplications.find(app => app.id === selectedApplication.id) 
+      ? allApplications.find(app => app.id === selectedApplication.id) 
       : null;
-
-    if (applicationForReview && applicationForReview.status !== 'Submitted' && applicationForReview.status !== 'Returned to ATL') {
-      // This logic is tricky with mock data, let's just allow review
-      // setSelectedApplication(null);
-    }
 
     if (applicationForReview) {
         return <ApplicationReview 
@@ -72,11 +81,55 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
           <h2 className="text-3xl font-bold">Back Office Dashboard</h2>
           <p className="text-muted-foreground">Review and validate incoming applications from ATLs.</p>
         </div>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Pending Your Review</CardTitle>
+                    <Inbox className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{summaryStats.pendingReview}</div>
+                    <p className="text-xs text-muted-foreground">New and returned applications</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Sent to Supervisor</CardTitle>
+                    <Send className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{summaryStats.pendingSupervisor}</div>
+                    <p className="text-xs text-muted-foreground">Applications awaiting final approval</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Approved</CardTitle>
+                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{summaryStats.approved}</div>
+                    <p className="text-xs text-muted-foreground">Completed applications</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Rejected</CardTitle>
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{summaryStats.rejected}</div>
+                    <p className="text-xs text-muted-foreground">Applications that were rejected</p>
+                </CardContent>
+            </Card>
+        </div>
+
         <Card>
            <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                   <div>
-                      <CardTitle>Application Queue</CardTitle>
+                      <CardTitle>My Application Queue</CardTitle>
                       <CardDescription>Applications awaiting your review and validation before being sent to a supervisor.</CardDescription>
                   </div>
                    <div className="relative w-full sm:w-64">
