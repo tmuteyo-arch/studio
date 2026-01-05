@@ -19,7 +19,11 @@ export function useDoc<T extends DocumentData>(
   const [error, setError] = useState<FirestoreError | null>(null);
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
 
     const docRef = docRefCreator(firestore);
      if (!docRef) {
@@ -39,6 +43,7 @@ export function useDoc<T extends DocumentData>(
         setLoading(false);
       },
       (err: FirestoreError) => {
+        console.error(err);
         setError(err);
         setLoading(false);
       }

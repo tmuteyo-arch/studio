@@ -19,7 +19,11 @@ export function useCollection<T extends DocumentData>(
   const [error, setError] = useState<FirestoreError | null>(null);
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
     
     const query = queryCreator(firestore);
     if (!query) {
@@ -36,6 +40,7 @@ export function useCollection<T extends DocumentData>(
         setLoading(false);
       },
       (err: FirestoreError) => {
+        console.error(err);
         setError(err);
         setLoading(false);
       }
