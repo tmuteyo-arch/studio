@@ -137,16 +137,18 @@ export default function StepLivenessCheck() {
         {verificationResult ? (
              <div className="text-center space-y-4">
                 <Alert variant={verificationResult.success ? 'default' : 'destructive'}>
-                    <Check className="h-4 w-4" />
+                    {verificationResult.success ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
                     <AlertTitle>{verificationResult.success ? 'Verification Successful!' : 'Verification Failed'}</AlertTitle>
                     <AlertDescription>
                         Your identity has been {verificationResult.success ? 'successfully' : 'unsuccessfully'} verified with a confidence score of <strong>{verificationResult.score.toFixed(2)}</strong>.
                     </AlertDescription>
                 </Alert>
-                <Button variant="outline" onClick={resetVerification}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Try Again
-                </Button>
+                {!verificationResult.success &&
+                    <Button variant="outline" onClick={resetVerification}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Try Again
+                    </Button>
+                }
             </div>
         ) : (
             <Button onClick={handleVerify} disabled={!hasCameraPermission || isVerifying} className="w-full max-w-md mx-auto flex">
