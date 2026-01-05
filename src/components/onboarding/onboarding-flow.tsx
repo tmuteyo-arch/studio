@@ -4,7 +4,7 @@ import * as React from 'react';
 import { FormProvider, useForm, type FieldName } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { OnboardingFormData, OnboardingFormSchema, Step } from '@/lib/types';
+import { OnboardingFormData, OnboardingFormSchema, Step, DirectorFormData } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressTracker } from './progress-tracker';
@@ -18,9 +18,20 @@ import StepReview from './steps/step-review';
 import { Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { checkForDuplicates } from '@/lib/actions';
+
 
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
@@ -45,10 +56,19 @@ interface OnboardingFlowProps {
   user: User;
 }
 
+type DuplicateInfo = {
+  isDuplicate: boolean;
+  message: string;
+}
+
 export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
   const { toast } = useToast();
   const { firestore } = useFirestore();
+
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = React.useState(false);
+  const [duplicateInfo, setDuplicateInfo] = React.useState<DuplicateInfo>({ isDuplicate: false, message: '' });
+
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
@@ -95,12 +115,69 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       return true;
     });
   }, [clientType, isCorporate]);
+  
+  const handleDuplicateCheck = async (): Promise<boolean> => {
+    const currentStepId = steps[currentStep].id;
+    const data = form.getValues();
+    let checks: Promise<{ isDuplicate: boolean, message: string }>[] = [];
 
-  const next = () => {
+    if (currentStepId === 'personal-info' && !isCorporate) {
+        checks.push(
+            checkForDuplicates('fullName', data.fullName).then(res => ({...res, message: `A client with the name '${data.fullName}' already exists (ID: ${res.existingId}).`})),
+        );
+    } else if (currentStepId === 'corporate-info') {
+         checks.push(
+            checkForDuplicates('organisationLegalName', data.organisationLegalName).then(res => ({...res, message: `A company with the legal name '${data.organisationLegalName}' already exists (ID: ${res.existingId}).`})),
+            checkForDuplicates('certificateOfIncorporationNumber', data.certificateOfIncorporationNumber).then(res => ({...res, message: `A company with the incorporation number '${data.certificateOfIncorporationNumber}' already exists (ID: ${res.existingId}).`})),
+        );
+    } else if (currentStepId === 'directors-signatories') {
+        data.directors?.forEach(director => {
+             checks.push(
+                checkForDuplicates('idNumber', director.idNumber).then(res => ({...res, message: `A director with the ID number '${director.idNumber}' already exists on another application (ID: ${res.existingId}).`})),
+                checkForDuplicates('phoneNumber', director.phoneNumber).then(res => ({...res, message: `A director with the phone number '${director.phoneNumber}' already exists on another application (ID: ${res.existingId}).`}))
+            );
+        });
+    }
+
+    if (checks.length === 0) {
+        return true; // No checks needed for this step
+    }
+
+    setIsCheckingDuplicates(true);
+    const results = await Promise.all(checks);
+    setIsCheckingDuplicates(false);
+
+    const firstDuplicate = results.find(r => r.isDuplicate);
+
+    if (firstDuplicate) {
+        setDuplicateInfo({ isDuplicate: true, message: firstDuplicate.message });
+        return false;
+    }
+
+    return true;
+};
+
+  const next = async () => {
+    const stepFields = steps[currentStep].fields as FieldName<OnboardingFormData>[] | undefined;
+    const isValid = await form.trigger(stepFields);
+
+    if (!isValid) {
+      toast({
+        title: "Incomplete Information",
+        description: "Please fill out all required fields before proceeding.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const canProceed = await handleDuplicateCheck();
+    if (!canProceed) return;
+
     if (currentStep < steps.length - 1) {
       setCurrentStep((step) => step + 1);
     }
   };
+
 
   const prev = () => {
     if (currentStep > 0) {
@@ -120,8 +197,15 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
     setIsSubmitting(true);
     
+    // Final duplicate check before submission
+    const isDuplicateOnSubmit = !(await handleDuplicateCheck());
+    if (isDuplicateOnSubmit) {
+      setIsSubmitting(false);
+      return; // The dialog will be shown by handleDuplicateCheck
+    }
+
     const newApplicationData = {
-      clientName: data.fullName,
+      clientName: data.organisationLegalName || data.fullName,
       clientType: data.clientType as any, // Simplified for now
       status: 'Submitted',
       submittedDate: new Date().toISOString().split('T')[0],
@@ -129,11 +213,27 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
       details: {
+        fullName: data.fullName, // Primary Contact for corporate
         address: data.address,
         dateOfBirth: data.dateOfBirth,
-        contactNumber: data.directors?.[0]?.phoneNumber || 'N/A',
+        contactNumber: data.businessTelNumber || data.directors?.[0]?.phoneNumber || 'N/A',
         email: data.email || 'N/A',
+
+        // Corporate details
+        organisationLegalName: data.organisationLegalName || null,
+        postalAddress: data.postalAddress || null,
+        physicalAddress: data.physicalAddress || null,
+        webAddress: data.webAddress || null,
+        natureOfBusiness: data.natureOfBusiness || null,
+        sourceOfWealth: data.sourceOfWealth || null,
+        noOfEmployees: data.noOfEmployees || null,
+        economicSector: data.economicSector || null,
+        dateOfIncorporation: data.dateOfIncorporation || null,
+        tradeName: data.tradeName || null,
+        certificateOfIncorporationNumber: data.certificateOfIncorporationNumber || null,
+        countryOfIncorporation: data.countryOfIncorporation || null,
       },
+       directors: data.directors || [],
       documents: [
         { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
@@ -188,12 +288,14 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
                   {currentStep === 0 ? 'Cancel' : 'Back'}
                 </Button>
                 {currentStep < steps.length - 1 && (
-                  <Button type="button" onClick={next}>
-                    Next
+                   <Button type="button" onClick={next} disabled={isCheckingDuplicates}>
+                    {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isCheckingDuplicates ? 'Checking...' : 'Next'}
                   </Button>
                 )}
                 {currentStep === steps.length - 1 && (
                    <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
+                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                      {isSubmitting ? 'Submitting...' : 'Submit Application'}
                    </Button>
                 )}
@@ -202,6 +304,29 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
           </form>
         </FormProvider>
       </div>
+
+       <AlertDialog open={duplicateInfo.isDuplicate} onOpenChange={(isOpen) => !isOpen && setDuplicateInfo({ isDuplicate: false, message: '' })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Potential Duplicate Found</AlertDialogTitle>
+            <AlertDialogDescription>
+              {duplicateInfo.message}
+              <br /><br />
+              Please review the existing application before proceeding. Do you want to continue creating this new application anyway?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setDuplicateInfo({ isDuplicate: false, message: '' });
+              setCurrentStep((step) => step + 1);
+            }}>
+              Continue Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

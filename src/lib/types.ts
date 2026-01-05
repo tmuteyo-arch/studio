@@ -22,7 +22,7 @@ export const OnboardingFormSchema = z.object({
   }),
   address: z.string().min(10, { message: 'Address must be at least 10 characters.' }),
   
-  // Corporate Info - NEW
+  // Corporate Info
   organisationLegalName: z.string().optional(),
   postalAddress: z.string().optional(),
   physicalAddress: z.string().optional(),

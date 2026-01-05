@@ -11,10 +11,11 @@ import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, User } from '@/lib/users';
 import { FirebaseProvider } from '@/firebase/provider';
-import { useAuth, useFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 
 function AppContent() {
-  const { user: authUser, loading } = useAuth();
+  const { user: authUser, loading } = useUser();
   const [loggedInUser, setLoggedInUser] = React.useState<User | null>(null);
 
   const handleLogin = (role: User['role']) => {
