@@ -45,7 +45,7 @@ const soleTraderRequirements: DocumentRequirement[] = [
         comment: 'To be verified by the bank.'
     },
     {
-        document: 'Certified copy of National ID card',
+        document: 'National ID Card',
         details: 'Valid National ID card.',
         comment: 'Must be a certified copy.'
     },
@@ -55,7 +55,7 @@ const soleTraderRequirements: DocumentRequirement[] = [
         comment: 'Submit recent photos.'
     },
     {
-        document: 'Operating / Business license',
+        document: 'Trading License',
         details: 'Valid license for the business.',
         comment: 'Submit a copy of the trading license.'
     }
@@ -63,7 +63,7 @@ const soleTraderRequirements: DocumentRequirement[] = [
 
 const corporateAccountRequirements: DocumentRequirement[] = [
     {
-        document: 'Board resolution',
+        document: 'Board Resolution',
         details: 'Stating the board has agreed to open the account and list of authorized signatories.',
         comment: 'Must be on company letterhead.',
     },
@@ -78,12 +78,12 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         comment: 'Submit copy; verified against original and certified by the bank.',
     },
      {
-        document: 'ZIMRA Tax Clearance Certificate / Certificate of Exemption',
+        document: 'Tax Clearance Certificate',
         details: 'Valid certificate from the tax authority.',
         comment: 'Submit copy; verified against original and certified by the bank.',
     },
     {
-        document: 'CR6 / CR5',
+        document: 'CR6/CR5',
         details: 'Documents showing the registered office address.',
         comment: 'Submit copy; verified against original and certified by the bank. Physical address must match current location.',
     },
@@ -98,7 +98,7 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         comment: 'Submit a verified copy.',
     },
     {
-        document: 'Valid Identity Documents',
+        document: 'National ID Card',
         details: 'Passport, Driver’s License, or National ID for all directors and signatories.',
         comment: 'Submit copies; bank will verify against originals and certify.',
     },
@@ -141,22 +141,22 @@ const pbcAccountRequirements: DocumentRequirement[] = [
         comment: 'Submit recent photos.',
     },
     {
-        document: 'Board resolution letter',
+        document: 'Board Resolution',
         details: 'Minutes of the last meeting held authorizing account opening.',
         comment: 'Must be on company letterhead and signed.',
     },
     {
-        document: 'Certified tax clearance (current)',
+        document: 'Tax Clearance Certificate',
         details: 'A current and valid tax clearance certificate.',
         comment: 'The certificate must be certified.',
     },
     {
-        document: 'Stamped bank statement (last 3 months)',
+        document: 'Bank Statement',
         details: 'Bank statements for the last 3 months.',
         comment: 'Must be officially stamped by the bank.',
     },
     {
-        document: 'Certified national identification',
+        document: 'National ID Card',
         details: 'For all signatories and directors.',
         comment: 'Submit certified copies of National IDs.',
     },
@@ -174,7 +174,7 @@ const ngoRequirements: DocumentRequirement[] = [
         comment: 'Submit a certified copy.',
     },
     {
-        document: 'Board resolution letter',
+        document: 'Board Resolution',
         details: 'A letter from the board authorizing the opening of the account.',
         comment: 'Must be on official letterhead and signed by the board.',
     },
@@ -184,14 +184,37 @@ const ngoRequirements: DocumentRequirement[] = [
         comment: 'Proof of residence must not be more than 3 months old.',
     },
     {
-        document: 'Passport size photos of signatories',
+        document: 'Passport size photos',
         details: 'Recent color photographs of all signatories.',
         comment: 'Submit recent photos.',
     },
+];
+
+const partnershipRequirements: DocumentRequirement[] = [
     {
-        document: 'All applicable charges',
-        details: 'Confirmation of payment for any required account opening fees.',
-        comment: 'Provide proof of payment.',
+        document: 'Partnership Agreement',
+        details: 'The legal agreement defining the partnership.',
+        comment: 'Submit a signed and dated copy.'
+    },
+    {
+        document: 'Proof of operating address',
+        details: 'A recent utility bill or lease agreement for the business address.',
+        comment: 'Not older than 3 months.'
+    },
+    {
+        document: 'National ID Card',
+        details: 'For all partners and authorized signatories.',
+        comment: 'Submit certified copies.'
+    },
+    {
+        document: 'Board Resolution',
+        details: 'Resolution or letter of authority to open an account.',
+        comment: 'Signed by all partners.'
+    },
+     {
+        document: 'Tax Clearance Certificate',
+        details: 'Current tax clearance certificate.',
+        comment: 'Submit a valid certificate.'
     },
 ];
 
@@ -201,12 +224,15 @@ const requirementsMap: Record<string, DocumentRequirement[]> = {
     'Proprietorship / Sole Trader': soleTraderRequirements,
     'Company (Private / Public Limited)': corporateAccountRequirements,
     'PBC Account': pbcAccountRequirements,
+    'Partnership': partnershipRequirements,
+    'Trust': ngoRequirements, // Using NGO as a base, can be refined
     'NGO / Non-Profit / Embassy': ngoRequirements,
     'Society / Association / Club': ngoRequirements,
-    'Trust': ngoRequirements,
-    'Partnership': corporateAccountRequirements, // Defaulting to corporate for now
+    'Government / Local Authority': [], // Needs specific definition
+    'Minors': [], // Needs specific definition
+    'Professional Intermediaries': [], // Needs specific definition
 };
 
 export function getDocumentRequirements(accountType: string): DocumentRequirement[] {
-    return requirementsMap[accountType] || personalAccountRequirements;
+    return requirementsMap[accountType] || [];
 }
