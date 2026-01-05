@@ -24,6 +24,7 @@ import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'fire
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -220,7 +221,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step + 1);
+      setCurrentStep((step) => step - 1);
     }
   };
   
