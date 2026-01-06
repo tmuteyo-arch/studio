@@ -88,8 +88,8 @@ export const OnboardingFormSchema = z.object({
   document2Type: z.string().min(1, { message: 'Please select a document type.' }),
   
   signature: z.string().min(3, { message: 'Please provide your full name as a signature.' }),
-  agreedToTerms: z.boolean().refine(val => val === true, {
-    message: 'You must agree to the terms and conditions.',
+  agreedToTerms: z.literal(true, {
+    errorMap: () => ({ message: 'You must agree to the terms and conditions.' }),
   }),
 }).superRefine((data, ctx) => {
     const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(data.clientType);

@@ -10,6 +10,8 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import TermsAndConditions from '../terms-and-conditions';
 
 interface StepReviewProps {
   next?: () => void;
@@ -111,19 +113,10 @@ export default function StepReview({ next }: StepReviewProps) {
         <Separator />
         
         <div className="space-y-4">
-            <FormField
-            control={control}
-            name="signature"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Digital Signature</FormLabel>
-                <FormControl>
-                    <Input placeholder="Type your full name to sign" {...field} />
-                </FormControl>
-                 <FormMessage />
-                </FormItem>
-            )}
-            />
+            <h3 className="font-semibold text-lg">Terms & Conditions</h3>
+            <ScrollArea className="h-48 w-full rounded-md border p-4">
+                <TermsAndConditions />
+            </ScrollArea>
              <FormField
                 control={control}
                 name="agreedToTerms"
@@ -137,11 +130,25 @@ export default function StepReview({ next }: StepReviewProps) {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                         <FormLabel>
-                         I confirm that the information provided is true and correct.
+                         I have read, understood, and agree to the InnBucks MicroBank Terms and Conditions and Client Protection Principles. I confirm that the information provided is true and correct.
                         </FormLabel>
+                         <FormMessage />
                     </div>
                     </FormItem>
                 )}
+            />
+            <FormField
+            control={control}
+            name="signature"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Digital Signature</FormLabel>
+                <FormControl>
+                    <Input placeholder="Type your full name to sign" {...field} />
+                </FormControl>
+                 <FormMessage />
+                </FormItem>
+            )}
             />
         </div>
       </div>
