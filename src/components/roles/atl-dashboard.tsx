@@ -1,18 +1,17 @@
 'use client';
 
 import * as React from 'react';
+import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, ApplicationStatus, initialApplications } from '@/lib/mock-data';
+import { Application, ApplicationStatus, applicationsAtom } from '@/lib/mock-data';
 import { PlusCircle, Search } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -39,12 +38,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
-
-  // const { data: applications, loading } = useCollection(
-  //   (firestore) => firestore ? query(collection(firestore, 'applications'), where('submittedBy', '==', user.name)) : null
-  // );
-
-  const [applications, setApplications] = React.useState(initialApplications);
+  const [applications, setApplications] = useAtom(applicationsAtom);
   const loading = false;
 
 

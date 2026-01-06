@@ -1,10 +1,11 @@
 'use client';
 import * as React from 'react';
+import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, ApplicationStatus, initialApplications } from '@/lib/mock-data';
+import { Application, ApplicationStatus, applicationsAtom } from '@/lib/mock-data';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
@@ -42,10 +43,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [searchTerm, setSearchTerm] = React.useState('');
     const [filter, setFilter] = React.useState<FilterStatus>('pendingReview');
     
-    // const { data: applications, loading } = useCollection(
-    //   (firestore) => firestore ? query(collection(firestore, 'applications'), or(where('status', '==', 'Submitted'), where('status', '==', 'Returned to ATL'))) : null
-    // );
-    const [allApplications, setAllApplications] = React.useState(initialApplications);
+    const [allApplications, setAllApplications] = useAtom(applicationsAtom);
     const loading = false;
     
     const summaryStats = {
@@ -93,11 +91,11 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
       // This is a mock-data workaround to reflect status changes
       // In a real app with Firestore, this would update automatically.
       const updatedApp = allApplications.find(a => a.id === selectedApplication?.id);
-       if (updatedApp && (updatedApp.status !== 'Submitted' && updatedApp.status !== 'Returned to ATL')) {
+       if (updatedApp && selectedApplication) {
          const currentApplications = [...allApplications];
          const appIndex = currentApplications.findIndex(a => a.id === updatedApp.id);
          if(appIndex > -1) {
-            currentApplications[appIndex] = updatedApp;
+            currentApplications[appIndex] = {...selectedApplication, ...updatedApp, status: selectedApplication.status};
             setAllApplications(currentApplications);
          }
       }

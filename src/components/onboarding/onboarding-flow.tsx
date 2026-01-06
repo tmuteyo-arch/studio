@@ -4,6 +4,7 @@ import * as React from 'react';
 import { FormProvider, useForm, type FieldName } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { useAtom } from 'jotai';
 
 import { OnboardingFormData, OnboardingFormSchema, Step, DirectorFormData } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -12,11 +13,9 @@ import { ProgressTracker } from './progress-tracker';
 
 import StepAccountType from './steps/step-account-type';
 import StepPersonalInfo from './steps/step-personal-info';
-import StepCorporateInfo from './steps/step-corporate-info';
-import StepDirectors from './steps/step-directors';
 import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
-import { Application } from '@/lib/mock-data';
+import { applicationsAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -37,7 +36,7 @@ import { checkForDuplicates } from '@/lib/actions';
 
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
-  { id: 'personal-info', name: 'Applicant Info' },
+  { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address', 'certificateOfIncorporationNumber'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
@@ -45,8 +44,6 @@ const baseSteps: Step[] = [
 const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
   'personal-info': StepPersonalInfo,
-  'corporate-info': StepCorporateInfo,
-  'directors-signatories': StepDirectors,
   'document-upload': StepDocumentUpload,
   'review-submit': StepReview,
 };
@@ -69,6 +66,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const [isCheckingDuplicates, setIsCheckingDuplicates] = React.useState(false);
   const [duplicateInfo, setDuplicateInfo] = React.useState<DuplicateInfo>({ isDuplicate: false, message: '' });
 
+  const [, setApplications] = useAtom(applicationsAtom);
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
@@ -78,22 +76,8 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       fullName: '',
       dateOfBirth: '',
       address: '',
-      // Corporate fields
-      organisationLegalName: undefined,
-      tradeName: undefined,
-      physicalAddress: undefined,
-      postalAddress: undefined,
-      businessTelNumber: undefined,
-      email: undefined,
-      webAddress: undefined,
-      dateOfIncorporation: undefined,
-      countryOfIncorporation: undefined,
       certificateOfIncorporationNumber: undefined,
-      natureOfBusiness: undefined,
-      sourceOfWealth: undefined,
-      noOfEmployees: undefined,
-      economicSector: undefined,
-      // End corporate fields
+      // Directors and corporate fields removed from default
       directors: [],
       document1Type: '',
       document2Type: '',
@@ -105,32 +89,11 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const clientType = form.watch('clientType');
-  const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(clientType);
+  const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType) && clientType !== '';
 
   const steps = React.useMemo(() => {
-    let newSteps = [...baseSteps];
-
-    if (isCorporate) {
-        const personalInfoStep = newSteps.find(step => step.id === 'personal-info');
-        if (personalInfoStep) {
-            personalInfoStep.name = 'Primary Contact';
-            personalInfoStep.fields = ['fullName', 'dateOfBirth', 'address'];
-        }
-    } else {
-        const personalInfoStep = newSteps.find(step => step.id === 'personal-info');
-        if (personalInfoStep) {
-            personalInfoStep.name = 'Personal Info';
-            personalInfoStep.fields = ['fullName', 'dateOfBirth', 'address'];
-        }
-    }
-
-    return newSteps.filter(step => {
-      if (step.isDynamic) {
-        return isCorporate;
-      }
-      return true;
-    });
-  }, [clientType, isCorporate]);
+    return baseSteps;
+  }, [clientType]);
   
   const handleDuplicateCheck = async (): Promise<boolean> => {
     if (!firestore) return true; // Don't block if firebase isn't configured
@@ -139,32 +102,21 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     const data = form.getValues();
     let checks: Promise<{ isDuplicate: boolean, message: string }>[] = [];
 
-    if (currentStepId === 'personal-info' && !isCorporate) {
-        checks.push(
-            checkForDuplicates('fullName', data.fullName).then(res => ({...res, message: `A client with the name '${data.fullName}' already exists (ID: ${res.existingId}).`})),
-        );
-    } else if (currentStepId === 'corporate-info' && data.organisationLegalName) {
-         checks.push(
-            checkForDuplicates('organisationLegalName', data.organisationLegalName).then(res => ({...res, message: `A company with the legal name '${data.organisationLegalName}' already exists (ID: ${res.existingId}).`})),
-         );
-         if(data.certificateOfIncorporationNumber) {
+    if (currentStepId === 'personal-info') {
+        if (!isCorporate) {
+            checks.push(
+                checkForDuplicates('fullName', data.fullName).then(res => ({...res, message: `A client with the name '${data.fullName}' already exists (ID: ${res.existingId}).`})),
+            );
+        } else if(data.fullName) {
+             checks.push(
+                checkForDuplicates('organisationLegalName', data.fullName).then(res => ({...res, message: `A company with the legal name '${data.fullName}' already exists (ID: ${res.existingId}).`})),
+             );
+        }
+        if(isCorporate && data.certificateOfIncorporationNumber) {
             checks.push(
               checkForDuplicates('certificateOfIncorporationNumber', data.certificateOfIncorporationNumber).then(res => ({...res, message: `A company with the incorporation number '${data.certificateOfIncorporationNumber}' already exists (ID: ${res.existingId}).`}))
             )
-         }
-    } else if (currentStepId === 'directors-signatories') {
-        data.directors?.forEach(director => {
-             if(director.idNumber) {
-                checks.push(
-                    checkForDuplicates('idNumber', director.idNumber).then(res => ({...res, message: `A director with the ID number '${director.idNumber}' already exists on another application (ID: ${res.existingId}).`})),
-                );
-             }
-             if(director.phoneNumber) {
-                checks.push(
-                    checkForDuplicates('phoneNumber', director.phoneNumber).then(res => ({...res, message: `A director with the phone number '${director.phoneNumber}' already exists on another application (ID: ${res.existingId}).`}))
-                );
-             }
-        });
+        }
     }
 
     if (checks.length === 0) {
@@ -209,7 +161,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step - 1);
+      setCurrentStep((step) => step + 1);
     }
   };
   
@@ -226,52 +178,27 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     }
     
     const newApplicationData = {
+      id: `APP-${String(Date.now()).slice(-5)}`,
       clientName: data.fullName,
-      clientType: data.clientType as any,
+      clientType: data.clientType,
       status: 'Submitted',
       submittedDate: format(new Date(), 'yyyy-MM-dd'),
-      lastUpdated: serverTimestamp(),
+      lastUpdated: new Date().toISOString(),
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
       details: {
-        // Personal info / Primary contact
         fullName: data.fullName,
         address: data.address,
-        dateOfBirth: data.dateOfBirth,
-        contactNumber: data.businessTelNumber || data.directors?.[0]?.phoneNumber || 'N/A',
-        email: data.email || 'N/A',
+        dateOfBirth: data.dateOfBirth || '',
+        contactNumber: 'N/A', // To be filled by back-office
+        email: 'N/A', // To be filled by back-office
 
-        // Corporate details from the new form
-        organisationLegalName: data.organisationLegalName || null,
-        tradeName: data.tradeName || null,
-        physicalAddress: data.physicalAddress || null,
-        postalAddress: data.postalAddress || null,
-        webAddress: data.webAddress || null,
-        faxNumber: data.faxNumber || null,
-        natureOfBusiness: data.natureOfBusiness || null,
-        sourceOfWealth: data.sourceOfWealth || null,
-        typeOfBusiness: data.typeOfBusiness || null,
-        noOfEmployees: data.noOfEmployees || null,
-        economicSector: data.economicSector || null,
-        authorisedCapital: data.authorisedCapital || null,
-        taxPayerNumber: data.taxPayerNumber || null,
-        dateOfIncorporation: data.dateOfIncorporation || null,
-        countryOfIncorporation: data.countryOfIncorporation || null,
-        certificateOfIncorporationNumber: data.certificateOfIncorporationNumber || null,
-        hasOtherAccounts: data.hasOtherAccounts || null,
-        otherAccountNumbers: data.otherAccountNumbers || null,
-        communicationPreference: data.communicationPreference || null,
-        requestedServices: data.requestedServices || null,
-        premisesStatus: data.premisesStatus || null,
-        premisesOtherDetails: data.premisesOtherDetails || null,
-        otherBank1Name: data.otherBank1Name || null,
-        otherBank1AccName: data.otherBank1AccName || null,
-        otherBank1AccNumber: data.otherBank1AccNumber || null,
-        accountCurrency: data.accountCurrency || null,
-        accountTypeTick: data.accountTypeTick || null,
-        socials: data.socials || null,
+        // Corporate details - initially minimal
+        organisationLegalName: isCorporate ? data.fullName : null,
+        dateOfIncorporation: isCorporate ? data.dateOfIncorporation : null,
+        certificateOfIncorporationNumber: isCorporate ? data.certificateOfIncorporationNumber : null,
       },
-       directors: data.directors || [],
+       directors: [], // To be filled by back-office
       documents: [
         { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
@@ -281,10 +208,17 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       ],
       comments: [],
     };
+    
+    // For demo purposes, update Jotai atom state
+    setApplications(prev => [newApplicationData, ...prev]);
 
     if (firestore) {
       try {
-        await addDoc(collection(firestore, 'applications'), newApplicationData);
+        const { id, ...appDataForFirebase } = newApplicationData;
+        await addDoc(collection(firestore, 'applications'), {
+          ...appDataForFirebase,
+          lastUpdated: serverTimestamp()
+        });
       } catch (error) {
         console.error("Error adding document: ", error);
         toast({
