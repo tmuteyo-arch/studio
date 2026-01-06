@@ -77,7 +77,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     mode: 'onChange', // Validate on change to update submit button status
     defaultValues: {
       clientType: '',
-      fullName: '',
+      fullName: user.name,
       dateOfBirth: '',
       address: '',
       // Corporate fields
@@ -323,65 +323,65 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const CurrentStepComponent = StepComponents[steps[currentStep].id];
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-background">
-      <ProgressTracker steps={steps} currentStep={currentStep} formState={form.formState} />
-      <div className="flex-1 p-4 md:p-8">
-        <FormProvider {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="h-full"
-          >
-            <Card className="h-full flex flex-col">
-              <CardContent className="flex-1 py-6">
-                <CurrentStepComponent />
-              </CardContent>
-              <CardFooter className="border-t px-6 py-4 justify-between">
-                <Button variant="outline" type="button" onClick={currentStep === 0 ? onCancel : prev}>
-                   {currentStep > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
-                  {currentStep === 0 ? 'Cancel' : 'Back'}
-                </Button>
-                {currentStep < steps.length - 1 && (
-                   <Button type="button" onClick={next} disabled={isCheckingDuplicates}>
-                    {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {isCheckingDuplicates ? 'Checking...' : 'Next'}
+    <FormProvider {...form}>
+      <div className="flex flex-col md:flex-row min-h-screen bg-background">
+        <ProgressTracker steps={steps} currentStep={currentStep} formState={form.formState} />
+        <div className="flex-1 p-4 md:p-8">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="h-full"
+            >
+              <Card className="h-full flex flex-col">
+                <CardContent className="flex-1 py-6">
+                  <CurrentStepComponent />
+                </CardContent>
+                <CardFooter className="border-t px-6 py-4 justify-between">
+                  <Button variant="outline" type="button" onClick={currentStep === 0 ? onCancel : prev}>
+                     {currentStep > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
+                    {currentStep === 0 ? 'Cancel' : 'Back'}
                   </Button>
-                )}
-                {currentStep === steps.length - 1 && (
-                   <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
-                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                     {isSubmitting ? 'Submitting...' : 'Submit Application'}
-                   </Button>
-                )}
-              </CardFooter>
-            </Card>
-          </form>
-        </FormProvider>
+                  {currentStep < steps.length - 1 && (
+                     <Button type="button" onClick={next} disabled={isCheckingDuplicates}>
+                      {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {isCheckingDuplicates ? 'Checking...' : 'Next'}
+                    </Button>
+                  )}
+                  {currentStep === steps.length - 1 && (
+                     <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
+                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                       {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                     </Button>
+                  )}
+                </CardFooter>
+              </Card>
+            </form>
+        </div>
+
+         <AlertDialog open={duplicateInfo.isDuplicate} onOpenChange={(isOpen) => !isOpen && setDuplicateInfo({ isDuplicate: false, message: '' })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Potential Duplicate Found</AlertDialogTitle>
+              <AlertDialogDescription>
+                {duplicateInfo.message}
+                <br /><br />
+                Please review the existing application before proceeding. Do you want to continue creating this new application anyway?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                setDuplicateInfo({ isDuplicate: false, message: '' });
+                if (currentStep < steps.length - 1) {
+                  setCurrentStep((step) => step + 1);
+                }
+              }}>
+                Continue Anyway
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </div>
-
-       <AlertDialog open={duplicateInfo.isDuplicate} onOpenChange={(isOpen) => !isOpen && setDuplicateInfo({ isDuplicate: false, message: '' })}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Potential Duplicate Found</AlertDialogTitle>
-            <AlertDialogDescription>
-              {duplicateInfo.message}
-              <br /><br />
-              Please review the existing application before proceeding. Do you want to continue creating this new application anyway?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setDuplicateInfo({ isDuplicate: false, message: '' });
-              if (currentStep < steps.length - 1) {
-                setCurrentStep((step) => step + 1);
-              }
-            }}>
-              Continue Anyway
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-    </div>
+    </FormProvider>
   );
 }
