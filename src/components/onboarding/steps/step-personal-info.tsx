@@ -10,13 +10,13 @@ export default function StepPersonalInfo() {
   const form = useFormContext<OnboardingFormData>();
   const clientType = form.watch('clientType');
 
-  const showDateOfBirth = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
+  const isPersonal = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
 
   return (
     <div>
       <CardHeader>
-        <CardTitle>Personal Information</CardTitle>
-        <CardDescription>Please provide your personal details.</CardDescription>
+        <CardTitle>Applicant Information</CardTitle>
+        <CardDescription>Please provide the applicant's primary details.</CardDescription>
       </CardHeader>
       <div className="space-y-4 px-6">
         <FormField
@@ -24,21 +24,21 @@ export default function StepPersonalInfo() {
           name="fullName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>{isPersonal ? 'Full Name' : 'Company Name'}</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder={isPersonal ? 'John Doe' : 'Acme Inc.'} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        {showDateOfBirth && (
-          <FormField
+        
+        <FormField
             control={form.control}
-            name="dateOfBirth"
+            name={isPersonal ? 'dateOfBirth' : 'dateOfIncorporation'}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Date of Birth</FormLabel>
+                <FormLabel>{isPersonal ? 'Date of Birth' : 'Date of Incorporation'}</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -46,20 +46,36 @@ export default function StepPersonalInfo() {
               </FormItem>
             )}
           />
-        )}
+
         <FormField
           control={form.control}
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Home Address</FormLabel>
+              <FormLabel>{isPersonal ? 'Home Address' : 'Business Address'}</FormLabel>
               <FormControl>
-                <Input placeholder="123 Main St, Anytown, USA" {...field} />
+                <Input placeholder="123 Main St, Anytown" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        {!isPersonal && (
+          <FormField
+            control={form.control}
+            name="certificateOfIncorporationNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Incorporation Number</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. 12345/2021" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
       </div>
     </div>
   );

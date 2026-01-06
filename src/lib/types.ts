@@ -104,6 +104,22 @@ export const OnboardingFormSchema = z.object({
           message: 'Please enter a valid date of birth.',
         });
       }
+    } else {
+      // It's a corporate account
+      if (!data.dateOfIncorporation || new Date(data.dateOfIncorporation).toString() === 'Invalid Date') {
+          ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ['dateOfIncorporation'],
+              message: 'Please enter a valid date of incorporation.',
+          });
+      }
+      if (!data.certificateOfIncorporationNumber || data.certificateOfIncorporationNumber.length < 3) {
+          ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ['certificateOfIncorporationNumber'],
+              message: 'A valid incorporation number is required.',
+          });
+      }
     }
 });
 
@@ -114,7 +130,6 @@ export type Step = {
   id: string;
   name: string;
   fields?: (keyof OnboardingFormData)[];
-  isDynamic?: boolean;
 };
 
 export const accountTypes = [
