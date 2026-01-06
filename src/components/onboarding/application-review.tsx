@@ -166,6 +166,16 @@ export default function ApplicationReview({ application: initialApplication, onB
         await addCanvasToPdf(summaryElement, true);
     }
 
+    // Add 10 sample pages
+    for (let i = 1; i <= 10; i++) {
+        pdf.addPage();
+        pdf.setFontSize(40);
+        pdf.text('INNBUCKS ONBOARDING', pdfWidth / 2, pdfHeight / 2, { align: 'center' });
+        pdf.setFontSize(10);
+        pdf.text(`Sample Page ${i}`, pdfWidth / 2, pdfHeight / 2 + 10, { align: 'center' });
+    }
+
+
     pdf.save(`Application-${application.id}.pdf`);
     setIsPrinting(false);
   };
