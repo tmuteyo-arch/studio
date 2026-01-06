@@ -52,7 +52,7 @@ export const OnboardingFormSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   natureOfBusiness: z.string().optional(),
   sourceOfWealth: z.string().optional(),
-  typeOfBusiness: z.string().min(1, 'Type of Business is required.').optional(),
+  typeOfBusiness: z.string().optional(),
   noOfEmployees: z.coerce.number().optional(),
   economicSector: z.string().optional(),
   authorisedCapital: z.string().optional(),
@@ -87,8 +87,11 @@ export const OnboardingFormSchema = z.object({
   directors: z.array(DirectorSchema).optional(),
 
   // Document Info
-  document1Type: z.string().min(1, { message: 'Please select a document type.' }),
-  document2Type: z.string().min(1, { message: 'Please select a document type.' }),
+  document1Type: z.string().min(1, { message: 'Please upload at least one document.' }),
+  document2Type: z.string().min(1, { message: 'Please upload at least two documents.' }),
+  
+  // FCB Status
+  fcbStatus: z.string().optional(),
   
   signature: z.string().min(3, { message: 'Please provide your full name as a signature.' }),
   agreedToTerms: z.literal(true, {
