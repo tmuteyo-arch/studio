@@ -329,6 +329,10 @@ export default function ApplicationReview({ application: initialApplication, onB
                                         <Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label>
                                     </FormItem>
                                     <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <RadioGroupItem value="Prior Adverse" id="fcb-prior-adverse" />
+                                        <Label htmlFor="fcb-prior-adverse" className="font-normal">Prior Adverse</Label>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
                                         <RadioGroupItem value="PEP" id="fcb-pep" />
                                         <Label htmlFor="fcb-pep" className="font-normal">PEP</Label>
                                     </FormItem>

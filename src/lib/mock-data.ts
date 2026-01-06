@@ -10,7 +10,7 @@ export type ApplicationStatus =
   | 'Rejected'
   | 'Returned to ATL';
   
-export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP';
+export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
 
 export type Document = {
   type: string;

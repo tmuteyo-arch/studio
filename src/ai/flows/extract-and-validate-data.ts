@@ -32,7 +32,7 @@ export type ExtractAndValidateDataInput = z.infer<typeof ExtractAndValidateDataI
 const ExtractAndValidateDataOutputSchema = z.object({
   validatedFields: z.record(z.string()).describe('The validated form data fields, as a key-value object.'),
   validationResult: z.string().describe('A summary of the validation result, including any discrepancies found.'),
-  fcbStatus: z.enum(['Inclusive', 'Good', 'Adverse', 'PEP']).describe('The determined FCB status from the documents.'),
+  fcbStatus: z.enum(['Inclusive', 'Good', 'Adverse', 'PEP', 'Prior Adverse']).describe('The determined FCB status from the documents.'),
 });
 export type ExtractAndValidateDataOutput = z.infer<typeof ExtractAndValidateDataOutputSchema>;
 
@@ -53,7 +53,7 @@ Your task is to:
 1.  **Extract relevant information** from the two documents provided.
 2.  **Pre-fill the form data fields** based on the extracted information.
 3.  **Validate the information** across the two documents and the existing form data fields to identify any discrepancies or inconsistencies.
-4.  **Determine the FCB Status** from the document content. The status can be 'Inclusive', 'Good', 'Adverse', or 'PEP'.
+4.  **Determine the FCB Status** from the document content. The status can be 'Inclusive', 'Good', 'Adverse', 'Prior Adverse', or 'PEP'.
 5.  **Provide a summary of the validation result**, highlighting any issues found.
 
 Here's the information you have:
