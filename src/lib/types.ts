@@ -154,7 +154,7 @@ export const OnboardingFormSchema = z.object({
                 message: 'Certificate of Incorporation number is required.',
             });
         }
-        if (!data.typeOfBusiness) {
+        if (data.clientType === 'Company (Private / Public Limited)' && !data.typeOfBusiness) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 path: ['typeOfBusiness'],
