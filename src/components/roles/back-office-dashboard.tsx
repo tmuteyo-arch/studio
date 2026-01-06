@@ -80,7 +80,8 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
         if (searchTerm) {
             return apps.filter(app =>
                 app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+                app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                app.documents.some(doc => doc.type.toLowerCase().includes(searchTerm.toLowerCase()))
             );
         }
         return apps;
@@ -212,7 +213,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                      <div className="relative w-full sm:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
-                            placeholder="Search by ID or Client..."
+                            placeholder="Search by ID, Client, or Doc..."
                             className="pl-10"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
