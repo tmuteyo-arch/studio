@@ -20,9 +20,7 @@ export const OnboardingFormSchema = z.object({
   
   // Personal Info
   fullName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
-  dateOfBirth: z.string().refine((dob) => new Date(dob).toString() !== 'Invalid Date', {
-    message: 'Please enter a valid date of birth.',
-  }),
+  dateOfBirth: z.string().optional(),
   address: z.string().min(10, { message: 'Address must be at least 10 characters.' }),
   
   // Account Specifications
@@ -98,7 +96,21 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the terms and conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(data.clientType);
+    if (['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType)) {
+      if (!data.dateOfBirth || new Date(data.dateOfBirth).toString() === 'Invalid Date') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['dateOfBirth'],
+          message: 'Please enter a valid date of birth.',
+        });
+      }
+    }
+
+    const isCorporate = ![
+        'Personal Account', 
+        'Proprietorship / Sole Trader'
+    ].includes(data.clientType);
+
     if (isCorporate) {
         if (!data.organisationLegalName) {
             ctx.addIssue({

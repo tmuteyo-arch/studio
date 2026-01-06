@@ -8,6 +8,9 @@ import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function StepPersonalInfo() {
   const form = useFormContext<OnboardingFormData>();
+  const clientType = form.watch('clientType');
+
+  const showDateOfBirth = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
 
   return (
     <div>
@@ -29,19 +32,21 @@ export default function StepPersonalInfo() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="dateOfBirth"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date of Birth</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {showDateOfBirth && (
+          <FormField
+            control={form.control}
+            name="dateOfBirth"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Date of Birth</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="address"
