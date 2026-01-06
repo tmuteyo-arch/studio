@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { FormProvider, useForm, type FieldName } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
 
 import { OnboardingFormData, OnboardingFormSchema, Step, DirectorFormData } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -221,7 +222,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step + 1);
+      setCurrentStep((step) => step - 1);
     }
   };
   
@@ -241,7 +242,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       clientName: data.organisationLegalName || data.fullName,
       clientType: data.clientType as any, // Simplified for now
       status: 'Submitted',
-      submittedDate: new Date().toISOString().split('T')[0],
+      submittedDate: format(new Date(), 'yyyy-MM-dd'),
       lastUpdated: serverTimestamp(),
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
@@ -323,7 +324,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-background">
-      <ProgressTracker steps={steps} currentStep={currentStep} />
+      <ProgressTracker steps={steps} currentStep={currentStep} formState={form.formState} />
       <div className="flex-1 p-4 md:p-8">
         <FormProvider {...form}>
           <form

@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { type FormState as RHFFormState } from 'react-hook-form';
+
+export type FormState<TFieldValues extends Record<string, any>> = RHFFormState<TFieldValues>;
 
 const DirectorSchema = z.object({
   fullName: z.string().min(2, 'Director name is required.'),
@@ -49,7 +52,7 @@ export const OnboardingFormSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   natureOfBusiness: z.string().optional(),
   sourceOfWealth: z.string().optional(),
-  typeOfBusiness: z.string().optional(),
+  typeOfBusiness: z.string().min(1, 'Type of Business is required.').optional(),
   noOfEmployees: z.coerce.number().optional(),
   economicSector: z.string().optional(),
   authorisedCapital: z.string().optional(),
@@ -134,6 +137,13 @@ export const OnboardingFormSchema = z.object({
                 code: z.ZodIssueCode.custom,
                 path: ['certificateOfIncorporationNumber'],
                 message: 'Certificate of Incorporation number is required.',
+            });
+        }
+        if (!data.typeOfBusiness) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['typeOfBusiness'],
+                message: 'Type of Business is required.',
             });
         }
     }

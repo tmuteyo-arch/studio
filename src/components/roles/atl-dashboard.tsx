@@ -48,10 +48,12 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const loading = false;
 
 
-  const filteredApplications = (applications || []).filter(app => 
-    app.submittedBy === user.name &&
-    (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredApplications = (applications || []).filter(app => {
+    const isOwner = app.submittedBy === user.name;
+    const matchesSearch = app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+    const relevantStatus = ['Submitted', 'Returned to ATL', 'Approved'].includes(app.status);
+    return isOwner && matchesSearch && relevantStatus;
+  });
 
   const applicationForReview = selectedApplication 
       ? applications?.find(app => app.id === selectedApplication.id) 
@@ -86,7 +88,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <div>
                     <CardTitle>My Applications</CardTitle>
-                    <CardDescription>A list of applications you have submitted.</CardDescription>
+                    <CardDescription>A list of your submitted, returned, and approved applications.</CardDescription>
                 </div>
                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
