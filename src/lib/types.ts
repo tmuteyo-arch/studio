@@ -105,63 +105,6 @@ export const OnboardingFormSchema = z.object({
         });
       }
     }
-
-    const isCorporate = ![
-        'Personal Account', 
-        'Proprietorship / Sole Trader'
-    ].includes(data.clientType);
-
-    if (isCorporate) {
-        if (!data.organisationLegalName) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['organisationLegalName'],
-                message: 'Organisation legal name is required.',
-            });
-        }
-        if (!data.physicalAddress) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['physicalAddress'],
-                message: 'Physical address is required.',
-            });
-        }
-         if (!data.businessTelNumber) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['businessTelNumber'],
-                message: 'Business phone number is required.',
-            });
-        }
-         if (!data.email) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['email'],
-                message: 'A valid email is required.',
-            });
-        }
-        if (!data.dateOfIncorporation) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['dateOfIncorporation'],
-                message: 'Date of incorporation is required.',
-            });
-        }
-         if (!data.certificateOfIncorporationNumber) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['certificateOfIncorporationNumber'],
-                message: 'Certificate of Incorporation number is required.',
-            });
-        }
-        if (data.clientType === 'Company (Private / Public Limited)' && !data.typeOfBusiness) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ['typeOfBusiness'],
-                message: 'Type of Business is required.',
-            });
-        }
-    }
 });
 
 export type OnboardingFormData = z.infer<typeof OnboardingFormSchema>;

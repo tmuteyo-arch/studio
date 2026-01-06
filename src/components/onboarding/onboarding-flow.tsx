@@ -38,8 +38,6 @@ import { checkForDuplicates } from '@/lib/actions';
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
   { id: 'personal-info', name: 'Applicant Info' },
-  { id: 'corporate-info', name: 'Corporate Info', isDynamic: true },
-  { id: 'directors-signatories', name: 'Directors', isDynamic: true, fields: ['directors'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
@@ -77,7 +75,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     mode: 'onChange', // Validate on change to update submit button status
     defaultValues: {
       clientType: '',
-      fullName: user.name,
+      fullName: '',
       dateOfBirth: '',
       address: '',
       // Corporate fields
@@ -117,17 +115,6 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
         if (personalInfoStep) {
             personalInfoStep.name = 'Primary Contact';
             personalInfoStep.fields = ['fullName', 'dateOfBirth', 'address'];
-        }
-        const corporateInfoStep = newSteps.find(step => step.id === 'corporate-info');
-        if (corporateInfoStep) {
-            corporateInfoStep.fields = [
-                'organisationLegalName', 
-                'physicalAddress', 
-                'businessTelNumber', 
-                'email',
-                'dateOfIncorporation',
-                'certificateOfIncorporationNumber'
-            ];
         }
     } else {
         const personalInfoStep = newSteps.find(step => step.id === 'personal-info');
@@ -239,8 +226,8 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     }
     
     const newApplicationData = {
-      clientName: data.organisationLegalName || data.fullName,
-      clientType: data.clientType as any, // Simplified for now
+      clientName: data.fullName,
+      clientType: data.clientType as any,
       status: 'Submitted',
       submittedDate: format(new Date(), 'yyyy-MM-dd'),
       lastUpdated: serverTimestamp(),
@@ -312,7 +299,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
     toast({
         title: "Application Submitted!",
-        description: `Application for ${data.organisationLegalName || data.fullName} has been successfully created.`,
+        description: `Application for ${data.fullName} has been successfully created.`,
     });
 
     setTimeout(() => {
@@ -325,7 +312,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   return (
     <FormProvider {...form}>
       <div className="flex flex-col md:flex-row min-h-screen bg-background">
-        <ProgressTracker steps={steps} currentStep={currentStep} formState={form.formState} />
+        <ProgressTracker steps={steps} currentStep={currentStep} />
         <div className="flex-1 p-4 md:p-8">
             <form
               onSubmit={form.handleSubmit(onSubmit)}
