@@ -20,7 +20,7 @@ export const OnboardingFormSchema = z.object({
   
   // Personal Info
   fullName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
-  dateOfBirth: z.string().optional(),
+  dateOfBirth: z.string().optional().default(''),
   address: z.string().min(10, { message: 'Address must be at least 10 characters.' }),
   
   // Account Specifications
@@ -55,9 +55,9 @@ export const OnboardingFormSchema = z.object({
   economicSector: z.string().optional(),
   authorisedCapital: z.string().optional(),
   taxPayerNumber: z.string().optional(),
-  dateOfIncorporation: z.string().optional(),
+  dateOfIncorporation: z.string().optional().default(''),
   countryOfIncorporation: z.string().optional(),
-  certificateOfIncorporationNumber: z.string().optional(),
+  certificateOfIncorporationNumber: z.string().optional().default(''),
   hasOtherAccounts: z.enum(['Yes', 'No']).optional(),
   otherAccountNumbers: z.string().optional(),
   accountTypeTick: z.object({
@@ -104,8 +104,7 @@ export const OnboardingFormSchema = z.object({
           message: 'Please enter a valid date of birth.',
         });
       }
-    } else {
-      // It's a corporate account
+    } else if (data.clientType) { // It's a corporate account type and it has been selected
       if (!data.dateOfIncorporation || new Date(data.dateOfIncorporation).toString() === 'Invalid Date') {
           ctx.addIssue({
               code: z.ZodIssueCode.custom,
