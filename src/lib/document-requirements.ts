@@ -63,9 +63,14 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         comment: 'Submit copy; to be verified against original and certified by the bank.',
     },
     {
-        document: 'CR6/CR5',
-        details: 'Documents showing the registered office address.',
+        document: 'CR6',
+        details: 'Notice of Registered office and postal address.',
         comment: 'Submit copy; physical address must match current location.',
+    },
+     {
+        document: 'CR2 / CR11',
+        details: 'Confirmation of shareholding structure.',
+        comment: 'Submit copy.',
     },
     {
         document: 'CR14',
@@ -73,9 +78,14 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         comment: 'Submit copy; must be up to date for current directors.',
     },
     {
-        document: 'Account Resolution Form',
+        document: 'Board Resolution',
         details: 'Stating the board has agreed to open the account and list of authorized signatories.',
         comment: 'This is a specific Innbucks form to be completed.',
+    },
+    {
+        document: 'Company Profile',
+        details: 'A brief overview of the company.',
+        comment: 'A summary of the business operations.'
     },
     {
         document: 'Tax Clearance Certificate',
@@ -97,26 +107,11 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         details: 'Utility bills for all directors and signatories.',
         comment: 'Submit originals; must not be older than 3 months.',
     },
-    {
-        document: 'ADLA',
-        details: 'Anti-Money Laundering declaration form.',
-        comment: 'To be completed and signed.'
+     {
+        document: 'Director & Signatory Photos',
+        details: '1 recent passport size photo for each director and signatory.',
+        comment: 'Required for client records.',
     },
-    {
-        document: 'Agency Agreement',
-        details: 'Agreement for agency banking.',
-        comment: 'If applicable for the agent type.'
-    },
-    {
-        document: 'Write Up',
-        details: 'Business write-up or profile.',
-        comment: 'A summary of the business operations.'
-    },
-    {
-        document: 'Merchant Agreement',
-        details: 'Agreement for merchant services.',
-        comment: 'Optional, only if merchant services are required.'
-    }
 ];
 
 const pbcAccountRequirements: DocumentRequirement[] = [
@@ -131,7 +126,7 @@ const pbcAccountRequirements: DocumentRequirement[] = [
         comment: 'Submit a certified and up-to-date copy.',
     },
     {
-        document: 'Account Resolution Form',
+        document: 'Board Resolution',
         details: 'Resolution authorizing account opening and listing signatories.',
         comment: 'Must be on company letterhead and signed.',
     },
@@ -208,6 +203,38 @@ const partnershipRequirements: DocumentRequirement[] = [
     },
 ];
 
+const clubsAndSocietiesRequirements: DocumentRequirement[] = [
+    { document: 'Constitution', details: 'Certified true copy of bye-laws/rules.', comment: 'Must be verified with Registrar of Companies if applicable.' },
+    { document: 'Proof of Office', details: 'Utility bill or lease for the place of business.', comment: 'Not older than 3 months.' },
+    { document: 'List of Executive Committee', details: 'IDs for all persons in control.', comment: 'Verify identity for all committee members.' },
+    { document: 'Resolution to Open Account', details: 'Certified true copy of the resolution.', comment: 'Must authorize account opening and operation.' },
+];
+
+const trustRequirements: DocumentRequirement[] = [
+    { document: 'Trust Deed', details: 'Original or certified copy of the trust deed.', comment: 'Or probate copy of a will creating the trust.' },
+    { document: 'Certificate of Registration', details: 'Certified true copy of trust registration.', comment: '' },
+    { document: 'Board Resolution', details: 'Resolution from Trustees to open account.', comment: '' },
+    { document: 'Identification of Trustees/Founder', details: 'IDs for trustees, founder, beneficiaries.', comment: 'Verify identity for all involved parties.' },
+];
+
+const professionalIntermediariesRequirements: DocumentRequirement[] = [
+    { document: 'License/Registration Certificate', details: 'Copy of license from relevant authority.', comment: 'e.g., for Law Practitioners, Accountants.' },
+    { document: 'Intermediary Identification', details: 'Proof of residence and IDs for office bearers/directors.', comment: 'Verify the identity of the intermediary firm.' },
+    { document: 'Undertaking of Client Verification', details: 'An undertaking that the intermediary has verified their own clients.', comment: '' },
+];
+
+const governmentRequirements: DocumentRequirement[] = [
+    { document: 'Statute or Law', details: 'Copy of the statute or law that created the body.', comment: '' },
+    { document: 'Resolution or Mandate', details: 'Resolution authorizing account opening and signatories.', comment: '' },
+    { document: 'Signatory IDs and Proof of Residence', details: 'ID and recent utility bill for all signatories.', comment: '' },
+];
+
+const minorsRequirements: DocumentRequirement[] = [
+    { document: 'Minor\'s Birth Certificate', details: 'Original and certified copy.', comment: '' },
+    { document: 'Guardian\'s ID and Proof of Residence', details: 'Positive ID and recent utility bill for the guardian.', comment: '' },
+    { document: 'Legal Guardian Appointment Order', details: 'If guardian is not a parent, provide court order.', comment: '' },
+];
+
 
 const requirementsMap: Record<string, DocumentRequirement[]> = {
     'Personal Account': personalAccountRequirements,
@@ -215,12 +242,12 @@ const requirementsMap: Record<string, DocumentRequirement[]> = {
     'Company (Private / Public Limited)': corporateAccountRequirements,
     'PBC Account': pbcAccountRequirements,
     'Partnership': partnershipRequirements,
-    'Trust': ngoRequirements, // Using NGO as a base, can be refined
+    'Trust': trustRequirements,
     'NGO / Non-Profit / Embassy': ngoRequirements,
-    'Society / Association / Club': ngoRequirements,
-    'Government / Local Authority': [], // Needs specific definition
-    'Minors': [], // Needs specific definition
-    'Professional Intermediaries': [], // Needs specific definition
+    'Society / Association / Club': clubsAndSocietiesRequirements,
+    'Government / Local Authority': governmentRequirements,
+    'Minors': minorsRequirements,
+    'Professional Intermediaries': professionalIntermediariesRequirements,
 };
 
 export function getDocumentRequirements(accountType: string): DocumentRequirement[] {
