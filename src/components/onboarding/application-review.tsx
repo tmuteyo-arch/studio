@@ -29,6 +29,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { rejectionReasons } from '@/lib/types';
@@ -37,7 +38,7 @@ import { Badge } from '@/components/ui/badge';
 import { useFirestore } from '@/firebase';
 import { doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { generateApplicationSummary } from '@/lib/actions';
-import { Alert } from '../ui/alert';
+import { Alert, AlertDescription as AlertDescriptionComponent, AlertTitle as AlertTitleComponent } from '../ui/alert';
 
 
 interface ApplicationReviewProps {
@@ -320,8 +321,8 @@ export default function ApplicationReview({ application: initialApplication, onB
             {aiSummary && (
                 <Alert className="mb-6 bg-secondary/50">
                     <Wand2 className="h-4 w-4" />
-                    <AlertDialogTitle>AI Summary & Risk Assessment</AlertDialogTitle>
-                    <AlertDialogDescription>{aiSummary}</AlertDialogDescription>
+                    <AlertTitleComponent>AI Summary & Risk Assessment</AlertTitleComponent>
+                    <AlertDescriptionComponent>{aiSummary}</AlertDescriptionComponent>
                 </Alert>
             )}
 
@@ -596,3 +597,5 @@ export default function ApplicationReview({ application: initialApplication, onB
     </div>
   );
 }
+
+    
