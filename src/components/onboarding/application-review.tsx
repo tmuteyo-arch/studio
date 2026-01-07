@@ -7,7 +7,7 @@ import { Application, Comment, HistoryLog } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2, Wand2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -36,6 +36,8 @@ import CorporateChecklist from './corporate-checklist';
 import { Badge } from '@/components/ui/badge';
 import { useFirestore } from '@/firebase';
 import { doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { generateApplicationSummary } from '@/lib/actions';
+import { Alert } from '../ui/alert';
 
 
 interface ApplicationReviewProps {
@@ -66,6 +68,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [rejectionReason, setRejectionReason] = React.useState('');
   const [rejectionComment, setRejectionComment] = React.useState('');
   
+  const [isGeneratingSummary, setIsGeneratingSummary] = React.useState(false);
+  const [aiSummary, setAiSummary] = React.useState<string | null>(null);
+
   const documentRequirements = getDocumentRequirements(application.clientType);
   const uploadedDocumentTypes = application.documents.map(d => d.type);
 
@@ -202,6 +207,37 @@ export default function ApplicationReview({ application: initialApplication, onB
     });
   }
 
+  const handleGenerateSummary = async () => {
+    setIsGeneratingSummary(true);
+    setAiSummary(null);
+
+    const summaryInput = {
+      clientType: application.clientType,
+      clientName: application.clientName,
+      status: application.status,
+      fcbStatus: application.fcbStatus,
+      documents: application.documents,
+      history: application.history,
+    };
+    
+    const result = await generateApplicationSummary(summaryInput);
+    setIsGeneratingSummary(false);
+
+    if (result.success && result.data) {
+      setAiSummary(result.data.summary);
+      toast({
+        title: 'AI Summary Generated',
+        description: 'The application summary and risk assessment is ready.',
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Summary Failed',
+        description: result.error || 'Could not generate AI summary.',
+      });
+    }
+  };
+
   const renderActions = () => {
     switch (user.role) {
       case 'back-office':
@@ -274,6 +310,21 @@ export default function ApplicationReview({ application: initialApplication, onB
           </div>
         </CardHeader>
         <CardContent>
+            <div className='flex justify-end mb-4'>
+                <Button variant="secondary" onClick={handleGenerateSummary} disabled={isGeneratingSummary}>
+                    {isGeneratingSummary ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                    {isGeneratingSummary ? 'Generating...' : 'Generate AI Summary'}
+                </Button>
+            </div>
+            
+            {aiSummary && (
+                <Alert className="mb-6 bg-secondary/50">
+                    <Wand2 className="h-4 w-4" />
+                    <AlertDialogTitle>AI Summary & Risk Assessment</AlertDialogTitle>
+                    <AlertDialogDescription>{aiSummary}</AlertDialogDescription>
+                </Alert>
+            )}
+
              <Tabs defaultValue="details" className="w-full">
                 <TabsList>
                     <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Customer Details</TabsTrigger>
