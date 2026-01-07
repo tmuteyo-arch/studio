@@ -66,6 +66,7 @@ export default function ApplicationReview({ application: initialApplication, onB
   const printRef = React.useRef<HTMLDivElement>(null);
   const checklistRef = React.useRef<HTMLDivElement>(null);
 
+  const [email, setEmail] = React.useState('tmateoro@inbucks.co.zw');
   const [brNumber, setBrNumber] = React.useState('');
   const [walletAccount, setWalletAccount] = React.useState('');
   const [isRejecting, setIsRejecting] = React.useState(false);
@@ -200,18 +201,18 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
   
   const handleSendEmail = () => {
-    if (!brNumber || !walletAccount) {
+    if (!email || !brNumber || !walletAccount) {
       toast({
         variant: 'destructive',
         title: 'Missing Information',
-        description: 'Please enter both BR Number and Wallet Account before sending.',
+        description: 'Please enter Email, BR Number, and Wallet Account before sending.',
       });
       return;
     }
 
     const subject = `Account Creation for Application: ${application.id}`;
     const body = `Please create an account for the following applicant:\n\nClient Name: ${application.clientName}\nApplication ID: ${application.id}\n\nBR Number: ${brNumber}\nWallet Account: ${walletAccount}\n\nThank you.`;
-    const mailtoLink = `mailto:tmateoro@inbucks.co.zw?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     window.location.href = mailtoLink;
 
@@ -534,10 +535,20 @@ export default function ApplicationReview({ application: initialApplication, onB
                               <CardHeader>
                                   <CardTitle>Account Creation Details</CardTitle>
                                   <CardDescription>
-                                      Enter the branch and wallet information, then send to the account creation team.
+                                      Enter the recipient email, branch, and wallet information, then send to the account creation team.
                                   </CardDescription>
                               </CardHeader>
                               <CardContent className="space-y-4">
+                                  <div className="space-y-2">
+                                      <Label htmlFor="email">Recipient Email</Label>
+                                      <Input
+                                          id="email"
+                                          type="email"
+                                          placeholder="Enter recipient email address"
+                                          value={email}
+                                          onChange={(e) => setEmail(e.target.value)}
+                                      />
+                                  </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                       <div className="space-y-2">
                                           <Label htmlFor="br-number">BR Number</Label>
