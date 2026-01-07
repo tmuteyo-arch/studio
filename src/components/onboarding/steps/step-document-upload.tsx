@@ -237,16 +237,16 @@ export default function StepDocumentUpload() {
                 {pages.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4">
                         {pages.map((page, index) => (
-                            <div key={index} className="relative group border rounded-md p-1">
+                            <div key={index} className="relative group border rounded-md p-1 h-28 flex flex-col justify-center">
                                 {page.type === 'image' ? (
-                                    <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-24 object-cover rounded-md" />
+                                    <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-cover rounded-md" />
                                 ) : (
-                                    <div className="w-full h-24 flex flex-col items-center justify-center bg-muted rounded-md">
+                                    <div className="flex flex-col items-center justify-center bg-muted rounded-md p-2 h-full">
                                         <File className="h-8 w-8 text-muted-foreground" />
-                                        <p className="text-xs text-muted-foreground mt-1 truncate">{page.file?.name}</p>
+                                        <p className="text-xs text-muted-foreground mt-2 w-full text-center truncate" title={page.file?.name}>{page.file?.name}</p>
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
                                     <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePageFromDocument(documentType, index)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
