@@ -11,12 +11,18 @@ export default function StepPersonalInfo() {
   const clientType = form.watch('clientType');
 
   const isPersonal = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
+  const isCorporate = !isPersonal && clientType;
 
   return (
     <div>
       <CardHeader>
         <CardTitle>Applicant Information</CardTitle>
-        <CardDescription>Please provide the applicant's primary details.</CardDescription>
+        <CardDescription>
+            { isCorporate 
+              ? "Provide the name of the primary contact person for this application."
+              : "Please provide the applicant's primary details."
+            }
+        </CardDescription>
       </CardHeader>
       <div className="space-y-4 px-6">
         <FormField
@@ -24,9 +30,9 @@ export default function StepPersonalInfo() {
           name="fullName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{isPersonal ? 'Full Name' : 'Company Name'}</FormLabel>
+              <FormLabel>{isCorporate ? 'Primary Contact Full Name' : 'Full Name'}</FormLabel>
               <FormControl>
-                <Input placeholder={isPersonal ? 'John Doe' : 'Acme Inc.'} {...field} />
+                <Input placeholder={isCorporate ? 'e.g., John Doe' : 'e.g., Jane Doe'} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -35,10 +41,10 @@ export default function StepPersonalInfo() {
         
         <FormField
             control={form.control}
-            name={isPersonal ? 'dateOfBirth' : 'dateOfIncorporation'}
+            name={'dateOfBirth'}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{isPersonal ? 'Date of Birth' : 'Date of Incorporation'}</FormLabel>
+                <FormLabel>{isCorporate ? 'Contact Person\'s Date of Birth' : 'Date of Birth'}</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -52,7 +58,7 @@ export default function StepPersonalInfo() {
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{isPersonal ? 'Home Address' : 'Business Address'}</FormLabel>
+              <FormLabel>{isCorporate ? 'Contact Person\'s Home Address' : 'Home Address'}</FormLabel>
               <FormControl>
                 <Input placeholder="123 Main St, Anytown" {...field} />
               </FormControl>
@@ -60,22 +66,6 @@ export default function StepPersonalInfo() {
             </FormItem>
           )}
         />
-
-        {!isPersonal && (
-          <FormField
-            control={form.control}
-            name="certificateOfIncorporationNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Incorporation Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. 12345/2021" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
       </div>
     </div>
   );

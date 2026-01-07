@@ -13,6 +13,8 @@ import { ProgressTracker } from './progress-tracker';
 
 import StepAccountType from './steps/step-account-type';
 import StepPersonalInfo from './steps/step-personal-info';
+import StepCorporateInfo from './steps/step-corporate-info';
+import StepDirectors from './steps/step-directors';
 import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
 import { applicationsAtom } from '@/lib/mock-data';
@@ -36,7 +38,15 @@ import { checkForDuplicates } from '@/lib/actions';
 
 const baseSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
-  { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address', 'certificateOfIncorporationNumber'] },
+  { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address'] },
+];
+
+const corporateSteps: Step[] = [
+    { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
+    { id: 'directors', name: 'Directors', fields: ['directors'] },
+]
+
+const finalSteps: Step[] = [
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
@@ -44,6 +54,8 @@ const baseSteps: Step[] = [
 const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
   'personal-info': StepPersonalInfo,
+  'corporate-info': StepCorporateInfo,
+  'directors': StepDirectors,
   'document-upload': StepDocumentUpload,
   'review-submit': StepReview,
 };
@@ -76,8 +88,6 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       fullName: '',
       dateOfBirth: '',
       address: '',
-      certificateOfIncorporationNumber: undefined,
-      // Directors and corporate fields removed from default
       directors: [],
       document1Type: '',
       document2Type: '',
@@ -92,8 +102,13 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType) && clientType !== '';
 
   const steps = React.useMemo(() => {
-    return baseSteps;
-  }, [clientType]);
+    let allSteps = [...baseSteps];
+    if (isCorporate) {
+      allSteps.push(...corporateSteps);
+    }
+    allSteps.push(...finalSteps);
+    return allSteps;
+  }, [clientType, isCorporate]);
   
   const handleDuplicateCheck = async (): Promise<boolean> => {
     if (!firestore) return true; // Don't block if firebase isn't configured
@@ -103,16 +118,18 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     let checks: Promise<{ isDuplicate: boolean, message: string }>[] = [];
 
     if (currentStepId === 'personal-info') {
-        if (!isCorporate) {
-            checks.push(
+        if (!isCorporate && data.fullName) {
+             checks.push(
                 checkForDuplicates('fullName', data.fullName).then(res => ({...res, message: `A client with the name '${data.fullName}' already exists (ID: ${res.existingId}).`})),
             );
-        } else if(data.fullName) {
+        }
+    } else if (currentStepId === 'corporate-info') {
+        if(data.organisationLegalName) {
              checks.push(
-                checkForDuplicates('organisationLegalName', data.fullName).then(res => ({...res, message: `A company with the legal name '${data.fullName}' already exists (ID: ${res.existingId}).`})),
+                checkForDuplicates('organisationLegalName', data.organisationLegalName).then(res => ({...res, message: `A company with the legal name '${data.organisationLegalName}' already exists (ID: ${res.existingId}).`})),
              );
         }
-        if(isCorporate && data.certificateOfIncorporationNumber) {
+        if(data.certificateOfIncorporationNumber) {
             checks.push(
               checkForDuplicates('certificateOfIncorporationNumber', data.certificateOfIncorporationNumber).then(res => ({...res, message: `A company with the incorporation number '${data.certificateOfIncorporationNumber}' already exists (ID: ${res.existingId}).`}))
             )
@@ -161,7 +178,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep((step) => step + 1);
+      setCurrentStep((step) => step - 1);
     }
   };
   
@@ -179,7 +196,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     
     const newApplicationData = {
       id: `APP-${String(Date.now()).slice(-5)}`,
-      clientName: data.fullName,
+      clientName: data.organisationLegalName || data.fullName,
       clientType: data.clientType,
       status: 'Submitted',
       submittedDate: format(new Date(), 'yyyy-MM-dd'),
@@ -187,18 +204,9 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
       details: {
-        fullName: data.fullName,
-        address: data.address,
-        dateOfBirth: data.dateOfBirth || '',
-        contactNumber: 'N/A', // To be filled by back-office
-        email: 'N/A', // To be filled by back-office
-
-        // Corporate details - initially minimal
-        organisationLegalName: isCorporate ? data.fullName : null,
-        dateOfIncorporation: isCorporate ? data.dateOfIncorporation : null,
-        certificateOfIncorporationNumber: isCorporate ? data.certificateOfIncorporationNumber : null,
+        ...data
       },
-       directors: [], // To be filled by back-office
+      directors: data.directors || [],
       documents: [
         { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
@@ -246,7 +254,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   return (
     <FormProvider {...form}>
       <div className="flex flex-col md:flex-row min-h-screen bg-background">
-        <ProgressTracker steps={steps} currentStep={currentStep} />
+        <ProgressTracker steps={steps} currentStep={currentStep} formState={form.formState} />
         <div className="flex-1 p-4 md:p-8">
             <form
               onSubmit={form.handleSubmit(onSubmit)}

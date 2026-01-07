@@ -104,7 +104,10 @@ export const OnboardingFormSchema = z.object({
           message: 'Please enter a valid date of birth.',
         });
       }
-    } else if (data.clientType) { // It's a corporate account type and it has been selected
+    } else if (data.clientType && !['', 'Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType)) { // It's a corporate account type and it has been selected
+      if (!data.organisationLegalName) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['organisationLegalName'], message: 'Organization name is required for corporate accounts.' });
+      }
       if (!data.dateOfIncorporation || new Date(data.dateOfIncorporation).toString() === 'Invalid Date') {
           ctx.addIssue({
               code: z.ZodIssueCode.custom,

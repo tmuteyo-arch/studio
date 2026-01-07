@@ -109,6 +109,26 @@ export default function StepReview({ next }: StepReviewProps) {
                 </div>
             </div>
         )}
+        
+        {isCorporate && data.directors && data.directors.length > 0 && (
+             <div className="rounded-md border p-4 space-y-4">
+                <h3 className="font-semibold">Directors</h3>
+                {data.directors.map((director, index) => (
+                    <div key={index} className="space-y-2 border-b pb-2 last:border-b-0">
+                        <p className='font-medium'>Director {index + 1}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <DetailItem label="Full Name" value={director.fullName} />
+                            <DetailItem label="ID Number" value={director.idNumber} />
+                            <DetailItem label="Date of Birth" value={director.dateOfBirth ? format(new Date(director.dateOfBirth), 'MMMM d, yyyy') : '-'} />
+                            <DetailItem label="Address" value={director.address} />
+                            <DetailItem label="Designation" value={director.designation} />
+                            <DetailItem label="Phone Number" value={director.phoneNumber} />
+                            <DetailItem label="Gender" value={director.gender} />
+                        </div>
+                    </div>
+                ))}
+             </div>
+        )}
 
         <Separator />
         
