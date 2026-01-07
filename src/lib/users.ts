@@ -7,11 +7,18 @@ export interface User {
   name: string;
   role: Role;
   initials: string;
+  team?: string[]; // IDs of ATLs this supervisor manages
 }
 
 export const users: User[] = [
   { id: 'user-1', name: 'Tashinga Muteyo', role: 'atl', initials: 'TM' },
   { id: 'user-2', name: 'Tendai Moyo', role: 'atl', initials: 'TM' },
   { id: 'user-3', name: 'Fadzai Zesa', role: 'back-office', initials: 'FZ' },
-  { id: 'user-4', name: 'Blessing Zulu', role: 'supervisor', initials: 'BZ' },
+  { 
+    id: 'user-4', 
+    name: 'Blessing Zulu', 
+    role: 'supervisor', 
+    initials: 'BZ',
+    team: ['Tashinga Muteyo', 'Tendai Moyo'] // Manages both ATLs
+  },
 ];
