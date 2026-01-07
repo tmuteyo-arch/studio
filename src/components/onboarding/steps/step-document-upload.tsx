@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Eye, Camera, Trash2, PlusCircle, Upload } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Eye, Camera, Trash2, PlusCircle, Upload, File } from 'lucide-react';
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
@@ -16,10 +16,17 @@ import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 
+type PageState = {
+  source: 'scan' | 'upload';
+  dataUri: string;
+  file?: File;
+  type: 'image' | 'pdf';
+};
+
 // State for a single document, which can now have multiple pages
 type DocumentState = {
   documentType: string;
-  pages: { source: 'scan' | 'upload'; dataUri: string; file?: File }[];
+  pages: PageState[];
 };
 
 export default function StepDocumentUpload() {
@@ -51,20 +58,23 @@ export default function StepDocumentUpload() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
     const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith('image/')) {
-        toast({ variant: 'destructive', title: 'Invalid File', description: 'Please upload an image file (PNG, JPG, etc.).' });
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        toast({ variant: 'destructive', title: 'Invalid File', description: 'Please upload an image or PDF file.' });
         return;
     }
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUri = event.target?.result as string;
-      addPageToDocument(documentType, { source: 'upload', dataUri, file });
+      const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+      addPageToDocument(documentType, { source: 'upload', dataUri, file, type: fileType });
     };
     reader.readAsDataURL(file);
   };
   
-  const addPageToDocument = (documentType: string, page: { source: 'scan' | 'upload'; dataUri: string; file?: File }) => {
+  const addPageToDocument = (documentType: string, page: PageState) => {
     setDocuments(prev => ({
         ...prev,
         [documentType]: {
@@ -116,7 +126,7 @@ export default function StepDocumentUpload() {
         if (context) {
             context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
             const dataUri = canvas.toDataURL('image/jpeg');
-            addPageToDocument(isScanning, { source: 'scan', dataUri });
+            addPageToDocument(isScanning, { source: 'scan', dataUri, type: 'image' });
             toast({ title: 'Page Captured', description: `Added a new page to ${isScanning}.` });
         }
         stopScan();
@@ -189,7 +199,7 @@ export default function StepDocumentUpload() {
     <div>
       <CardHeader>
         <CardTitle>Document Upload & Verification</CardTitle>
-        <CardDescription>Scan or upload all required documents. You can add multiple pages to each document type.</CardDescription>
+        <CardDescription>Scan or upload all required documents (Images or PDFs). You can add multiple pages to each document type.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
         
@@ -228,7 +238,14 @@ export default function StepDocumentUpload() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4">
                         {pages.map((page, index) => (
                             <div key={index} className="relative group border rounded-md p-1">
-                                <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-24 object-cover rounded-md" />
+                                {page.type === 'image' ? (
+                                    <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-24 object-cover rounded-md" />
+                                ) : (
+                                    <div className="w-full h-24 flex flex-col items-center justify-center bg-muted rounded-md">
+                                        <File className="h-8 w-8 text-muted-foreground" />
+                                        <p className="text-xs text-muted-foreground mt-1 truncate">{page.file?.name}</p>
+                                    </div>
+                                )}
                                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePageFromDocument(documentType, index)}>
                                         <Trash2 className="h-4 w-4" />
@@ -244,7 +261,7 @@ export default function StepDocumentUpload() {
                      <Button asChild variant="outline" size="sm">
                         <label className="cursor-pointer">
                             <Upload className="mr-2 h-4 w-4"/>Upload Page
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
+                            <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
                         </label>
                     </Button>
                 </div>
