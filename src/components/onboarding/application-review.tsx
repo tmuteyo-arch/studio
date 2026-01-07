@@ -346,7 +346,6 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs defaultValue="details" className="w-full">
                   <TabsList>
                       <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Customer Details</TabsTrigger>
-                      {isCorporate && user.role === 'back-office' && <TabsTrigger value="corporate-info">Corporate &amp; Director Info</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
@@ -411,14 +410,6 @@ export default function ApplicationReview({ application: initialApplication, onB
                       )}
                   </TabsContent>
                   
-                  {isCorporate && user.role === 'back-office' && (
-                    <TabsContent value="corporate-info" className="pt-4">
-                        <StepCorporateInfo />
-                        <div className="mt-6" />
-                        <StepDirectors />
-                    </TabsContent>
-                  )}
-
                   <TabsContent value="documents" className="pt-4">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           <Card>
