@@ -10,24 +10,21 @@ import { useFormContext } from 'react-hook-form';
 
 interface ProgressTrackerProps {
   steps: Step[];
-  currentStep: number;
-  formState: FormState<OnboardingFormData>;
+  currentStepIndex: number;
 }
 
-export function ProgressTracker({ steps, currentStep, formState }: ProgressTrackerProps) {
-  const { trigger, formState: { errors, isValid } } = useFormContext<OnboardingFormData>();
+export function ProgressTracker({ steps, currentStepIndex }: ProgressTrackerProps) {
+  const { formState: { errors } } = useFormContext<OnboardingFormData>();
 
   const getStepStatus = (stepIdx: number, step: Step) => {
-    if (stepIdx < currentStep) {
-      // Step has been visited and is in the past
+    if (stepIdx < currentStepIndex) {
       const stepFields = step.fields as FieldName<OnboardingFormData>[] | undefined;
-      if (!stepFields) return 'complete'; // Steps with no fields are complete by default
+      if (!stepFields) return 'complete';
       
-      // Check if any field in this step has an error
       const hasError = stepFields.some(field => errors[field]);
       return hasError ? 'error' : 'complete';
     }
-    if (stepIdx === currentStep) {
+    if (stepIdx === currentStepIndex) {
       return 'current';
     }
     return 'upcoming';

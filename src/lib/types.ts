@@ -18,15 +18,17 @@ const DirectorSchema = z.object({
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   
-  // Personal Info / Primary Contact
+  // Personal Info / Primary Contact - Required for all
   fullName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
-  dateOfBirth: z.string().optional().default(''),
+  dateOfBirth: z.string().refine((dob) => new Date(dob).toString() !== 'Invalid Date', {
+    message: 'Please enter a valid date of birth.',
+  }),
   address: z.string().min(10, { message: 'Address must be at least 10 characters.' }),
   
-  // Minimal corporate name for ATL
+  // Now only required for corporate accounts, handled in superRefine
   organisationLegalName: z.string().optional(),
 
-  // The rest of the corporate fields are optional for the ATL
+  // These fields are only for corporate and are filled in by the back office
   tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
   postalAddress: z.string().optional(),
@@ -94,16 +96,9 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the terms and conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    // For ATLs, we only require the primary fields. Corporate details are optional for them.
-    if (['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType)) {
-      if (!data.dateOfBirth || new Date(data.dateOfBirth).toString() === 'Invalid Date') {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['dateOfBirth'],
-          message: 'Please enter a valid date of birth.',
-        });
-      }
-    } else { // Corporate account
+    // For ATLs submitting a corporate account, we now only require the organisationLegalName
+    const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
+    if (isCorporate) {
       if (!data.organisationLegalName) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,

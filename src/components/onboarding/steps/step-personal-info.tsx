@@ -25,22 +25,24 @@ export default function StepPersonalInfo() {
         </CardDescription>
       </CardHeader>
       <div className="space-y-4 px-6">
-        <FormField
-          control={form.control}
-          name={isCorporate ? 'organisationLegalName' : 'fullName'}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{isCorporate ? "Organisation's Legal Name" : 'Full Name'}</FormLabel>
-              <FormControl>
-                <Input placeholder={isCorporate ? 'e.g., Acme Inc.' : 'e.g., Jane Doe'} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {isCorporate && (
+            <FormField
+            control={form.control}
+            name={'organisationLegalName'}
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Organisation's Legal Name</FormLabel>
+                <FormControl>
+                    <Input placeholder={'e.g., Acme Inc.'} {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        )}
         
-        <div className="pt-4 border-t">
-            <p className="text-sm font-medium text-muted-foreground mb-4">{isCorporate ? 'Primary Contact Person Details' : 'Personal Details'}</p>
+        <div className={isCorporate ? "pt-4 border-t" : ""}>
+            {isCorporate && <p className="text-sm font-medium text-muted-foreground mb-4">Primary Contact Person Details</p>}
             <div className='space-y-4'>
                 <FormField
                 control={form.control}

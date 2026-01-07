@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { useAtom } from 'jotai';
 
-import { OnboardingFormData, OnboardingFormSchema, Step, DirectorFormData } from '@/lib/types';
+import { OnboardingFormData, OnboardingFormSchema, Step } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressTracker } from './progress-tracker';
@@ -32,11 +32,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { checkForDuplicates } from '@/lib/actions';
+import StepCorporateInfo from './steps/step-corporate-info';
+import StepDirectors from './steps/step-directors';
 
 
-const steps: Step[] = [
+const allSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
-  { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address'] },
+  { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address', 'organisationLegalName'] },
+  { id: 'corporate-info', name: 'Corporate Details', fields: [] },
+  { id: 'directors', name: 'Directors', fields: [] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
@@ -44,6 +48,8 @@ const steps: Step[] = [
 const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
   'personal-info': StepPersonalInfo,
+  'corporate-info': StepCorporateInfo,
+  'directors': StepDirectors,
   'document-upload': StepDocumentUpload,
   'review-submit': StepReview,
 };
@@ -59,7 +65,7 @@ type DuplicateInfo = {
 }
 
 export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) {
-  const [currentStep, setCurrentStep] = React.useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const { toast } = useToast();
   const { firestore } = useFirestore();
 
@@ -80,6 +86,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       document2Type: '',
       signature: '',
       agreedToTerms: false,
+      directors: [], // Start with an empty array for directors
     },
   });
   
@@ -88,11 +95,20 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const clientType = form.watch('clientType');
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType) && clientType !== '';
   
+  const steps = React.useMemo(() => {
+    if (isCorporate) {
+      return allSteps;
+    }
+    return allSteps.filter(step => step.id !== 'corporate-info' && step.id !== 'directors');
+  }, [isCorporate]);
+
+  const currentStep = steps[currentStepIndex];
+
   const handleDuplicateCheck = async (): Promise<boolean> => {
     if (!firestore) return true; // Don't block if firebase isn't configured
     
     const data = form.getValues();
-    let checks: Promise<{ isDuplicate: boolean, message: string }>[] = [];
+    let checks: Promise<{ isDuplicate: boolean, message: string, existingId: string | null }>[] = [];
     
     if (data.clientType) {
         let nameToCheck = isCorporate ? data.organisationLegalName : data.fullName;
@@ -122,7 +138,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 };
 
   const next = async () => {
-    const stepFields = steps[currentStep].fields as FieldName<OnboardingFormData>[] | undefined;
+    const stepFields = currentStep.fields as FieldName<OnboardingFormData>[] | undefined;
     const isValid = await form.trigger(stepFields);
     
     if (!isValid) {
@@ -134,21 +150,21 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       return;
     }
     
-    if (currentStep === 0) { // After selecting client type
+    if (currentStep.id === 'personal-info' && isCorporate) { // After personal info on corporate flow
         const canProceed = await handleDuplicateCheck();
         if (!canProceed) return;
     }
 
 
-    if (currentStep < steps.length - 1) {
-      setCurrentStep((step) => step + 1);
+    if (currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex((step) => step + 1);
     }
   };
 
 
   const prev = () => {
-    if (currentStep > 0) {
-      setCurrentStep((step) => step - 1);
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex((step) => step - 1);
     }
   };
   
@@ -176,7 +192,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       details: {
         ...data
       },
-      directors: [],
+      directors: data.directors || [],
       documents: [
         { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
@@ -211,7 +227,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
     toast({
         title: "Application Submitted!",
-        description: `Application for ${data.fullName} has been successfully created.`,
+        description: `Application for ${data.organisationLegalName || data.fullName} has been successfully created.`,
     });
 
     setTimeout(() => {
@@ -219,12 +235,12 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     }, 1000);
   };
 
-  const CurrentStepComponent = StepComponents[steps[currentStep].id];
+  const CurrentStepComponent = StepComponents[currentStep.id];
 
   return (
     <FormProvider {...form}>
       <div className="flex flex-col md:flex-row min-h-screen bg-background">
-        <ProgressTracker steps={steps} currentStep={currentStep} formState={form.formState} />
+        <ProgressTracker steps={steps} currentStepIndex={currentStepIndex} />
         <div className="flex-1 p-4 md:p-8">
             <form
               onSubmit={form.handleSubmit(onSubmit)}
@@ -235,17 +251,17 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
                   <CurrentStepComponent />
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4 justify-between">
-                  <Button variant="outline" type="button" onClick={currentStep === 0 ? onCancel : prev}>
-                     {currentStep > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
-                    {currentStep === 0 ? 'Cancel' : 'Back'}
+                  <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev}>
+                     {currentStepIndex > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
+                    {currentStepIndex === 0 ? 'Cancel' : 'Back'}
                   </Button>
-                  {currentStep < steps.length - 1 && (
+                  {currentStepIndex < steps.length - 1 && (
                      <Button type="button" onClick={next} disabled={isCheckingDuplicates}>
                       {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       {isCheckingDuplicates ? 'Checking...' : 'Next'}
                     </Button>
                   )}
-                  {currentStep === steps.length - 1 && (
+                  {currentStepIndex === steps.length - 1 && (
                      <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                        {isSubmitting ? 'Submitting...' : 'Submit Application'}
@@ -270,8 +286,8 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
               <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => {
                 setDuplicateInfo({ isDuplicate: false, message: '' });
-                if (currentStep < steps.length - 1) {
-                  setCurrentStep((step) => step + 1);
+                if (currentStepIndex < steps.length - 1) {
+                  setCurrentStepIndex((step) => step + 1);
                 }
               }}>
                 Continue Anyway
