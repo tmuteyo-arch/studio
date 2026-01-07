@@ -66,10 +66,10 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         <p className="text-muted-foreground">Review applications and track your team's progress.</p>
       </div>
        <Tabs defaultValue="queue" className="w-full">
-            <div className="flex justify-between items-center mb-4">
-                <TabsList>
-                    <TabsTrigger value="queue">Approval Queue ({filteredQueue.length})</TabsTrigger>
-                    <TabsTrigger value="team">Team Progress ({teamApplications.length})</TabsTrigger>
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                <TabsList className="w-full sm:w-auto">
+                    <TabsTrigger value="queue" className="flex-1 sm:flex-initial">Approval Queue ({filteredQueue.length})</TabsTrigger>
+                    <TabsTrigger value="team" className="flex-1 sm:flex-initial">Team Progress ({teamApplications.length})</TabsTrigger>
                 </TabsList>
                 <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -89,34 +89,57 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                     </CardHeader>
                     <CardContent>
                     {loading ? <p>Loading queue...</p> : filteredQueue.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>App ID</TableHead>
-                                    <TableHead>Client Name</TableHead>
-                                    <TableHead>Submitted By</TableHead>
-                                    <TableHead>Last Updated</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredQueue.map((app) => (
-                                    <TableRow key={app.id}>
-                                        <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                        <TableCell className="font-medium">{app.clientName}</TableCell>
-                                        <TableCell>{app.submittedBy}</TableCell>
-                                        <TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="secondary">{app.status}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                        <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review</Button>
-                                        </TableCell>
+                        <div>
+                          {/* Mobile Card View */}
+                          <div className="md:hidden space-y-4">
+                            {filteredQueue.map((app) => (
+                              <Card key={app.id} className="bg-muted/30">
+                                <CardHeader>
+                                  <CardTitle className="text-lg">{app.clientName}</CardTitle>
+                                  <CardDescription className="font-mono text-xs">{app.id}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-2 text-sm">
+                                  <p><span className="font-medium text-muted-foreground">Submitted By:</span> {app.submittedBy}</p>
+                                  <p><span className="font-medium text-muted-foreground">Updated:</span> {new Date(app.lastUpdated).toLocaleDateString()}</p>
+                                  <Badge variant="secondary" className="my-2">{app.status}</Badge>
+                                  <Button className="w-full mt-2" variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review</Button>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+
+                          {/* Desktop Table View */}
+                          <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>App ID</TableHead>
+                                        <TableHead>Client Name</TableHead>
+                                        <TableHead>Submitted By</TableHead>
+                                        <TableHead>Last Updated</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredQueue.map((app) => (
+                                        <TableRow key={app.id}>
+                                            <TableCell className="font-mono text-xs">{app.id}</TableCell>
+                                            <TableCell className="font-medium">{app.clientName}</TableCell>
+                                            <TableCell>{app.submittedBy}</TableCell>
+                                            <TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary">{app.status}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                            <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                          </div>
+                        </div>
                         ) : (
                         <div className="flex items-center justify-center p-12 text-center">
                             <p className="text-lg text-muted-foreground">
@@ -135,34 +158,61 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                     </CardHeader>
                     <CardContent>
                     {loading ? <p>Loading applications...</p> : teamApplications.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>App ID</TableHead>
-                                    <TableHead>Client Name</TableHead>
-                                    <TableHead>Submitted By (ATL)</TableHead>
-                                    <TableHead>Submission Date</TableHead>
-                                    <TableHead>Status</TableHead>
-                                     <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {teamApplications.map((app) => (
-                                    <TableRow key={app.id}>
-                                        <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                        <TableCell className="font-medium">{app.clientName}</TableCell>
-                                        <TableCell>{app.submittedBy}</TableCell>
-                                        <TableCell>{app.submittedDate}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                           <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
-                                        </TableCell>
+                        <div>
+                           {/* Mobile Card View */}
+                          <div className="md:hidden space-y-4">
+                            {teamApplications.map((app) => (
+                              <Card key={app.id} className="bg-muted/30">
+                                <CardHeader>
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <CardTitle className="text-lg">{app.clientName}</CardTitle>
+                                      <CardDescription className="font-mono text-xs">{app.id}</CardDescription>
+                                    </div>
+                                    <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="space-y-2 text-sm">
+                                  <p><span className="font-medium text-muted-foreground">Submitted By:</span> {app.submittedBy}</p>
+                                  <p><span className="font-medium text-muted-foreground">Submitted:</span> {app.submittedDate}</p>
+                                  <Button className="w-full mt-2" variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+
+                           {/* Desktop Table View */}
+                          <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>App ID</TableHead>
+                                        <TableHead>Client Name</TableHead>
+                                        <TableHead>Submitted By (ATL)</TableHead>
+                                        <TableHead>Submission Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {teamApplications.map((app) => (
+                                        <TableRow key={app.id}>
+                                            <TableCell className="font-mono text-xs">{app.id}</TableCell>
+                                            <TableCell className="font-medium">{app.clientName}</TableCell>
+                                            <TableCell>{app.submittedBy}</TableCell>
+                                            <TableCell>{app.submittedDate}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                              <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                          </div>
+                        </div>
                         ) : (
                         <div className="flex items-center justify-center p-12 text-center">
                             <p className="text-lg text-muted-foreground">

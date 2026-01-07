@@ -209,42 +209,74 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
           </CardHeader>
           <CardContent>
              {loading ? <p>Loading applications...</p> : filteredApplications.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>App ID</TableHead>
-                    <TableHead>Client Name</TableHead>
-                    {filter === 'storage' && <TableHead>Documents</TableHead>}
-                    <TableHead>Submitted By</TableHead>
-                    <TableHead>Submission Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredApplications.map((app) => (
-                    <TableRow key={app.id}>
-                      <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                      <TableCell className="font-medium">{app.clientName}</TableCell>
-                      {filter === 'storage' && 
-                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-                            {app.documents.map(d => d.type).join(', ')}
-                        </TableCell>
-                      }
-                      <TableCell>{app.submittedBy}</TableCell>
-                      <TableCell>{app.submittedDate}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                         <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
+                <div>
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-4">
+                    {filteredApplications.map((app) => (
+                      <Card key={app.id} className="bg-muted/30">
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg">{app.clientName}</CardTitle>
+                              <CardDescription className="font-mono text-xs">{app.id}</CardDescription>
+                            </div>
+                            <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                          <p><span className="font-medium text-muted-foreground">Submitted By:</span> {app.submittedBy}</p>
+                          <p><span className="font-medium text-muted-foreground">Submitted:</span> {app.submittedDate}</p>
+                           {filter === 'storage' && 
+                            <p><span className="font-medium text-muted-foreground">Docs:</span> <span className="text-xs">{app.documents.map(d => d.type).join(', ')}</span></p>
+                           }
+                          <Button className="w-full mt-2" variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
                             {filter === 'pendingReview' ? 'Review' : 'View'}
-                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>App ID</TableHead>
+                          <TableHead>Client Name</TableHead>
+                          {filter === 'storage' && <TableHead>Documents</TableHead>}
+                          <TableHead>Submitted By</TableHead>
+                          <TableHead>Submission Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredApplications.map((app) => (
+                          <TableRow key={app.id}>
+                            <TableCell className="font-mono text-xs">{app.id}</TableCell>
+                            <TableCell className="font-medium">{app.clientName}</TableCell>
+                            {filter === 'storage' && 
+                              <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                                  {app.documents.map(d => d.type).join(', ')}
+                              </TableCell>
+                            }
+                            <TableCell>{app.submittedBy}</TableCell>
+                            <TableCell>{app.submittedDate}</TableCell>
+                            <TableCell>
+                              <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
+                                  {filter === 'pendingReview' ? 'Review' : 'View'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
              ) : (
               <div className="flex items-center justify-center p-12 text-center">
                   <p className="text-lg text-muted-foreground">

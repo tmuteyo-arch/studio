@@ -99,34 +99,61 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
            {loading ? (
              <p>Loading applications...</p>
            ) : filteredApplications.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>App ID</TableHead>
-                  <TableHead>Client Name</TableHead>
-                  <TableHead>Client Type</TableHead>
-                  <TableHead>Submission Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
                 {filteredApplications.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                    <TableCell className="font-medium">{app.clientName}</TableCell>
-                    <TableCell>{app.clientType}</TableCell>
-                    <TableCell>{app.submittedDate}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
-                    </TableCell>
-                  </TableRow>
+                  <Card key={app.id} className="bg-muted/30">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{app.clientName}</CardTitle>
+                          <CardDescription className="font-mono text-xs">{app.id}</CardDescription>
+                        </div>
+                        <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <p><span className="font-medium text-muted-foreground">Client Type:</span> {app.clientType}</p>
+                      <p><span className="font-medium text-muted-foreground">Submitted:</span> {app.submittedDate}</p>
+                      <Button className="w-full mt-2" variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View Details</Button>
+                    </CardContent>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>App ID</TableHead>
+                      <TableHead>Client Name</TableHead>
+                      <TableHead>Client Type</TableHead>
+                      <TableHead>Submission Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredApplications.map((app) => (
+                      <TableRow key={app.id}>
+                        <TableCell className="font-mono text-xs">{app.id}</TableCell>
+                        <TableCell className="font-medium">{app.clientName}</TableCell>
+                        <TableCell>{app.clientType}</TableCell>
+                        <TableCell>{app.submittedDate}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
            ) : (
              <div className="flex flex-col items-center justify-center p-12 text-center">
                 <p className="text-lg text-muted-foreground mb-6">
