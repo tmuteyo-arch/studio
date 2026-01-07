@@ -19,7 +19,7 @@ export default function StepPersonalInfo() {
         <CardTitle>Applicant Information</CardTitle>
         <CardDescription>
             { isCorporate 
-              ? "Provide the name of the primary contact person for this application."
+              ? "Provide the legal name of the organization and the details for the primary contact person."
               : "Please provide the applicant's primary details."
             }
         </CardDescription>
@@ -27,45 +27,64 @@ export default function StepPersonalInfo() {
       <div className="space-y-4 px-6">
         <FormField
           control={form.control}
-          name="fullName"
+          name={isCorporate ? 'organisationLegalName' : 'fullName'}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{isCorporate ? 'Primary Contact Full Name' : 'Full Name'}</FormLabel>
+              <FormLabel>{isCorporate ? "Organisation's Legal Name" : 'Full Name'}</FormLabel>
               <FormControl>
-                <Input placeholder={isCorporate ? 'e.g., John Doe' : 'e.g., Jane Doe'} {...field} />
+                <Input placeholder={isCorporate ? 'e.g., Acme Inc.' : 'e.g., Jane Doe'} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         
-        <FormField
-            control={form.control}
-            name={'dateOfBirth'}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{isCorporate ? 'Contact Person\'s Date of Birth' : 'Date of Birth'}</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="pt-4 border-t">
+            <p className="text-sm font-medium text-muted-foreground mb-4">{isCorporate ? 'Primary Contact Person Details' : 'Personal Details'}</p>
+            <div className='space-y-4'>
+                <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>{isCorporate ? 'Contact Full Name' : 'Full Name'}</FormLabel>
+                    <FormControl>
+                        <Input placeholder={isCorporate ? 'e.g., John Doe' : 'e.g., Jane Doe'} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                
+                <FormField
+                    control={form.control}
+                    name={'dateOfBirth'}
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>{isCorporate ? 'Contact Person\'s Date of Birth' : 'Date of Birth'}</FormLabel>
+                        <FormControl>
+                        <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
 
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{isCorporate ? 'Contact Person\'s Home Address' : 'Home Address'}</FormLabel>
-              <FormControl>
-                <Input placeholder="123 Main St, Anytown" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>{isCorporate ? 'Contact Person\'s Home Address' : 'Home Address'}</FormLabel>
+                    <FormControl>
+                        <Input placeholder="123 Main St, Anytown" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+        </div>
       </div>
     </div>
   );

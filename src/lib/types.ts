@@ -18,22 +18,15 @@ const DirectorSchema = z.object({
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   
-  // Personal Info
+  // Personal Info / Primary Contact
   fullName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
   dateOfBirth: z.string().optional().default(''),
   address: z.string().min(10, { message: 'Address must be at least 10 characters.' }),
   
-  // Account Specifications
-  accountCurrency: z.object({
-    usd: z.boolean().optional(),
-    zar: z.boolean().optional(),
-    gbp: z.boolean().optional(),
-    eur: z.boolean().optional(),
-    bwp: z.boolean().optional(),
-  }).optional(),
-
-  // Corporate Info - Based on detailed form
+  // Minimal corporate name for ATL
   organisationLegalName: z.string().optional(),
+
+  // The rest of the corporate fields are optional for the ATL
   tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
   postalAddress: z.string().optional(),
@@ -58,6 +51,13 @@ export const OnboardingFormSchema = z.object({
   dateOfIncorporation: z.string().optional().default(''),
   countryOfIncorporation: z.string().optional(),
   certificateOfIncorporationNumber: z.string().optional().default(''),
+  accountCurrency: z.object({
+    usd: z.boolean().optional(),
+    zar: z.boolean().optional(),
+    gbp: z.boolean().optional(),
+    eur: z.boolean().optional(),
+    bwp: z.boolean().optional(),
+  }).optional(),
   hasOtherAccounts: z.enum(['Yes', 'No']).optional(),
   otherAccountNumbers: z.string().optional(),
   accountTypeTick: z.object({
@@ -80,8 +80,6 @@ export const OnboardingFormSchema = z.object({
   otherBank1Name: z.string().optional(),
   otherBank1AccName: z.string().optional(),
   otherBank1AccNumber: z.string().optional(),
-  
-  // Directors
   directors: z.array(DirectorSchema).optional(),
 
   // Document Info
@@ -96,6 +94,7 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the terms and conditions.' }),
   }),
 }).superRefine((data, ctx) => {
+    // For ATLs, we only require the primary fields. Corporate details are optional for them.
     if (['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType)) {
       if (!data.dateOfBirth || new Date(data.dateOfBirth).toString() === 'Invalid Date') {
         ctx.addIssue({
@@ -104,23 +103,13 @@ export const OnboardingFormSchema = z.object({
           message: 'Please enter a valid date of birth.',
         });
       }
-    } else if (data.clientType && !['', 'Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType)) { // It's a corporate account type and it has been selected
+    } else { // Corporate account
       if (!data.organisationLegalName) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['organisationLegalName'], message: 'Organization name is required for corporate accounts.' });
-      }
-      if (!data.dateOfIncorporation || new Date(data.dateOfIncorporation).toString() === 'Invalid Date') {
-          ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              path: ['dateOfIncorporation'],
-              message: 'Please enter a valid date of incorporation.',
-          });
-      }
-      if (!data.certificateOfIncorporationNumber || data.certificateOfIncorporationNumber.length < 3) {
-          ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              path: ['certificateOfIncorporationNumber'],
-              message: 'A valid incorporation number is required.',
-          });
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['organisationLegalName'],
+            message: 'Organization name is required for corporate accounts.',
+        });
       }
     }
 });

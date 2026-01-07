@@ -13,8 +13,6 @@ import { ProgressTracker } from './progress-tracker';
 
 import StepAccountType from './steps/step-account-type';
 import StepPersonalInfo from './steps/step-personal-info';
-import StepCorporateInfo from './steps/step-corporate-info';
-import StepDirectors from './steps/step-directors';
 import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
 import { applicationsAtom } from '@/lib/mock-data';
@@ -36,17 +34,9 @@ import {
 import { checkForDuplicates } from '@/lib/actions';
 
 
-const baseSteps: Step[] = [
+const steps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
   { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address'] },
-];
-
-const corporateSteps: Step[] = [
-    { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
-    { id: 'directors', name: 'Directors', fields: ['directors'] },
-]
-
-const finalSteps: Step[] = [
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
@@ -54,8 +44,6 @@ const finalSteps: Step[] = [
 const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
   'personal-info': StepPersonalInfo,
-  'corporate-info': StepCorporateInfo,
-  'directors': StepDirectors,
   'document-upload': StepDocumentUpload,
   'review-submit': StepReview,
 };
@@ -88,7 +76,6 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       fullName: '',
       dateOfBirth: '',
       address: '',
-      directors: [],
       document1Type: '',
       document2Type: '',
       signature: '',
@@ -100,42 +87,22 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const clientType = form.watch('clientType');
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType) && clientType !== '';
-
-  const steps = React.useMemo(() => {
-    let allSteps = [...baseSteps];
-    if (isCorporate) {
-      allSteps.push(...corporateSteps);
-    }
-    allSteps.push(...finalSteps);
-    return allSteps;
-  }, [clientType, isCorporate]);
   
   const handleDuplicateCheck = async (): Promise<boolean> => {
     if (!firestore) return true; // Don't block if firebase isn't configured
     
-    const currentStepId = steps[currentStep].id;
     const data = form.getValues();
     let checks: Promise<{ isDuplicate: boolean, message: string }>[] = [];
-
-    if (currentStepId === 'personal-info') {
-        if (!isCorporate && data.fullName) {
-             checks.push(
-                checkForDuplicates('fullName', data.fullName).then(res => ({...res, message: `A client with the name '${data.fullName}' already exists (ID: ${res.existingId}).`})),
+    
+    if (data.clientType) {
+        let nameToCheck = isCorporate ? data.organisationLegalName : data.fullName;
+        if (nameToCheck) {
+            checks.push(
+                checkForDuplicates('clientName', nameToCheck).then(res => ({...res, message: `An application with the name '${nameToCheck}' already exists (ID: ${res.existingId}).`})),
             );
         }
-    } else if (currentStepId === 'corporate-info') {
-        if(data.organisationLegalName) {
-             checks.push(
-                checkForDuplicates('organisationLegalName', data.organisationLegalName).then(res => ({...res, message: `A company with the legal name '${data.organisationLegalName}' already exists (ID: ${res.existingId}).`})),
-             );
-        }
-        if(data.certificateOfIncorporationNumber) {
-            checks.push(
-              checkForDuplicates('certificateOfIncorporationNumber', data.certificateOfIncorporationNumber).then(res => ({...res, message: `A company with the incorporation number '${data.certificateOfIncorporationNumber}' already exists (ID: ${res.existingId}).`}))
-            )
-        }
     }
-
+    
     if (checks.length === 0) {
         return true; // No checks needed for this step
     }
@@ -167,8 +134,11 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       return;
     }
     
-    const canProceed = await handleDuplicateCheck();
-    if (!canProceed) return;
+    if (currentStep === 0) { // After selecting client type
+        const canProceed = await handleDuplicateCheck();
+        if (!canProceed) return;
+    }
+
 
     if (currentStep < steps.length - 1) {
       setCurrentStep((step) => step + 1);
@@ -206,7 +176,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       details: {
         ...data
       },
-      directors: data.directors || [],
+      directors: [],
       documents: [
         { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
