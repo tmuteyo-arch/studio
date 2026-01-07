@@ -258,8 +258,8 @@ export default function StepDocumentUpload() {
         </Button>
 
         {validationResult && (
-          <Alert variant={validationResult.includes('discrepancies') ? 'destructive' : 'default'}>
-            {validationResult.includes('discrepancies') ? (
+          <Alert variant={validationResult.includes('discrepancies') || validationResult.includes('concerns') ? 'destructive' : 'default'}>
+            {validationResult.includes('discrepancies') || validationResult.includes('concerns') ? (
               <AlertCircle className="h-4 w-4" />
             ) : (
               <CheckCircle2 className="h-4 w-4" />

@@ -44,17 +44,15 @@ const prompt = ai.definePrompt({
   name: 'extractAndValidateDataPrompt',
   input: {schema: ExtractAndValidateDataInputSchema},
   output: {schema: ExtractAndValidateDataOutputSchema},
-  prompt: `You are an expert data extraction and validation specialist.
+  prompt: `You are an expert compliance officer specializing in Anti-Money Laundering (AML) and Know Your Customer (KYC) procedures.
 
-You will receive data extracted from two different document types, as well as a set of form data fields to be pre-filled.
+You will receive data from two different documents. Your task is to:
 
-Your task is to:
-
-1.  **Extract relevant information** from the two documents provided.
-2.  **Pre-fill the form data fields** based on the extracted information.
-3.  **Validate the information** across the two documents and the existing form data fields to identify any discrepancies or inconsistencies.
-4.  **Determine the FCB Status** from the document content. The status can be 'Inclusive', 'Good', 'Adverse', 'Prior Adverse', or 'PEP'.
-5.  **Provide a summary of the validation result**, highlighting any issues found.
+1.  **Act as a Compliance Officer:** Scrutinize the documents for common red flags associated with the "placement" stage of money laundering. Look for inconsistencies that might suggest false information, unusual sources of wealth, or other anomalies.
+2.  **Extract Information:** Extract relevant information (like name, address, date of birth, company name) from the provided documents.
+3.  **Pre-fill and Validate:** Use the extracted information to pre-fill and validate the provided form data fields. Highlight any discrepancies between the two documents or between the documents and the initial form data.
+4.  **Determine FCB Status:** Based on the content of the documents, determine the Financial Clearing Bureau (FCB) status. This is a critical part of KYC. The status can be 'Inclusive', 'Good', 'Adverse', 'Prior Adverse', or 'PEP' (Politically Exposed Person). For example, if you see any mention of legal issues, sanctions, or criminal history, the status might be 'Adverse'. If the person holds a prominent public function, they are a 'PEP'. If the data is clean, 'Good' or 'Inclusive' is appropriate.
+5.  **Provide a Summary:** Output a summary of your findings, including the validation result and any potential AML concerns.
 
 Here's the information you have:
 
@@ -66,14 +64,14 @@ Document 2: {{media url=document2DataUri}}
 
 Form Data Fields: {{{JSON.stringify(formDataFields)}}}
 
-Based on this information, please provide the validated form data fields, the determined FCB status, and a validation result summary.
+Based on this information, provide the validated form data fields, the determined FCB status, and a validation result summary.
 
 Output should be formatted as JSON:
 {
   "validatedFields": {
   //Key value pairs of validated fields
   },
-  "validationResult": "Summary of validation results",
+  "validationResult": "Summary of validation results and any AML concerns.",
   "fcbStatus": "The determined FCB status"
 }
 `,
