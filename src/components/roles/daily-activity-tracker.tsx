@@ -37,11 +37,11 @@ export default function DailyActivityTracker({ applications }: DailyActivityTrac
     value: {
       label: 'Applications',
     },
-    submitted: {
+    Submitted: {
       label: 'Submitted',
       color: 'hsl(var(--chart-1))',
     },
-    processed: {
+    Processed: {
       label: 'Processed',
       color: 'hsl(var(--chart-2))',
     },
@@ -75,7 +75,7 @@ export default function DailyActivityTracker({ applications }: DailyActivityTrac
             <p className="text-3xl font-bold">{processedToday}</p>
           </div>
           <div className="p-4 bg-muted/50 rounded-lg flex flex-col items-center justify-center">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Actions Today: {totalToday}</h3>
+             <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Actions Today: {totalToday}</h3>
             {totalToday > 0 ? (
                <ChartContainer config={chartConfig} className="h-24 w-24">
                 <ResponsiveContainer>
