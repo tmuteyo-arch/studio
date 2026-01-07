@@ -1,17 +1,16 @@
 'use client';
 
 import * as React from 'react';
+import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, initialApplications } from '@/lib/mock-data';
+import { Application, applicationsAtom } from '@/lib/mock-data';
 import { Search } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
 
 interface SupervisorDashboardProps {
     user: User;
@@ -20,24 +19,18 @@ interface SupervisorDashboardProps {
 export default function SupervisorDashboard({ user }: SupervisorDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
-
-    // const { data: applications, loading } = useCollection(
-    //   (firestore) => firestore ? query(collection(firestore, 'applications'), where('status', '==', 'Pending Supervisor')) : null
-    // );
-    const [applications, setApplications] = React.useState(initialApplications.filter(app => app.status === 'Pending Supervisor'));
+    const [applications] = useAtom(applicationsAtom);
     const loading = false;
 
-    const filteredQueue = (applications || []).filter(app =>
-        app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredQueue = (applications || [])
+        .filter(app => app.status === 'Pending Supervisor')
+        .filter(app =>
+            app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
     const applicationForReview = selectedApplication 
-      ? initialApplications.find(app => app.id === selectedApplication.id) 
+      ? applications.find(app => app.id === selectedApplication.id) 
       : null;
-
-    if (applicationForReview && applicationForReview.status !== 'Pending Supervisor') {
-      // setSelectedApplication(null);
-    }
     
     if (applicationForReview) {
         return <ApplicationReview 
