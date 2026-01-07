@@ -13,6 +13,7 @@ import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive } from 'lucide-
 import { useCollection } from '@/firebase';
 import { collection, query, where, or } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
+import DailyActivityTracker from './daily-activity-tracker';
 
 type FilterStatus = 'pendingReview' | 'pendingSupervisor' | 'approved' | 'rejected' | 'all' | 'storage';
 
@@ -69,6 +70,11 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 apps = allApplications.filter(app => app.status === 'Rejected');
                 break;
             case 'storage':
+                 return allApplications.filter(app =>
+                    app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    app.documents.some(doc => doc.type.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
             case 'all':
             default:
                 apps = allApplications;
@@ -78,8 +84,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
         if (searchTerm) {
             return apps.filter(app =>
                 app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                app.documents.some(doc => doc.type.toLowerCase().includes(searchTerm.toLowerCase()))
+                app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
         return apps;
@@ -88,17 +93,6 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
 
     const handleBack = () => {
       setSelectedApplication(null);
-      // This is a mock-data workaround to reflect status changes
-      // In a real app with Firestore, this would update automatically.
-      const updatedApp = allApplications.find(a => a.id === selectedApplication?.id);
-       if (updatedApp && selectedApplication) {
-         const currentApplications = [...allApplications];
-         const appIndex = currentApplications.findIndex(a => a.id === updatedApp.id);
-         if(appIndex > -1) {
-            currentApplications[appIndex] = {...selectedApplication, ...updatedApp, status: selectedApplication.status};
-            setAllApplications(currentApplications);
-         }
-      }
     }
     
     const applicationForReview = selectedApplication 
@@ -129,8 +123,10 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
           <h2 className="text-3xl font-bold">Back Office Dashboard</h2>
           <p className="text-muted-foreground">Review and validate incoming applications from ATLs.</p>
         </div>
+
+        <DailyActivityTracker applications={allApplications} />
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
             <button onClick={() => setFilter('pendingReview')} className={cn("text-left", filter === 'pendingReview' && "ring-2 ring-primary rounded-lg")}>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -179,18 +175,6 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     </CardContent>
                 </Card>
             </button>
-             <button onClick={() => setFilter('storage')} className={cn("text-left", filter === 'storage' && "ring-2 ring-primary rounded-lg")}>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Storage / Audit</CardTitle>
-                        <Archive className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{allApplications.length}</div>
-                        <p className="text-xs text-muted-foreground">Total applications</p>
-                    </CardContent>
-                </Card>
-            </button>
         </div>
 
         <Card>
@@ -207,16 +191,19 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                       </CardDescription>
                   </div>
                   <div className='flex gap-2 items-center'>
-                    {filter !== 'pendingReview' && <Button variant="outline" onClick={() => setFilter('pendingReview')}>View My Queue</Button>}
                      <div className="relative w-full sm:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
-                            placeholder="Search by ID, Client, or Doc..."
+                            placeholder={filter === 'storage' ? "Search ID, Client, or Doc..." : "Search ID or Client..."}
                             className="pl-10"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <Button variant="outline" onClick={() => setFilter(filter === 'storage' ? 'pendingReview' : 'storage')}>
+                        <Archive className="mr-2 h-4 w-4" />
+                        {filter === 'storage' ? 'My Queue' : 'Storage / Audit'}
+                    </Button>
                   </div>
               </div>
           </CardHeader>
@@ -240,7 +227,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                       <TableCell className="font-mono text-xs">{app.id}</TableCell>
                       <TableCell className="font-medium">{app.clientName}</TableCell>
                       {filter === 'storage' && 
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
                             {app.documents.map(d => d.type).join(', ')}
                         </TableCell>
                       }
