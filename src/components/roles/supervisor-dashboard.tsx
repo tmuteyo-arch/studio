@@ -12,7 +12,6 @@ import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ExchangeRates from './exchange-rates';
 
 interface SupervisorDashboardProps {
     user: User;
@@ -66,8 +65,6 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         <h2 className="text-3xl font-bold">Supervisor Dashboard</h2>
         <p className="text-muted-foreground">Review applications and track your team's progress.</p>
       </div>
-
-      <ExchangeRates />
 
        <Tabs defaultValue="queue" className="w-full">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
