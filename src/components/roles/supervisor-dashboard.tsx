@@ -13,6 +13,7 @@ import { User } from '@/lib/users';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { differenceInDays, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface SupervisorDashboardProps {
     user: User;
@@ -289,5 +290,3 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     </div>
   );
 }
-
-    
