@@ -51,7 +51,7 @@ export async function checkForDuplicates(field: string, value: string): Promise<
         // store a normalized (e.g., lowercase) version of the field. For this implementation,
         // we'll use direct matching.
         switch (field) {
-            case 'fullName':
+            case 'clientName':
                 query = applicationsRef.where('clientName', '==', value);
                 break;
             case 'idNumber': // This checks director's ID
@@ -82,5 +82,3 @@ export async function checkForDuplicates(field: string, value: string): Promise<
         return { isDuplicate: false, existingId: null };
     }
 }
-
-    
