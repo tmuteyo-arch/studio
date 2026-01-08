@@ -8,7 +8,8 @@ export type ApplicationStatus =
   | 'Pending Supervisor'
   | 'Approved'
   | 'Rejected'
-  | 'Returned to ATL';
+  | 'Returned to ATL'
+  | 'Archived';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
 
@@ -46,7 +47,7 @@ export type Director = {
 export type Application = {
   id: string;
   clientName: string;
-  clientType: 'Company (Private / Public Limited)' | 'Proprietorship / Sole Trader' | 'Personal Account' | string;
+  clientType: 'Company (Private / Public Limited)' | 'Proprietorship / Sole Trader' | 'Personal Account' | 'Archived' | string;
   status: ApplicationStatus;
   submittedDate: string;
   lastUpdated: any;
@@ -334,3 +335,5 @@ export const initialApplications: Application[] = [
 ];
 
 export const applicationsAtom = atom<Application[]>(initialApplications);
+
+    

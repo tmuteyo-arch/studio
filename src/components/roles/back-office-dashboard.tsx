@@ -9,11 +9,12 @@ import { Application, ApplicationStatus, applicationsAtom } from '@/lib/mock-dat
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive } from 'lucide-react';
+import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine } from 'lucide-react';
 import { useCollection } from '@/firebase';
 import { collection, query, where, or } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import DailyActivityTracker from './daily-activity-tracker';
+import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
 
 type FilterStatus = 'pendingReview' | 'pendingSupervisor' | 'approved' | 'rejected' | 'all' | 'storage';
 
@@ -29,6 +30,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Returned to ATL':
       return 'destructive';
     case 'Submitted':
+    case 'Archived':
       return 'outline';
     default:
       return 'outline';
@@ -43,6 +45,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [filter, setFilter] = React.useState<FilterStatus>('pendingReview');
+    const [isDigitizing, setIsDigitizing] = React.useState(false);
     
     const [allApplications, setAllApplications] = useAtom(applicationsAtom);
     const loading = false;
@@ -99,6 +102,10 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
       ? allApplications.find(app => app.id === selectedApplication.id) 
       : null;
 
+    if (isDigitizing) {
+        return <DigitizeApplicationFlow user={user} onCancel={() => setIsDigitizing(false)} />;
+    }
+
     if (applicationForReview) {
         return <ApplicationReview 
                   application={applicationForReview}
@@ -119,9 +126,15 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     function DashboardContent() {
       return (
         <div>
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold">Back Office Dashboard</h2>
-          <p className="text-muted-foreground">Review and validate incoming applications from ATLs.</p>
+        <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h2 className="text-3xl font-bold">Back Office Dashboard</h2>
+              <p className="text-muted-foreground">Review, validate, and digitize account applications.</p>
+            </div>
+            <Button onClick={() => setIsDigitizing(true)} variant="secondary">
+                <ScanLine className="mr-2 h-4 w-4" />
+                Digitize Application
+            </Button>
         </div>
 
         <DailyActivityTracker applications={allApplications} />
@@ -292,3 +305,5 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
 
     return <DashboardContent />;
 }
+
+    
