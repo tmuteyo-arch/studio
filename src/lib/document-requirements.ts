@@ -112,6 +112,11 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         details: '1 recent passport size photo for each director and signatory.',
         comment: 'Required for client records.',
     },
+    {
+        document: 'Bank Statement',
+        details: 'Bank statements from current bankers for the last 3 months.',
+        comment: 'Submit copies.'
+    }
 ];
 
 const pbcAccountRequirements: DocumentRequirement[] = [

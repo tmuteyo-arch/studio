@@ -7,7 +7,7 @@ import { Application, Comment, HistoryLog } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2, Wand2 } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -179,14 +179,14 @@ export default function ApplicationReview({ application: initialApplication, onB
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio);
     };
 
-    if (application.clientType === 'Company (Private / Public Limited)' && checklistElement) {
+    if (isCorporate && checklistElement) {
         await addCanvasToPdf(checklistElement, true);
         await addCanvasToPdf(summaryElement, false);
     } else {
         await addCanvasToPdf(summaryElement, true);
     }
 
-    // Add 10 sample pages
+    // Add 10 sample pages for document uploads
     for (let i = 1; i <= 10; i++) {
         pdf.addPage();
         pdf.setFontSize(40);
@@ -305,7 +305,7 @@ export default function ApplicationReview({ application: initialApplication, onB
             <div ref={printRef}>
                 <ApplicationPrintView application={applicationForPrint} />
             </div>
-            {application.clientType === 'Company (Private / Public Limited)' && (
+            {isCorporate && (
               <div ref={checklistRef}>
                 <CorporateChecklist application={applicationForPrint} supervisor={supervisor} />
               </div>
@@ -347,6 +347,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs defaultValue="details" className="w-full">
                   <TabsList>
                       <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Customer Details</TabsTrigger>
+                      {user.role === 'back-office' && isCorporate && <TabsTrigger value="corporate-info"><FileEdit className="mr-2 h-4 w-4"/>Corporate & Director Info</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
@@ -411,6 +412,21 @@ export default function ApplicationReview({ application: initialApplication, onB
                       )}
                   </TabsContent>
                   
+                   {user.role === 'back-office' && isCorporate && (
+                    <TabsContent value="corporate-info" className="pt-4">
+                        <Card>
+                            <CardContent className="pt-6">
+                                <StepCorporateInfo />
+                            </CardContent>
+                        </Card>
+                        <Card className='mt-6'>
+                             <CardContent className="pt-6">
+                                <StepDirectors />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                   )}
+
                   <TabsContent value="documents" className="pt-4">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           <Card>
