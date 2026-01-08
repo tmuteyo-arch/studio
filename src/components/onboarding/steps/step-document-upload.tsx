@@ -15,6 +15,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -264,6 +271,41 @@ export default function StepDocumentUpload() {
                             <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
                         </label>
                     </Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" disabled={pages.length === 0}>
+                                <Eye className="mr-2 h-4 w-4"/>View
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl">
+                            <DialogHeader>
+                                <DialogTitle>Viewing: {documentType}</DialogTitle>
+                            </DialogHeader>
+                            <Carousel className="w-full">
+                                <CarouselContent>
+                                    {pages.map((page, index) => (
+                                        <CarouselItem key={index}>
+                                            <div className="p-1">
+                                                <div className="flex aspect-video items-center justify-center p-2 border rounded-md">
+                                                     {page.type === 'image' ? (
+                                                        <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-contain rounded-md" />
+                                                    ) : (
+                                                        <div className="flex flex-col items-center justify-center bg-muted rounded-md p-6">
+                                                            <File className="h-16 w-16 text-muted-foreground" />
+                                                            <p className="font-semibold text-lg mt-4">PDF Document</p>
+                                                            <p className="text-sm text-muted-foreground mt-2 w-full text-center truncate" title={page.file?.name}>{page.file?.name}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                <CarouselPrevious />
+                                <CarouselNext />
+                            </Carousel>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
           ))}
