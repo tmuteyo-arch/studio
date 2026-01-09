@@ -24,6 +24,9 @@
     --input: 225 24% 22%;
     --ring: 41 94% 56%; /* Yellow for focus rings */
     --radius: 0.5rem;
+
+    --chart-1: hsl(41, 94%, 56%); /* primary */
+    --chart-2: hsl(142, 71%, 45%); /* a shade of green */
   }
   .dark {
     --background: 225 24% 12%;
@@ -45,6 +48,9 @@
     --border: 225 24% 22%;
     --input: 225 24% 22%;
     --ring: 41 94% 56%;
+
+    --chart-1: hsl(41, 94%, 56%);
+    --chart-2: hsl(142, 71%, 45%);
   }
 }
 
