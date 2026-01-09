@@ -29,10 +29,10 @@ export default function StepCorporateInfo() {
         <CardDescription>Please complete all sections in block capitals where applicable.</CardDescription>
       </CardHeader>
       <div className="px-6">
-        <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3']} className="w-full">
+        <Accordion type="multiple" defaultValue={['item-1', 'item-2', 'item-3', 'item-4']} className="w-full">
           <AccordionItem value="item-1">
             <AccordionTrigger>
-              <h3 className="font-semibold text-lg">Customer Information</h3>
+              <h3 className="font-semibold text-lg">Organisation Details</h3>
             </AccordionTrigger>
             <AccordionContent className="p-1">
               <div className="space-y-4 pt-2">
