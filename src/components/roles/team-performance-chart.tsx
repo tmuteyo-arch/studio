@@ -69,8 +69,8 @@ export default function TeamPerformanceChart({ applications, team }: TeamPerform
                         cursor={false}
                         content={<ChartTooltipContent />} 
                     />
-                    <Bar dataKey="approved" stackId="a" fill="var(--color-approved)" radius={[0, 0, 4, 4]} />
-                    <Bar dataKey="rejected" stackId="a" fill="var(--color-rejected)" radius={[4, 4, 0, 0]}/>
+                    <Bar dataKey="approved" fill="var(--color-approved)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="rejected" fill="var(--color-rejected)" radius={[4, 4, 0, 0]}/>
                 </BarChart>
             </ResponsiveContainer>
         </ChartContainer>
