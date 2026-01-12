@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { isToday, isSameDay, parseISO } from 'date-fns';
+import { isToday, parseISO } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Application } from '@/lib/mock-data';
 import { Activity, ArrowDown, ArrowUp } from 'lucide-react';
@@ -14,12 +14,10 @@ interface DailyActivityTrackerProps {
 
 export default function DailyActivityTracker({ applications }: DailyActivityTrackerProps) {
   const { submittedToday, processedToday } = React.useMemo(() => {
-    const now = new Date();
-    const submittedToday = applications.filter(app => isSameDay(parseISO(app.submittedDate), now)).length;
+    const submittedToday = applications.filter(app => isToday(parseISO(app.submittedDate))).length;
     
     const processedToday = applications.filter(app => {
-        const lastUpdatedDate = parseISO(app.lastUpdated);
-        return isToday(lastUpdatedDate) && app.status !== 'Submitted';
+        return isToday(parseISO(app.lastUpdated)) && app.status !== 'Submitted';
     }).length;
 
     return {

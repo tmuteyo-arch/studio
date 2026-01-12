@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, User as AuthUser, signOut } from 'firebase/auth';
+import { useAtom } from 'jotai';
 
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
@@ -11,53 +11,18 @@ import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, User } from '@/lib/users';
-import { useFirebase, useUser } from '@/firebase';
-import { FirebaseProvider } from '@/firebase/provider';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { activeUserAtom } from '@/lib/mock-data';
 
 function AppContent() {
-  const { auth } = useFirebase();
-  const { user: authUser, loading: authLoading } = useUser();
-  const [loggedInUser, setLoggedInUser] = React.useState<User | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const { toast } = useToast();
+  const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
 
-  React.useEffect(() => {
-    if (!authLoading) {
-      if (authUser) {
-        const userProfile = users.find(u => u.email === authUser.email);
-        setLoggedInUser(userProfile || null);
-      } else {
-        setLoggedInUser(null);
-      }
-      setLoading(false);
-    }
-  }, [authUser, authLoading]);
-
-  const handleLogin = async (role: User['role']) => {
-    if (!auth) return;
+  const handleLogin = (role: User['role']) => {
     const userToLogin = users.find(user => user.role === role);
-    if (!userToLogin) return;
-
-    try {
-        setLoading(true);
-        await signInWithEmailAndPassword(auth, userToLogin.email, 'password');
-        // Auth state change will handle setting the user
-    } catch (error) {
-        console.error("Login failed:", error);
-        toast({
-            title: "Login Failed",
-            description: "Could not log in. Please check credentials or Firebase setup.",
-            variant: "destructive"
-        })
-        setLoading(false);
-    }
+    setLoggedInUser(userToLogin || null);
   };
 
-  const handleLogout = async () => {
-    if (!auth) return;
-    await signOut(auth);
+  const handleLogout = () => {
+    setLoggedInUser(null);
   };
 
   const renderDashboard = () => {
@@ -131,14 +96,6 @@ function AppContent() {
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="w-full bg-background">
       {loggedInUser ? (
@@ -166,11 +123,7 @@ function AppContent() {
 }
 
 export default function Home() {
-  const { firebaseApp } = useFirebase();
-
   return (
-    <FirebaseProvider firebaseApp={firebaseApp}>
       <AppContent />
-    </FirebaseProvider>
   );
 }

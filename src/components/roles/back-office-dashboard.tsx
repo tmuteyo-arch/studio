@@ -1,16 +1,15 @@
 'use client';
 import * as React from 'react';
+import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, ApplicationStatus } from '@/lib/mock-data';
+import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine, Loader2 } from 'lucide-react';
-import { useCollection } from '@/firebase';
-import { collection, query, where, or, orderBy, limit } from 'firebase/firestore';
+import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import DailyActivityTracker from './daily-activity-tracker';
 import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
@@ -42,46 +41,42 @@ interface BackOfficeDashboardProps {
 
 export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
+    const [applications, setApplications] = useAtom(applicationsAtom);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [filter, setFilter] = React.useState<FilterStatus>('pendingReview');
     const [isDigitizing, setIsDigitizing] = React.useState(false);
-    
-    const { data: allApplications, loading } = useCollection<Application>(
-      (db) => db ? query(collection(db, 'applications'), orderBy('lastUpdated', 'desc')) : null
-    );
-    
+
     const summaryStats = React.useMemo(() => ({
-        pendingReview: allApplications?.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length ?? 0,
-        pendingSupervisor: allApplications?.filter(a => a.status === 'Pending Supervisor').length ?? 0,
-        approved: allApplications?.filter(a => a.status === 'Approved').length ?? 0,
-        rejected: allApplications?.filter(a => a.status === 'Rejected').length ?? 0,
-    }), [allApplications]);
+        pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length,
+        pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor').length,
+        approved: applications.filter(a => a.status === 'Approved').length,
+        rejected: applications.filter(a => a.status === 'Rejected').length,
+    }), [applications]);
 
     const filteredApplications = React.useMemo(() => {
-        if (!allApplications) return [];
-        let apps = allApplications;
+        let apps = applications;
         switch (filter) {
             case 'pendingReview':
-                apps = allApplications.filter(app => app.status === 'Submitted' || app.status === 'Returned to ATL');
+                apps = applications.filter(app => app.status === 'Submitted' || app.status === 'Returned to ATL');
                 break;
             case 'pendingSupervisor':
-                apps = allApplications.filter(app => app.status === 'Pending Supervisor');
+                apps = applications.filter(app => app.status === 'Pending Supervisor');
                 break;
             case 'approved':
-                apps = allApplications.filter(app => app.status === 'Approved');
+                apps = applications.filter(app => app.status === 'Approved');
                 break;
             case 'rejected':
-                apps = allApplications.filter(app => app.status === 'Rejected');
+                apps = applications.filter(app => app.status === 'Rejected');
                 break;
             case 'storage':
-                 return allApplications.filter(app =>
+                 return applications.filter(app =>
                     app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     app.documents.some(doc => doc.type.toLowerCase().includes(searchTerm.toLowerCase()))
                 );
             case 'all':
             default:
-                apps = allApplications;
+                apps = applications;
                 break;
         }
 
@@ -92,7 +87,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             );
         }
         return apps;
-    }, [allApplications, filter, searchTerm]);
+    }, [applications, filter, searchTerm]);
 
 
     const handleBack = () => {
@@ -100,7 +95,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     }
     
     const applicationForReview = selectedApplication 
-      ? allApplications?.find(app => app.id === selectedApplication.id) 
+      ? applications.find(app => app.id === selectedApplication.id) 
       : null;
 
     if (isDigitizing) {
@@ -138,7 +133,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             </Button>
         </div>
 
-        <DailyActivityTracker applications={allApplications || []} />
+        <DailyActivityTracker applications={applications} />
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
             <button onClick={() => setFilter('pendingReview')} className={cn("text-left", filter === 'pendingReview' && "ring-2 ring-primary rounded-lg")}>
@@ -222,11 +217,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
               </div>
           </CardHeader>
           <CardContent>
-             {loading ? (
-                <div className="flex items-center justify-center p-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-             ) : filteredApplications.length > 0 ? (
+             {filteredApplications.length > 0 ? (
                 <div>
                   {/* Mobile Card View */}
                   <div className="md:hidden space-y-4">

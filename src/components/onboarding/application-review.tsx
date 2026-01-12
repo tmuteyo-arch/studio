@@ -3,7 +3,8 @@
 import * as React from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Application, Comment, HistoryLog } from '@/lib/mock-data';
+import { useAtom } from 'jotai';
+import { Application, applicationsAtom, Comment, HistoryLog } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -34,12 +35,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { rejectionReasons } from '@/lib/types';
 import CorporateChecklist from './corporate-checklist';
 import { Badge } from '@/components/ui/badge';
-import { useFirestore } from '@/firebase';
 import { generateApplicationSummary } from '@/lib/actions';
 import { Alert, AlertDescription as AlertDescriptionComponent, AlertTitle as AlertTitleComponent } from '../ui/alert';
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepDirectors from './steps/step-directors';
-import { doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -60,7 +59,7 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
 
 export default function ApplicationReview({ application: initialApplication, onBack, user }: ApplicationReviewProps) {
   const { toast } = useToast();
-  const { firestore } = useFirestore();
+  const [applications, setApplications] = useAtom(applicationsAtom);
   const [application, setApplication] = React.useState(initialApplication);
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
@@ -76,24 +75,16 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const [isGeneratingSummary, setIsGeneratingSummary] = React.useState(false);
   const [aiSummary, setAiSummary] = React.useState<string | null>(null);
-  const [isUpdating, setIsUpdating] = React.useState(false);
 
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
+  const uploadedDocumentTypes = application.documents.map(d => d.type);
+  const documentRequirements = getDocumentRequirements(application.clientType);
 
   const form = useForm({
-    defaultValues: initialApplication.details,
+    defaultValues: application.details,
   });
-  
-  React.useEffect(() => {
-    setApplication(initialApplication);
-    form.reset(initialApplication.details);
-  }, [initialApplication, form]);
 
-
-  const handleStatusChange = async (status: Application['status'], notes?: string) => {
-    if (!firestore) return;
-    setIsUpdating(true);
-
+  const handleStatusChange = (status: Application['status'], notes?: string) => {
     const newHistoryLog: HistoryLog = {
       action: status,
       user: user.name,
@@ -101,29 +92,20 @@ export default function ApplicationReview({ application: initialApplication, onB
       notes: notes,
     };
     
-    const appRef = doc(firestore, 'applications', application.id);
+    setApplications(prev => prev.map(app => 
+      app.id === application.id 
+      ? { ...app, status: status, history: [...app.history, newHistoryLog], details: { ...app.details, ...form.getValues() } } 
+      : app
+    ));
 
-    try {
-        await updateDoc(appRef, {
-            status: status,
-            history: arrayUnion(newHistoryLog),
-            lastUpdated: serverTimestamp(),
-            details: { ...application.details, ...form.getValues() }
-        });
+    toast({
+        title: `Application ${status}`,
+        description: `Application for ${application.clientName} has been updated.`,
+    });
 
-        toast({
-            title: `Application ${status}`,
-            description: `Application for ${application.clientName} has been updated.`,
-        });
-
-        if (status === 'Approved' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL') {
-            setTimeout(() => onBack(), 500);
-        }
-    } catch (error) {
-        console.error("Failed to update status: ", error);
-        toast({ title: "Update failed", description: "Could not update application status.", variant: "destructive" });
+     if (status === 'Approved' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL') {
+        setTimeout(() => onBack(), 500);
     }
-    setIsUpdating(false);
   };
 
   const handleRejection = () => {
@@ -142,21 +124,17 @@ export default function ApplicationReview({ application: initialApplication, onB
     setRejectionComment('');
 };
 
-  const handleFcbStatusChange = async (status: Application['fcbStatus']) => {
-     if (!firestore) return;
-     const appRef = doc(firestore, 'applications', application.id);
-     try {
-         await updateDoc(appRef, { fcbStatus: status });
-         setApplication(prev => ({...prev, fcbStatus: status})); // Optimistic update
-     } catch (error) {
-         console.error("Failed to update FCB status: ", error);
-         toast({ title: "Update failed", description: "Could not update FCB status.", variant: "destructive" });
-     }
+  const handleFcbStatusChange = (status: Application['fcbStatus']) => {
+     setApplications(prev => prev.map(app => 
+      app.id === application.id 
+      ? { ...app, fcbStatus: status } 
+      : app
+    ));
+    setApplication(prev => ({...prev, fcbStatus: status})); // Also update local state for immediate UI feedback
   };
 
-
-  const handleAddComment = async () => {
-    if (newComment.trim() === '' || !firestore) return;
+  const handleAddComment = () => {
+    if (newComment.trim() === '') return;
 
     const newCommentObject: Comment = {
       id: `c${Date.now()}`,
@@ -165,17 +143,16 @@ export default function ApplicationReview({ application: initialApplication, onB
       timestamp: new Date().toISOString(),
       content: newComment.trim(),
     };
+
+    setApplications(prev => prev.map(app =>
+      app.id === application.id
+        ? { ...app, comments: [...app.comments, newCommentObject] }
+        : app
+    ));
     
-    const appRef = doc(firestore, 'applications', application.id);
-    try {
-        await updateDoc(appRef, {
-            comments: arrayUnion(newCommentObject)
-        });
-        setNewComment('');
-    } catch (error) {
-        console.error("Failed to add comment: ", error);
-        toast({ title: "Comment failed", description: "Could not add comment.", variant: "destructive" });
-    }
+    setApplication(prev => ({...prev, comments: [...prev.comments, newCommentObject]}));
+
+    setNewComment('');
   };
 
   const handleDownloadPdf = async () => {
@@ -191,6 +168,11 @@ export default function ApplicationReview({ application: initialApplication, onB
     
     // Temporarily update application with current form state for printing
     const appDataForPrint = { ...application, details: { ...application.details, ...form.getValues() } };
+    setApplication(appDataForPrint);
+    
+    // Allow state to update before printing
+    await new Promise(resolve => setTimeout(resolve, 100));
+
 
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -284,28 +266,21 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const renderActions = () => {
-    const disabled = isUpdating;
     switch (user.role) {
       case 'back-office':
         if(application.status === 'Approved' || application.status === 'Pending Supervisor') return null;
         return (
           <div className="space-x-2">
-            <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')} disabled={disabled}>
-              {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CornerUpLeft className="mr-2 h-4 w-4" />}Return to ATL
-            </Button>
-            <Button onClick={() => handleStatusChange('Pending Supervisor')} disabled={disabled}>
-              {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}Send to Supervisor
-            </Button>
+            <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ATL</Button>
+            <Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button>
           </div>
         );
       case 'supervisor':
         if(application.status === 'Approved' || application.status === 'Rejected') return null;
         return (
           <div className="space-x-2">
-            <Button variant="destructive" onClick={() => setIsRejecting(true)} disabled={disabled}><X className="mr-2 h-4 w-4" />Reject</Button>
-            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved')} disabled={disabled}>
-                {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4" />}Approve
-            </Button>
+            <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject</Button>
+            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved')}><Check className="mr-2 h-4 w-4" />Approve</Button>
           </div>
         );
       default:
@@ -317,8 +292,6 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   // Create a version of the application with the latest form data for printing
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
-
-  const lastUpdatedDate = application.lastUpdated?.toDate ? application.lastUpdated.toDate().toLocaleString() : new Date(application.lastUpdated).toLocaleString();
 
 
   return (
@@ -401,7 +374,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                               <DetailItem label="Submission Date" value={application.submittedDate} />
                               <DetailItem label="Submitted By" value={application.submittedBy} />
                               <DetailItem label="Status" value={application.status} />
-                              <DetailItem label="Last Updated" value={lastUpdatedDate} />
+                              <DetailItem label="Last Updated" value={application.lastUpdated} />
                             </div>
                             <Separator/>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -667,10 +640,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               </div>
               <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleRejection} disabled={!rejectionReason || !rejectionComment || isUpdating}>
-                  {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                  Confirm Rejection
-              </AlertDialogAction>
+              <AlertDialogAction onClick={handleRejection} disabled={!rejectionReason || !rejectionComment}>Confirm Rejection</AlertDialogAction>
               </AlertDialogFooter>
           </AlertDialogContent>
           </AlertDialog>

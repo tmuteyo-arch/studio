@@ -1,18 +1,17 @@
 'use client';
 
 import * as React from 'react';
+import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Loader2 } from 'lucide-react';
+import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
+import { PlusCircle, Search } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -38,26 +37,20 @@ interface AtlDashboardProps {
 export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
+  const [applications] = useAtom(applicationsAtom);
   const [searchTerm, setSearchTerm] = React.useState('');
-  
-  const { firestore } = useFirestore();
 
-  const { data: applications, loading } = useCollection<Application>(
-    (db) => db ? query(
-      collection(db, 'applications'),
-      where('submittedBy', '==', user.name),
-      where('status', 'in', ['Submitted', 'Returned to ATL', 'Approved', 'Rejected']),
-      orderBy('lastUpdated', 'desc')
-    ) : null
-  );
-
-  const filteredApplications = (applications || []).filter(app => {
+  const myApplications = applications
+    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Approved', 'Rejected'].includes(app.status))
+    .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+    
+  const filteredApplications = myApplications.filter(app => {
     return app.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
            app.clientName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const applicationForReview = selectedApplication 
-      ? applications?.find(app => app.id === selectedApplication.id) 
+      ? applications.find(app => app.id === selectedApplication.id) 
       : null;
 
   if (isCreatingApplication) {
@@ -103,11 +96,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
             </div>
         </CardHeader>
         <CardContent>
-           {loading ? (
-              <div className="flex items-center justify-center p-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-             </div>
-           ) : filteredApplications.length > 0 ? (
+           {filteredApplications.length > 0 ? (
             <div>
               {/* Mobile Card View */}
               <div className="md:hidden space-y-4">
