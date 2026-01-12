@@ -295,5 +295,3 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     </div>
   );
 }
-
-    

@@ -335,5 +335,3 @@ export const initialApplications: Application[] = [
 ];
 
 export const applicationsAtom = atom<Application[]>(initialApplications);
-
-    
