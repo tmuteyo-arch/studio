@@ -52,8 +52,8 @@ export default function TeamPerformanceChart({ applications, team }: TeamPerform
             A breakdown of the total applications processed by each team member.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-         <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <CardContent className="flex justify-center">
+         <ChartContainer config={chartConfig} className="h-40 w-full max-w-xs">
             <ResponsiveContainer>
               <PieChart>
                 <ChartTooltip 
@@ -66,7 +66,7 @@ export default function TeamPerformanceChart({ applications, team }: TeamPerform
                   nameKey="name" 
                   cx="50%" 
                   cy="50%" 
-                  outerRadius={80} 
+                  outerRadius={60} 
                   labelLine={false}
                   label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
                     const RADIAN = Math.PI / 180;
@@ -74,7 +74,7 @@ export default function TeamPerformanceChart({ applications, team }: TeamPerform
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                     return (
-                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+                      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-bold">
                         {`${(percent * 100).toFixed(0)}%`}
                       </text>
                     );
