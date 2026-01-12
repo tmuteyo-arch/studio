@@ -2,13 +2,11 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
-import { useAtom } from 'jotai';
-import { applicationsAtom, Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
 import { ArrowLeft, Loader2, FileUp, Camera, Upload, Trash2, File, ScanLine } from 'lucide-react';
-import { useFirestore, useFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +14,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '../ui/badge';
+import { Application } from '@/lib/mock-data';
+
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -33,7 +33,6 @@ interface DigitizeApplicationFlowProps {
 export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeApplicationFlowProps) {
   const { toast } = useToast();
   const { firestore } = useFirebase();
-  const [, setApplications] = useAtom(applicationsAtom);
 
   const [clientName, setClientName] = React.useState('');
   const [documentType, setDocumentType] = React.useState('Other Document');
@@ -127,16 +126,25 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       });
       return;
     }
+    if (!firestore) {
+      toast({
+          title: "Submission Failed",
+          description: "Database not connected. Please configure Firebase.",
+          variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+  }
 
     setIsSubmitting(true);
-
-    const newApplicationData: Application = {
-      id: `ARC-${String(Date.now()).slice(-6)}`,
+    
+    // We don't need all fields for an archived record, so we can cast a simpler object.
+    const newApplicationData = {
       clientName: clientName.trim(),
       clientType: 'Archived',
       status: 'Archived',
       submittedDate: format(new Date(), 'yyyy-MM-dd'),
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: serverTimestamp(),
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
       details: {
@@ -150,7 +158,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       documents: pages.map((page, index) => ({
         type: page.documentType,
         fileName: page.file?.name || `scan_${index + 1}.jpg`,
-        url: '#', // Placeholder URL
+        url: '#', // Placeholder URL for now. Would use Firebase Storage URL in a real scenario.
       })),
       history: [
         { action: 'Archived', user: user.name, timestamp: new Date().toISOString(), notes: 'Digitalized from paper record.' },
@@ -158,35 +166,24 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       comments: [],
     };
 
-    setApplications(prev => [newApplicationData, ...prev]);
-
-    if (firestore) {
-      try {
-        const { id, ...appDataForFirebase } = newApplicationData;
-        await addDoc(collection(firestore, 'applications'), {
-          ...appDataForFirebase,
-          lastUpdated: serverTimestamp()
+    try {
+        await addDoc(collection(firestore, 'applications'), newApplicationData);
+        toast({
+            title: "Application Archived!",
+            description: `The application for ${clientName} has been successfully digitized and saved.`,
         });
-      } catch (error) {
+        setTimeout(() => {
+            onCancel();
+        }, 1000);
+    } catch (error) {
         console.error("Error adding document: ", error);
         toast({
-          title: "Submission Failed",
-          description: "Could not save archived application to the database.",
-          variant: "destructive",
+            title: "Submission Failed",
+            description: "Could not save archived application to the database.",
+            variant: "destructive",
         });
         setIsSubmitting(false);
-        return;
-      }
     }
-
-    toast({
-      title: "Application Archived!",
-      description: `The application for ${clientName} has been successfully digitized and saved.`,
-    });
-
-    setTimeout(() => {
-      onCancel();
-    }, 1000);
   };
 
   return (

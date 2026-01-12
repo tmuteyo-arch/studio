@@ -1,17 +1,16 @@
 'use client';
 import * as React from 'react';
-import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, ApplicationStatus, applicationsAtom } from '@/lib/mock-data';
+import { Application, ApplicationStatus } from '@/lib/mock-data';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine } from 'lucide-react';
+import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine, Loader2 } from 'lucide-react';
 import { useCollection } from '@/firebase';
-import { collection, query, where, or } from 'firebase/firestore';
+import { collection, query, where, or, orderBy, limit } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import DailyActivityTracker from './daily-activity-tracker';
 import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
@@ -47,17 +46,19 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [filter, setFilter] = React.useState<FilterStatus>('pendingReview');
     const [isDigitizing, setIsDigitizing] = React.useState(false);
     
-    const [allApplications, setAllApplications] = useAtom(applicationsAtom);
-    const loading = false;
+    const { data: allApplications, loading } = useCollection<Application>(
+      (db) => db ? query(collection(db, 'applications'), orderBy('lastUpdated', 'desc')) : null
+    );
     
-    const summaryStats = {
-        pendingReview: allApplications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length,
-        pendingSupervisor: allApplications.filter(a => a.status === 'Pending Supervisor').length,
-        approved: allApplications.filter(a => a.status === 'Approved').length,
-        rejected: allApplications.filter(a => a.status === 'Rejected').length,
-    }
+    const summaryStats = React.useMemo(() => ({
+        pendingReview: allApplications?.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length ?? 0,
+        pendingSupervisor: allApplications?.filter(a => a.status === 'Pending Supervisor').length ?? 0,
+        approved: allApplications?.filter(a => a.status === 'Approved').length ?? 0,
+        rejected: allApplications?.filter(a => a.status === 'Rejected').length ?? 0,
+    }), [allApplications]);
 
     const filteredApplications = React.useMemo(() => {
+        if (!allApplications) return [];
         let apps = allApplications;
         switch (filter) {
             case 'pendingReview':
@@ -99,7 +100,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     }
     
     const applicationForReview = selectedApplication 
-      ? allApplications.find(app => app.id === selectedApplication.id) 
+      ? allApplications?.find(app => app.id === selectedApplication.id) 
       : null;
 
     if (isDigitizing) {
@@ -137,7 +138,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             </Button>
         </div>
 
-        <DailyActivityTracker applications={allApplications} />
+        <DailyActivityTracker applications={allApplications || []} />
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
             <button onClick={() => setFilter('pendingReview')} className={cn("text-left", filter === 'pendingReview' && "ring-2 ring-primary rounded-lg")}>
@@ -221,7 +222,11 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
               </div>
           </CardHeader>
           <CardContent>
-             {loading ? <p>Loading applications...</p> : filteredApplications.length > 0 ? (
+             {loading ? (
+                <div className="flex items-center justify-center p-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+             ) : filteredApplications.length > 0 ? (
                 <div>
                   {/* Mobile Card View */}
                   <div className="md:hidden space-y-4">

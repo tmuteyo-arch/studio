@@ -39,6 +39,7 @@ import { generateApplicationSummary } from '@/lib/actions';
 import { Alert, AlertDescription as AlertDescriptionComponent, AlertTitle as AlertTitleComponent } from '../ui/alert';
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepDirectors from './steps/step-directors';
+import { doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -75,18 +76,24 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const [isGeneratingSummary, setIsGeneratingSummary] = React.useState(false);
   const [aiSummary, setAiSummary] = React.useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = React.useState(false);
 
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
 
   const form = useForm({
     defaultValues: initialApplication.details,
   });
+  
+  React.useEffect(() => {
+    setApplication(initialApplication);
+    form.reset(initialApplication.details);
+  }, [initialApplication, form]);
 
-  const documentRequirements = getDocumentRequirements(application.clientType);
-  const uploadedDocumentTypes = application.documents.map(d => d.type);
 
   const handleStatusChange = async (status: Application['status'], notes?: string) => {
-    // With mock data, we just update the state
+    if (!firestore) return;
+    setIsUpdating(true);
+
     const newHistoryLog: HistoryLog = {
       action: status,
       user: user.name,
@@ -94,22 +101,29 @@ export default function ApplicationReview({ application: initialApplication, onB
       notes: notes,
     };
     
-    setApplication(prev => ({
-        ...prev,
-        status: status,
-        history: [...prev.history, newHistoryLog],
-        lastUpdated: new Date().toISOString(),
-        details: { ...prev.details, ...form.getValues() } // Save form data on status change
-    }));
+    const appRef = doc(firestore, 'applications', application.id);
 
-    toast({
-        title: `Application ${status}`,
-        description: `Application for ${application.clientName} has been updated.`,
-    });
+    try {
+        await updateDoc(appRef, {
+            status: status,
+            history: arrayUnion(newHistoryLog),
+            lastUpdated: serverTimestamp(),
+            details: { ...application.details, ...form.getValues() }
+        });
 
-    if (status === 'Approved' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL') {
-        setTimeout(() => onBack(), 500);
+        toast({
+            title: `Application ${status}`,
+            description: `Application for ${application.clientName} has been updated.`,
+        });
+
+        if (status === 'Approved' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL') {
+            setTimeout(() => onBack(), 500);
+        }
+    } catch (error) {
+        console.error("Failed to update status: ", error);
+        toast({ title: "Update failed", description: "Could not update application status.", variant: "destructive" });
     }
+    setIsUpdating(false);
   };
 
   const handleRejection = () => {
@@ -129,12 +143,20 @@ export default function ApplicationReview({ application: initialApplication, onB
 };
 
   const handleFcbStatusChange = async (status: Application['fcbStatus']) => {
-     setApplication(prev => ({...prev, fcbStatus: status}));
+     if (!firestore) return;
+     const appRef = doc(firestore, 'applications', application.id);
+     try {
+         await updateDoc(appRef, { fcbStatus: status });
+         setApplication(prev => ({...prev, fcbStatus: status})); // Optimistic update
+     } catch (error) {
+         console.error("Failed to update FCB status: ", error);
+         toast({ title: "Update failed", description: "Could not update FCB status.", variant: "destructive" });
+     }
   };
 
 
   const handleAddComment = async () => {
-    if (newComment.trim() === '') return;
+    if (newComment.trim() === '' || !firestore) return;
 
     const newCommentObject: Comment = {
       id: `c${Date.now()}`,
@@ -144,8 +166,16 @@ export default function ApplicationReview({ application: initialApplication, onB
       content: newComment.trim(),
     };
     
-    setApplication(prev => ({...prev, comments: [...prev.comments, newCommentObject]}));
-    setNewComment('');
+    const appRef = doc(firestore, 'applications', application.id);
+    try {
+        await updateDoc(appRef, {
+            comments: arrayUnion(newCommentObject)
+        });
+        setNewComment('');
+    } catch (error) {
+        console.error("Failed to add comment: ", error);
+        toast({ title: "Comment failed", description: "Could not add comment.", variant: "destructive" });
+    }
   };
 
   const handleDownloadPdf = async () => {
@@ -254,16 +284,17 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const renderActions = () => {
+    const disabled = isUpdating;
     switch (user.role) {
       case 'back-office':
         if(application.status === 'Approved' || application.status === 'Pending Supervisor') return null;
         return (
           <div className="space-x-2">
-            <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}>
-              <CornerUpLeft className="mr-2 h-4 w-4" />Return to ATL
+            <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')} disabled={disabled}>
+              {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CornerUpLeft className="mr-2 h-4 w-4" />}Return to ATL
             </Button>
-            <Button onClick={() => handleStatusChange('Pending Supervisor')}>
-              <Send className="mr-2 h-4 w-4" />Send to Supervisor
+            <Button onClick={() => handleStatusChange('Pending Supervisor')} disabled={disabled}>
+              {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}Send to Supervisor
             </Button>
           </div>
         );
@@ -271,8 +302,10 @@ export default function ApplicationReview({ application: initialApplication, onB
         if(application.status === 'Approved' || application.status === 'Rejected') return null;
         return (
           <div className="space-x-2">
-            <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject</Button>
-            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved')}><Check className="mr-2 h-4 w-4" />Approve</Button>
+            <Button variant="destructive" onClick={() => setIsRejecting(true)} disabled={disabled}><X className="mr-2 h-4 w-4" />Reject</Button>
+            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved')} disabled={disabled}>
+                {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4" />}Approve
+            </Button>
           </div>
         );
       default:
@@ -284,6 +317,9 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   // Create a version of the application with the latest form data for printing
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
+
+  const lastUpdatedDate = application.lastUpdated?.toDate ? application.lastUpdated.toDate().toLocaleString() : new Date(application.lastUpdated).toLocaleString();
+
 
   return (
     <FormProvider {...form}>
@@ -365,7 +401,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                               <DetailItem label="Submission Date" value={application.submittedDate} />
                               <DetailItem label="Submitted By" value={application.submittedBy} />
                               <DetailItem label="Status" value={application.status} />
-                              <DetailItem label="Last Updated" value={new Date(application.lastUpdated).toLocaleString()} />
+                              <DetailItem label="Last Updated" value={lastUpdatedDate} />
                             </div>
                             <Separator/>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -631,7 +667,8 @@ export default function ApplicationReview({ application: initialApplication, onB
               </div>
               <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleRejection} disabled={!rejectionReason || !rejectionComment}>
+              <AlertDialogAction onClick={handleRejection} disabled={!rejectionReason || !rejectionComment || isUpdating}>
+                  {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
                   Confirm Rejection
               </AlertDialogAction>
               </AlertDialogFooter>

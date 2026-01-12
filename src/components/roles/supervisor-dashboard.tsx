@@ -1,13 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Application, ApplicationStatus, applicationsAtom } from '@/lib/mock-data';
-import { AlertCircle, CheckCircle2, Clock, Inbox, Search } from 'lucide-react';
+import { Application, ApplicationStatus } from '@/lib/mock-data';
+import { AlertCircle, CheckCircle2, Clock, Inbox, Search, Loader2 } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
@@ -15,6 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { differenceInDays, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import TeamPerformanceChart from './team-performance-chart';
+import { useCollection } from '@/firebase';
+import { collection, query, where, orderBy } from 'firebase/firestore';
+
 
 interface SupervisorDashboardProps {
     user: User;
@@ -36,8 +38,10 @@ const getStatusVariant = (status: ApplicationStatus) => {
 export default function SupervisorDashboard({ user }: SupervisorDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [searchTerm, setSearchTerm] = React.useState('');
-    const [applications] = useAtom(applicationsAtom);
-    const loading = false;
+    
+    const { data: applications, loading } = useCollection<Application>(
+      (db) => db ? query(collection(db, 'applications'), orderBy('lastUpdated', 'desc')) : null
+    );
 
     const myApprovalQueue = (applications || [])
         .filter(app => app.status === 'Pending Supervisor');
@@ -49,13 +53,18 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         .filter(app => ['Submitted', 'In Review', 'Returned to ATL'].includes(app.status));
         
     const completedToday = teamApplications
-        .filter(app => app.status === 'Approved' && differenceInDays(new Date(), parseISO(app.lastUpdated)) === 0).length;
+        .filter(app => {
+            if (app.status !== 'Approved' || !app.lastUpdated?.toDate) return false;
+            return differenceInDays(new Date(), app.lastUpdated.toDate()) === 0
+        }).length;
 
-    const pendingOver3Days = applications
-        .filter(app => 
-            ['Submitted', 'In Review', 'Pending Supervisor', 'Returned to ATL'].includes(app.status) &&
-            differenceInDays(new Date(), parseISO(app.lastUpdated)) > 3
-        ).length;
+    const pendingOver3Days = (applications || [])
+        .filter(app => {
+            if (!['Submitted', 'In Review', 'Pending Supervisor', 'Returned to ATL'].includes(app.status) || !app.lastUpdated?.toDate) {
+                return false;
+            }
+            return differenceInDays(new Date(), app.lastUpdated.toDate()) > 3
+        }).length;
 
     const filteredQueue = myApprovalQueue
         .filter(app =>
@@ -67,7 +76,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
             app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
-    const applicationForReview = selectedApplication 
+    const applicationForReview = selectedApplication && applications
       ? applications.find(app => app.id === selectedApplication.id) 
       : null;
     
@@ -153,7 +162,11 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                         <CardDescription>Applications that have been reviewed by Back Office and are pending your final approval.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                    {loading ? <p>Loading queue...</p> : filteredQueue.length > 0 ? (
+                    {loading ? (
+                        <div className="flex items-center justify-center p-12">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : filteredQueue.length > 0 ? (
                         <div>
                           {/* Mobile Card View */}
                           <div className="md:hidden space-y-4">
@@ -165,7 +178,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                                 </CardHeader>
                                 <CardContent className="space-y-2 text-sm">
                                   <p><span className="font-medium text-muted-foreground">Submitted By:</span> {app.submittedBy}</p>
-                                  <p><span className="font-medium text-muted-foreground">Updated:</span> {new Date(app.lastUpdated).toLocaleDateString()}</p>
+                                  <p><span className="font-medium text-muted-foreground">Updated:</span> {app.lastUpdated?.toDate ? app.lastUpdated.toDate().toLocaleDateString() : 'N/A'}</p>
                                   <Badge variant="secondary" className="my-2">{app.status}</Badge>
                                   <Button className="w-full mt-2" variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review</Button>
                                 </CardContent>
@@ -192,7 +205,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                                             <TableCell className="font-mono text-xs">{app.id}</TableCell>
                                             <TableCell className="font-medium">{app.clientName}</TableCell>
                                             <TableCell>{app.submittedBy}</TableCell>
-                                            <TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
+                                            <TableCell>{app.lastUpdated?.toDate ? app.lastUpdated.toDate().toLocaleDateString() : 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary">{app.status}</Badge>
                                             </TableCell>
@@ -222,7 +235,11 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                         <CardDescription>A complete overview of applications submitted by your team members.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                    {loading ? <p>Loading applications...</p> : filteredTeamApps.length > 0 ? (
+                    {loading ? (
+                         <div className="flex items-center justify-center p-12">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : filteredTeamApps.length > 0 ? (
                         <div>
                            {/* Mobile Card View */}
                           <div className="md:hidden space-y-4">
