@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { differenceInDays, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import TeamPerformanceChart from './team-performance-chart';
+import ExchangeRates from './exchange-rates';
 
 interface SupervisorDashboardProps {
     user: User;
@@ -127,7 +128,11 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
             </Card>
         </div>
 
-        <TeamPerformanceChart applications={teamApplications} team={user.team || []} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <TeamPerformanceChart applications={teamApplications} team={user.team || []} />
+            <ExchangeRates />
+        </div>
+        
 
        <Tabs defaultValue="queue" className="w-full">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">

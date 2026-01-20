@@ -109,7 +109,7 @@ export default function ExchangeRates() {
   };
 
   return (
-    <Card className="mb-6">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
             <Landmark className="h-5 w-5" />
