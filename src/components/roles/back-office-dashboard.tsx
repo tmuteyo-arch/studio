@@ -44,7 +44,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [applications, setApplications] = useAtom(applicationsAtom);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [filter, setFilter] = React.useState<FilterStatus>('pendingReview');
-    const [isDigitizing, setIsDigitizing] = React.useState(false);
+    const [isDigitizing, setIsDigitizing] = React.useState<boolean>(false);
 
     const summaryStats = React.useMemo(() => ({
         pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length,
