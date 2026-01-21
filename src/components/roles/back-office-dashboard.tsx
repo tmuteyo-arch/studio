@@ -13,7 +13,6 @@ import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine } fro
 import { cn } from '@/lib/utils';
 import DailyActivityTracker from './daily-activity-tracker';
 import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
-import ExchangeRates from './exchange-rates';
 
 type FilterStatus = 'pendingReview' | 'pendingSupervisor' | 'approved' | 'rejected' | 'all' | 'storage';
 
@@ -134,9 +133,8 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             </Button>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="mb-6">
           <DailyActivityTracker applications={applications} />
-          <ExchangeRates />
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
