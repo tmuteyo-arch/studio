@@ -181,6 +181,8 @@ const initialApplications: Application[] = [
         fullName: "Rudo Moyo",
         address: "789 Baobab Close, Mutare",
         dateOfBirth: "1992-08-12",
+        contactNumber: 'N/A',
+        email: 'N/A'
     },
     directors: [],
     documents: [{ type: 'National ID Card', fileName: 'national_id.pdf', url: '#' }],
@@ -203,6 +205,8 @@ const initialApplications: Application[] = [
         fullName: "Tendai Moyo",
         address: "111 Jacaranda Lane, Harare",
         dateOfBirth: "1990-11-25",
+        contactNumber: 'N/A',
+        email: 'N/A'
     },
     directors: [],
     documents: [
@@ -232,6 +236,8 @@ const initialApplications: Application[] = [
         address: "Agri-Innovate Farm, Mazowe",
         dateOfBirth: "1975-03-30",
         organisationLegalName: 'Agri-Innovate Ltd',
+        contactNumber: 'N/A',
+        email: 'N/A'
     },
     directors: [],
     documents: [
@@ -258,6 +264,8 @@ const initialApplications: Application[] = [
         fullName: "Tashinga Muteyo",
         address: "222 Flame Lily Drive, Gweru",
         dateOfBirth: "1995-01-10",
+        contactNumber: 'N/A',
+        email: 'N/A'
     },
     directors: [],
     documents: [
