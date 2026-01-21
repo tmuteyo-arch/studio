@@ -35,8 +35,8 @@ import StepDirectors from './steps/step-directors';
 
 const allSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
-  { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address', 'organisationLegalName'] },
-  { id: 'corporate-info', name: 'Corporate Details', fields: [] },
+  { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address'] },
+  { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'certificateOfIncorporationNumber', 'countryOfIncorporation', 'dateOfIncorporation'] },
   { id: 'directors', name: 'Directors', fields: [] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
@@ -77,6 +77,29 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       fullName: '',
       dateOfBirth: '',
       address: '',
+      organisationLegalName: '',
+      tradeName: '',
+      physicalAddress: '',
+      postalAddress: '',
+      webAddress: '',
+      businessTelNumber: '',
+      faxNumber: '',
+      email: '',
+      natureOfBusiness: '',
+      sourceOfWealth: '',
+      typeOfBusiness: '',
+      noOfEmployees: undefined,
+      economicSector: '',
+      authorisedCapital: '',
+      taxPayerNumber: '',
+      dateOfIncorporation: '',
+      countryOfIncorporation: '',
+      certificateOfIncorporationNumber: '',
+      otherAccountNumbers: '',
+      premisesOtherDetails: '',
+      otherBank1Name: '',
+      otherBank1AccName: '',
+      otherBank1AccNumber: '',
       document1Type: '',
       document2Type: '',
       signature: '',
@@ -104,8 +127,10 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     const data = form.getValues();
     let nameToCheck = '';
     
-    if (currentStep.id === 'personal-info') {
-        nameToCheck = isCorporate ? data.organisationLegalName || '' : data.fullName;
+    if (currentStep.id === 'corporate-info') {
+        nameToCheck = data.organisationLegalName || '';
+    } else if (currentStep.id === 'personal-info' && !isCorporate) {
+         nameToCheck = data.fullName;
     }
     
     if (!nameToCheck) {

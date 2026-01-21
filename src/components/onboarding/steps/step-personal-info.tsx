@@ -9,9 +9,7 @@ import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 export default function StepPersonalInfo() {
   const form = useFormContext<OnboardingFormData>();
   const clientType = form.watch('clientType');
-
-  const isPersonal = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
-  const isCorporate = !isPersonal && clientType;
+  const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType) && clientType;
 
   return (
     <div>
@@ -19,29 +17,13 @@ export default function StepPersonalInfo() {
         <CardTitle>Applicant Information</CardTitle>
         <CardDescription>
             { isCorporate 
-              ? "Provide the legal name of the organization and the details for the primary contact person."
+              ? "Please provide the details for the primary contact person."
               : "Please provide the applicant's primary details."
             }
         </CardDescription>
       </CardHeader>
       <div className="space-y-4 px-6">
-        {isCorporate && (
-            <FormField
-            control={form.control}
-            name={'organisationLegalName'}
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Organisation's Legal Name</FormLabel>
-                <FormControl>
-                    <Input placeholder={'e.g., Acme Inc.'} {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-        )}
-        
-        <div className={isCorporate ? "pt-4 border-t" : ""}>
+        <div className={isCorporate ? "pt-4" : ""}>
             {isCorporate && <p className="text-sm font-medium text-muted-foreground mb-4">Primary Contact Person Details</p>}
             <div className='space-y-4'>
                 <FormField
