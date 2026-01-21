@@ -10,76 +10,33 @@ import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { users, User } from '@/lib/users';
+import { users, User, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
-import { Mail, Lock, ShieldCheck, User as UserIcon } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
   const { toast } = useToast();
 
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [error, setError] = React.useState('');
-
-
-  const handleLogin = (event: React.FormEvent) => {
-    event.preventDefault();
-    setError('');
-
-    if (!email) {
-        setError('Please enter an email address.');
-        return;
-    }
-
-    const lowerCaseEmail = email.toLowerCase();
-    let userToLogin: User | undefined;
-
-    // 1. Try to find by exact email
-    userToLogin = users.find(user => user.email.toLowerCase() === lowerCaseEmail);
-
-    // 2. If not found, try by keyword
-    if (!userToLogin) {
-        if (lowerCaseEmail.includes('atl')) {
-            userToLogin = users.find(u => u.role === 'atl');
-        } else if (lowerCaseEmail.includes('bo') || lowerCaseEmail.includes('back')) {
-            userToLogin = users.find(u => u.role === 'back-office');
-        } else if (lowerCaseEmail.includes('supervisor')) {
-            userToLogin = users.find(u => u.role === 'supervisor');
-        }
-    }
-    
-    // 3. If still not found, and something was typed, default to the first user.
-    if (!userToLogin && email) {
-        userToLogin = users[0];
-    }
-
+  const handleRoleLogin = (role: Role) => {
+    const userToLogin = users.find(u => u.role === role);
     if (userToLogin) {
       setLoggedInUser(userToLogin);
       toast({
         title: `Welcome, ${userToLogin.name}!`,
-        description: `You have successfully logged in as a ${userToLogin.role.replace('-', ' ')}.`,
+        description: `You are now logged in as a ${userToLogin.role.replace('-', ' ')}.`,
       });
     } else {
-      const errorMessage = 'Please enter an email to sign in.';
-      setError(errorMessage);
-      toast({
+       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: errorMessage,
+        description: `Could not find a user for the role: ${role}`,
       });
     }
   };
 
   const handleLogout = () => {
     setLoggedInUser(null);
-    setEmail('');
-    setPassword('');
-    setError('');
   };
 
   const renderDashboard = () => {
@@ -97,84 +54,49 @@ function AppContent() {
     }
   };
   
-  const renderLoginScreen = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#111827] via-[#1a2c58] to-[#4c1d95] p-4 sm:p-8">
-      <header className="mb-8 text-center">
-        <div className="flex justify-center items-center gap-4 mb-4">
-          <Logo className="h-12 w-12 text-white" />
-          <h1 className="text-4xl font-bold tracking-tight text-white">InnBucks Agent Onboarding</h1>
-        </div>
-      </header>
-      <motion.div 
-        initial={{ opacity: 0, y: 50, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md"
-      >
-          <Card className="overflow-hidden shadow-2xl">
-            <CardHeader className="bg-card p-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-primary/20 p-3 rounded-full border-2 border-primary/50">
-                  <UserIcon className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl text-foreground">Welcome Back</CardTitle>
-                  <CardDescription>Sign in to access your dashboard</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="bg-background/80 backdrop-blur-sm p-6">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      placeholder="e.g. atl1@inbucks.app" 
-                      className="pl-10" 
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input 
-                      id="password" 
-                      type="password" 
-                      placeholder="••••••••" 
-                      className="pl-10" 
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                  <p className='text-xs text-muted-foreground pt-1'>Hint: Any password will work for demo purposes.</p>
-                </div>
-                 {error && (
-                    <Alert variant="destructive" className="mt-4">
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
-                <Button type="submit" className="w-full !mt-6">Sign In</Button>
-              </form>
-            </CardContent>
-            <CardFooter className="bg-card p-4 flex items-center justify-center text-xs">
-                <ShieldCheck className="h-4 w-4 text-green-500 mr-2"/>
-                <p className="text-muted-foreground">Your data is secure and protected.</p>
-            </CardFooter>
-          </Card>
-      </motion.div>
-       <div className="mt-8 text-center text-sm text-gray-400">
-        <p>Available demo users:</p>
-        <div className="flex gap-4 justify-center mt-2 font-mono">
-            <span>atl1@inbucks.app</span>
-            <span>bo1@inbucks.app</span>
-            <span>supervisor1@inbucks.app</span>
-        </div>
+  const renderRoleSelection = () => (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-8 text-center">
+       <div className="flex items-center gap-4 mb-4">
+        <Logo className="h-10 w-10" />
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">InnBucks Agent Onboarding</h1>
+      </div>
+      <h2 className="text-2xl font-semibold text-primary mb-2">Select a Role to Continue</h2>
+      <p className="text-muted-foreground mb-12">Simulate the login for different user roles in the system.</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+            <Card className="text-left h-full flex flex-col">
+                <CardHeader>
+                    <CardTitle>ATL</CardTitle>
+                    <CardDescription>Account Taking Leaders who submit applications.</CardDescription>
+                </CardHeader>
+                <CardFooter className="mt-auto">
+                    <Button className="w-full" onClick={() => handleRoleLogin('atl')}>Login as ATL</Button>
+                </CardFooter>
+            </Card>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+            <Card className="text-left h-full flex flex-col">
+                <CardHeader>
+                    <CardTitle>Back Office</CardTitle>
+                    <CardDescription>Officers who validate and process applications.</CardDescription>
+                </CardHeader>
+                <CardFooter className="mt-auto">
+                    <Button className="w-full" variant="secondary" onClick={() => handleRoleLogin('back-office')}>Login as Back Office</Button>
+                </CardFooter>
+            </Card>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
+            <Card className="text-left h-full flex flex-col">
+                <CardHeader>
+                    <CardTitle>Supervisor</CardTitle>
+                    <CardDescription>Supervisors who review, approve, or reject applications.</CardDescription>
+                </CardHeader>
+                <CardFooter className="mt-auto">
+                    <Button className="w-full" variant="outline" style={{borderColor: 'hsl(var(--chart-2))', color: 'hsl(var(--chart-2))'}} onClick={() => handleRoleLogin('supervisor')}>Login as Supervisor</Button>
+                </CardFooter>
+            </Card>
+        </motion.div>
       </div>
     </div>
   );
@@ -199,7 +121,7 @@ function AppContent() {
             <main>{renderDashboard()}</main>
         </div>
       ) : (
-        renderLoginScreen()
+        renderRoleSelection()
       )}
     </div>
   );
