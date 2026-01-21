@@ -36,7 +36,27 @@ function AppContent() {
         return;
     }
 
-    const userToLogin = users.find(user => user.email.toLowerCase() === email.toLowerCase());
+    const lowerCaseEmail = email.toLowerCase();
+    let userToLogin: User | undefined;
+
+    // 1. Try to find by exact email
+    userToLogin = users.find(user => user.email.toLowerCase() === lowerCaseEmail);
+
+    // 2. If not found, try by keyword
+    if (!userToLogin) {
+        if (lowerCaseEmail.includes('atl')) {
+            userToLogin = users.find(u => u.role === 'atl');
+        } else if (lowerCaseEmail.includes('bo') || lowerCaseEmail.includes('back')) {
+            userToLogin = users.find(u => u.role === 'back-office');
+        } else if (lowerCaseEmail.includes('supervisor')) {
+            userToLogin = users.find(u => u.role === 'supervisor');
+        }
+    }
+    
+    // 3. If still not found, and something was typed, default to the first user.
+    if (!userToLogin && email) {
+        userToLogin = users[0];
+    }
 
     if (userToLogin) {
       setLoggedInUser(userToLogin);
@@ -45,7 +65,7 @@ function AppContent() {
         description: `You have successfully logged in as a ${userToLogin.role.replace('-', ' ')}.`,
       });
     } else {
-      const errorMessage = 'No user found with that email address.';
+      const errorMessage = 'Please enter an email to sign in.';
       setError(errorMessage);
       toast({
         variant: 'destructive',
