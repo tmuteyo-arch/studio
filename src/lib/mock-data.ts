@@ -59,61 +59,17 @@ export type Application = {
     address: string;
     dateOfBirth: string;
     contactNumber?: string;
-    email?: string;
-
+    
     // Corporate only
     organisationLegalName?: string | null;
     tradeName?: string | null;
     physicalAddress?: string | null;
-    postalAddress?: string | null;
-    webAddress?: string | null;
-    socials?: {
-        facebook?: string;
-        twitter?: string;
-        skype?: string;
-        linkedin?: string;
-        other?: string;
-    } | null;
-    faxNumber?: string | null;
+    businessTelNumber?: string | null;
+    email?: string | null;
     natureOfBusiness?: string | null;
-    sourceOfWealth?: string | null;
-    typeOfBusiness?: string | null;
-    noOfEmployees?: number | null;
-    economicSector?: string | null;
-    authorisedCapital?: string | null;
-    taxPayerNumber?: string | null;
     dateOfIncorporation?: string | null;
     countryOfIncorporation?: string | null;
     certificateOfIncorporationNumber?: string | null;
-    accountCurrency?: {
-        usd?: boolean;
-        zar?: boolean;
-        gbp?: boolean;
-        eur?: boolean;
-        bwp?: boolean;
-    } | null;
-    hasOtherAccounts?: 'Yes' | 'No' | null;
-    otherAccountNumbers?: string | null;
-    accountTypeTick?: {
-        transactional?: boolean;
-        savings?: boolean;
-        termDeposit?: boolean;
-        mMarket?: boolean;
-        loan?: boolean;
-    } | null;
-    communicationPreference?: 'Email' | 'Fax' | 'Letter' | 'Telephone' | null;
-    requestedServices?: {
-        internetBanking?: boolean;
-        standingOrder?: boolean;
-        accountSweep?: boolean;
-        salaryServices?: boolean;
-        posInfrastructure?: boolean;
-    } | null;
-    premisesStatus?: 'Owned' | 'Rented' | 'Other' | null;
-    premisesOtherDetails?: string | null;
-    otherBank1Name?: string | null;
-    otherBank1AccName?: string | null;
-    otherBank1AccNumber?: string | null;
   };
   directors: Director[];
   documents: Document[];
@@ -138,15 +94,9 @@ const initialApplications: Application[] = [
         organisationLegalName: 'EcoVentures Inc.',
         tradeName: 'EcoVentures',
         physicalAddress: '123 Green Way, Harare',
-        postalAddress: 'P.O. Box 500, Harare',
-        webAddress: 'http://ecoventures.co.zw',
         businessTelNumber: '+263 4 700 800',
         email: 'contact@ecoventures.co.zw',
         natureOfBusiness: 'Renewable energy solutions',
-        sourceOfWealth: 'Business profits',
-        typeOfBusiness: 'Private Limited',
-        noOfEmployees: 45,
-        economicSector: 'Energy',
         dateOfIncorporation: '2020-01-15',
         countryOfIncorporation: 'Zimbabwe',
         certificateOfIncorporationNumber: 'CI-12345/2020'
@@ -182,7 +132,6 @@ const initialApplications: Application[] = [
         address: "789 Baobab Close, Mutare",
         dateOfBirth: "1992-08-12",
         contactNumber: 'N/A',
-        email: 'N/A'
     },
     directors: [],
     documents: [{ type: 'National ID Card', fileName: 'national_id.pdf', url: '#' }],
@@ -206,7 +155,6 @@ const initialApplications: Application[] = [
         address: "111 Jacaranda Lane, Harare",
         dateOfBirth: "1990-11-25",
         contactNumber: 'N/A',
-        email: 'N/A'
     },
     directors: [],
     documents: [
@@ -237,7 +185,6 @@ const initialApplications: Application[] = [
         dateOfBirth: "1975-03-30",
         organisationLegalName: 'Agri-Innovate Ltd',
         contactNumber: 'N/A',
-        email: 'N/A'
     },
     directors: [],
     documents: [
@@ -265,7 +212,6 @@ const initialApplications: Application[] = [
         address: "222 Flame Lily Drive, Gweru",
         dateOfBirth: "1995-01-10",
         contactNumber: 'N/A',
-        email: 'N/A'
     },
     directors: [],
     documents: [

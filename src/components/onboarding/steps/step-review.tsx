@@ -111,7 +111,6 @@ export default function StepReview({ next }: StepReviewProps) {
               <h3 className="font-semibold">Application Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <DetailItem label="Account Type" value={data.clientType} />
-                <DetailItem label="Organisation Legal Name" value={data.organisationLegalName} />
                 <DetailItem label="Primary Contact Name" value={data.fullName} />
                 <DetailItem label="Contact Date of Birth" value={data.dateOfBirth ? format(new Date(data.dateOfBirth), 'MMMM d, yyyy') : '-'} />
                 <DetailItem label="Contact Address" value={data.address} />
@@ -121,6 +120,12 @@ export default function StepReview({ next }: StepReviewProps) {
             <div className="rounded-md border p-4 space-y-4">
                 <h3 className="font-semibold">Corporate Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DetailItem label="Organisation Legal Name" value={data.organisationLegalName} />
+                    <DetailItem label="Trade Name" value={data.tradeName} />
+                    <DetailItem label="Physical Address" value={data.physicalAddress} />
+                    <DetailItem label="Business Phone" value={data.businessTelNumber} />
+                    <DetailItem label="Business Email" value={data.email} />
+                    <DetailItem label="Nature of Business" value={data.natureOfBusiness} />
                     <DetailItem label="Cert. of Incorporation Number" value={data.certificateOfIncorporationNumber} />
                     <DetailItem label="Date of Incorporation" value={data.dateOfIncorporation ? format(new Date(data.dateOfIncorporation), 'MMMM d, yyyy') : '-'} />
                     <DetailItem label="Country of Incorporation" value={data.countryOfIncorporation} />

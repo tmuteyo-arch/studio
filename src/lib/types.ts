@@ -59,57 +59,12 @@ export const OnboardingFormSchema = z.object({
   organisationLegalName: z.string().optional(),
   tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
-  postalAddress: z.string().optional(),
-  webAddress: z.string().url().optional().or(z.literal('')),
-  socials: z.object({
-    facebook: z.string().optional(),
-    twitter: z.string().optional(),
-    skype: z.string().optional(),
-    linkedin: z.string().optional(),
-    other: z.string().optional(),
-  }).optional(),
   businessTelNumber: z.string().optional(),
-  faxNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   natureOfBusiness: z.string().optional(),
-  sourceOfWealth: z.string().optional(),
-  typeOfBusiness: z.string().optional(),
-  noOfEmployees: z.coerce.number().optional(),
-  economicSector: z.string().optional(),
-  authorisedCapital: z.string().optional(),
-  taxPayerNumber: z.string().optional(),
   dateOfIncorporation: z.string().optional().default(''),
   countryOfIncorporation: z.string().optional(),
   certificateOfIncorporationNumber: z.string().optional().default(''),
-  accountCurrency: z.object({
-    usd: z.boolean().optional(),
-    zar: z.boolean().optional(),
-    gbp: z.boolean().optional(),
-    eur: z.boolean().optional(),
-    bwp: z.boolean().optional(),
-  }).optional(),
-  hasOtherAccounts: z.enum(['Yes', 'No']).optional(),
-  otherAccountNumbers: z.string().optional(),
-  accountTypeTick: z.object({
-    transactional: z.boolean().optional(),
-    savings: z.boolean().optional(),
-    termDeposit: z.boolean().optional(),
-    mMarket: z.boolean().optional(),
-    loan: z.boolean().optional(),
-  }).optional(),
-  communicationPreference: z.enum(['Email', 'Fax', 'Letter', 'Telephone']).optional(),
-  requestedServices: z.object({
-    internetBanking: z.boolean().optional(),
-    standingOrder: z.boolean().optional(),
-    accountSweep: z.boolean().optional(),
-    salaryServices: z.boolean().optional(),
-    posInfrastructure: z.boolean().optional(),
-  }).optional(),
-  premisesStatus: z.enum(['Owned', 'Rented', 'Other']).optional(),
-  premisesOtherDetails: z.string().optional(),
-  otherBank1Name: z.string().optional(),
-  otherBank1AccName: z.string().optional(),
-  otherBank1AccNumber: z.string().optional(),
   directors: z.array(DirectorSchema).optional(),
 
   // Document Info
@@ -132,6 +87,12 @@ export const OnboardingFormSchema = z.object({
             path: ['organisationLegalName'],
             message: 'Organization name is required for corporate accounts.',
         });
+      }
+       if (!data.dateOfIncorporation) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dateOfIncorporation'], message: 'Date of incorporation is required.' });
+      }
+      if (!data.certificateOfIncorporationNumber) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['certificateOfIncorporationNumber'], message: 'Certificate number is required.' });
       }
       if (!data.fullName) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['fullName'], message: 'Contact name is required.' });
