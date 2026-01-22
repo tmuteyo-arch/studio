@@ -1,12 +1,13 @@
 'use client';
 import * as React from 'react';
-import { differenceInHours, parseISO } from 'date-fns';
+import { differenceInHours, parseISO, isSameMonth, isSameQuarter } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Application } from '@/lib/mock-data';
 import { Award } from 'lucide-react';
 import { User } from '@/lib/users';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface TeamAppraisalProps {
   applications: Application[];
@@ -23,10 +24,22 @@ type AppraisalData = {
 };
 
 export default function TeamAppraisal({ applications, team }: TeamAppraisalProps) {
+  const [period, setPeriod] = React.useState('all-time');
+
   const appraisalData: AppraisalData[] = React.useMemo(() => {
     if (!team) return [];
+
+    const now = new Date();
+    const filteredApps = applications.filter(app => {
+        if (period === 'all-time') return true;
+        const submittedDate = parseISO(app.submittedDate);
+        if (period === 'monthly') return isSameMonth(submittedDate, now);
+        if (period === 'quarterly') return isSameQuarter(submittedDate, now);
+        return true;
+    });
+
     return team.map((member) => {
-      const memberApps = applications.filter(app => app.submittedBy === member.name);
+      const memberApps = filteredApps.filter(app => app.submittedBy === member.name);
       
       const processedApps = memberApps.filter(app => app.status === 'Approved' || app.status === 'Rejected');
 
@@ -35,7 +48,6 @@ export default function TeamAppraisal({ applications, team }: TeamAppraisalProps
 
       processedApps.forEach(app => {
         const submittedLog = app.history.find(h => h.action === 'Submitted');
-        // Find the final approval or rejection log
         const finalLog = app.history.slice().reverse().find(h => h.action === 'Approved' || h.action === 'Rejected');
         
         if (submittedLog && finalLog) {
@@ -57,18 +69,30 @@ export default function TeamAppraisal({ applications, team }: TeamAppraisalProps
         avgTurnaroundHours: avgTurnaroundHours,
       };
     });
-  }, [applications, team]);
+  }, [applications, team, period]);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Award className="h-5 w-5" />
-          Team Appraisal
-        </CardTitle>
-        <CardDescription>
-          Performance metrics for each Account Taking Leader on your team.
-        </CardDescription>
+      <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center">
+        <div>
+            <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Team Appraisal
+            </CardTitle>
+            <CardDescription>
+                Performance metrics for each Account Taking Leader on your team.
+            </CardDescription>
+        </div>
+         <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-full sm:w-[180px] mt-4 sm:mt-0">
+                <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all-time">All Time</SelectItem>
+                <SelectItem value="monthly">This Month</SelectItem>
+                <SelectItem value="quarterly">This Quarter</SelectItem>
+            </SelectContent>
+        </Select>
       </CardHeader>
       <CardContent>
         <Table>
@@ -100,7 +124,7 @@ export default function TeamAppraisal({ applications, team }: TeamAppraisalProps
         </Table>
          {appraisalData.length === 0 && (
             <div className="text-center text-muted-foreground py-8">
-                No team data to appraise.
+                No team data to appraise for the selected period.
             </div>
          )}
       </CardContent>

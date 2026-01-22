@@ -17,6 +17,8 @@ import { cn } from '@/lib/utils';
 import TeamPerformanceChart from './team-performance-chart';
 import ExchangeRates from './exchange-rates';
 import TeamAppraisal from './team-appraisal';
+import KpiTracker from './kpi-tracker';
+import AccountSummaryReport from './account-summary-report';
 
 interface SupervisorDashboardProps {
     user: User;
@@ -131,6 +133,11 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
             </Card>
         </div>
 
+        <div className="grid grid-cols-1 gap-6 mb-6">
+            <KpiTracker applications={applications} />
+            <AccountSummaryReport applications={applications} />
+        </div>
+
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
           <div className="xl:col-span-2">
             <TeamPerformanceChart applications={teamApplications} team={user.team || []} />
@@ -141,7 +148,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         </div>
         
         <div className="mb-6">
-            <TeamAppraisal applications={teamApplications} team={teamMembers} />
+            <TeamAppraisal applications={applications} team={teamMembers} />
         </div>
 
        <Tabs defaultValue="queue" className="w-full">
