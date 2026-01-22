@@ -9,7 +9,7 @@ const SignatorySchema = z.object({
   otherName: z.string().optional(),
   nationalIdNo: z.string().min(5, 'A valid ID number is required.'),
   designation: z.string().min(2, 'Designation is required.'),
-  signature: z.string().min(3, "Signature is required."),
+  signature: z.string().min(1, "A signature is required."),
 });
 export type Signatory = z.infer<typeof SignatorySchema>;
 

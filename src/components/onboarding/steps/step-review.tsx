@@ -134,7 +134,14 @@ export default function StepReview({ next }: StepReviewProps) {
                             <DetailItem label="Name" value={`${signatory.firstName} ${signatory.surname}`} />
                             <DetailItem label="ID Number" value={signatory.nationalIdNo} />
                             <DetailItem label="Designation" value={signatory.designation} />
-                            <DetailItem label="Signature" value={signatory.signature} />
+                             <div>
+                                <p className="text-sm font-medium text-muted-foreground">Signature</p>
+                                {signatory.signature && signatory.signature.startsWith('data:image') ? (
+                                    <div className="border rounded-md p-1 mt-1 inline-block bg-white">
+                                        <img src={signatory.signature} alt="Signature" className="h-12 w-auto" />
+                                    </div>
+                                ) : <p className="font-semibold">-</p>}
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -181,7 +188,7 @@ export default function StepReview({ next }: StepReviewProps) {
                 <FormItem>
                 <FormLabel>Digital Signature (Applicant)</FormLabel>
                 <FormControl>
-                    <Input placeholder="Type your full name to sign" {...field} />
+                    <Input placeholder="Type your full name to sign" {...field} value={field.value || ''} />
                 </FormControl>
                  <FormMessage />
                 </FormItem>

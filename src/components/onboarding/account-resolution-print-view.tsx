@@ -14,11 +14,11 @@ const SignatoryBox = ({ signatory, isLast }: { signatory: any, isLast: boolean }
         <div className="grid grid-cols-2 gap-x-4">
             <div>
                 <p className="text-xs text-gray-500 uppercase">Surname</p>
-                <p className="text-sm border-b border-gray-400 h-6">{signatory.surname}</p>
+                <p className="text-sm border-b border-gray-400 h-6">{signatory.surname || ''}</p>
             </div>
             <div>
                 <p className="text-xs text-gray-500 uppercase">First Name</p>
-                <p className="text-sm border-b border-gray-400 h-6">{signatory.firstName}</p>
+                <p className="text-sm border-b border-gray-400 h-6">{signatory.firstName || ''}</p>
             </div>
         </div>
         <div className="mt-2">
@@ -27,11 +27,11 @@ const SignatoryBox = ({ signatory, isLast }: { signatory: any, isLast: boolean }
         </div>
         <div className="mt-2">
             <p className="text-xs text-gray-500 uppercase">National I.D. No.</p>
-            <p className="text-sm border-b border-gray-400 h-6">{signatory.nationalIdNo}</p>
+            <p className="text-sm border-b border-gray-400 h-6">{signatory.nationalIdNo || ''}</p>
         </div>
         <div className="mt-2">
             <p className="text-xs text-gray-500 uppercase">Designation</p>
-            <p className="text-sm border-b border-gray-400 h-6">{signatory.designation}</p>
+            <p className="text-sm border-b border-gray-400 h-6">{signatory.designation || ''}</p>
         </div>
         <div className="grid grid-cols-2 gap-x-4 mt-2">
             <div>
@@ -39,8 +39,12 @@ const SignatoryBox = ({ signatory, isLast }: { signatory: any, isLast: boolean }
                 <p className="text-sm border-b border-gray-400 h-6">{format(new Date(), 'yyyy-MM-dd')}</p>
             </div>
             <div>
-                <p className="text-xs text-gray-500 uppercase">Signature</p>
-                <p className="text-sm border-b border-gray-400 h-6 font-serif italic">{signatory.signature}</p>
+                 <p className="text-xs text-gray-500 uppercase">Signature</p>
+                <div className="border-b border-gray-400 h-10 flex items-center">
+                    {signatory.signature && signatory.signature.startsWith('data:image') ? (
+                        <img src={signatory.signature} alt="Signature" className="h-8 w-auto"/>
+                    ) : null}
+                </div>
             </div>
         </div>
     </div>
@@ -93,10 +97,10 @@ const AccountResolutionPrintView = React.forwardRef<HTMLDivElement, AccountResol
                     {signatorySlots.slice(0, 2).map((sig, i) => <SignatoryBox key={i} signatory={sig} isLast={i % 2 !== 0} />)}
                 </div>
                 <div className="grid grid-cols-2">
-                    {signatorySlots.slice(2, 4).map((sig, i) => <SignatoryBox key={i} signatory={sig} isLast={i % 2 !== 0} />)}
+                    {signatorySlots.slice(2, 4).map((sig, i) => <SignatoryBox key={i + 2} signatory={sig} isLast={i % 2 !== 0} />)}
                 </div>
                  <div className="grid grid-cols-2">
-                    {signatorySlots.slice(4, 6).map((sig, i) => <SignatoryBox key={i} signatory={sig} isLast={i % 2 !== 0} />)}
+                    {signatorySlots.slice(4, 6).map((sig, i) => <SignatoryBox key={i + 4} signatory={sig} isLast={i % 2 !== 0} />)}
                 </div>
                 <div className="border-t border-l border-r border-b border-gray-400 p-2">
                     <p className="text-xs text-gray-500 uppercase">Signing Instruction</p>
