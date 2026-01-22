@@ -14,6 +14,7 @@ import { ProgressTracker } from './progress-tracker';
 
 import StepAccountType from './steps/step-account-type';
 import StepPersonalInfo from './steps/step-personal-info';
+import StepIndividualInfo from './steps/step-individual-info';
 import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,7 @@ import StepDirectors from './steps/step-directors';
 
 const allSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
+  { id: 'individual-info', name: 'Applicant Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualAddress'] },
   { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address'] },
   { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'certificateOfIncorporationNumber', 'countryOfIncorporation', 'dateOfIncorporation'] },
   { id: 'directors', name: 'Directors', fields: [] },
@@ -44,6 +46,7 @@ const allSteps: Step[] = [
 
 const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
+  'individual-info': StepIndividualInfo,
   'personal-info': StepPersonalInfo,
   'corporate-info': StepCorporateInfo,
   'directors': StepDirectors,
@@ -71,12 +74,41 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
-    mode: 'onChange', // Validate on change to update submit button status
+    mode: 'onChange',
     defaultValues: {
       clientType: '',
+      // Corporate contact
       fullName: '',
       dateOfBirth: '',
       address: '',
+      // Individual
+      branch: '',
+      accountSpecType: '',
+      accountSpecCurrency: '',
+      referredBy: '',
+      individualTitle: '',
+      individualSurname: '',
+      individualFirstName: '',
+      individualDateOfBirth: '',
+      individualPlaceOfBirth: '',
+      individualIdType: '',
+      individualIdNumber: '',
+      individualGender: '',
+      individualMaritalStatus: '',
+      individualAddress: '',
+      individualMobileNumber: '',
+      individualInnbucksWalletAccount: '',
+      occupation: '',
+      employerName: '',
+      employerAddress: '',
+      employerTel: '',
+      employerSector: '',
+      dateOfEmployment: '',
+      grossMonthlyIncome: undefined,
+      otherIncome: undefined,
+      salaryRate: '',
+      totalIncome: undefined,
+      // Corporate
       organisationLegalName: '',
       tradeName: '',
       physicalAddress: '',
@@ -100,37 +132,44 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       otherBank1Name: '',
       otherBank1AccName: '',
       otherBank1AccNumber: '',
+      directors: [],
+      // Common
       document1Type: '',
       document2Type: '',
       signature: '',
       agreedToTerms: false,
-      directors: [], // Start with an empty array for directors
     },
   });
   
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const clientType = form.watch('clientType');
-  const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType) && clientType !== '';
   
   const steps = React.useMemo(() => {
-    if (isCorporate) {
-      return allSteps;
+    const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
+    const isCorporate = !isIndividual && clientType !== '';
+
+    if (isIndividual) {
+      return allSteps.filter(step => ['account-type', 'individual-info', 'document-upload', 'review-submit'].includes(step.id));
     }
-    return allSteps.filter(step => step.id !== 'corporate-info' && step.id !== 'directors');
-  }, [isCorporate]);
+    if (isCorporate) {
+      return allSteps.filter(step => step.id !== 'individual-info');
+    }
+    // Default to only showing the first step if no client type is selected
+    return [allSteps.find(s => s.id === 'account-type')!];
+  }, [clientType]);
 
   const currentStep = steps[currentStepIndex];
 
   const handleDuplicateCheck = async (): Promise<boolean> => {
-    // In-memory duplicate check
     const data = form.getValues();
     let nameToCheck = '';
+    const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
     
     if (currentStep.id === 'corporate-info') {
         nameToCheck = data.organisationLegalName || '';
-    } else if (currentStep.id === 'personal-info' && !isCorporate) {
-         nameToCheck = data.fullName;
+    } else if (currentStep.id === 'individual-info' && isIndividual) {
+         nameToCheck = `${data.individualFirstName || ''} ${data.individualSurname || ''}`.trim();
     }
     
     if (!nameToCheck) {
@@ -138,7 +177,6 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     }
 
     setIsCheckingDuplicates(true);
-    // Simulate async check
     await new Promise(res => setTimeout(res, 300));
     setIsCheckingDuplicates(false);
 
@@ -183,10 +221,11 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   
   const onSubmit = (data: OnboardingFormData) => {
     setIsSubmitting(true);
-    
+    const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
+
     const newApplication = {
       id: `APP-${Date.now()}`,
-      clientName: data.organisationLegalName || data.fullName,
+      clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
       clientType: data.clientType,
       status: 'Submitted',
       submittedDate: format(new Date(), 'yyyy-MM-dd'),
@@ -194,7 +233,11 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
       details: {
-        ...data
+        ...data,
+        // Ensure personal details are set correctly for individual accounts
+        fullName: isIndividual ? `${data.individualFirstName} ${data.individualSurname}`.trim() : data.fullName,
+        dateOfBirth: isIndividual ? data.individualDateOfBirth : data.dateOfBirth,
+        address: isIndividual ? data.individualAddress : data.address,
       },
       directors: data.directors || [],
       documents: [
@@ -211,7 +254,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
 
     toast({
       title: "Application Submitted!",
-      description: `Application for ${data.organisationLegalName || data.fullName} has been successfully created.`,
+      description: `Application for ${newApplication.clientName} has been successfully created.`,
     });
     
      setTimeout(() => {
@@ -233,7 +276,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
             >
               <Card className="h-full flex flex-col">
                 <CardContent className="flex-1 py-6">
-                  <CurrentStepComponent />
+                  { CurrentStepComponent ? <CurrentStepComponent /> : <div>Step not found</div> }
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4 justify-between">
                   <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev}>

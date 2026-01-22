@@ -17,14 +17,14 @@ interface StepReviewProps {
   next?: () => void;
 }
 
-const DetailItem = ({ label, value }: { label: string; value: string | undefined | null | boolean; }) => {
+const DetailItem = ({ label, value }: { label: string; value: string | number | undefined | null | boolean; }) => {
     if (value === undefined || value === null || value === '') return null;
 
     let displayValue: string;
     if (typeof value === 'boolean') {
         displayValue = value ? 'Yes' : 'No';
     } else {
-        displayValue = value;
+        displayValue = String(value);
     }
 
     return (
@@ -46,8 +46,11 @@ export default function StepReview({ next }: StepReviewProps) {
         setIsSubmitted(true);
     }
   }, [formState.isSubmitting]);
+  
+  const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
+  const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
+  const isCorporate = !isIndividual;
 
-  const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(data.clientType);
 
   if (isSubmitted) {
     return (
@@ -55,7 +58,7 @@ export default function StepReview({ next }: StepReviewProps) {
         <PartyPopper className="mx-auto h-16 w-16 text-green-500 mb-4" />
         <h2 className="text-2xl font-bold">Application Submitted!</h2>
         <p className="text-muted-foreground mt-2 max-w-sm">
-          The application for <strong>{data.organisationLegalName || data.fullName}</strong> has been successfully submitted for validation. You will be returned to the dashboard.
+          The application for <strong>{clientName}</strong> has been successfully submitted for validation. You will be returned to the dashboard.
         </p>
       </div>
     );
@@ -68,46 +71,62 @@ export default function StepReview({ next }: StepReviewProps) {
         <CardDescription>Please review your information carefully before submitting.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
-        <div className="rounded-md border p-4 space-y-4">
-           <h3 className="font-semibold">Application Details</h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <DetailItem label="Account Type" value={data.clientType} />
-             {isCorporate && <DetailItem label="Organisation Legal Name" value={data.organisationLegalName} />}
-             <DetailItem label={isCorporate ? "Primary Contact Name" : "Full Name"} value={data.fullName} />
-             <DetailItem label="Date of Birth" value={data.dateOfBirth ? format(new Date(data.dateOfBirth), 'MMMM d, yyyy') : '-'} />
-             <DetailItem label="Address" value={data.address} />
-             <DetailItem label="Documents Provided" value={data.document1Type && data.document2Type ? `${data.document1Type} & ${data.document2Type}`: '-'} />
-           </div>
-        </div>
+        
+        {isIndividual && (
+          <div className="rounded-md border p-4 space-y-4">
+            <h3 className="font-semibold">Applicant Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <DetailItem label="Account Type" value={data.clientType} />
+              <DetailItem label="Branch" value={data.branch} />
+              <DetailItem label="Referred By" value={data.referredBy} />
+              <DetailItem label="Title" value={data.individualTitle} />
+              <DetailItem label="First Name" value={data.individualFirstName} />
+              <DetailItem label="Surname" value={data.individualSurname} />
+              <DetailItem label="Date of Birth" value={data.individualDateOfBirth ? format(new Date(data.individualDateOfBirth), 'MMMM d, yyyy') : '-'} />
+              <DetailItem label="Place of Birth" value={data.individualPlaceOfBirth} />
+              <DetailItem label="Gender" value={data.individualGender} />
+              <DetailItem label="Marital Status" value={data.individualMaritalStatus} />
+              <DetailItem label="ID Type" value={data.individualIdType} />
+              <DetailItem label="ID Number" value={data.individualIdNumber} />
+              <DetailItem label="Address" value={data.individualAddress} />
+              <DetailItem label="Mobile Number" value={data.individualMobileNumber} />
+              <DetailItem label="InnBucks Wallet No." value={data.individualInnbucksWalletAccount} />
+            </div>
+            <Separator />
+            <h3 className="font-semibold pt-2">Employment Details</h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <DetailItem label="Occupation" value={data.occupation} />
+              <DetailItem label="Employer" value={data.employerName} />
+              <DetailItem label="Employer Sector" value={data.employerSector} />
+              <DetailItem label="Employment Date" value={data.dateOfEmployment ? format(new Date(data.dateOfEmployment), 'MMMM d, yyyy') : '-'} />
+              <DetailItem label="Gross Monthly Income" value={data.grossMonthlyIncome} />
+              <DetailItem label="Other Income" value={data.otherIncome} />
+            </div>
+          </div>
+        )}
 
         {isCorporate && (
+          <>
+            <div className="rounded-md border p-4 space-y-4">
+              <h3 className="font-semibold">Application Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <DetailItem label="Account Type" value={data.clientType} />
+                <DetailItem label="Organisation Legal Name" value={data.organisationLegalName} />
+                <DetailItem label="Primary Contact Name" value={data.fullName} />
+                <DetailItem label="Contact Date of Birth" value={data.dateOfBirth ? format(new Date(data.dateOfBirth), 'MMMM d, yyyy') : '-'} />
+                <DetailItem label="Contact Address" value={data.address} />
+              </div>
+            </div>
+
             <div className="rounded-md border p-4 space-y-4">
                 <h3 className="font-semibold">Corporate Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <DetailItem label="Trade Name" value={data.tradeName} />
-                    <DetailItem label="Physical Address" value={data.physicalAddress} />
-                    <DetailItem label="Postal Address" value={data.postalAddress} />
-                    <DetailItem label="Web Address" value={data.webAddress} />
-                    <DetailItem label="Business Tel. Number" value={data.businessTelNumber} />
-                    <DetailItem label="Fax Number" value={data.faxNumber} />
-                    <DetailItem label="Email" value={data.email} />
-                    <DetailItem label="Nature of Business" value={data.natureOfBusiness} />
-                    <DetailItem label="Source of Wealth" value={data.sourceOfWealth} />
-                    <DetailItem label="Type of Business" value={data.typeOfBusiness} />
-                    <DetailItem label="Number of Employees" value={data.noOfEmployees?.toString()} />
-                    <DetailItem label="Economic Sector" value={data.economicSector} />
-                    <DetailItem label="Authorised Capital" value={data.authorisedCapital} />
-                    <DetailItem label="Tax Payer Number" value={data.taxPayerNumber} />
+                    <DetailItem label="Cert. of Incorporation Number" value={data.certificateOfIncorporationNumber} />
                     <DetailItem label="Date of Incorporation" value={data.dateOfIncorporation ? format(new Date(data.dateOfIncorporation), 'MMMM d, yyyy') : '-'} />
                     <DetailItem label="Country of Incorporation" value={data.countryOfIncorporation} />
-                    <DetailItem label="Cert. of Incorporation Number" value={data.certificateOfIncorporationNumber} />
-                    <DetailItem label="Other InnBucks Accounts?" value={data.hasOtherAccounts} />
-                    <DetailItem label="Other Account Numbers" value={data.otherAccountNumbers} />
-                    <DetailItem label="Communication Preference" value={data.communicationPreference} />
-                    <DetailItem label="Premises Status" value={data.premisesStatus} />
-                    <DetailItem label="Premises Details (Other)" value={data.premisesOtherDetails} />
                 </div>
             </div>
+          </>
         )}
         
         {isCorporate && data.directors && data.directors.length > 0 && (
@@ -129,6 +148,11 @@ export default function StepReview({ next }: StepReviewProps) {
                 ))}
              </div>
         )}
+         <div className="rounded-md border p-4 space-y-4">
+            <h3 className="font-semibold">Documents</h3>
+            <DetailItem label="Documents Provided" value={data.document1Type && data.document2Type ? `${data.document1Type} & ${data.document2Type}`: '-'} />
+         </div>
+
 
         <Separator />
         

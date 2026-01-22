@@ -18,17 +18,45 @@ const DirectorSchema = z.object({
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   
-  // Personal Info / Primary Contact - Required for all
-  fullName: z.string().min(2, { message: 'Full name must be at least 2 characters.' }),
-  dateOfBirth: z.string().refine((dob) => new Date(dob).toString() !== 'Invalid Date', {
-    message: 'Please enter a valid date of birth.',
-  }),
-  address: z.string().min(10, { message: 'Address must be at least 10 characters.' }),
+  // Corporate Primary Contact Info
+  fullName: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  address: z.string().optional(),
   
-  // Now only required for corporate accounts, handled in superRefine
-  organisationLegalName: z.string().optional(),
+  // --- New Individual/Sole Trader Fields ---
+  branch: z.string().optional(),
+  accountSpecType: z.string().optional(),
+  accountSpecCurrency: z.string().optional(),
+  referredBy: z.string().optional(),
+  
+  individualTitle: z.string().optional(),
+  individualSurname: z.string().optional(),
+  individualFirstName: z.string().optional(),
+  individualDateOfBirth: z.string().optional(),
+  individualPlaceOfBirth: z.string().optional(),
+  individualIdType: z.string().optional(),
+  individualIdNumber: z.string().optional(),
+  individualGender: z.string().optional(),
+  individualMaritalStatus: z.string().optional(),
+  individualAddress: z.string().optional(),
+  individualMobileNumber: z.string().optional(),
+  individualInnbucksWalletAccount: z.string().optional(),
 
-  // These fields are only for corporate and are filled in by the back office
+  occupation: z.string().optional(),
+  employerName: z.string().optional(),
+  employerAddress: z.string().optional(),
+  employerTel: z.string().optional(),
+  employerSector: z.string().optional(),
+  dateOfEmployment: z.string().optional(),
+
+  grossMonthlyIncome: z.coerce.number().optional(),
+  otherIncome: z.coerce.number().optional(),
+  salaryRate: z.string().optional(),
+  totalIncome: z.coerce.number().optional(),
+  // --- End of New Fields ---
+
+  // Corporate only fields
+  organisationLegalName: z.string().optional(),
   tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
   postalAddress: z.string().optional(),
@@ -96,8 +124,7 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the terms and conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    // For ATLs submitting a corporate account, we now only require the organisationLegalName
-    const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
+    const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType) && data.clientType;
     if (isCorporate) {
       if (!data.organisationLegalName) {
         ctx.addIssue({
@@ -106,6 +133,20 @@ export const OnboardingFormSchema = z.object({
             message: 'Organization name is required for corporate accounts.',
         });
       }
+      if (!data.fullName) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['fullName'], message: 'Contact name is required.' });
+      }
+      if (!data.dateOfBirth) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dateOfBirth'], message: 'Contact date of birth is required.' });
+      }
+      if (!data.address) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['address'], message: 'Contact address is required.' });
+      }
+    } else if (data.clientType) { // Individual or Sole Trader
+      if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is required.' });
+      if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is required.' });
+      if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is required.' });
+      if (!data.individualAddress) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualAddress'], message: 'Address is required.' });
     }
 });
 
