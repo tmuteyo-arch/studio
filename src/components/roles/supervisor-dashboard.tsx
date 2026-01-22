@@ -9,13 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
 import { AlertCircle, CheckCircle2, Clock, Inbox, Search } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
-import { User } from '@/lib/users';
+import { User, users as allUsers } from '@/lib/users';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { differenceInDays, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import TeamPerformanceChart from './team-performance-chart';
 import ExchangeRates from './exchange-rates';
+import TeamAppraisal from './team-appraisal';
 
 interface SupervisorDashboardProps {
     user: User;
@@ -38,6 +39,8 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [applications] = useAtom(applicationsAtom);
     const [searchTerm, setSearchTerm] = React.useState('');
+
+    const teamMembers = allUsers.filter(u => user.team?.includes(u.name));
 
     const myApprovalQueue = applications
         .filter(app => app.status === 'Pending Supervisor');
@@ -137,6 +140,9 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
           </div>
         </div>
         
+        <div className="mb-6">
+            <TeamAppraisal applications={teamApplications} team={teamMembers} />
+        </div>
 
        <Tabs defaultValue="queue" className="w-full">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
