@@ -144,3 +144,11 @@ export const rejectionReasons = [
     'Client Does Not Meet Policy Requirements',
     'Other (See Comments)',
 ];
+
+export type Comment = {
+  id: string;
+  user: string;
+  role: 'atl' | 'back-office' | 'supervisor' | 'retail-executive';
+  timestamp: string;
+  content: string;
+};

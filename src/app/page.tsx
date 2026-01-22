@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
+import RetailExecutiveDashboard from '@/components/roles/retail-executive-dashboard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, User, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck, Crown } from 'lucide-react';
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
@@ -58,6 +59,8 @@ function AppContent() {
         return <BackOfficeDashboard user={loggedInUser} />;
       case 'supervisor':
         return <SupervisorDashboard user={loggedInUser} />;
+      case 'retail-executive':
+        return <RetailExecutiveDashboard user={loggedInUser} />;
       default:
         return null;
     }
@@ -112,7 +115,7 @@ function AppContent() {
       <h2 className="text-2xl font-semibold text-white/90 mb-2">Select a Role to Continue</h2>
       <p className="text-white/70 mb-12">Choose a role to proceed to the login screen.</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-6xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
             <Card className="text-left h-full flex flex-col bg-white/10 backdrop-blur-lg border-white/20 text-white">
                 <CardHeader>
@@ -143,6 +146,20 @@ function AppContent() {
                 </CardHeader>
                 <CardFooter className="mt-auto">
                     <Button className="w-full" variant="outline" onClick={() => handleRoleSelect('supervisor')}>Login as Supervisor</Button>
+                </CardFooter>
+            </Card>
+        </motion.div>
+         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}>
+            <Card className="text-left h-full flex flex-col bg-white/10 backdrop-blur-lg border-white/20 text-white">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Retail Executive</CardTitle>
+                        <Crown className="text-amber-400" />
+                    </div>
+                    <CardDescription className="text-white/80">Oversees all operations and high-level performance.</CardDescription>
+                </CardHeader>
+                <CardFooter className="mt-auto">
+                    <Button className="w-full border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black" variant="outline" onClick={() => handleRoleSelect('retail-executive')}>Login as Executive</Button>
                 </CardFooter>
             </Card>
         </motion.div>
