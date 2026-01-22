@@ -1,6 +1,7 @@
 'use client';
 
 import { atom } from 'jotai';
+import type { OnboardingFormData, Signatory } from './types';
 
 export type ApplicationStatus =
   | 'Submitted'
@@ -34,16 +35,6 @@ export type Comment = {
   content: string;
 };
 
-export type Director = {
-    fullName: string;
-    idNumber: string;
-    dateOfBirth: string;
-    address: string;
-    designation: string;
-    phoneNumber: string;
-    gender: string;
-}
-
 export type Application = {
   id: string;
   clientName: string;
@@ -53,25 +44,8 @@ export type Application = {
   lastUpdated: string;
   submittedBy: string;
   fcbStatus: FcbStatus;
-  details: {
-    // Shared
-    fullName: string; // Primary contact for corporate
-    address: string;
-    dateOfBirth: string;
-    contactNumber?: string;
-    
-    // Corporate only
-    organisationLegalName?: string | null;
-    tradeName?: string | null;
-    physicalAddress?: string | null;
-    businessTelNumber?: string | null;
-    email?: string | null;
-    natureOfBusiness?: string | null;
-    dateOfIncorporation?: string | null;
-    countryOfIncorporation?: string | null;
-    certificateOfIncorporationNumber?: string | null;
-  };
-  directors: Director[];
+  details: OnboardingFormData;
+  signatories: Signatory[];
   documents: Document[];
   history: HistoryLog[];
   comments: Comment[];
@@ -88,9 +62,7 @@ const initialApplications: Application[] = [
     submittedBy: 'Tashinga Muteyo',
     fcbStatus: 'Inclusive',
     details: {
-        fullName: "Tafadzwa Chihota",
-        address: "456 Oak Avenue, Bulawayo",
-        dateOfBirth: "1985-02-20",
+        clientType: 'Company (Private / Public Limited)',
         organisationLegalName: 'EcoVentures Inc.',
         tradeName: 'EcoVentures',
         physicalAddress: '123 Green Way, Harare',
@@ -99,16 +71,19 @@ const initialApplications: Application[] = [
         natureOfBusiness: 'Renewable energy solutions',
         dateOfIncorporation: '2020-01-15',
         countryOfIncorporation: 'Zimbabwe',
-        certificateOfIncorporationNumber: 'CI-12345/2020'
+        certificateOfIncorporationNumber: 'CI-12345/2020',
+        signatories: [],
+        document1Type: 'Certificate of Incorporation',
+        document2Type: 'CR14',
+        agreedToTerms: true,
+        signature: 'Tafadzwa Chihota',
     },
-    directors: [{
-        fullName: 'Jane Doe',
-        idNumber: '12-345678-A-90',
-        dateOfBirth: '1980-05-15',
-        address: '101 Pine St, Harare',
+    signatories: [{
+        surname: 'Doe',
+        firstName: 'Jane',
+        nationalIdNo: '12-345678-A-90',
         designation: 'CEO',
-        phoneNumber: '+263771234567',
-        gender: 'Female'
+        signature: 'Jane Doe',
     }],
     documents: [
       { type: 'Certificate of Incorporation', fileName: 'cert_incorp.pdf', url: '#' },
@@ -128,12 +103,18 @@ const initialApplications: Application[] = [
     submittedBy: 'Tashinga Muteyo',
     fcbStatus: 'Good',
      details: {
-        fullName: "Rudo Moyo",
-        address: "789 Baobab Close, Mutare",
-        dateOfBirth: "1992-08-12",
-        contactNumber: 'N/A',
+        clientType: 'Proprietorship / Sole Trader',
+        individualFirstName: "Rudo",
+        individualSurname: "Moyo",
+        individualAddress: "789 Baobab Close, Mutare",
+        individualDateOfBirth: "1992-08-12",
+        signatories: [],
+        document1Type: 'National ID Card',
+        document2Type: 'Proof of residence',
+        agreedToTerms: true,
+        signature: 'Rudo Moyo',
     },
-    directors: [],
+    signatories: [],
     documents: [{ type: 'National ID Card', fileName: 'national_id.pdf', url: '#' }],
     history: [
       { action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2024-05-09T09:00:00Z' },
@@ -151,12 +132,18 @@ const initialApplications: Application[] = [
     submittedBy: 'Tendai Moyo',
     fcbStatus: 'PEP',
     details: {
-        fullName: "Tendai Moyo",
-        address: "111 Jacaranda Lane, Harare",
-        dateOfBirth: "1990-11-25",
-        contactNumber: 'N/A',
+        clientType: 'Personal Account',
+        individualFirstName: "Tendai",
+        individualSurname: "Moyo",
+        individualAddress: "111 Jacaranda Lane, Harare",
+        individualDateOfBirth: "1990-11-25",
+        signatories: [],
+        document1Type: 'National ID Card',
+        document2Type: 'Proof of Residence',
+        agreedToTerms: true,
+        signature: 'Tendai Moyo',
     },
-    directors: [],
+    signatories: [],
     documents: [
       { type: 'National ID Card', fileName: 'national_id.pdf', url: '#' },
       { type: 'Proof of Residence', fileName: 'proof_of_res.pdf', url: '#' },
@@ -180,13 +167,15 @@ const initialApplications: Application[] = [
     submittedBy: 'Tendai Moyo',
     fcbStatus: 'Good',
      details: {
-        fullName: "David Chen",
-        address: "Agri-Innovate Farm, Mazowe",
-        dateOfBirth: "1975-03-30",
+        clientType: 'Company (Private / Public Limited)',
         organisationLegalName: 'Agri-Innovate Ltd',
-        contactNumber: 'N/A',
+        signatories: [],
+        document1Type: 'Certificate of Incorporation',
+        document2Type: 'CR14',
+        agreedToTerms: true,
+        signature: 'David Chen'
     },
-    directors: [],
+    signatories: [],
     documents: [
       { type: 'Certificate of Incorporation', fileName: 'cert_incorp_agri.pdf', url: '#' },
       { type: 'CR14', fileName: 'cr14_agri.pdf', url: '#' },
@@ -208,12 +197,18 @@ const initialApplications: Application[] = [
     submittedBy: 'Tashinga Muteyo',
     fcbStatus: 'Adverse',
     details: {
-        fullName: "Tashinga Muteyo",
-        address: "222 Flame Lily Drive, Gweru",
-        dateOfBirth: "1995-01-10",
-        contactNumber: 'N/A',
+        clientType: 'Personal Account',
+        individualFirstName: "Tashinga",
+        individualSurname: "Muteyo",
+        individualAddress: "222 Flame Lily Drive, Gweru",
+        individualDateOfBirth: "1995-01-10",
+        signatories: [],
+        document1Type: 'National ID Card',
+        document2Type: 'Proof of Residence',
+        agreedToTerms: true,
+        signature: 'Tashinga Muteyo',
     },
-    directors: [],
+    signatories: [],
     documents: [
       { type: 'National ID Card', fileName: 'id_tashinga.pdf', url: '#' },
       { type: 'Proof of Residence', fileName: 'res_tashinga.pdf', url: '#' },

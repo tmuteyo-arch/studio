@@ -49,7 +49,7 @@ export default function StepReview({ next }: StepReviewProps) {
   
   const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
   const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
-  const isCorporate = !isIndividual;
+  const isCorporate = !isIndividual && !!data.clientType;
 
 
   if (isSubmitted) {
@@ -106,20 +106,10 @@ export default function StepReview({ next }: StepReviewProps) {
         )}
 
         {isCorporate && (
-          <>
-            <div className="rounded-md border p-4 space-y-4">
-              <h3 className="font-semibold">Application Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetailItem label="Account Type" value={data.clientType} />
-                <DetailItem label="Primary Contact Name" value={data.fullName} />
-                <DetailItem label="Contact Date of Birth" value={data.dateOfBirth ? format(new Date(data.dateOfBirth), 'MMMM d, yyyy') : '-'} />
-                <DetailItem label="Contact Address" value={data.address} />
-              </div>
-            </div>
-
             <div className="rounded-md border p-4 space-y-4">
                 <h3 className="font-semibold">Corporate Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DetailItem label="Account Type" value={data.clientType} />
                     <DetailItem label="Organisation Legal Name" value={data.organisationLegalName} />
                     <DetailItem label="Trade Name" value={data.tradeName} />
                     <DetailItem label="Physical Address" value={data.physicalAddress} />
@@ -131,26 +121,24 @@ export default function StepReview({ next }: StepReviewProps) {
                     <DetailItem label="Country of Incorporation" value={data.countryOfIncorporation} />
                 </div>
             </div>
-          </>
         )}
         
-        {isCorporate && data.directors && data.directors.length > 0 && (
+        {data.signatories && data.signatories.length > 0 && (
              <div className="rounded-md border p-4 space-y-4">
-                <h3 className="font-semibold">Directors</h3>
-                {data.directors.map((director, index) => (
+                <h3 className="font-semibold">Signatories & Mandate</h3>
+                <DetailItem label="Resolution Date" value={data.resolutionDate ? format(new Date(data.resolutionDate), 'MMMM d, yyyy') : '-'} />
+                {data.signatories.map((signatory, index) => (
                     <div key={index} className="space-y-2 border-b pb-2 last:border-b-0">
-                        <p className='font-medium'>Director {index + 1}</p>
+                        <p className='font-medium'>Signatory {index + 1}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <DetailItem label="Full Name" value={director.fullName} />
-                            <DetailItem label="ID Number" value={director.idNumber} />
-                            <DetailItem label="Date of Birth" value={director.dateOfBirth ? format(new Date(director.dateOfBirth), 'MMMM d, yyyy') : '-'} />
-                            <DetailItem label="Address" value={director.address} />
-                            <DetailItem label="Designation" value={director.designation} />
-                            <DetailItem label="Phone Number" value={director.phoneNumber} />
-                            <DetailItem label="Gender" value={director.gender} />
+                            <DetailItem label="Name" value={`${signatory.firstName} ${signatory.surname}`} />
+                            <DetailItem label="ID Number" value={signatory.nationalIdNo} />
+                            <DetailItem label="Designation" value={signatory.designation} />
+                            <DetailItem label="Signature" value={signatory.signature} />
                         </div>
                     </div>
                 ))}
+                <DetailItem label="Signing Instructions" value={data.signingInstruction} />
              </div>
         )}
          <div className="rounded-md border p-4 space-y-4">
@@ -191,7 +179,7 @@ export default function StepReview({ next }: StepReviewProps) {
             name="signature"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Digital Signature</FormLabel>
+                <FormLabel>Digital Signature (Applicant)</FormLabel>
                 <FormControl>
                     <Input placeholder="Type your full name to sign" {...field} />
                 </FormControl>

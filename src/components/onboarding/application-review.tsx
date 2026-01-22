@@ -38,7 +38,8 @@ import { Badge } from '@/components/ui/badge';
 import { generateApplicationSummary } from '@/lib/actions';
 import { Alert, AlertDescription as AlertDescriptionComponent, AlertTitle as AlertTitleComponent } from '../ui/alert';
 import StepCorporateInfo from './steps/step-corporate-info';
-import StepDirectors from './steps/step-directors';
+import StepSignatories from './steps/step-signatories';
+import AccountResolutionPrintView from './account-resolution-print-view';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -65,6 +66,7 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [isPrinting, setIsPrinting] = React.useState(false);
   const printRef = React.useRef<HTMLDivElement>(null);
   const checklistRef = React.useRef<HTMLDivElement>(null);
+  const resolutionRef = React.useRef<HTMLDivElement>(null);
 
   const [email, setEmail] = React.useState('tmateoro@inbucks.co.zw');
   const [brNumber, setBrNumber] = React.useState('');
@@ -158,9 +160,10 @@ export default function ApplicationReview({ application: initialApplication, onB
   const handleDownloadPdf = async () => {
     const checklistElement = checklistRef.current;
     const summaryElement = printRef.current;
+    const resolutionElement = resolutionRef.current;
 
-    if (!summaryElement) {
-        console.error("Summary element not found");
+    if (!summaryElement || !resolutionElement) {
+        console.error("Required print elements not found");
         return;
     }
 
@@ -177,8 +180,9 @@ export default function ApplicationReview({ application: initialApplication, onB
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
+    let isFirstPage = true;
 
-    const addCanvasToPdf = async (element: HTMLElement, isFirstPage: boolean) => {
+    const addCanvasToPdf = async (element: HTMLElement) => {
         const canvas = await html2canvas(element, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
         const imgWidth = canvas.width;
@@ -189,14 +193,15 @@ export default function ApplicationReview({ application: initialApplication, onB
             pdf.addPage();
         }
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio);
+        isFirstPage = false;
     };
-
+    
+    // Add pages to PDF
+    await addCanvasToPdf(resolutionElement);
     if (isCorporate && checklistElement) {
-        await addCanvasToPdf(checklistElement, true);
-        await addCanvasToPdf(summaryElement, false);
-    } else {
-        await addCanvasToPdf(summaryElement, true);
+        await addCanvasToPdf(checklistElement);
     }
+    await addCanvasToPdf(summaryElement);
 
     // Add 10 sample pages for document uploads
     for (let i = 1; i <= 10; i++) {
@@ -314,6 +319,9 @@ export default function ApplicationReview({ application: initialApplication, onB
             <div ref={printRef}>
                 <ApplicationPrintView application={applicationForPrint} />
             </div>
+            <div ref={resolutionRef}>
+                <AccountResolutionPrintView application={applicationForPrint} />
+            </div>
             {isCorporate && (
               <div ref={checklistRef}>
                 <CorporateChecklist application={applicationForPrint} supervisor={supervisor} />
@@ -356,7 +364,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs defaultValue="details" className="w-full">
                   <TabsList>
                       <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Customer Details</TabsTrigger>
-                      {user.role === 'back-office' && isCorporate && <TabsTrigger value="corporate-info"><FileEdit className="mr-2 h-4 w-4"/>Corporate & Director Info</TabsTrigger>}
+                      {user.role === 'back-office' && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Form Data</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
@@ -377,11 +385,20 @@ export default function ApplicationReview({ application: initialApplication, onB
                               <DetailItem label="Last Updated" value={application.lastUpdated} />
                             </div>
                             <Separator/>
+                            {isCorporate ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <DetailItem label="Legal Name" value={application.details.organisationLegalName} />
+                                    <DetailItem label="Trade Name" value={application.details.tradeName} />
+                                    <DetailItem label="Nature of Business" value={application.details.natureOfBusiness} />
+                                    <DetailItem label="Incorporation Date" value={application.details.dateOfIncorporation} />
+                                </div>
+                            ) : (
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <DetailItem label="Primary Contact" value={application.details.fullName} />
-                                <DetailItem label="Contact Address" value={application.details.address} />
-                                <DetailItem label="Contact Date of Birth" value={application.details.dateOfBirth} />
+                                <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
+                                <DetailItem label="Address" value={application.details.individualAddress} />
+                                <DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} />
                               </div>
+                            )}
                           </CardContent>
                       </Card>
                       {user.role === 'back-office' && (
@@ -421,16 +438,14 @@ export default function ApplicationReview({ application: initialApplication, onB
                       )}
                   </TabsContent>
                   
-                   {user.role === 'back-office' && isCorporate && (
-                    <TabsContent value="corporate-info" className="pt-4">
+                   {user.role === 'back-office' && (
+                    <TabsContent value="form-data" className="pt-4">
                         <Card>
                             <CardContent className="pt-6">
-                                <StepCorporateInfo />
-                            </CardContent>
-                        </Card>
-                        <Card className='mt-6'>
-                             <CardContent className="pt-6">
-                                <StepDirectors />
+                                {isCorporate ? <StepCorporateInfo /> : null}
+                                 <div className={isCorporate ? 'mt-6' : ''}>
+                                    <StepSignatories />
+                                 </div>
                             </CardContent>
                         </Card>
                     </TabsContent>

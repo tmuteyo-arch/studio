@@ -3,25 +3,18 @@ import { type FormState as RHFFormState } from 'react-hook-form';
 
 export type FormState<TFieldValues extends Record<string, any>> = RHFFormState<TFieldValues>;
 
-const DirectorSchema = z.object({
-  fullName: z.string().min(2, 'Director name is required.'),
-  idNumber: z.string().min(5, 'A valid ID number is required.'),
-  dateOfBirth: z.string().refine((dob) => new Date(dob).toString() !== 'Invalid Date', {
-    message: 'Please enter a valid date of birth.',
-  }),
-  address: z.string().min(10, 'Address is required.'),
+const SignatorySchema = z.object({
+  surname: z.string().min(1, "Surname is required."),
+  firstName: z.string().min(1, "First name is required."),
+  otherName: z.string().optional(),
+  nationalIdNo: z.string().min(5, 'A valid ID number is required.'),
   designation: z.string().min(2, 'Designation is required.'),
-  phoneNumber: z.string().min(5, 'A valid phone number is required.'),
-  gender: z.string().min(1, 'Please select a gender.'),
+  signature: z.string().min(3, "Signature is required."),
 });
+export type Signatory = z.infer<typeof SignatorySchema>;
 
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
-  
-  // Corporate Primary Contact Info
-  fullName: z.string().optional(),
-  dateOfBirth: z.string().optional(),
-  address: z.string().optional(),
   
   // --- New Individual/Sole Trader Fields ---
   branch: z.string().optional(),
@@ -53,19 +46,34 @@ export const OnboardingFormSchema = z.object({
   otherIncome: z.coerce.number().optional(),
   salaryRate: z.string().optional(),
   totalIncome: z.coerce.number().optional(),
-  // --- End of New Fields ---
 
   // Corporate only fields
   organisationLegalName: z.string().optional(),
   tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
+  postalAddress: z.string().optional(),
+  webAddress: z.string().optional(),
   businessTelNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   natureOfBusiness: z.string().optional(),
   dateOfIncorporation: z.string().optional().default(''),
   countryOfIncorporation: z.string().optional(),
   certificateOfIncorporationNumber: z.string().optional().default(''),
-  directors: z.array(DirectorSchema).optional(),
+  sourceOfWealth: z.string().optional(),
+  noOfEmployees: z.coerce.number().optional(),
+  economicSector: z.string().optional(),
+  authorisedCapital: z.string().optional(),
+  taxPayerNumber: z.string().optional(),
+  hasOtherAccounts: z.string().optional(),
+  otherAccountNumbers: z.string().optional(),
+  communicationPreference: z.string().optional(),
+  premisesStatus: z.string().optional(),
+  typeOfBusiness: z.string().optional(),
+
+  // Mandate and Signatories
+  resolutionDate: z.string().optional(),
+  signingInstruction: z.string().optional(),
+  signatories: z.array(SignatorySchema).min(1, "At least one signatory is required."),
 
   // Document Info
   document1Type: z.string().min(1, { message: 'Please upload at least one document.' }),
@@ -94,15 +102,6 @@ export const OnboardingFormSchema = z.object({
       if (!data.certificateOfIncorporationNumber) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['certificateOfIncorporationNumber'], message: 'Certificate number is required.' });
       }
-      if (!data.fullName) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['fullName'], message: 'Contact name is required.' });
-      }
-      if (!data.dateOfBirth) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dateOfBirth'], message: 'Contact date of birth is required.' });
-      }
-      if (!data.address) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['address'], message: 'Contact address is required.' });
-      }
     } else if (data.clientType) { // Individual or Sole Trader
       if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is required.' });
       if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is required.' });
@@ -112,7 +111,6 @@ export const OnboardingFormSchema = z.object({
 });
 
 export type OnboardingFormData = z.infer<typeof OnboardingFormSchema>;
-export type DirectorFormData = z.infer<typeof DirectorSchema>;
 
 export type Step = {
   id: string;

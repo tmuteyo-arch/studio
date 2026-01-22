@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { ProgressTracker } from './progress-tracker';
 
 import StepAccountType from './steps/step-account-type';
-import StepPersonalInfo from './steps/step-personal-info';
 import StepIndividualInfo from './steps/step-individual-info';
 import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
@@ -31,15 +30,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import StepCorporateInfo from './steps/step-corporate-info';
-import StepDirectors from './steps/step-directors';
+import StepSignatories from './steps/step-signatories';
 
 
 const allSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
   { id: 'individual-info', name: 'Applicant Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualAddress'] },
-  { id: 'personal-info', name: 'Applicant Info', fields: ['fullName', 'dateOfBirth', 'address'] },
   { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'tradeName', 'physicalAddress', 'businessTelNumber', 'email', 'natureOfBusiness', 'dateOfIncorporation', 'countryOfIncorporation', 'certificateOfIncorporationNumber'] },
-  { id: 'directors', name: 'Directors', fields: [] },
+  { id: 'signatories', name: 'Signatories & Mandate', fields: ['signatories'] },
   { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
@@ -47,9 +45,8 @@ const allSteps: Step[] = [
 const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
   'individual-info': StepIndividualInfo,
-  'personal-info': StepPersonalInfo,
   'corporate-info': StepCorporateInfo,
-  'directors': StepDirectors,
+  'signatories': StepSignatories,
   'document-upload': StepDocumentUpload,
   'review-submit': StepReview,
 };
@@ -77,10 +74,6 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     mode: 'onChange',
     defaultValues: {
       clientType: '',
-      // Corporate contact
-      fullName: '',
-      dateOfBirth: '',
-      address: '',
       // Individual
       branch: '',
       accountSpecType: '',
@@ -112,13 +105,28 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       organisationLegalName: '',
       tradeName: '',
       physicalAddress: '',
+      postalAddress: '',
+      webAddress: '',
       businessTelNumber: '',
       email: '',
       natureOfBusiness: '',
       dateOfIncorporation: '',
       countryOfIncorporation: '',
       certificateOfIncorporationNumber: '',
-      directors: [],
+      sourceOfWealth: '',
+      noOfEmployees: undefined,
+      economicSector: '',
+      authorisedCapital: '',
+      taxPayerNumber: '',
+      hasOtherAccounts: 'No',
+      otherAccountNumbers: '',
+      communicationPreference: 'Email',
+      premisesStatus: 'Rented',
+      typeOfBusiness: '',
+      // Signatories
+      signatories: [],
+      resolutionDate: '',
+      signingInstruction: '',
       // Common
       document1Type: '',
       document2Type: '',
@@ -136,7 +144,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     const isCorporate = !isIndividual && clientType !== '';
 
     if (isIndividual) {
-      return allSteps.filter(step => ['account-type', 'individual-info', 'document-upload', 'review-submit'].includes(step.id));
+      return allSteps.filter(step => ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'].includes(step.id));
     }
     if (isCorporate) {
       return allSteps.filter(step => step.id !== 'individual-info');
@@ -150,11 +158,10 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const handleDuplicateCheck = async (): Promise<boolean> => {
     const data = form.getValues();
     let nameToCheck = '';
-    const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
     
     if (currentStep.id === 'corporate-info') {
         nameToCheck = data.organisationLegalName || '';
-    } else if (currentStep.id === 'individual-info' && isIndividual) {
+    } else if (currentStep.id === 'individual-info') {
          nameToCheck = `${data.individualFirstName || ''} ${data.individualSurname || ''}`.trim();
     }
     
@@ -207,7 +214,6 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   
   const onSubmit = (data: OnboardingFormData) => {
     setIsSubmitting(true);
-    const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
 
     const newApplication = {
       id: `APP-${Date.now()}`,
@@ -218,14 +224,8 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       lastUpdated: new Date().toISOString(),
       submittedBy: user.name,
       fcbStatus: 'Inclusive',
-      details: {
-        ...data,
-        // Ensure personal details are set correctly for individual accounts
-        fullName: isIndividual ? `${data.individualFirstName} ${data.individualSurname}`.trim() : data.fullName,
-        dateOfBirth: isIndividual ? data.individualDateOfBirth : data.dateOfBirth,
-        address: isIndividual ? data.individualAddress : data.address,
-      },
-      directors: data.directors || [],
+      details: data,
+      signatories: data.signatories || [],
       documents: [
         { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
