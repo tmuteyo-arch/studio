@@ -148,7 +148,7 @@ export const rejectionReasons = [
 export type Comment = {
   id: string;
   user: string;
-  role: 'atl' | 'back-office' | 'supervisor' | 'retail-executive';
+  role: 'atl' | 'back-office' | 'supervisor';
   timestamp: string;
   content: string;
 };

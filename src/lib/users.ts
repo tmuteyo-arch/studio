@@ -1,6 +1,6 @@
 'use client';
 
-export type Role = 'atl' | 'back-office' | 'supervisor' | 'retail-executive';
+export type Role = 'atl' | 'back-office' | 'supervisor';
 
 export interface User {
   id: string;
@@ -22,12 +22,5 @@ export const users: User[] = [
     email: 'supervisor1@inbucks.app',
     initials: 'BZ',
     team: ['Tashinga Muteyo', 'Tendai Moyo']
-  },
-  { 
-    id: 'user-5', 
-    name: 'Sekai Chipo', 
-    role: 'retail-executive', 
-    email: 're@inbucks.app',
-    initials: 'SC'
   },
 ];
