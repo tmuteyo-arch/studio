@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { useAtom } from 'jotai';
 
 import { Logo } from '@/components/logo';
@@ -15,6 +15,75 @@ import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck } from 'lucide-react';
+
+const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVariant, delay }) => {
+  const ref = React.useRef<HTMLDivElement>(null);
+  
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const xSpring = useSpring(x, { stiffness: 200, damping: 25 });
+  const ySpring = useSpring(y, { stiffness: 200, damping: 25 });
+
+  const rotateX = useTransform(ySpring, [-0.5, 0.5], ["12.5deg", "-12.5deg"]);
+  const rotateY = useTransform(xSpring, [-0.5, 0.5], ["-12.5deg", "12.5deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!ref.current) return;
+
+    const rect = ref.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+     <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateX,
+        rotateY,
+        transformStyle: "preserve-3d",
+      }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay }}
+    >
+      <Card
+        className="text-left h-full flex flex-col bg-white/10 backdrop-blur-lg border-white/20 text-white"
+        style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}
+      >
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription className="text-white/80">{description}</CardDescription>
+        </CardHeader>
+        <CardFooter className="mt-auto">
+          <Button 
+            className="w-full"
+            variant={buttonVariant || 'default'}
+            onClick={() => onRoleSelect(role)}>
+            Login as {title}
+          </Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
+  );
+};
+
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
@@ -104,48 +173,39 @@ function AppContent() {
   );
   
   const renderRoleSelection = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-8 text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-8 text-center" style={{ perspective: 1200 }}>
        <div className="flex items-center gap-4 mb-4">
         <Logo className="h-10 w-10" />
         <h1 className="text-3xl font-bold tracking-tight text-white">InnBucks Agent Onboarding</h1>
       </div>
       <h2 className="text-2xl font-semibold text-white/90 mb-2">Select a Role to Continue</h2>
-      <p className="text-white/70 mb-12">Choose a role to proceed to the login screen.</p>
+      <p className="text-white/70 mb-12">Simulate the login for different user roles in the system.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-5xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            <Card className="text-left h-full flex flex-col bg-white/10 backdrop-blur-lg border-white/20 text-white">
-                <CardHeader>
-                    <CardTitle>ATL</CardTitle>
-                    <CardDescription className="text-white/80">Account Taking Leaders who submit applications.</CardDescription>
-                </CardHeader>
-                <CardFooter className="mt-auto">
-                    <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleRoleSelect('atl')}>Login as ATL</Button>
-                </CardFooter>
-            </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            <Card className="text-left h-full flex flex-col bg-white/10 backdrop-blur-lg border-white/20 text-white">
-                <CardHeader>
-                    <CardTitle>Back Office</CardTitle>
-                    <CardDescription className="text-white/80">Officers who validate and process applications.</CardDescription>
-                </CardHeader>
-                <CardFooter className="mt-auto">
-                    <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80" onClick={() => handleRoleSelect('back-office')}>Login as Back Office</Button>
-                </CardFooter>
-            </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-            <Card className="text-left h-full flex flex-col bg-white/10 backdrop-blur-lg border-white/20 text-white">
-                <CardHeader>
-                    <CardTitle>Supervisor</CardTitle>
-                    <CardDescription className="text-white/80">Supervisors who review, approve, or reject applications.</CardDescription>
-                </CardHeader>
-                <CardFooter className="mt-auto">
-                    <Button className="w-full" variant="outline" onClick={() => handleRoleSelect('supervisor')}>Login as Supervisor</Button>
-                </CardFooter>
-            </Card>
-        </motion.div>
+        <AnimatedRoleCard 
+          role="atl"
+          title="ATL"
+          description="Account Taking Leaders who submit applications."
+          onRoleSelect={handleRoleSelect}
+          buttonVariant="default"
+          delay={0.1}
+        />
+        <AnimatedRoleCard 
+          role="back-office"
+          title="Back Office"
+          description="Officers who validate and process applications."
+          onRoleSelect={handleRoleSelect}
+          buttonVariant="secondary"
+          delay={0.2}
+        />
+        <AnimatedRoleCard 
+          role="supervisor"
+          title="Supervisor"
+          description="Supervisors who review, approve, or reject applications."
+          onRoleSelect={handleRoleSelect}
+          buttonVariant="outline"
+          delay={0.3}
+        />
       </div>
     </div>
   );
