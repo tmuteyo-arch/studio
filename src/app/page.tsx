@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
+import RetailExecutiveDashboard from '@/components/roles/retail-executive-dashboard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, User, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck, Crown } from 'lucide-react';
 
 const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVariant, delay }) => {
   const ref = React.useRef<HTMLDivElement>(null);
@@ -127,6 +128,8 @@ function AppContent() {
         return <BackOfficeDashboard user={loggedInUser} />;
       case 'supervisor':
         return <SupervisorDashboard user={loggedInUser} />;
+      case 'retail-executive':
+        return <RetailExecutiveDashboard user={loggedInUser} />;
       default:
         return null;
     }
@@ -142,7 +145,10 @@ function AppContent() {
       >
         <Card className="overflow-hidden shadow-2xl">
           <div className="bg-slate-900 p-6 text-center text-card-foreground">
-              <UserIcon className="mx-auto h-8 w-8 mb-2 text-primary"/>
+              {selectedRole === 'retail-executive' ? 
+                <Crown className="mx-auto h-8 w-8 mb-2 text-primary"/> :
+                <UserIcon className="mx-auto h-8 w-8 mb-2 text-primary"/>
+              }
               <h2 className="text-2xl font-bold">Welcome Back</h2>
               <p className="text-sm text-muted-foreground">Sign in to access your {selectedRole?.replace('-', ' ')} dashboard.</p>
           </div>
@@ -181,7 +187,7 @@ function AppContent() {
       <h2 className="text-2xl font-semibold text-white/90 mb-2">Select a Role to Continue</h2>
       <p className="text-white/70 mb-12">Simulate the login for different user roles in the system.</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-7xl">
         <AnimatedRoleCard 
           role="atl"
           title="ATL"
@@ -205,6 +211,14 @@ function AppContent() {
           onRoleSelect={handleRoleSelect}
           buttonVariant="outline"
           delay={0.3}
+        />
+        <AnimatedRoleCard 
+          role="retail-executive"
+          title="Retail Executive"
+          description="High-level overview of onboarding performance."
+          onRoleSelect={handleRoleSelect}
+          buttonVariant="ghost"
+          delay={0.4}
         />
       </div>
     </div>
