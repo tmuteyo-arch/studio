@@ -8,7 +8,7 @@ import { Application, applicationsAtom, Comment, HistoryLog } from '@/lib/mock-d
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit } from 'lucide-react';
+import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -227,15 +227,15 @@ export default function ApplicationReview({ application: initialApplication, onB
       return;
     }
 
-    const subject = `Account Creation for Application: ${application.id}`;
-    const body = `Please create an account for the following applicant:\n\nClient Name: ${application.clientName}\nApplication ID: ${application.id}\n\nBR Number: ${brNumber}\nWallet Account: ${walletAccount}\n\nThank you.`;
+    const subject = `Agency Agreement for ${application.clientName} - App ID: ${application.id}`;
+    const body = `Please find the attached agency agreement for wallet creation.\n\nClient Name: ${application.clientName}\nApplication ID: ${application.id}\n\nBR Number: ${brNumber}\nWallet Account: ${walletAccount}\n\nThis application has been approved. Please proceed with the wallet creation upon signing.`;
     const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     window.location.href = mailtoLink;
 
      toast({
         title: 'Redirecting to Email Client',
-        description: 'Please complete and send the email to finalize the account creation request.',
+        description: 'Please attach the PDF and send the email.',
     });
   }
 
@@ -368,7 +368,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
-                      {user.role === 'back-office' && application.status !== 'Approved' && <TabsTrigger value="account-creation"><Mail className="mr-2 h-4 w-4" />Account Creation</TabsTrigger>}
+                      {user.role === 'back-office' && application.status === 'Approved' && <TabsTrigger value="agency-agreement"><FileSignature className="mr-2 h-4 w-4" />Agency Agreement</TabsTrigger>}
                   </TabsList>
                   <TabsContent value="details" className="pt-4">
                       <Card>
@@ -569,13 +569,13 @@ export default function ApplicationReview({ application: initialApplication, onB
                           </CardContent>
                       </Card>
                   </TabsContent>
-                  {user.role === 'back-office' && application.status !== 'Approved' && (
-                      <TabsContent value="account-creation" className="pt-4">
+                  {user.role === 'back-office' && application.status === 'Approved' && (
+                      <TabsContent value="agency-agreement" className="pt-4">
                           <Card>
                               <CardHeader>
-                                  <CardTitle>Account Creation Details</CardTitle>
+                                  <CardTitle>Send Agency Agreement</CardTitle>
                                   <CardDescription>
-                                      Enter the recipient email, branch, and wallet information, then send to the account creation team.
+                                      Enter the recipient email, branch, and wallet information, then send the agency agreement for wallet creation.
                                   </CardDescription>
                               </CardHeader>
                               <CardContent className="space-y-4">
@@ -610,8 +610,8 @@ export default function ApplicationReview({ application: initialApplication, onB
                                       </div>
                                   </div>
                                   <Button onClick={handleSendEmail}>
-                                      <Mail className="mr-2 h-4 w-4" />
-                                      Send for Account Creation
+                                      <FileSignature className="mr-2 h-4 w-4" />
+                                      Send Agency Agreement
                                   </Button>
                               </CardContent>
                           </Card>
