@@ -8,7 +8,7 @@ import { Application, applicationsAtom, Comment, HistoryLog } from '@/lib/mock-d
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, Mail, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -105,7 +105,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-     if (status === 'Approved' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL') {
+     if (status === 'Approved' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL' || status === 'Archived') {
         setTimeout(() => onBack(), 500);
     }
   };
@@ -273,7 +273,17 @@ export default function ApplicationReview({ application: initialApplication, onB
   const renderActions = () => {
     switch (user.role) {
       case 'back-office':
-        if(application.status === 'Approved' || application.status === 'Pending Supervisor') return null;
+        if (application.status === 'Approved') {
+            return (
+              <div className="space-x-2">
+                <Button onClick={() => handleStatusChange('Archived', 'Application has been filed and archived.')}>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Archive Application
+                </Button>
+              </div>
+            );
+        }
+        if(application.status === 'Pending Supervisor') return null;
         return (
           <div className="space-x-2">
             <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ATL</Button>

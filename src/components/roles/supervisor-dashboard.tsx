@@ -48,7 +48,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         .filter(app => app.status === 'Pending Supervisor');
 
     const teamApplications = applications
-        .filter(app => user.team?.includes(app.submittedBy));
+        .filter(app => user.team?.includes(app.submittedBy) && app.status !== 'Archived');
     
     const teamPending = teamApplications
         .filter(app => ['Submitted', 'In Review', 'Returned to ATL'].includes(app.status));
