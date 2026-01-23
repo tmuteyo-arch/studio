@@ -10,7 +10,10 @@ export type ApplicationStatus =
   | 'Approved'
   | 'Rejected'
   | 'Returned to ATL'
-  | 'Archived';
+  | 'Archived'
+  | 'Approved - Pending Supervisor Signature'
+  | 'Approved - Pending Executive Signature'
+  | 'Signed';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
 
@@ -30,7 +33,7 @@ export type HistoryLog = {
 export type Comment = {
   id: string;
   user: string;
-  role: 'atl' | 'back-office' | 'supervisor';
+  role: 'atl' | 'back-office' | 'supervisor' | 'retail-executive';
   timestamp: string;
   content: string;
 };

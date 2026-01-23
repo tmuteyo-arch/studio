@@ -82,6 +82,14 @@ export const OnboardingFormSchema = z.object({
   // FCB Status
   fcbStatus: z.string().optional(),
   
+  // Agency Agreement Fields
+  brNumber: z.string().optional(),
+  walletAccount: z.string().optional(),
+  supervisorSignature: z.string().optional(),
+  supervisorSignatureTimestamp: z.string().optional(),
+  executiveSignature: z.string().optional(),
+  executiveSignatureTimestamp: z.string().optional(),
+
   signature: z.string().min(3, { message: 'Please provide your full name as a signature.' }),
   agreedToTerms: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the terms and conditions.' }),

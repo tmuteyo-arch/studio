@@ -127,6 +127,13 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       signatories: [],
       resolutionDate: '',
       signingInstruction: '',
+      // Agency Agreement
+      brNumber: '',
+      walletAccount: '',
+      supervisorSignature: '',
+      supervisorSignatureTimestamp: '',
+      executiveSignature: '',
+      executiveSignatureTimestamp: '',
       // Common
       document1Type: '',
       document2Type: '',
