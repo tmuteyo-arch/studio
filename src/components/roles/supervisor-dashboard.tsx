@@ -78,6 +78,8 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         return <ApplicationReview application={applicationForReview} onBack={() => setSelectedApplication(null)} user={user} />;
     }
 
+    const totalTasks = myApprovalQueue.length + agreementsToSignQueue.length;
+
   return (
     <div>
       <div className="mb-8">
@@ -140,7 +142,10 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
 
       <Tabs defaultValue="tasks" className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6">
-              <TabsTrigger value="tasks"><ClipboardList className="mr-2"/>Tasks</TabsTrigger>
+              <TabsTrigger value="tasks">
+                <ClipboardList className="mr-2"/>Tasks
+                {totalTasks > 0 && <Badge variant="destructive" className="ml-2 animate-pulse">{totalTasks}</Badge>}
+              </TabsTrigger>
               <TabsTrigger value="analytics"><AreaChart className="mr-2"/>Analytics & KPIs</TabsTrigger>
               <TabsTrigger value="team"><Users className="mr-2"/>Team Management</TabsTrigger>
               <TabsTrigger value="reports"><FileDown className="mr-2"/>Reports</TabsTrigger>
