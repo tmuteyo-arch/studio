@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { AlertCircle, AreaChart, CheckCircle2, ClipboardList, Clock, Edit, Inbox, Search, Users } from 'lucide-react';
+import { AlertCircle, AreaChart, CheckCircle2, ClipboardList, Clock, Edit, Inbox, Search, Users, FileDown } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { User, users as allUsers } from '@/lib/users';
 import { Input } from '../ui/input';
@@ -19,6 +19,7 @@ import ExchangeRates from './exchange-rates';
 import TeamAppraisal from './team-appraisal';
 import KpiTracker from './kpi-tracker';
 import AccountSummaryReport from './account-summary-report';
+import ReportsTab from './reports-tab';
 
 interface SupervisorDashboardProps {
     user: User;
@@ -136,10 +137,11 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         </div>
 
       <Tabs defaultValue="tasks" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="tasks"><ClipboardList className="mr-2"/>Tasks</TabsTrigger>
               <TabsTrigger value="analytics"><AreaChart className="mr-2"/>Analytics & KPIs</TabsTrigger>
               <TabsTrigger value="team"><Users className="mr-2"/>Team Management</TabsTrigger>
+              <TabsTrigger value="reports"><FileDown className="mr-2"/>Reports</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tasks">
@@ -212,6 +214,9 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
           </TabsContent>
           <TabsContent value="team">
              <TeamAppraisal applications={applications} team={teamMembers} />
+          </TabsContent>
+           <TabsContent value="reports">
+             <ReportsTab applications={applications} />
           </TabsContent>
       </Tabs>
     </div>
