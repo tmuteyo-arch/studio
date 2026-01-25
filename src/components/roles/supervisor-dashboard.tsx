@@ -20,6 +20,7 @@ import TeamAppraisal from './team-appraisal';
 import KpiTracker from './kpi-tracker';
 import AccountSummaryReport from './account-summary-report';
 import ReportsTab from './reports-tab';
+import BackOfficeAppraisal from './back-office-appraisal';
 
 interface SupervisorDashboardProps {
     user: User;
@@ -47,6 +48,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     const [searchTerm, setSearchTerm] = React.useState('');
 
     const teamMembers = allUsers.filter(u => user.team?.includes(u.name));
+    const backOfficeTeam = allUsers.filter(u => u.role === 'back-office');
 
     const myApprovalQueue = applications.filter(app => app.status === 'Pending Supervisor');
     const agreementsToSignQueue = applications.filter(app => app.status === 'Approved - Pending Supervisor Signature');
@@ -213,7 +215,10 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
             </div>
           </TabsContent>
           <TabsContent value="team">
+            <div className="space-y-6">
              <TeamAppraisal applications={applications} team={teamMembers} />
+             <BackOfficeAppraisal applications={applications} team={backOfficeTeam} />
+            </div>
           </TabsContent>
            <TabsContent value="reports">
              <ReportsTab applications={applications} />
