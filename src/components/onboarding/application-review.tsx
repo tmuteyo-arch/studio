@@ -88,6 +88,7 @@ export default function ApplicationReview({ application: initialApplication, onB
   const printRef = React.useRef<HTMLDivElement>(null);
   const checklistRef = React.useRef<HTMLDivElement>(null);
   const resolutionRef = React.useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = React.useState("details");
 
   const [isRejecting, setIsRejecting] = React.useState(false);
   const [rejectionReason, setRejectionReason] = React.useState('');
@@ -126,7 +127,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-     if (status === 'Approved' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL' || status === 'Archived' || status.includes('Signature') || status === 'Signed') {
+     if (status === 'Signed' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL' || status === 'Archived' || status.includes('Signature')) {
         setTimeout(() => onBack(), 500);
     }
   };
@@ -198,21 +199,11 @@ export default function ApplicationReview({ application: initialApplication, onB
     pdf.save(`Application-${application.id}.pdf`);
     setIsPrinting(false);
   };
-  
-  const handleSendForSignature = () => {
-    const brNumber = form.getValues('brNumber');
-    const walletAccount = form.getValues('walletAccount');
-    if (!brNumber || !walletAccount) {
-      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please enter BR Number and Wallet Account before sending.' });
-      return;
-    }
-    handleStatusChange('Approved - Pending Supervisor Signature', 'Sent for supervisor signature.');
-  }
 
   const handleSupervisorSign = (signatureData: string) => {
     const newDetails = { ...application.details, supervisorSignature: signatureData, supervisorSignatureTimestamp: new Date().toISOString() };
     const newHistoryLog: HistoryLog = { action: 'Agreement Signed by Supervisor', user: user.name, timestamp: new Date().toISOString() };
-    handleUpdateApplication({ details: newDetails, status: 'Approved - Pending Executive Signature', history: [...application.history, newHistoryLog] });
+    handleUpdateApplication({ details: newDetails, status: 'Pending Executive Signature', history: [...application.history, newHistoryLog] });
     toast({ title: "Agreement Sent", description: "Agreement has been signed and sent to the Retail Executive for final verification."});
     setTimeout(() => onBack(), 500);
   };
@@ -243,21 +234,26 @@ export default function ApplicationReview({ application: initialApplication, onB
   const renderActions = () => {
     switch (user.role) {
       case 'back-office':
-        if (application.status === 'Approved') return null;
-        if (['Signed', 'Archived'].includes(application.status)) return <Button onClick={() => handleStatusChange('Archived', 'Application has been filed and archived.')}><Archive className="mr-2 h-4 w-4" />Archive Application</Button>;
-        if(application.status === 'Pending Supervisor') return null;
-        return <div className="space-x-2"><Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ATL</Button><Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button></div>;
+        if (['Signed', 'Archived', 'Pending Supervisor', 'Rejected'].includes(application.status)) return null;
+        if(application.status === 'Submitted' || application.status === 'Returned to ATL') {
+            return <div className="space-x-2"><Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ATL</Button><Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button></div>;
+        }
+        return null;
       case 'supervisor':
-        if(application.status === 'Approved' || application.status === 'Rejected') return null;
-        if (application.status === 'Pending Supervisor') return <div className="space-x-2"><Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject</Button><Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved')}><Check className="mr-2 h-4 w-4" />Approve</Button></div>;
+        if(application.status === 'Pending Supervisor') {
+            return <div className="space-x-2">
+                <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject</Button>
+                <Button className="bg-green-600 hover:bg-green-700" onClick={() => setActiveTab('sign-agreement')}><FileSignature className="mr-2 h-4 w-4" />Review & Sign Agreement</Button>
+            </div>;
+        }
         return null;
       default: return null;
     }
   };
   
-  const supervisorForChecklist = application.history.find(h => h.action === 'Approved')?.user;
+  const supervisorForChecklist = application.history.find(h => h.action.includes('Supervisor'))?.user;
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
-  const isSigningStep = ['Approved - Pending Supervisor Signature', 'Approved - Pending Executive Signature'].includes(application.status);
+  const isSigningStep = ['Pending Supervisor', 'Pending Executive Signature'].includes(application.status);
 
   return (
     <FormProvider {...form}>
@@ -266,7 +262,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Button>
               <div className="flex items-center gap-2">
                   <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting}><Download className="mr-2 h-4 w-4" />{isPrinting ? 'Generating...' : 'Download PDF'}</Button>
-                  {!isSigningStep && renderActions()}
+                  {renderActions()}
               </div>
           </div>
           <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1 }}>
@@ -282,7 +278,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                   <CardTitle>Review Application: {application.id}</CardTitle>
                   <CardDescription>Reviewing application for <strong>{application.clientName}</strong> submitted on {application.submittedDate}.</CardDescription>
               </div>
-              <Badge variant={ application.status === 'Approved' || application.status === 'Signed' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
+              <Badge variant={ application.status === 'Signed' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -292,26 +288,21 @@ export default function ApplicationReview({ application: initialApplication, onB
               
               {aiSummary && (<Alert className="mb-6 bg-secondary/50"><Wand2 className="h-4 w-4" /><AlertTitleComponent>AI Summary & Risk Assessment</AlertTitleComponent><AlertDescriptionComponent>{aiSummary}</AlertDescriptionComponent></Alert>)}
 
-              <Tabs defaultValue="details" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList>
                       <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Customer Details</TabsTrigger>
                       {user.role === 'back-office' && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Form Data</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
-                      {(user.role === 'back-office' && application.status === 'Approved') && <TabsTrigger value="agency-agreement"><FileSignature className="mr-2 h-4 w-4" />Agency Agreement</TabsTrigger>}
-                      {(user.role === 'supervisor' && application.status === 'Approved - Pending Supervisor Signature') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
-                      {(user.role === 'retail-executive' && application.status === 'Approved - Pending Executive Signature') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
+                      {(user.role === 'supervisor' && application.status === 'Pending Supervisor') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
+                      {(user.role === 'retail-executive' && application.status === 'Pending Executive Signature') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
                   </TabsList>
                   <TabsContent value="details" className="pt-4"><Card><CardHeader><CardTitle>Applicant Information</CardTitle></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><DetailItem label="Client Name" value={application.clientName} /><DetailItem label="Client Type" value={application.clientType} /><DetailItem label="Submission Date" value={application.submittedDate} /><DetailItem label="Submitted By" value={application.submittedBy} /><DetailItem label="Status" value={application.status} /><DetailItem label="Last Updated" value={application.lastUpdated} /></div><Separator/>{isCorporate ? (<div className="grid grid-cols-1 md:grid-cols-2 gap-4"><DetailItem label="Legal Name" value={application.details.organisationLegalName} /><DetailItem label="Trade Name" value={application.details.tradeName} /><DetailItem label="Nature of Business" value={application.details.natureOfBusiness} /><DetailItem label="Incorporation Date" value={application.details.dateOfIncorporation} /></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 gap-4"><DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} /><DetailItem label="Address" value={application.details.individualAddress} /><DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} /></div>)}</CardContent></Card>{user.role === 'back-office' && (<Card className="mt-6"><CardHeader><CardTitle>FCB Status Check</CardTitle><CardDescription>Confirm the applicant's status from the Financial Clearing Bureau.</CardDescription></CardHeader><CardContent><RadioGroup defaultValue={application.fcbStatus} onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)} className="flex flex-col sm:flex-row gap-4"><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Inclusive" id="fcb-inclusive" /><Label htmlFor="fcb-inclusive" className="font-normal">Inclusive</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Good" id="fcb-good" /><Label htmlFor="fcb-good" className="font-normal">Good</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adverse" id="fcb-adverse" /><Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Prior Adverse" id="fcb-prior-adverse" /><Label htmlFor="fcb-prior-adverse" className="font-normal">Prior Adverse</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="PEP" id="fcb-pep" /><Label htmlFor="fcb-pep" className="font-normal">PEP</Label></div></RadioGroup></CardContent></Card>)}</TabsContent>
                    {user.role === 'back-office' && (<TabsContent value="form-data" className="pt-4"><Card><CardContent className="pt-6">{isCorporate ? <StepCorporateInfo /> : null}<div className={isCorporate ? 'mt-6' : ''}><StepSignatories /></div></CardContent></Card></TabsContent>)}
                   <TabsContent value="documents" className="pt-4"><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Document Requirements</CardTitle><CardDescription>Checklist for '{application.clientType}' account.</CardDescription></CardHeader><CardContent><ul className="space-y-3">{documentRequirements.map((req) => { const isUploaded = uploadedDocumentTypes.includes(req.document); return (<li key={req.document} className="flex items-center">{isUploaded ? (<CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />) : (<AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />)}<div><p className="font-medium">{req.document}</p><p className="text-sm text-muted-foreground">{req.comment}</p></div></li>); })}</ul></CardContent></Card><Card><CardHeader><CardTitle>Uploaded Documents</CardTitle><CardDescription>Files submitted by the applicant.</CardDescription></CardHeader><CardContent>{application.documents.length > 0 ? (<ul className="space-y-3">{application.documents.map(doc => (<li key={doc.type} className="flex items-center justify-between p-3 rounded-md border"><div><p className="font-medium">{doc.type}</p><p className="text-sm text-muted-foreground">{doc.fileName}</p></div><Button variant="outline" size="sm">View Document</Button></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-8">No documents were uploaded for this application.</p>)}</CardContent></Card></div></TabsContent>
                   <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Application History</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action === 'Submitted' ? <FileText className="h-5 w-5"/> : <User className="h-5 w-5"/>}</div></div><div className="ml-4"><p className="font-medium">{entry.action} by {entry.user}</p><p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
-                  <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Comments & Feedback</CardTitle><CardDescription>Discuss the application with team members. Comments are not visible to the client.</CardDescription></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}{application.comments.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">No comments yet.</p>)}</div>{application.status !== 'Approved' && (<div className="space-y-2"><Textarea placeholder="Type your comment here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Comment</Button></div>)}</CardContent></Card></TabsContent>
-                  {(user.role === 'back-office' && application.status === 'Approved') && (
-                      <TabsContent value="agency-agreement" className="pt-4"><Card><CardHeader><CardTitle>Prepare Agency Agreement</CardTitle><CardDescription>Enter the branch and wallet information, then send the agreement to the supervisor for the first signature.</CardDescription></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="br-number">BR Number</Label><Input id="br-number" placeholder="Enter BR number" {...form.register('brNumber')} /></div><div className="space-y-2"><Label htmlFor="wallet-account">Wallet Account</Label><Input id="wallet-account" placeholder="Enter wallet account number" {...form.register('walletAccount')} /></div></div><Button onClick={handleSendForSignature}><Send className="mr-2 h-4 w-4" />Send to Supervisor for Signature</Button></CardContent></Card>
-                      </TabsContent>
-                  )}
+                  <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Comments & Feedback</CardTitle><CardDescription>Discuss the application with team members. Comments are not visible to the client.</CardDescription></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}{application.comments.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">No comments yet.</p>)}</div>{application.status !== 'Signed' && (<div className="space-y-2"><Textarea placeholder="Type your comment here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Comment</Button></div>)}</CardContent></Card></TabsContent>
                    {isSigningStep && (
                        <TabsContent value="sign-agreement" className="pt-4"><Card>
                            <CardHeader><CardTitle>Sign Agency Agreement</CardTitle><CardDescription>Please review the resolution details and provide your digital signature below.</CardDescription></CardHeader>
@@ -331,10 +322,10 @@ export default function ApplicationReview({ application: initialApplication, onB
                                        )}
                                     </div>
                                     <div>
-                                       {user.role === 'supervisor' && application.status === 'Approved - Pending Supervisor Signature' && (
+                                       {user.role === 'supervisor' && application.status === 'Pending Supervisor' && (
                                            <SignatureField onSave={handleSupervisorSign} />
                                        )}
-                                       {user.role === 'retail-executive' && application.status === 'Approved - Pending Executive Signature' && (
+                                       {user.role === 'retail-executive' && application.status === 'Pending Executive Signature' && (
                                            <SignatureField onSave={handleExecutiveSign} />
                                        )}
                                     </div>

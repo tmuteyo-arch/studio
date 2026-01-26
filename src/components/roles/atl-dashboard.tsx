@@ -15,10 +15,11 @@ import { Input } from '../ui/input';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
-    case 'Approved':
+    case 'Signed':
       return 'success';
     case 'Pending Supervisor':
     case 'In Review':
+    case 'Pending Executive Signature':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
@@ -41,7 +42,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
 
   const myApplications = applications
-    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Approved', 'Rejected'].includes(app.status))
+    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected'].includes(app.status))
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     
   const filteredApplications = myApplications.filter(app => {
@@ -82,7 +83,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <div>
                     <CardTitle>My Applications</CardTitle>
-                    <CardDescription>A list of your submitted, returned, and approved applications.</CardDescription>
+                    <CardDescription>A list of your submitted, returned, and finalized applications.</CardDescription>
                 </div>
                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />

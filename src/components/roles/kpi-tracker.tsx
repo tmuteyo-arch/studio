@@ -72,7 +72,7 @@ export default function KpiTracker({ applications }: KpiTrackerProps) {
     const missingKycRate = 100 - kycCompletenessRate;
 
     // 3. Approval Rate
-    const approvedCount = applications.filter(a => a.status === 'Approved').length;
+    const approvedCount = applications.filter(a => a.status === 'Signed').length;
     const approvalRate = (approvedCount / totalSubmissions) * 100;
 
     // 4. Rework Rate
@@ -81,10 +81,10 @@ export default function KpiTracker({ applications }: KpiTrackerProps) {
 
     // 5. Onboarding TAT
     let totalOnboardingHours = 0;
-    const approvedApps = applications.filter(app => app.status === 'Approved');
+    const approvedApps = applications.filter(app => app.status === 'Signed');
     approvedApps.forEach(app => {
       const submittedLog = app.history.find(h => h.action === 'Submitted');
-      const approvedLog = app.history.find(h => h.action === 'Approved');
+      const approvedLog = app.history.find(h => h.action === 'Signed');
       if (submittedLog && approvedLog) {
         totalOnboardingHours += differenceInHours(parseISO(approvedLog.timestamp), parseISO(submittedLog.timestamp));
       }

@@ -20,17 +20,17 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
 
     const summaryStats = React.useMemo(() => {
-        const pendingStatuses: ApplicationStatus[] = ['Submitted', 'In Review', 'Returned to ATL', 'Pending Supervisor'];
+        const pendingStatuses: ApplicationStatus[] = ['Submitted', 'In Review', 'Returned to ATL', 'Pending Supervisor', 'Pending Executive Signature'];
         return {
             totalPending: applications.filter(a => pendingStatuses.includes(a.status)).length,
-            totalApproved: applications.filter(a => a.status === 'Approved').length,
+            totalSigned: applications.filter(a => a.status === 'Signed').length,
             totalRejected: applications.filter(a => a.status === 'Rejected').length,
             totalApplications: applications.length,
-            pendingAgreementSignature: applications.filter(a => a.status === 'Approved - Pending Executive Signature').length,
+            pendingAgreementSignature: applications.filter(a => a.status === 'Pending Executive Signature').length,
         };
     }, [applications]);
 
-    const agreementsToSign = applications.filter(app => app.status === 'Approved - Pending Executive Signature');
+    const agreementsToSign = applications.filter(app => app.status === 'Pending Executive Signature');
     const signedAgreements = applications.filter(app => app.status === 'Signed');
 
     const applicationForReview = selectedApplication 
@@ -77,11 +77,11 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Approved</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Signed</CardTitle>
                         <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.totalApproved}</div>
+                        <div className="text-2xl font-bold">{summaryStats.totalSigned}</div>
                         <p className="text-xs text-muted-foreground">Successfully onboarded</p>
                     </CardContent>
                 </Card>

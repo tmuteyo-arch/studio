@@ -41,14 +41,14 @@ export default function TeamAppraisal({ applications, team }: TeamAppraisalProps
     return team.map((member) => {
       const memberApps = filteredApps.filter(app => app.submittedBy === member.name);
       
-      const processedApps = memberApps.filter(app => app.status === 'Approved' || app.status === 'Rejected');
+      const processedApps = memberApps.filter(app => app.status === 'Signed' || app.status === 'Rejected');
 
       let totalHours = 0;
       let appCountWithTurnaround = 0;
 
       processedApps.forEach(app => {
         const submittedLog = app.history.find(h => h.action === 'Submitted');
-        const finalLog = app.history.slice().reverse().find(h => h.action === 'Approved' || h.action === 'Rejected');
+        const finalLog = app.history.slice().reverse().find(h => h.action === 'Signed' || h.action === 'Rejected');
         
         if (submittedLog && finalLog) {
           const startTime = parseISO(submittedLog.timestamp);
@@ -64,7 +64,7 @@ export default function TeamAppraisal({ applications, team }: TeamAppraisalProps
         name: member.name,
         initials: member.initials,
         submitted: memberApps.length,
-        approved: memberApps.filter(app => app.status === 'Approved').length,
+        approved: memberApps.filter(app => app.status === 'Signed').length,
         rejected: memberApps.filter(app => app.status === 'Rejected').length,
         avgTurnaroundHours: avgTurnaroundHours,
       };

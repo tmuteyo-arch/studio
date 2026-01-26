@@ -13,7 +13,7 @@ interface AccountSummaryReportProps {
 export default function AccountSummaryReport({ applications }: AccountSummaryReportProps) {
   const reportData = React.useMemo(() => {
     const totalReceived = applications.length;
-    const totalCompleted = applications.filter(app => app.status === 'Approved').length;
+    const totalCompleted = applications.filter(app => app.status === 'Signed').length;
     
     const breakdown = applications.reduce((acc, app) => {
       acc[app.clientType] = (acc[app.clientType] || 0) + 1;

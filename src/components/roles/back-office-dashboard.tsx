@@ -14,15 +14,16 @@ import { cn } from '@/lib/utils';
 import DailyActivityTracker from './daily-activity-tracker';
 import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
 
-type FilterStatus = 'pendingReview' | 'pendingSupervisor' | 'approved' | 'rejected' | 'all' | 'storage';
+type FilterStatus = 'pendingReview' | 'pendingSupervisor' | 'signed' | 'rejected' | 'all' | 'storage';
 
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
-    case 'Approved':
+    case 'Signed':
         return 'success';
     case 'Pending Supervisor':
     case 'In Review':
+    case 'Pending Executive Signature':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
@@ -49,7 +50,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const summaryStats = React.useMemo(() => ({
         pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length,
         pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor').length,
-        approved: applications.filter(a => a.status === 'Approved').length,
+        signed: applications.filter(a => a.status === 'Signed').length,
         rejected: applications.filter(a => a.status === 'Rejected').length,
     }), [applications]);
 
@@ -62,8 +63,8 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             case 'pendingSupervisor':
                 apps = applications.filter(app => app.status === 'Pending Supervisor');
                 break;
-            case 'approved':
-                apps = applications.filter(app => app.status === 'Approved');
+            case 'signed':
+                apps = applications.filter(app => app.status === 'Signed');
                 break;
             case 'rejected':
                 apps = applications.filter(app => app.status === 'Rejected');
@@ -114,7 +115,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
         all: "All Applications",
         pendingReview: "My Application Queue",
         pendingSupervisor: "Applications Pending Supervisor",
-        approved: "Approved & Ready for Filing",
+        signed: "Signed & Ready for Filing",
         rejected: "Rejected Applications",
         storage: "Storage & Audit",
     }
@@ -162,15 +163,15 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     </CardContent>
                 </Card>
             </button>
-            <button onClick={() => setFilter('approved')} className={cn("text-left", filter === 'approved' && "ring-2 ring-primary rounded-lg")}>
+            <button onClick={() => setFilter('signed')} className={cn("text-left", filter === 'signed' && "ring-2 ring-primary rounded-lg")}>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Ready for Filing</CardTitle>
                         <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.approved}</div>
-                        <p className="text-xs text-muted-foreground">Approved applications awaiting filing.</p>
+                        <div className="text-2xl font-bold">{summaryStats.signed}</div>
+                        <p className="text-xs text-muted-foreground">Signed agreements awaiting filing.</p>
                     </CardContent>
                 </Card>
             </button>
@@ -196,7 +197,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                       <CardDescription>
                          {
                             filter === 'pendingReview' ? 'Applications awaiting your review and validation.' :
-                            filter === 'approved' ? 'Approved applications ready for final filing and archival.' :
+                            filter === 'signed' ? 'Signed applications ready for final filing and archival.' :
                             filter === 'storage' ? 'Search and view all applications for audit purposes.' :
                             `A list of all ${filter} applications.`
                          }
@@ -242,7 +243,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                             <p><span className="font-medium text-muted-foreground">Docs:</span> <span className="text-xs">{app.documents.map(d => d.type).join(', ')}</span></p>
                            }
                           <Button className="w-full mt-2" variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                            {filter === 'pendingReview' || filter === 'approved' ? 'Review & File' : 'View'}
+                            {filter === 'pendingReview' || filter === 'signed' ? 'Review & File' : 'View'}
                           </Button>
                         </CardContent>
                       </Card>
@@ -280,7 +281,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                             </TableCell>
                             <TableCell className="text-right">
                               <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                                  {filter === 'pendingReview' || filter === 'approved' ? 'Review & File' : 'View'}
+                                  {filter === 'pendingReview' || filter === 'signed' ? 'Review & File' : 'View'}
                               </Button>
                             </TableCell>
                           </TableRow>

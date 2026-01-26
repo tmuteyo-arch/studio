@@ -28,12 +28,10 @@ interface SupervisorDashboardProps {
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
-    case 'Approved':
     case 'Signed':
       return 'success';
     case 'Pending Supervisor':
-    case 'Approved - Pending Supervisor Signature':
-    case 'Approved - Pending Executive Signature':
+    case 'Pending Executive Signature':
       return 'secondary';
     case 'Rejected':
       return 'destructive';
@@ -51,8 +49,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     const backOfficeTeam = allUsers.filter(u => u.role === 'back-office');
 
     const myApprovalQueue = applications.filter(app => app.status === 'Pending Supervisor');
-    const agreementsToSignQueue = applications.filter(app => app.status === 'Approved - Pending Supervisor Signature');
-
+    
     const teamApplications = applications
         .filter(app => user.team?.includes(app.submittedBy) && app.status !== 'Archived');
     
@@ -60,7 +57,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         .filter(app => ['Submitted', 'In Review', 'Returned to ATL'].includes(app.status));
         
     const completedToday = teamApplications
-        .filter(app => app.status === 'Approved' && differenceInDays(new Date(), new Date(app.lastUpdated)) === 0).length;
+        .filter(app => app.status === 'Signed' && differenceInDays(new Date(), new Date(app.lastUpdated)) === 0).length;
 
     const pendingOver3Days = applications
         .filter(app => 
@@ -69,7 +66,6 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         ).length;
 
     const filteredApprovalQueue = myApprovalQueue.filter(app => app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
-    const filteredAgreementsQueue = agreementsToSignQueue.filter(app => app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
     const filteredTeamApps = teamApplications.filter(app => app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const applicationForReview = selectedApplication ? applications.find(app => app.id === selectedApplication.id) : null;
@@ -78,7 +74,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         return <ApplicationReview application={applicationForReview} onBack={() => setSelectedApplication(null)} user={user} />;
     }
 
-    const totalTasks = myApprovalQueue.length + agreementsToSignQueue.length;
+    const totalTasks = myApprovalQueue.length;
 
   return (
     <div>
@@ -87,25 +83,15 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         <p className="text-muted-foreground">Review applications and track your team's progress.</p>
       </div>
 
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-6">
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Approve Applications</CardTitle>
+                    <CardTitle className="text-sm font-medium">Approval Queue</CardTitle>
                     <Inbox className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{myApprovalQueue.length}</div>
                     <p className="text-xs text-muted-foreground">Awaiting your decision</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Sign Agreements</CardTitle>
-                    <Edit className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{agreementsToSignQueue.length}</div>
-                    <p className="text-xs text-muted-foreground">Agreements needing your signature</p>
                 </CardContent>
             </Card>
             <Card>
@@ -125,7 +111,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">+{completedToday}</div>
-                    <p className="text-xs text-muted-foreground">Applications approved today</p>
+                    <p className="text-xs text-muted-foreground">Applications signed today</p>
                 </CardContent>
             </Card>
             <Card className={pendingOver3Days > 0 ? "bg-destructive/10 border-destructive" : ""}>
@@ -156,7 +142,6 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                   <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                       <TabsList className="w-full sm:w-auto">
                           <TabsTrigger value="approval">Approval Queue ({filteredApprovalQueue.length})</TabsTrigger>
-                          <TabsTrigger value="agreements">Agreements to Sign ({filteredAgreementsQueue.length})</TabsTrigger>
                           <TabsTrigger value="team">Team Progress ({filteredTeamApps.length})</TabsTrigger>
                       </TabsList>
                       <div className="relative w-full sm:w-64">
@@ -166,27 +151,14 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                   </div>
                   <TabsContent value="approval">
                       <Card>
-                          <CardHeader><CardTitle>Approval Queue</CardTitle><CardDescription>Applications that have been reviewed by Back Office and are pending your final approval.</CardDescription></CardHeader>
+                          <CardHeader><CardTitle>Approval Queue</CardTitle><CardDescription>Applications that have been reviewed by Back Office and are pending your signature.</CardDescription></CardHeader>
                           <CardContent>
                             <Table><TableHeader><TableRow><TableHead>App ID</TableHead><TableHead>Client Name</TableHead><TableHead>Submitted By</TableHead><TableHead>Last Updated</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                                 <TableBody>
-                                    {filteredApprovalQueue.map((app) => (<TableRow key={app.id}><TableCell className="font-mono text-xs">{app.id}</TableCell><TableCell className="font-medium">{app.clientName}</TableCell><TableCell>{app.submittedBy}</TableCell><TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell><TableCell><Badge variant="secondary">{app.status}</Badge></TableCell><TableCell className="text-right"><Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review</Button></TableCell></TableRow>))}
+                                    {filteredApprovalQueue.map((app) => (<TableRow key={app.id}><TableCell className="font-mono text-xs">{app.id}</TableCell><TableCell className="font-medium">{app.clientName}</TableCell><TableCell>{app.submittedBy}</TableCell><TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell><TableCell><Badge variant="secondary">{app.status}</Badge></TableCell><TableCell className="text-right"><Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review & Sign</Button></TableCell></TableRow>))}
                                 </TableBody>
                             </Table>
                             {filteredApprovalQueue.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No applications match your search.' : 'There are no applications pending your approval.'}</div>}
-                          </CardContent>
-                      </Card>
-                  </TabsContent>
-                   <TabsContent value="agreements">
-                      <Card>
-                          <CardHeader><CardTitle>Agreements to Sign</CardTitle><CardDescription>Approved applications that require your signature on the agency agreement before being sent to the executive.</CardDescription></CardHeader>
-                          <CardContent>
-                            <Table><TableHeader><TableRow><TableHead>App ID</TableHead><TableHead>Client Name</TableHead><TableHead>Submitted By</TableHead><TableHead>Last Updated</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-                                <TableBody>
-                                    {filteredAgreementsQueue.map((app) => (<TableRow key={app.id}><TableCell className="font-mono text-xs">{app.id}</TableCell><TableCell className="font-medium">{app.clientName}</TableCell><TableCell>{app.submittedBy}</TableCell><TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell><TableCell><Badge variant="secondary">{app.status}</Badge></TableCell><TableCell className="text-right"><Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review & Sign</Button></TableCell></TableRow>))}
-                                </TableBody>
-                            </Table>
-                            {filteredAgreementsQueue.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No agreements match your search.' : 'There are no agreements pending your signature.'}</div>}
                           </CardContent>
                       </Card>
                   </TabsContent>

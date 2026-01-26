@@ -23,13 +23,13 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function ReportsTab({ applications }: ReportsTabProps) {
-  const approvedApplications = React.useMemo(() =>
-    applications.filter(app => app.status === 'Approved' || app.status === 'Signed')
+  const signedApplications = React.useMemo(() =>
+    applications.filter(app => app.status === 'Signed')
   , [applications]);
 
   const monthlyData = React.useMemo(() => {
     const months: Record<string, number> = {};
-    approvedApplications.forEach(app => {
+    signedApplications.forEach(app => {
       const month = format(new Date(app.lastUpdated), 'MMM yyyy');
       months[month] = (months[month] || 0) + 1;
     });
@@ -37,11 +37,11 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
       month,
       count: months[month],
     })).sort((a, b) => new Date(a.month).valueOf() - new Date(b.month).valueOf());
-  }, [approvedApplications]);
+  }, [signedApplications]);
   
   const handleDownloadCsv = () => {
     const headers = ['Name', 'Address', 'Mobile Number', 'Date Opened'];
-    const rows = approvedApplications.map(app => {
+    const rows = signedApplications.map(app => {
         const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(app.clientType);
         const name = app.clientName;
         const address = isCorporate ? app.details.physicalAddress : app.details.individualAddress;
@@ -54,7 +54,7 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `approved_applications_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.setAttribute("download", `signed_applications_${format(new Date(), 'yyyy-MM-dd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -65,10 +65,10 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Approved Applications Report</CardTitle>
-            <CardDescription>A detailed list of all approved and signed applications.</CardDescription>
+            <CardTitle>Signed Applications Report</CardTitle>
+            <CardDescription>A detailed list of all finalized and signed applications.</CardDescription>
           </div>
-          <Button onClick={handleDownloadCsv} variant="outline" size="sm" disabled={approvedApplications.length === 0}>
+          <Button onClick={handleDownloadCsv} variant="outline" size="sm" disabled={signedApplications.length === 0}>
             <FileDown className="mr-2 h-4 w-4" />
             Download CSV
           </Button>
@@ -84,7 +84,7 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {approvedApplications.length > 0 ? approvedApplications.map(app => {
+              {signedApplications.length > 0 ? signedApplications.map(app => {
                 const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(app.clientType);
                 return (
                   <TableRow key={app.id}>
@@ -97,7 +97,7 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
               }) : (
                 <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
-                        No approved applications to report.
+                        No signed applications to report.
                     </TableCell>
                 </TableRow>
               )}
@@ -109,7 +109,7 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
       <Card>
         <CardHeader>
           <CardTitle>Monthly Application Volume</CardTitle>
-          <CardDescription>A summary of approved applications per month.</CardDescription>
+          <CardDescription>A summary of signed applications per month.</CardDescription>
         </CardHeader>
         <CardContent>
             {monthlyData.length > 0 ? (

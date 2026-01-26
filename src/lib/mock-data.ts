@@ -7,13 +7,11 @@ export type ApplicationStatus =
   | 'Submitted'
   | 'In Review'
   | 'Pending Supervisor'
-  | 'Approved'
+  | 'Pending Executive Signature'
+  | 'Signed'
   | 'Rejected'
   | 'Returned to ATL'
-  | 'Archived'
-  | 'Approved - Pending Supervisor Signature'
-  | 'Approved - Pending Executive Signature'
-  | 'Signed';
+  | 'Archived';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
 
@@ -164,9 +162,9 @@ const initialApplications: Application[] = [
     id: 'APP-004',
     clientName: 'Agri-Innovate Ltd',
     clientType: 'Company (Private / Public Limited)',
-    status: 'Approved',
+    status: 'Signed',
     submittedDate: '2024-05-07',
-    lastUpdated: '2024-05-13T16:00:00Z',
+    lastUpdated: '2024-05-14T18:00:00Z',
     submittedBy: 'Tendai Moyo',
     fcbStatus: 'Good',
      details: {
@@ -176,7 +174,11 @@ const initialApplications: Application[] = [
         document1Type: 'Certificate of Incorporation',
         document2Type: 'CR14',
         agreedToTerms: true,
-        signature: 'David Chen'
+        signature: 'David Chen',
+        supervisorSignature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mP8/wcAAwAB/epv2AAAAABJRU5ErkJggg==',
+        supervisorSignatureTimestamp: '2024-05-13T16:00:00Z',
+        executiveSignature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mP8/wcAAwAB/epv2AAAAABJRU5ErkJggg==',
+        executiveSignatureTimestamp: '2024-05-14T18:00:00Z'
     },
     signatories: [],
     documents: [
@@ -186,7 +188,8 @@ const initialApplications: Application[] = [
     history: [
       { action: 'Submitted', user: 'Tendai Moyo', timestamp: '2024-05-07T11:00:00Z' },
       { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-10T14:00:00Z' },
-      { action: 'Approved', user: 'Blessing Zulu', timestamp: '2024-05-13T16:00:00Z' },
+      { action: 'Pending Executive Signature', user: 'Blessing Zulu', timestamp: '2024-05-13T16:00:00Z', notes: 'Supervisor has signed.' },
+      { action: 'Signed', user: 'Tafadzwa Chihota', timestamp: '2024-05-14T18:00:00Z', notes: 'Final signature from Retail Executive.' },
     ],
     comments: [],
   },
