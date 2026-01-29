@@ -9,7 +9,7 @@ import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-dat
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine } from 'lucide-react';
+import { Search, Send, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import DailyActivityTracker from './daily-activity-tracker';
 import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
@@ -44,7 +44,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [applications, setApplications] = useAtom(applicationsAtom);
     const [searchTerm, setSearchTerm] = React.useState('');
-    const [filter, setFilter] = React.useState<FilterStatus>('pendingReview');
+    const [filter, setFilter] = React.useState<FilterStatus>('all');
     const [isDigitizing, setIsDigitizing] = React.useState<boolean>(false);
 
     const summaryStats = React.useMemo(() => ({
@@ -52,10 +52,11 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
         pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor').length,
         signed: applications.filter(a => a.status === 'Signed').length,
         rejected: applications.filter(a => a.status === 'Rejected').length,
+        all: applications.filter(a => ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Signed', 'Rejected'].includes(a.status)).length,
     }), [applications]);
 
     const filteredApplications = React.useMemo(() => {
-        let apps = applications;
+        let apps: Application[];
         switch (filter) {
             case 'pendingReview':
                 apps = applications.filter(app => app.status === 'Submitted' || app.status === 'Returned to ATL');
@@ -76,12 +77,14 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     app.documents.some(doc => doc.type.toLowerCase().includes(searchTerm.toLowerCase()))
                 );
             case 'all':
+                apps = applications.filter(app => ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Signed', 'Rejected'].includes(app.status));
+                break;
             default:
-                apps = applications;
+                apps = applications.filter(app => ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Signed', 'Rejected'].includes(app.status));
                 break;
         }
 
-        if (searchTerm) {
+        if (searchTerm && filter !== 'storage') {
             return apps.filter(app =>
                 app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -112,7 +115,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     }
     
     const filterTitles: Record<FilterStatus, string> = {
-        all: "All Applications",
+        all: "All Active Applications",
         pendingReview: "My Application Queue",
         pendingSupervisor: "Applications Pending Supervisor",
         signed: "Signed & Ready for Filing",
@@ -139,6 +142,18 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            <button onClick={() => setFilter('all')} className={cn("text-left", filter === 'all' && "ring-2 ring-primary rounded-lg")}>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">All Active Apps</CardTitle>
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{summaryStats.all}</div>
+                        <p className="text-xs text-muted-foreground">All applications you can action</p>
+                    </CardContent>
+                </Card>
+            </button>
             <button onClick={() => setFilter('pendingReview')} className={cn("text-left", filter === 'pendingReview' && "ring-2 ring-primary rounded-lg")}>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -148,18 +163,6 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     <CardContent>
                         <div className="text-2xl font-bold">{summaryStats.pendingReview}</div>
                         <p className="text-xs text-muted-foreground">New and returned applications</p>
-                    </CardContent>
-                </Card>
-            </button>
-            <button onClick={() => setFilter('pendingSupervisor')} className={cn("text-left", filter === 'pendingSupervisor' && "ring-2 ring-primary rounded-lg")}>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Sent to Supervisor</CardTitle>
-                        <Send className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.pendingSupervisor}</div>
-                        <p className="text-xs text-muted-foreground">Awaiting final approval</p>
                     </CardContent>
                 </Card>
             </button>
@@ -196,6 +199,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                       <CardTitle>{filterTitles[filter]}</CardTitle>
                       <CardDescription>
                          {
+                            filter === 'all' ? 'A list of all applications you can action or view.' :
                             filter === 'pendingReview' ? 'Applications awaiting your review and validation.' :
                             filter === 'signed' ? 'Signed applications ready for final filing and archival.' :
                             filter === 'storage' ? 'Search and view all applications for audit purposes.' :
@@ -213,7 +217,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button variant="outline" onClick={() => setFilter(filter === 'storage' ? 'pendingReview' : 'storage')}>
+                    <Button variant="outline" onClick={() => setFilter(filter === 'storage' ? 'all' : 'storage')}>
                         <Archive className="mr-2 h-4 w-4" />
                         {filter === 'storage' ? 'My Queue' : 'Storage / Audit'}
                     </Button>

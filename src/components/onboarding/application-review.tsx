@@ -234,7 +234,10 @@ export default function ApplicationReview({ application: initialApplication, onB
   const renderActions = () => {
     switch (user.role) {
       case 'back-office':
-        if (['Signed', 'Archived', 'Pending Supervisor', 'Rejected'].includes(application.status)) return null;
+        if (application.status === 'Signed') {
+            return <div className="space-x-2"><Button onClick={() => handleStatusChange('Archived')}><Archive className="mr-2 h-4 w-4" />Archive Application</Button></div>;
+        }
+        if (['Archived', 'Pending Supervisor', 'Rejected', 'Pending Executive Signature'].includes(application.status)) return null;
         if(application.status === 'Submitted' || application.status === 'Returned to ATL') {
             return <div className="space-x-2"><Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ATL</Button><Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button></div>;
         }
