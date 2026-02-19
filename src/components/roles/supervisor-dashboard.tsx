@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { differenceInDays, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import TeamPerformanceChart from './team-performance-chart';
-import ExchangeRates from './exchange-rates';
 import TeamAppraisal from './team-appraisal';
 import KpiTracker from './kpi-tracker';
 import AccountSummaryReport from './account-summary-report';
@@ -181,13 +180,8 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
             <div className="space-y-6">
                 <KpiTracker applications={applications} />
                 <AccountSummaryReport applications={applications} />
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <div className="xl:col-span-2">
-                        <TeamPerformanceChart applications={teamApplications} team={user.team || []} />
-                    </div>
-                    <div>
-                        <ExchangeRates />
-                    </div>
+                <div className="w-full">
+                    <TeamPerformanceChart applications={teamApplications} team={user.team || []} />
                 </div>
             </div>
           </TabsContent>
