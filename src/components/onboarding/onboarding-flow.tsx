@@ -18,7 +18,7 @@ import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/step-review';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -178,13 +178,16 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     }
 
     setIsCheckingDuplicates(true);
-    await new Promise(res => setTimeout(res, 300));
+    await new Promise(res => setTimeout(res, 600)); // Simulate check
     setIsCheckingDuplicates(false);
 
     const duplicate = applications.find(app => app.clientName.toLowerCase() === nameToCheck.toLowerCase());
 
     if (duplicate) {
-        setDuplicateInfo({ isDuplicate: true, message: `An application with the name '${nameToCheck}' already exists (ID: ${duplicate.id}).` });
+        setDuplicateInfo({ 
+          isDuplicate: true, 
+          message: `An existing application for '${nameToCheck}' was found in the system (App ID: ${duplicate.id}). Please verify if this is a new request or a duplicate of the existing record.` 
+        });
         return false;
     }
 
@@ -204,8 +207,11 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       return;
     }
     
-    const canProceed = await handleDuplicateCheck();
-    if (!canProceed) return;
+    // Check for duplicates before moving away from name entry steps
+    if (currentStep.id === 'corporate-info' || currentStep.id === 'individual-info') {
+      const canProceed = await handleDuplicateCheck();
+      if (!canProceed) return;
+    }
 
 
     if (currentStepIndex < steps.length - 1) {
@@ -269,11 +275,11 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
               onSubmit={form.handleSubmit(onSubmit)}
               className="h-full"
             >
-              <Card className="h-full flex flex-col">
+              <Card className="h-full flex flex-col shadow-lg border-primary/10">
                 <CardContent className="flex-1 py-6">
                   { CurrentStepComponent ? <CurrentStepComponent /> : <div>Step not found</div> }
                 </CardContent>
-                <CardFooter className="border-t px-6 py-4 justify-between">
+                <CardFooter className="border-t px-6 py-4 justify-between bg-muted/10">
                   <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev}>
                      {currentStepIndex > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
                     {currentStepIndex === 0 ? 'Cancel' : 'Back'}
@@ -281,13 +287,13 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
                   {currentStepIndex < steps.length - 1 && (
                      <Button type="button" onClick={next} disabled={isCheckingDuplicates}>
                       {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      {isCheckingDuplicates ? 'Checking...' : 'Next'}
+                      {isCheckingDuplicates ? 'Validating...' : 'Next'}
                     </Button>
                   )}
                   {currentStepIndex === steps.length - 1 && (
                      <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                       {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                       {isSubmitting ? 'Finalizing...' : 'Submit Application'}
                      </Button>
                   )}
                 </CardFooter>
@@ -298,22 +304,25 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
          <AlertDialog open={duplicateInfo.isDuplicate} onOpenChange={(isOpen) => !isOpen && setDuplicateInfo({ isDuplicate: false, message: '' })}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Potential Duplicate Found</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Potential Duplicate Warning
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-foreground">
                 {duplicateInfo.message}
                 <br /><br />
-                Please review the existing application before proceeding. Do you want to continue creating this new application anyway?
+                Do you want to continue creating this <strong>new</strong> application, or should this lead be cancelled?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel Submission</AlertDialogCancel>
               <AlertDialogAction onClick={() => {
                 setDuplicateInfo({ isDuplicate: false, message: '' });
                 if (currentStepIndex < steps.length - 1) {
                   setCurrentStepIndex((step) => step + 1);
                 }
               }}>
-                Continue Anyway
+                Continue with New Application
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

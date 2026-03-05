@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, MapPin, Inbox, UserCheck } from 'lucide-react';
+import { PlusCircle, Search, MapPin, Inbox, UserCheck, AlertCircle, MessageSquare } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -79,142 +80,170 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   }
 
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-            <h2 className="text-3xl font-bold">ATL Dashboard</h2>
-            <p className="text-muted-foreground">Submit, track, and process customer self-service applications.</p>
+    <TooltipProvider>
+      <div>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+              <h2 className="text-3xl font-bold">ATL Dashboard</h2>
+              <p className="text-muted-foreground">Submit, track, and process customer self-service applications.</p>
+          </div>
+          <Button onClick={() => setIsCreatingApplication(true)} className="shadow-lg hover:scale-105 transition-transform">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New Application
+          </Button>
         </div>
-        <Button onClick={() => setIsCreatingApplication(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Application
-        </Button>
+
+        <Tabs defaultValue="my-apps" className="w-full">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+              <TabsList className="bg-muted/50 p-1">
+                  <TabsTrigger value="my-apps" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                      <UserCheck className="h-4 w-4" />
+                      My Pipeline ({filteredApplications.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="leads" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                      <Inbox className="h-4 w-4" />
+                      Customer Leads ({filteredLeads.length})
+                      {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
+                  </TabsTrigger>
+              </TabsList>
+              <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                      placeholder="Search ID, Client, or Region..."
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+              </div>
+          </div>
+
+          <TabsContent value="my-apps">
+              <Card className="border-none shadow-md overflow-hidden">
+                  <CardHeader className="bg-muted/30">
+                      <CardTitle>Application Tracking</CardTitle>
+                      <CardDescription>View status and address feedback from Back Office.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                      {filteredApplications.length > 0 ? (
+                          <Table>
+                              <TableHeader>
+                                  <TableRow className="bg-muted/10">
+                                      <TableHead className="pl-6">App ID</TableHead>
+                                      <TableHead>Client Name</TableHead>
+                                      <TableHead>Region</TableHead>
+                                      <TableHead>Status</TableHead>
+                                      <TableHead>Recent Activity</TableHead>
+                                      <TableHead className="text-right pr-6">Actions</TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {filteredApplications.map((app) => {
+                                      const lastHistory = app.history[app.history.length - 1];
+                                      return (
+                                          <TableRow key={app.id} className="hover:bg-muted/5 group">
+                                              <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
+                                              <TableCell>
+                                                  <div className="font-medium">{app.clientName}</div>
+                                                  <div className="text-[10px] text-muted-foreground">{app.clientType}</div>
+                                              </TableCell>
+                                              <TableCell>
+                                                  <div className="flex items-center gap-1">
+                                                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                                                      <span className="text-xs">{app.region}</span>
+                                                  </div>
+                                              </TableCell>
+                                              <TableCell>
+                                                  <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                                              </TableCell>
+                                              <TableCell>
+                                                  <div className="flex items-center gap-2">
+                                                      <div className="text-xs truncate max-w-[150px]">
+                                                          <span className="text-muted-foreground">{lastHistory.action}</span>
+                                                          {lastHistory.notes && (
+                                                              <Tooltip>
+                                                                  <TooltipTrigger asChild>
+                                                                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-1 text-destructive">
+                                                                          <AlertCircle className="h-3 w-3" />
+                                                                      </Button>
+                                                                  </TooltipTrigger>
+                                                                  <TooltipContent className="max-w-xs">
+                                                                      <p className="font-bold mb-1">Feedback Note:</p>
+                                                                      <p className="text-xs">{lastHistory.notes}</p>
+                                                                  </TooltipContent>
+                                                              </Tooltip>
+                                                          )}
+                                                      </div>
+                                                  </div>
+                                              </TableCell>
+                                              <TableCell className="text-right pr-6">
+                                                  <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
+                                                      {app.status === 'Returned to ATL' ? 'Fix & Resubmit' : 'View'}
+                                                  </Button>
+                                              </TableCell>
+                                          </TableRow>
+                                      );
+                                  })}
+                              </TableBody>
+                          </Table>
+                      ) : (
+                          <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+                              <p>No active applications found.</p>
+                          </div>
+                      )}
+                  </CardContent>
+              </Card>
+          </TabsContent>
+
+          <TabsContent value="leads">
+              <Card className="border-primary/20 bg-primary/5 shadow-md overflow-hidden">
+                  <CardHeader className="bg-primary/10">
+                      <CardTitle className="flex items-center gap-2">
+                          <Inbox className="h-5 w-5 text-primary" />
+                          Self-Service Customer Inbox
+                      </CardTitle>
+                      <CardDescription className="text-primary/80">Applications submitted by customers via separate portal. Please verify and claim these leads.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                      {filteredLeads.length > 0 ? (
+                          <Table>
+                              <TableHeader>
+                                  <TableRow className="bg-primary/5">
+                                      <TableHead className="pl-6">Lead ID</TableHead>
+                                      <TableHead>Customer / Company</TableHead>
+                                      <TableHead>Region</TableHead>
+                                      <TableHead>Type</TableHead>
+                                      <TableHead>Submitted</TableHead>
+                                      <TableHead className="text-right pr-6">Actions</TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {filteredLeads.map((app) => (
+                                      <TableRow key={app.id} className="hover:bg-primary/10 group animate-in slide-in-from-left-2 duration-300">
+                                          <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
+                                          <TableCell className="font-medium">{app.clientName}</TableCell>
+                                          <TableCell>
+                                              <Badge variant="outline" className="font-normal bg-background">{app.region}</Badge>
+                                          </TableCell>
+                                          <TableCell className="text-xs">{app.clientType}</TableCell>
+                                          <TableCell className="text-xs text-muted-foreground">{app.submittedDate}</TableCell>
+                                          <TableCell className="text-right pr-6">
+                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Review & Claim</Button>
+                                          </TableCell>
+                                      </TableRow>
+                                  ))}
+                              </TableBody>
+                          </Table>
+                      ) : (
+                          <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
+                              <Inbox className="h-12 w-12 mb-2 opacity-20" />
+                              <p>No incoming customer leads at this time.</p>
+                          </div>
+                      )}
+                  </CardContent>
+              </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="my-apps" className="w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-            <TabsList>
-                <TabsTrigger value="my-apps" className="flex items-center gap-2">
-                    <UserCheck className="h-4 w-4" />
-                    My Applications ({filteredApplications.length})
-                </TabsTrigger>
-                <TabsTrigger value="leads" className="flex items-center gap-2">
-                    <Inbox className="h-4 w-4" />
-                    Customer Inbox ({filteredLeads.length})
-                    {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
-                </TabsTrigger>
-            </TabsList>
-            <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    placeholder="Search ID, Client, or Region..."
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-        </div>
-
-        <TabsContent value="my-apps">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Application Pipeline</CardTitle>
-                    <CardDescription>Applications you initiated and are currently tracking.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {filteredApplications.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>App ID</TableHead>
-                                    <TableHead>Client Name</TableHead>
-                                    <TableHead>Region</TableHead>
-                                    <TableHead>Client Type</TableHead>
-                                    <TableHead>Submission Date</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredApplications.map((app) => (
-                                    <TableRow key={app.id}>
-                                        <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                        <TableCell className="font-medium">{app.clientName}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="h-3 w-3 text-muted-foreground" />
-                                                <span className="text-xs">{app.region}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{app.clientType}</TableCell>
-                                        <TableCell>{app.submittedDate}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                            <p>No active applications found.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        </TabsContent>
-
-        <TabsContent value="leads">
-            <Card className="border-primary/20 bg-primary/5">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Inbox className="h-5 w-5" />
-                        Incoming Customer Leads
-                    </CardTitle>
-                    <CardDescription>Applications submitted by customers via the self-service portal. Review and forward them to Back Office.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {filteredLeads.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>App ID</TableHead>
-                                    <TableHead>Client Name</TableHead>
-                                    <TableHead>Region</TableHead>
-                                    <TableHead>Client Type</TableHead>
-                                    <TableHead>Submission Date</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredLeads.map((app) => (
-                                    <TableRow key={app.id}>
-                                        <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                        <TableCell className="font-medium">{app.clientName}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{app.region}</Badge>
-                                        </TableCell>
-                                        <TableCell>{app.clientType}</TableCell>
-                                        <TableCell>{app.submittedDate}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Review & Claim</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                            <p>No incoming customer leads at this time.</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+    </TooltipProvider>
   );
 }

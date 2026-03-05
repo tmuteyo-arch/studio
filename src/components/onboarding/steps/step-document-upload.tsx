@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Eye, Camera, Trash2, PlusCircle, Upload, File } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Eye, Camera, Trash2, PlusCircle, Upload, File, ScanLine } from 'lucide-react';
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
@@ -119,7 +119,7 @@ export default function StepDocumentUpload() {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
       setIsScanning(null);
-      toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access the camera.' });
+      toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access the camera. Check your browser settings.' });
     }
   };
 
@@ -156,7 +156,7 @@ export default function StepDocumentUpload() {
       toast({
         variant: 'destructive',
         title: 'Missing Documents',
-        description: 'Please upload pages for at least the first two required documents.',
+        description: 'Please capture/upload pages for at least the first two required documents.',
       });
       return;
     }
@@ -166,14 +166,14 @@ export default function StepDocumentUpload() {
 
     const formData = form.getValues();
     const input = {
-      document1DataUri: doc1.pages[0].dataUri, // Using first page for AI verification
+      document1DataUri: doc1.pages[0].dataUri,
       document1Type: doc1.documentType,
-      document2DataUri: doc2.pages[0].dataUri, // Using first page for AI verification
+      document2DataUri: doc2.pages[0].dataUri,
       document2Type: doc2.documentType,
       formDataFields: {
-        fullName: formData.fullName,
-        dateOfBirth: formData.dateOfBirth,
-        address: formData.address,
+        fullName: formData.individualFirstName ? `${formData.individualFirstName} ${formData.individualSurname}` : formData.organisationLegalName || '',
+        dateOfBirth: formData.individualDateOfBirth || formData.dateOfIncorporation || '',
+        address: formData.individualAddress || formData.physicalAddress || '',
       },
     };
 
@@ -189,14 +189,14 @@ export default function StepDocumentUpload() {
       form.setValue('fcbStatus', result.data.fcbStatus);
        toast({
         title: 'Verification Complete',
-        description: 'Your documents have been processed and form pre-filled.',
+        description: 'AI has processed your documents and pre-filled the form.',
       });
     } else {
       setValidationResult(result.error || 'An unknown error occurred.');
       toast({
         variant: 'destructive',
         title: 'Verification Failed',
-        description: result.error || 'An unknown error occurred.',
+        description: result.error || 'An unknown error occurred during AI processing.',
       });
     }
   };
@@ -205,126 +205,141 @@ export default function StepDocumentUpload() {
   return (
     <div>
       <CardHeader>
-        <CardTitle>Document Upload & Verification</CardTitle>
-        <CardDescription>Scan or upload all required documents (Images or PDFs). You can add multiple pages to each document type.</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <ScanLine className="h-6 w-6 text-primary" />
+          Document Capture & AI Verification
+        </CardTitle>
+        <CardDescription>Capture required documents using your camera or upload existing files. AI will then validate the data.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
         
-        <Alert>
+        <Alert className="bg-primary/5 border-primary/20">
             <Info className="h-4 w-4" />
-            <AlertTitle>Document Requirements for: {clientType || 'Not Selected'}</AlertTitle>
+            <AlertTitle>Requirements for {clientType}</AlertTitle>
             <AlertDescription>
-                <Table className="mt-2">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Document Required</TableHead>
-                            <TableHead>Comment</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {documentRequirements.map((req) => (
-                            <TableRow key={req.document}>
-                                <TableCell className="font-medium">{req.document}<p className="text-xs text-muted-foreground font-normal">{req.details}</p></TableCell>
-                                <TableCell>{req.comment}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                <div className="max-h-48 overflow-auto mt-2">
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead>Document</TableHead>
+                              <TableHead>Required Format</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                          {documentRequirements.map((req) => (
+                              <TableRow key={req.document}>
+                                  <TableCell className="font-medium text-xs">{req.document}</TableCell>
+                                  <TableCell className="text-xs">{req.comment}</TableCell>
+                              </TableRow>
+                          ))}
+                      </TableBody>
+                  </Table>
+                </div>
             </AlertDescription>
         </Alert>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.values(documents).map(({documentType, pages}) => (
-            <div key={documentType} className="p-4 border rounded-lg">
-                <div className='flex justify-between items-center mb-2'>
-                     <h3 className="font-semibold">{documentType}</h3>
-                     <Badge variant={pages.length > 0 ? 'success' : 'outline'}>{pages.length} Page(s)</Badge>
+            <div key={documentType} className="p-4 border rounded-lg hover:border-primary/50 transition-colors bg-card shadow-sm">
+                <div className='flex justify-between items-center mb-3'>
+                     <h3 className="text-sm font-bold truncate max-w-[150px]" title={documentType}>{documentType}</h3>
+                     <Badge variant={pages.length > 0 ? 'success' : 'outline'} className="text-[10px]">{pages.length} Pages</Badge>
                 </div>
                
-                {pages.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4">
+                <div className="flex gap-2 mb-3">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => startScan(documentType)}><Camera className="mr-2 h-3 w-3"/>Scan</Button>
+                     <Button asChild variant="outline" size="sm" className="flex-1">
+                        <label className="cursor-pointer">
+                            <Upload className="mr-2 h-3 w-3"/>Upload
+                            <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
+                        </label>
+                    </Button>
+                </div>
+
+                {pages.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-1 h-12 overflow-hidden">
                         {pages.map((page, index) => (
-                            <div key={index} className="relative group border rounded-md p-1 h-28 flex flex-col justify-center">
+                            <div key={index} className="relative group border rounded h-12 bg-muted flex items-center justify-center overflow-hidden">
                                 {page.type === 'image' ? (
-                                    <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-cover rounded-md" />
+                                    <img src={page.dataUri} alt="doc" className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center bg-muted rounded-md p-2 h-full">
-                                        <File className="h-8 w-8 text-muted-foreground" />
-                                        <p className="text-xs text-muted-foreground mt-2 w-full text-center truncate" title={page.file?.name}>{page.file?.name}</p>
-                                    </div>
+                                    <File className="h-4 w-4 text-muted-foreground" />
                                 )}
-                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
-                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePageFromDocument(documentType, index)}>
-                                        <Trash2 className="h-4 w-4" />
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <Button variant="destructive" size="icon" className="h-6 w-6" onClick={() => removePageFromDocument(documentType, index)}>
+                                        <Trash2 className="h-3 w-3" />
                                     </Button>
                                 </div>
                             </div>
                         ))}
                     </div>
+                ) : (
+                  <div className="h-12 border-dashed border-2 rounded flex items-center justify-center text-muted-foreground text-[10px]">
+                    No pages added
+                  </div>
                 )}
                 
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => startScan(documentType)}><Camera className="mr-2 h-4 w-4"/>Scan Page</Button>
-                     <Button asChild variant="outline" size="sm">
-                        <label className="cursor-pointer">
-                            <Upload className="mr-2 h-4 w-4"/>Upload Page
-                            <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
-                        </label>
-                    </Button>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={pages.length === 0}>
-                                <Eye className="mr-2 h-4 w-4"/>View
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl">
-                            <DialogHeader>
-                                <DialogTitle>Viewing: {documentType}</DialogTitle>
-                            </DialogHeader>
-                            <Carousel className="w-full">
-                                <CarouselContent>
-                                    {pages.map((page, index) => (
-                                        <CarouselItem key={index}>
-                                            <div className="p-1">
-                                                <div className="flex aspect-video items-center justify-center p-2 border rounded-md">
-                                                     {page.type === 'image' ? (
-                                                        <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-contain rounded-md" />
-                                                    ) : (
-                                                        <div className="flex flex-col items-center justify-center bg-muted rounded-md p-6">
-                                                            <File className="h-16 w-16 text-muted-foreground" />
-                                                            <p className="font-semibold text-lg mt-4">PDF Document</p>
-                                                            <p className="text-sm text-muted-foreground mt-2 w-full text-center truncate" title={page.file?.name}>{page.file?.name}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </CarouselItem>
-                                    ))}
-                                </CarouselContent>
-                                <CarouselPrevious />
-                                <CarouselNext />
-                            </Carousel>
-                        </DialogContent>
-                    </Dialog>
-                </div>
+                {pages.length > 0 && (
+                  <Dialog>
+                      <DialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs">
+                              <Eye className="mr-2 h-3 w-3"/>Preview All Pages
+                          </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl">
+                          <DialogHeader>
+                              <DialogTitle>Preview: {documentType}</DialogTitle>
+                          </DialogHeader>
+                          <Carousel className="w-full">
+                              <CarouselContent>
+                                  {pages.map((page, index) => (
+                                      <CarouselItem key={index}>
+                                          <div className="p-1">
+                                              <div className="flex aspect-video items-center justify-center p-2 border rounded-md bg-muted">
+                                                   {page.type === 'image' ? (
+                                                      <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-contain rounded-md" />
+                                                  ) : (
+                                                      <div className="flex flex-col items-center justify-center p-6">
+                                                          <File className="h-16 w-16 text-muted-foreground" />
+                                                          <p className="font-semibold text-lg mt-4">PDF Document</p>
+                                                          <p className="text-sm text-muted-foreground mt-2">{page.file?.name}</p>
+                                                      </div>
+                                                  )}
+                                              </div>
+                                          </div>
+                                      </CarouselItem>
+                                  ))}
+                              </CarouselContent>
+                              <CarouselPrevious />
+                              <CarouselNext />
+                          </Carousel>
+                      </DialogContent>
+                  </Dialog>
+                )}
             </div>
           ))}
         </div>
         
-        <Button onClick={handleVerification} disabled={isLoading} className="w-full md:w-auto">
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Verify Documents &amp; Pre-fill Form
-        </Button>
+        <div className="bg-secondary/20 p-4 rounded-lg border border-secondary">
+          <h4 className="font-semibold mb-2 text-sm flex items-center gap-2">
+            <Loader2 className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            AI Document Verification
+          </h4>
+          <p className="text-xs text-muted-foreground mb-4">Click below to have Gemini analyze the first pages of your main documents. It will attempt to pre-fill the applicant's name, DOB, and address for you.</p>
+          <Button onClick={handleVerification} disabled={isLoading} className="w-full">
+            {isLoading ? 'AI is analyzing documents...' : 'Run AI Pre-fill & Validation'}
+          </Button>
+        </div>
 
         {validationResult && (
-          <Alert variant={validationResult.includes('discrepancies') || validationResult.includes('concerns') ? 'destructive' : 'default'}>
+          <Alert variant={validationResult.includes('discrepancies') || validationResult.includes('concerns') ? 'destructive' : 'default'} className="animate-in fade-in slide-in-from-top-2">
             {validationResult.includes('discrepancies') || validationResult.includes('concerns') ? (
               <AlertCircle className="h-4 w-4" />
             ) : (
               <CheckCircle2 className="h-4 w-4" />
             )}
-            <AlertTitle>Validation Result</AlertTitle>
-            <AlertDescription>{validationResult}</AlertDescription>
+            <AlertTitle>AI Insights</AlertTitle>
+            <AlertDescription className="text-xs">{validationResult}</AlertDescription>
           </Alert>
         )}
       </div>
@@ -332,24 +347,24 @@ export default function StepDocumentUpload() {
        <Dialog open={!!isScanning} onOpenChange={(isOpen) => !isOpen && stopScan()}>
             <DialogContent className="max-w-xl">
                 <DialogHeader>
-                    <DialogTitle>Scan Document: {isScanning}</DialogTitle>
+                    <DialogTitle>Capture Document: {isScanning}</DialogTitle>
                 </DialogHeader>
                 <div className="relative">
-                    <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay playsInline muted />
+                    <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay playsInline muted />
                     <canvas ref={canvasRef} className="hidden" />
                     {hasCameraPermission === false && (
-                         <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                         <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                             <Alert variant="destructive" className="m-4">
                                 <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Camera Access Denied</AlertTitle>
-                                <AlertDescription>Please enable camera permissions in your browser settings to use this feature.</AlertDescription>
+                                <AlertTitle>Camera Access Required</AlertTitle>
+                                <AlertDescription>Please allow camera access in your browser settings to scan documents directly.</AlertDescription>
                             </Alert>
                         </div>
                     )}
                 </div>
                 <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={stopScan}>Cancel</Button>
-                    <Button onClick={captureImage} disabled={!hasCameraPermission}>Capture</Button>
+                    <Button onClick={captureImage} disabled={!hasCameraPermission}>Capture Page</Button>
                 </div>
             </DialogContent>
         </Dialog>
