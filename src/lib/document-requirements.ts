@@ -45,6 +45,16 @@ const soleTraderRequirements: DocumentRequirement[] = [
         comment: 'Submit a copy of the trading license.'
     },
     {
+        document: 'Agency Agreement',
+        details: 'The signed agreement between the agent and InnBucks.',
+        comment: 'Download the pre-filled template, sign, and scan back.',
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Authorised Dealer with Limited Authority declaration.',
+        comment: 'Download the pre-filled template, sign, and scan back.',
+    },
+    {
         document: 'Passport-size photos',
         details: 'Recent color photographs of the proprietor.',
         comment: 'Required for client record.'
@@ -81,6 +91,16 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         document: 'Board Resolution',
         details: 'Stating the board has agreed to open the account and list of authorized signatories.',
         comment: 'This is a specific Innbucks form to be completed.',
+    },
+    {
+        document: 'Agency Agreement',
+        details: 'The signed agreement between the agent and InnBucks.',
+        comment: 'Download the pre-filled template, sign, and scan back.',
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Authorised Dealer with Limited Authority declaration.',
+        comment: 'Download the pre-filled template, sign, and scan back.',
     },
     {
         document: 'Company Profile',
@@ -134,6 +154,16 @@ const pbcAccountRequirements: DocumentRequirement[] = [
         document: 'Board Resolution',
         details: 'Resolution authorizing account opening and listing signatories.',
         comment: 'Must be on company letterhead and signed.',
+    },
+    {
+        document: 'Agency Agreement',
+        details: 'The signed agreement between the agent and InnBucks.',
+        comment: 'Download the pre-filled template, sign, and scan back.',
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Authorised Dealer with Limited Authority declaration.',
+        comment: 'Download the pre-filled template, sign, and scan back.',
     },
     {
         document: 'Tax Clearance Certificate',

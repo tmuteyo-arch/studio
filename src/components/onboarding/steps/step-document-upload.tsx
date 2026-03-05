@@ -1,8 +1,11 @@
+
 'use client';
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Eye, Camera, Trash2, PlusCircle, Upload, File, ScanLine } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Eye, Camera, Trash2, PlusCircle, Upload, File, ScanLine, Download, FileText } from 'lucide-react';
 
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
@@ -22,6 +25,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import AgencyAgreementPrintView from '../agency-agreement-print-view';
+import AdlaDeclarationPrintView from '../adla-declaration-print-view';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -30,7 +35,6 @@ type PageState = {
   type: 'image' | 'pdf';
 };
 
-// State for a single document, which can now have multiple pages
 type DocumentState = {
   documentType: string;
   pages: PageState[];
@@ -41,6 +45,7 @@ export default function StepDocumentUpload() {
   const form = useFormContext<OnboardingFormData>();
   const [documents, setDocuments] = React.useState<Record<string, DocumentState>>({});
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isGenerating, setIsGenerating] = React.useState<string | null>(null);
   const [validationResult, setValidationResult] = React.useState<string | null>(null);
   
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
@@ -48,17 +53,19 @@ export default function StepDocumentUpload() {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [isScanning, setIsScanning] = React.useState<string | null>(null);
 
+  // Refs for PDF templates
+  const agencyRef = React.useRef<HTMLDivElement>(null);
+  const adlaRef = React.useRef<HTMLDivElement>(null);
+
   const clientType = form.watch('clientType');
   const documentRequirements = getDocumentRequirements(clientType);
 
-  // Initialize state for each required document
   React.useEffect(() => {
     const initialDocs: Record<string, DocumentState> = {};
     documentRequirements.forEach(req => {
       initialDocs[req.document] = { documentType: req.document, pages: [] };
     });
     setDocuments(initialDocs);
-    // Set form values for validation
     form.setValue('document1Type', documentRequirements[0]?.document || 'doc1');
     form.setValue('document2Type', documentRequirements[1]?.document || 'doc2');
   }, [clientType, documentRequirements, form]);
@@ -101,7 +108,6 @@ export default function StepDocumentUpload() {
     }));
   };
 
-  // CAMERA LOGIC
   const startScan = async (docType: string) => {
     setIsScanning(docType);
     if (hasCameraPermission === false) {
@@ -147,6 +153,34 @@ export default function StepDocumentUpload() {
     }
     setIsScanning(null);
   };
+
+  const handleDownloadTemplate = async (docType: string) => {
+    setIsGenerating(docType);
+    const element = docType === 'Agency Agreement' ? agencyRef.current : adlaRef.current;
+    
+    if (!element) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Template ref not found.' });
+        setIsGenerating(null);
+        return;
+    }
+
+    try {
+        const canvas = await html2canvas(element, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${docType.replace(/\s+/g, '_')}_PreFilled.pdf`);
+        toast({ title: 'Template Ready', description: `Your pre-filled ${docType} has been downloaded. Please sign and scan it back.` });
+    } catch (e) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate PDF template.' });
+    } finally {
+        setIsGenerating(null);
+    }
+  };
   
    const handleVerification = async () => {
     const doc1 = documents[documentRequirements[0]?.document];
@@ -182,7 +216,6 @@ export default function StepDocumentUpload() {
 
     if (result.success && result.data) {
       setValidationResult(result.data.validationResult);
-      // Pre-fill form with validated data
       Object.entries(result.data.validatedFields).forEach(([key, value]) => {
         form.setValue(key as keyof OnboardingFormData, value);
       });
@@ -201,6 +234,7 @@ export default function StepDocumentUpload() {
     }
   };
 
+  const formData = form.getValues();
 
   return (
     <div>
@@ -209,10 +243,16 @@ export default function StepDocumentUpload() {
           <ScanLine className="h-6 w-6 text-primary" />
           Document Capture & AI Verification
         </CardTitle>
-        <CardDescription>Capture required documents using your camera or upload existing files. AI will then validate the data.</CardDescription>
+        <CardDescription>Capture required documents using your camera or upload existing files. For Agreements, download the pre-filled templates first.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
         
+        {/* Hidden Templates for PDF Generation */}
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1 }}>
+            <AgencyAgreementPrintView ref={agencyRef} data={formData} />
+            <AdlaDeclarationPrintView ref={adlaRef} data={formData} />
+        </div>
+
         <Alert className="bg-primary/5 border-primary/20">
             <Info className="h-4 w-4" />
             <AlertTitle>Requirements for {clientType}</AlertTitle>
@@ -239,85 +279,103 @@ export default function StepDocumentUpload() {
         </Alert>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Object.values(documents).map(({documentType, pages}) => (
-            <div key={documentType} className="p-4 border rounded-lg hover:border-primary/50 transition-colors bg-card shadow-sm">
-                <div className='flex justify-between items-center mb-3'>
-                     <h3 className="text-sm font-bold truncate max-w-[150px]" title={documentType}>{documentType}</h3>
-                     <Badge variant={pages.length > 0 ? 'success' : 'outline'} className="text-[10px]">{pages.length} Pages</Badge>
-                </div>
-               
-                <div className="flex gap-2 mb-3">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => startScan(documentType)}><Camera className="mr-2 h-3 w-3"/>Scan</Button>
-                     <Button asChild variant="outline" size="sm" className="flex-1">
-                        <label className="cursor-pointer">
-                            <Upload className="mr-2 h-3 w-3"/>Upload
-                            <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
-                        </label>
-                    </Button>
-                </div>
-
-                {pages.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-1 h-12 overflow-hidden">
-                        {pages.map((page, index) => (
-                            <div key={index} className="relative group border rounded h-12 bg-muted flex items-center justify-center overflow-hidden">
-                                {page.type === 'image' ? (
-                                    <img src={page.dataUri} alt="doc" className="w-full h-full object-cover" />
-                                ) : (
-                                    <File className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                    <Button variant="destructive" size="icon" className="h-6 w-6" onClick={() => removePageFromDocument(documentType, index)}>
-                                        <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
+          {Object.values(documents).map(({documentType, pages}) => {
+            const isTemplate = ['Agency Agreement', 'ADLA Declaration'].includes(documentType);
+            
+            return (
+                <div key={documentType} className="p-4 border rounded-lg hover:border-primary/50 transition-colors bg-card shadow-sm">
+                    <div className='flex justify-between items-center mb-3'>
+                        <h3 className="text-sm font-bold truncate max-w-[150px]" title={documentType}>{documentType}</h3>
+                        <Badge variant={pages.length > 0 ? 'success' : 'outline'} className="text-[10px]">{pages.length} Pages</Badge>
                     </div>
-                ) : (
-                  <div className="h-12 border-dashed border-2 rounded flex items-center justify-center text-muted-foreground text-[10px]">
-                    No pages added
-                  </div>
-                )}
                 
-                {pages.length > 0 && (
-                  <Dialog>
-                      <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs">
-                              <Eye className="mr-2 h-3 w-3"/>Preview All Pages
-                          </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-3xl">
-                          <DialogHeader>
-                              <DialogTitle>Preview: {documentType}</DialogTitle>
-                          </DialogHeader>
-                          <Carousel className="w-full">
-                              <CarouselContent>
-                                  {pages.map((page, index) => (
-                                      <CarouselItem key={index}>
-                                          <div className="p-1">
-                                              <div className="flex aspect-video items-center justify-center p-2 border rounded-md bg-muted">
-                                                   {page.type === 'image' ? (
-                                                      <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-contain rounded-md" />
-                                                  ) : (
-                                                      <div className="flex flex-col items-center justify-center p-6">
-                                                          <File className="h-16 w-16 text-muted-foreground" />
-                                                          <p className="font-semibold text-lg mt-4">PDF Document</p>
-                                                          <p className="text-sm text-muted-foreground mt-2">{page.file?.name}</p>
-                                                      </div>
-                                                  )}
-                                              </div>
-                                          </div>
-                                      </CarouselItem>
-                                  ))}
-                              </CarouselContent>
-                              <CarouselPrevious />
-                              <CarouselNext />
-                          </Carousel>
-                      </DialogContent>
-                  </Dialog>
-                )}
-            </div>
-          ))}
+                    <div className="space-y-2 mb-3">
+                        {isTemplate && (
+                            <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                className="w-full text-xs" 
+                                onClick={() => handleDownloadTemplate(documentType)}
+                                disabled={isGenerating === documentType}
+                            >
+                                {isGenerating === documentType ? <Loader2 className="mr-2 h-3 w-3 animate-spin"/> : <Download className="mr-2 h-3 w-3"/>}
+                                Download Pre-filled {documentType.split(' ')[0]}
+                            </Button>
+                        )}
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="flex-1" onClick={() => startScan(documentType)}><Camera className="mr-2 h-3 w-3"/>Scan</Button>
+                            <Button asChild variant="outline" size="sm" className="flex-1">
+                                <label className="cursor-pointer">
+                                    <Upload className="mr-2 h-3 w-3"/>Upload
+                                    <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
+                                </label>
+                            </Button>
+                        </div>
+                    </div>
+
+                    {pages.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-1 h-12 overflow-hidden">
+                            {pages.map((page, index) => (
+                                <div key={index} className="relative group border rounded h-12 bg-muted flex items-center justify-center overflow-hidden">
+                                    {page.type === 'image' ? (
+                                        <img src={page.dataUri} alt="doc" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <File className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                        <Button variant="destructive" size="icon" className="h-6 w-6" onClick={() => removePageFromDocument(documentType, index)}>
+                                            <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                    <div className="h-12 border-dashed border-2 rounded flex items-center justify-center text-muted-foreground text-[10px]">
+                        No pages added
+                    </div>
+                    )}
+                    
+                    {pages.length > 0 && (
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs">
+                                <Eye className="mr-2 h-3 w-3"/>Preview All Pages
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl">
+                            <DialogHeader>
+                                <DialogTitle>Preview: {documentType}</DialogTitle>
+                            </DialogHeader>
+                            <Carousel className="w-full">
+                                <CarouselContent>
+                                    {pages.map((page, index) => (
+                                        <CarouselItem key={index}>
+                                            <div className="p-1">
+                                                <div className="flex aspect-video items-center justify-center p-2 border rounded-md bg-muted">
+                                                    {page.type === 'image' ? (
+                                                        <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-contain rounded-md" />
+                                                    ) : (
+                                                        <div className="flex flex-col items-center justify-center p-6">
+                                                            <File className="h-16 w-16 text-muted-foreground" />
+                                                            <p className="font-semibold text-lg mt-4">PDF Document</p>
+                                                            <p className="text-sm text-muted-foreground mt-2">{page.file?.name}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                <CarouselPrevious />
+                                <CarouselNext />
+                            </Carousel>
+                        </DialogContent>
+                    </Dialog>
+                    )}
+                </div>
+            );
+          })}
         </div>
         
         <div className="bg-secondary/20 p-4 rounded-lg border border-secondary">
@@ -325,7 +383,7 @@ export default function StepDocumentUpload() {
             <Loader2 className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
             AI Document Verification
           </h4>
-          <p className="text-xs text-muted-foreground mb-4">Click below to have Gemini analyze the first pages of your main documents. It will attempt to pre-fill the applicant's name, DOB, and address for you.</p>
+          <p className="text-xs text-muted-foreground mb-4">Click below to have Gemini analyze the first pages of your main documents (ID/Registration). It will attempt to verify information across the files.</p>
           <Button onClick={handleVerification} disabled={isLoading} className="w-full">
             {isLoading ? 'AI is analyzing documents...' : 'Run AI Pre-fill & Validation'}
           </Button>
