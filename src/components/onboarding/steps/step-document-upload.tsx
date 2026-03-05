@@ -1,13 +1,9 @@
-
 'use client';
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { AlertCircle, CheckCircle2, FileUp, Info, Loader2, Eye, Camera, Trash2, PlusCircle, Upload, File, ScanLine, Download, FileText } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info, Loader2, Eye, Camera, Trash2, Upload, File, ScanLine } from 'lucide-react';
 
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { verifyDocuments } from '@/lib/actions';
@@ -25,8 +21,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import AgencyAgreementPrintView from '../agency-agreement-print-view';
-import AdlaDeclarationPrintView from '../adla-declaration-print-view';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -45,17 +39,12 @@ export default function StepDocumentUpload() {
   const form = useFormContext<OnboardingFormData>();
   const [documents, setDocuments] = React.useState<Record<string, DocumentState>>({});
   const [isLoading, setIsLoading] = React.useState(false);
-  const [isGenerating, setIsGenerating] = React.useState<string | null>(null);
   const [validationResult, setValidationResult] = React.useState<string | null>(null);
   
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [isScanning, setIsScanning] = React.useState<string | null>(null);
-
-  // Refs for PDF templates
-  const agencyRef = React.useRef<HTMLDivElement>(null);
-  const adlaRef = React.useRef<HTMLDivElement>(null);
 
   const clientType = form.watch('clientType');
   const documentRequirements = getDocumentRequirements(clientType);
@@ -153,34 +142,6 @@ export default function StepDocumentUpload() {
     }
     setIsScanning(null);
   };
-
-  const handleDownloadTemplate = async (docType: string) => {
-    setIsGenerating(docType);
-    const element = docType === 'Agency Agreement' ? agencyRef.current : adlaRef.current;
-    
-    if (!element) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Template ref not found.' });
-        setIsGenerating(null);
-        return;
-    }
-
-    try {
-        const canvas = await html2canvas(element, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`${docType.replace(/\s+/g, '_')}_PreFilled.pdf`);
-        toast({ title: 'Template Ready', description: `Your pre-filled ${docType} has been downloaded. Please sign and scan it back.` });
-    } catch (e) {
-        console.error(e);
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to generate PDF template.' });
-    } finally {
-        setIsGenerating(null);
-    }
-  };
   
    const handleVerification = async () => {
     const doc1 = documents[documentRequirements[0]?.document];
@@ -234,8 +195,6 @@ export default function StepDocumentUpload() {
     }
   };
 
-  const formData = form.getValues();
-
   return (
     <div>
       <CardHeader>
@@ -243,16 +202,10 @@ export default function StepDocumentUpload() {
           <ScanLine className="h-6 w-6 text-primary" />
           Document Capture & AI Verification
         </CardTitle>
-        <CardDescription>Capture required documents using your camera or upload existing files. For Agreements, download the pre-filled templates first.</CardDescription>
+        <CardDescription>Capture required documents using your camera or upload existing files.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
         
-        {/* Hidden Templates for PDF Generation */}
-        <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1 }}>
-            <AgencyAgreementPrintView ref={agencyRef} data={formData} />
-            <AdlaDeclarationPrintView ref={adlaRef} data={formData} />
-        </div>
-
         <Alert className="bg-primary/5 border-primary/20">
             <Info className="h-4 w-4" />
             <AlertTitle>Requirements for {clientType}</AlertTitle>
@@ -280,8 +233,6 @@ export default function StepDocumentUpload() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.values(documents).map(({documentType, pages}) => {
-            const isTemplate = ['Agency Agreement', 'ADLA Declaration'].includes(documentType);
-            
             return (
                 <div key={documentType} className="p-4 border rounded-lg hover:border-primary/50 transition-colors bg-card shadow-sm">
                     <div className='flex justify-between items-center mb-3'>
@@ -290,18 +241,6 @@ export default function StepDocumentUpload() {
                     </div>
                 
                     <div className="space-y-2 mb-3">
-                        {isTemplate && (
-                            <Button 
-                                variant="secondary" 
-                                size="sm" 
-                                className="w-full text-xs" 
-                                onClick={() => handleDownloadTemplate(documentType)}
-                                disabled={isGenerating === documentType}
-                            >
-                                {isGenerating === documentType ? <Loader2 className="mr-2 h-3 w-3 animate-spin"/> : <Download className="mr-2 h-3 w-3"/>}
-                                Download Pre-filled {documentType.split(' ')[0]}
-                            </Button>
-                        )}
                         <div className="flex gap-2">
                             <Button variant="outline" size="sm" className="flex-1" onClick={() => startScan(documentType)}><Camera className="mr-2 h-3 w-3"/>Scan</Button>
                             <Button asChild variant="outline" size="sm" className="flex-1">

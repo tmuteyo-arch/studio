@@ -1,4 +1,3 @@
-
 export type DocumentRequirement = {
     document: string;
     details: string;
@@ -47,12 +46,12 @@ const soleTraderRequirements: DocumentRequirement[] = [
     {
         document: 'Agency Agreement',
         details: 'The signed agreement between the agent and InnBucks.',
-        comment: 'Download the pre-filled template, sign, and scan back.',
+        comment: 'Submit a signed and certified copy.',
     },
     {
         document: 'ADLA Declaration',
         details: 'Authorised Dealer with Limited Authority declaration.',
-        comment: 'Download the pre-filled template, sign, and scan back.',
+        comment: 'Submit a signed and certified copy.',
     },
     {
         document: 'Passport-size photos',
@@ -95,12 +94,12 @@ const corporateAccountRequirements: DocumentRequirement[] = [
     {
         document: 'Agency Agreement',
         details: 'The signed agreement between the agent and InnBucks.',
-        comment: 'Download the pre-filled template, sign, and scan back.',
+        comment: 'Submit a signed and certified copy.',
     },
     {
         document: 'ADLA Declaration',
         details: 'Authorised Dealer with Limited Authority declaration.',
-        comment: 'Download the pre-filled template, sign, and scan back.',
+        comment: 'Submit a signed and certified copy.',
     },
     {
         document: 'Company Profile',
@@ -158,12 +157,12 @@ const pbcAccountRequirements: DocumentRequirement[] = [
     {
         document: 'Agency Agreement',
         details: 'The signed agreement between the agent and InnBucks.',
-        comment: 'Download the pre-filled template, sign, and scan back.',
+        comment: 'Submit a signed and certified copy.',
     },
     {
         document: 'ADLA Declaration',
         details: 'Authorised Dealer with Limited Authority declaration.',
-        comment: 'Download the pre-filled template, sign, and scan back.',
+        comment: 'Submit a signed and certified copy.',
     },
     {
         document: 'Tax Clearance Certificate',
