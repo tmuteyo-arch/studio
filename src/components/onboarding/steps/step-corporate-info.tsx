@@ -3,8 +3,9 @@
 import { useFormContext } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { OnboardingFormData } from '@/lib/types';
+import { OnboardingFormData, businessTypes } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function StepCorporateInfo() {
   const form = useFormContext<OnboardingFormData>();
@@ -27,6 +28,31 @@ export default function StepCorporateInfo() {
               <FormControl>
                 <Input placeholder="e.g. Rubieson Enterprises (Pvt) Ltd" {...field} value={field.value || ''}/>
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="natureOfBusiness"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Type of Business (Industry)</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select business industry..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {businessTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

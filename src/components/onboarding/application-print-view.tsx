@@ -50,6 +50,7 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
             {isCorporate ? (
                 <>
                     <DetailItem label="Legal Name" value={application.details.organisationLegalName} />
+                    <DetailItem label="Business Type" value={application.details.natureOfBusiness} />
                     <DetailItem label="Reg. Number" value={application.details.certificateOfIncorporationNumber} />
                     <DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} />
                     <DetailItem label="Address" value={application.details.physicalAddress} />

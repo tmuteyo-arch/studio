@@ -88,6 +88,7 @@ export default function StepReview() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <DetailItem label="Account Type" value={data.clientType} />
                     <DetailItem label="Organisation Legal Name" value={data.organisationLegalName} />
+                    <DetailItem label="Business Type" value={data.natureOfBusiness} />
                     <DetailItem label="Cert. Number" value={data.certificateOfIncorporationNumber} />
                     <DetailItem label="Date of Inc." value={data.dateOfIncorporation ? format(new Date(data.dateOfIncorporation), 'MMMM d, yyyy') : '-'} />
                     <DetailItem label="Physical Address" value={data.physicalAddress} />

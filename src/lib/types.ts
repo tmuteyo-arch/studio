@@ -16,6 +16,21 @@ export const zimRegions = [
   'Midlands',
 ] as const;
 
+export const businessTypes = [
+  'Agriculture',
+  'Mining',
+  'Manufacturing',
+  'Retail',
+  'Wholesale',
+  'Services',
+  'Construction',
+  'Transport & Logistics',
+  'Technology / ICT',
+  'Financial Services',
+  'Tourism & Hospitality',
+  'Other',
+] as const;
+
 const SignatorySchema = z.object({
   surname: z.string().min(1, "Surname is required."),
   firstName: z.string().min(1, "First name is required."),
@@ -40,6 +55,7 @@ export const OnboardingFormSchema = z.object({
 
   // Simplified Corporate Fields
   organisationLegalName: z.string().optional(),
+  natureOfBusiness: z.string().optional(),
   physicalAddress: z.string().optional(),
   businessTelNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
@@ -76,6 +92,13 @@ export const OnboardingFormSchema = z.object({
             code: z.ZodIssueCode.custom,
             path: ['organisationLegalName'],
             message: 'Organization name is required for corporate accounts.',
+        });
+      }
+      if (!data.natureOfBusiness) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['natureOfBusiness'],
+            message: 'Type of business is required.',
         });
       }
        if (!data.dateOfIncorporation) {

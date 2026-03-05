@@ -36,7 +36,7 @@ import StepSignatories from './steps/step-signatories';
 const allSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType', 'region'] },
   { id: 'individual-info', name: 'Applicant Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
-  { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
+  { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
   { id: 'signatories', name: 'Signatories', fields: ['signatories'] },
   { id: 'document-upload', name: 'Documents', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
@@ -82,6 +82,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       individualAddress: '',
       individualMobileNumber: '',
       organisationLegalName: '',
+      natureOfBusiness: '',
       physicalAddress: '',
       businessTelNumber: '',
       email: '',
