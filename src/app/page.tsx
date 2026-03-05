@@ -15,9 +15,10 @@ import { users, User, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck, Crown } from 'lucide-react';
+import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck, Crown, ShoppingBag } from 'lucide-react';
+import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 
-const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVariant, delay }) => {
+const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVariant, delay, icon: Icon }) => {
   const ref = React.useRef<HTMLDivElement>(null);
   
   const x = useMotionValue(0);
@@ -69,7 +70,10 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVarian
         style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}
       >
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
+          <div className="flex items-center gap-2 mb-2">
+            {Icon && <Icon className="h-5 w-5 text-primary" />}
+            <CardTitle>{title}</CardTitle>
+          </div>
           <CardDescription className="text-white/80">{description}</CardDescription>
         </CardHeader>
         <CardFooter className="mt-auto">
@@ -77,7 +81,7 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVarian
             className="w-full"
             variant={buttonVariant || 'default'}
             onClick={() => onRoleSelect(role)}>
-            Login as {title}
+            {role === 'customer' ? 'Apply Now' : `Login as ${title}`}
           </Button>
         </CardFooter>
       </Card>
@@ -88,11 +92,15 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVarian
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
-  const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
+  const [selectedRole, setSelectedRole] = React.useState<Role | 'customer' | null>(null);
   const { toast } = useToast();
 
-  const handleRoleSelect = (role: Role) => {
+  const handleRoleSelect = (role: Role | 'customer') => {
     setSelectedRole(role);
+    if (role === 'customer') {
+        // Automatically "log in" as a guest customer for the demo flow
+        setLoggedInUser({ id: 'guest', name: 'Guest Customer', role: 'customer', email: 'guest@example.com', initials: 'GC' });
+    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -130,6 +138,8 @@ function AppContent() {
         return <SupervisorDashboard user={loggedInUser} />;
       case 'retail-executive':
         return <RetailExecutiveDashboard user={loggedInUser} />;
+      case 'customer':
+        return <div className="p-4 sm:p-8"><OnboardingFlow user={loggedInUser} onCancel={handleLogout} /></div>;
       default:
         return null;
     }
@@ -156,7 +166,7 @@ function AppContent() {
             <form onSubmit={handleLogin} className='space-y-4'>
               <div className="space-y-2">
                   <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="email"><Mail className="h-4 w-4 text-muted-foreground" />Email Address</label>
-                  <Input id="email" type="email" placeholder="email@example.com" required defaultValue={users.find(u => u.role === selectedRole)?.email}/>
+                  <Input id="email" type="email" placeholder="email@example.com" required defaultValue={users.find(u => u.role === (selectedRole as Role))?.email}/>
               </div>
               <div className="space-y-2">
                   <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="password"><Lock className="h-4 w-4 text-muted-foreground"/>Password</label>
@@ -172,7 +182,7 @@ function AppContent() {
           </CardFooter>
         </Card>
         <Button variant="link" className="mt-4 text-white/80" onClick={() => setSelectedRole(null)}>
-          Back to role selection
+          Back to portal selection
         </Button>
       </motion.div>
     </div>
@@ -184,14 +194,24 @@ function AppContent() {
         <Logo className="h-10 w-10" />
         <h1 className="text-3xl font-bold tracking-tight text-white">InnBucks Agent Onboarding</h1>
       </div>
-      <h2 className="text-2xl font-semibold text-white/90 mb-2">Select a Role to Continue</h2>
-      <p className="text-white/70 mb-12">Simulate the login for different user roles in the system.</p>
+      <h2 className="text-2xl font-semibold text-white/90 mb-2">Select Your Portal</h2>
+      <p className="text-white/70 mb-12">Choose a role to simulate the onboarding workflow.</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-7xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full max-w-7xl">
+        <AnimatedRoleCard 
+          role="customer"
+          title="Customer"
+          icon={ShoppingBag}
+          description="Apply for a new account independently."
+          onRoleSelect={handleRoleSelect}
+          buttonVariant="secondary"
+          delay={0.05}
+        />
         <AnimatedRoleCard 
           role="atl"
           title="ATL"
-          description="Account Taking Leaders who submit applications."
+          icon={UserIcon}
+          description="Account Taking Leaders who submit and verify leads."
           onRoleSelect={handleRoleSelect}
           buttonVariant="default"
           delay={0.1}
@@ -199,6 +219,7 @@ function AppContent() {
         <AnimatedRoleCard 
           role="back-office"
           title="Back Office"
+          icon={ShieldCheck}
           description="Officers who validate and process applications."
           onRoleSelect={handleRoleSelect}
           buttonVariant="secondary"
@@ -207,7 +228,8 @@ function AppContent() {
         <AnimatedRoleCard 
           role="supervisor"
           title="Supervisor"
-          description="Supervisors who review, approve, or reject applications."
+          icon={Crown}
+          description="Supervisors who review and sign agreements."
           onRoleSelect={handleRoleSelect}
           buttonVariant="outline"
           delay={0.3}
@@ -215,7 +237,8 @@ function AppContent() {
         <AnimatedRoleCard 
           role="retail-executive"
           title="Retail Executive"
-          description="High-level overview of onboarding performance."
+          icon={Crown}
+          description="High-level performance and final verification."
           onRoleSelect={handleRoleSelect}
           buttonVariant="ghost"
           delay={0.4}
@@ -245,7 +268,7 @@ function AppContent() {
             </div>
         );
     }
-    if (selectedRole) {
+    if (selectedRole && selectedRole !== 'customer') {
         return renderLoginForm();
     }
     return renderRoleSelection();

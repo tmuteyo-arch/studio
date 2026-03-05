@@ -8,7 +8,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -132,6 +132,25 @@ export default function ApplicationReview({ application: initialApplication, onB
     }
   };
 
+  const handleClaimLead = () => {
+    const newHistoryLog: HistoryLog = {
+        action: 'Lead Claimed & Verified',
+        user: user.name,
+        timestamp: new Date().toISOString(),
+        notes: 'ATL has verified the customer lead and forwarded it to Back Office.',
+    };
+    handleUpdateApplication({
+        submittedBy: user.name,
+        status: 'Submitted',
+        history: [...application.history, newHistoryLog]
+    });
+    toast({
+        title: "Lead Processed",
+        description: "Customer lead has been claimed and forwarded to Back Office.",
+    });
+    setTimeout(() => onBack(), 500);
+  };
+
   const handleRejection = () => {
     if (!rejectionReason || !rejectionComment) {
         toast({ variant: 'destructive', title: 'Rejection Failed', description: 'Please select a reason and provide a comment.' });
@@ -233,6 +252,11 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const renderActions = () => {
     switch (user.role) {
+      case 'atl':
+        if (application.submittedBy === 'Customer' && application.status === 'Submitted') {
+            return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Claim & Forward to Back Office</Button>;
+        }
+        return null;
       case 'back-office':
         if (application.status === 'Signed') {
             return <div className="space-x-2"><Button onClick={() => handleStatusChange('Archived')}><Archive className="mr-2 h-4 w-4" />Archive Application</Button></div>;
@@ -281,7 +305,10 @@ export default function ApplicationReview({ application: initialApplication, onB
                   <CardTitle>Review Application: {application.id}</CardTitle>
                   <CardDescription>Reviewing application for <strong>{application.clientName}</strong> submitted on {application.submittedDate}.</CardDescription>
               </div>
-              <Badge variant={ application.status === 'Signed' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
+              <div className="flex flex-col items-end gap-2">
+                <Badge variant={ application.status === 'Signed' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
+                {application.submittedBy === 'Customer' && <Badge variant="outline" className="bg-blue-50 text-blue-700">Self-Service Lead</Badge>}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -294,7 +321,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList>
                       <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Customer Details</TabsTrigger>
-                      {user.role === 'back-office' && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Form Data</TabsTrigger>}
+                      {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy === 'Customer')) && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Form Data</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
@@ -302,9 +329,9 @@ export default function ApplicationReview({ application: initialApplication, onB
                       {(user.role === 'retail-executive' && application.status === 'Pending Executive Signature') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
                   </TabsList>
                   <TabsContent value="details" className="pt-4"><Card><CardHeader><CardTitle>Applicant Information</CardTitle></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><DetailItem label="Client Name" value={application.clientName} /><DetailItem label="Client Type" value={application.clientType} /><DetailItem label="Submission Date" value={application.submittedDate} /><DetailItem label="Submitted By" value={application.submittedBy} /><DetailItem label="Status" value={application.status} /><DetailItem label="Last Updated" value={application.lastUpdated} /></div><Separator/>{isCorporate ? (<div className="grid grid-cols-1 md:grid-cols-2 gap-4"><DetailItem label="Legal Name" value={application.details.organisationLegalName} /><DetailItem label="Trade Name" value={application.details.tradeName} /><DetailItem label="Nature of Business" value={application.details.natureOfBusiness} /><DetailItem label="Incorporation Date" value={application.details.dateOfIncorporation} /></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 gap-4"><DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} /><DetailItem label="Address" value={application.details.individualAddress} /><DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} /></div>)}</CardContent></Card>{user.role === 'back-office' && (<Card className="mt-6"><CardHeader><CardTitle>FCB Status Check</CardTitle><CardDescription>Confirm the applicant's status from the Financial Clearing Bureau.</CardDescription></CardHeader><CardContent><RadioGroup defaultValue={application.fcbStatus} onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)} className="flex flex-col sm:flex-row gap-4"><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Inclusive" id="fcb-inclusive" /><Label htmlFor="fcb-inclusive" className="font-normal">Inclusive</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Good" id="fcb-good" /><Label htmlFor="fcb-good" className="font-normal">Good</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adverse" id="fcb-adverse" /><Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Prior Adverse" id="fcb-prior-adverse" /><Label htmlFor="fcb-prior-adverse" className="font-normal">Prior Adverse</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="PEP" id="fcb-pep" /><Label htmlFor="fcb-pep" className="font-normal">PEP</Label></div></RadioGroup></CardContent></Card>)}</TabsContent>
-                   {user.role === 'back-office' && (<TabsContent value="form-data" className="pt-4"><Card><CardContent className="pt-6">{isCorporate ? <StepCorporateInfo /> : null}<div className={isCorporate ? 'mt-6' : ''}><StepSignatories /></div></CardContent></Card></TabsContent>)}
+                   {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy === 'Customer')) && (<TabsContent value="form-data" className="pt-4"><Card><CardContent className="pt-6">{isCorporate ? <StepCorporateInfo /> : null}<div className={isCorporate ? 'mt-6' : ''}><StepSignatories /></div></CardContent></Card></TabsContent>)}
                   <TabsContent value="documents" className="pt-4"><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Document Requirements</CardTitle><CardDescription>Checklist for '{application.clientType}' account.</CardDescription></CardHeader><CardContent><ul className="space-y-3">{documentRequirements.map((req) => { const isUploaded = uploadedDocumentTypes.includes(req.document); return (<li key={req.document} className="flex items-center">{isUploaded ? (<CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />) : (<AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />)}<div><p className="font-medium">{req.document}</p><p className="text-sm text-muted-foreground">{req.comment}</p></div></li>); })}</ul></CardContent></Card><Card><CardHeader><CardTitle>Uploaded Documents</CardTitle><CardDescription>Files submitted by the applicant.</CardDescription></CardHeader><CardContent>{application.documents.length > 0 ? (<ul className="space-y-3">{application.documents.map(doc => (<li key={doc.type} className="flex items-center justify-between p-3 rounded-md border"><div><p className="font-medium">{doc.type}</p><p className="text-sm text-muted-foreground">{doc.fileName}</p></div><Button variant="outline" size="sm">View Document</Button></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-8">No documents were uploaded for this application.</p>)}</CardContent></Card></div></TabsContent>
-                  <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Application History</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action === 'Submitted' ? <FileText className="h-5 w-5"/> : <User className="h-5 w-5"/>}</div></div><div className="ml-4"><p className="font-medium">{entry.action} by {entry.user}</p><p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
+                  <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Application History</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action.includes('Submitted') ? <FileText className="h-5 w-5"/> : <User className="h-5 w-5"/>}</div></div><div className="ml-4"><p className="font-medium">{entry.action} by {entry.user}</p><p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
                   <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Comments & Feedback</CardTitle><CardDescription>Discuss the application with team members. Comments are not visible to the client.</CardDescription></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}{application.comments.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">No comments yet.</p>)}</div>{application.status !== 'Signed' && (<div className="space-y-2"><Textarea placeholder="Type your comment here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Comment</Button></div>)}</CardContent></Card></TabsContent>
                    {isSigningStep && (
                        <TabsContent value="sign-agreement" className="pt-4"><Card>
