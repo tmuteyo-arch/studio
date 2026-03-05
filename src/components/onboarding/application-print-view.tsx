@@ -21,7 +21,7 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
 
 
 const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintViewProps>(({ application }, ref) => {
-  const isCorporate = ['Company (Private / Public Limited)', 'PBC Account', 'Partnership'].includes(application.clientType);
+  const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
   
   return (
     <div ref={ref} className="bg-white text-black p-8" style={{ width: '210mm', minHeight: '297mm'}}>
@@ -30,56 +30,54 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
             <Logo className="h-10 w-10" />
             <div>
                 <h1 className="text-xl font-bold">InnBucks Agent Onboarding</h1>
-                <p className="text-sm">Application Summary</p>
+                <p className="text-sm">Mandatory Information Summary</p>
             </div>
         </div>
         <div className='text-right'>
-            <p className="text-sm">Application ID: <strong>{application.id}</strong></p>
+            <p className="text-sm">App ID: <strong>{application.id}</strong></p>
             <p className="text-sm">Status: <strong>{application.status}</strong></p>
         </div>
       </header>
 
       <main>
         <section className="mb-6">
-          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Applicant Information</h2>
+          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Client Information</h2>
           <div className="grid grid-cols-2 gap-x-8 gap-y-2">
             <DetailItem label="Client Name" value={application.clientName} />
             <DetailItem label="Client Type" value={application.clientType} />
+            <DetailItem label="Region" value={application.region} />
             <DetailItem label="Submission Date" value={application.submittedDate} />
-            <DetailItem label="Submitted By" value={application.submittedBy} />
-            <DetailItem label={isCorporate ? "Primary Contact" : "Full Name"} value={application.details.fullName} />
-            <DetailItem label="Contact Number" value={application.details.contactNumber} />
-            <DetailItem label="Email" value={application.details.email} />
-            <DetailItem label="Date of Birth" value={application.details.dateOfBirth} />
-            <DetailItem label="Address" value={application.details.address} />
+            {isCorporate ? (
+                <>
+                    <DetailItem label="Legal Name" value={application.details.organisationLegalName} />
+                    <DetailItem label="Reg. Number" value={application.details.certificateOfIncorporationNumber} />
+                    <DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} />
+                    <DetailItem label="Address" value={application.details.physicalAddress} />
+                    <DetailItem label="Business Phone" value={application.details.businessTelNumber} />
+                    <DetailItem label="Email" value={application.details.email} />
+                </>
+            ) : (
+                <>
+                    <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
+                    <DetailItem label="ID Number" value={application.details.individualIdNumber} />
+                    <DetailItem label="Address" value={application.details.individualAddress} />
+                    <DetailItem label="Mobile" value={application.details.individualMobileNumber} />
+                    <DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} />
+                </>
+            )}
           </div>
         </section>
 
-        {isCorporate && application.details && (
-            <section className="mb-6">
-                <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Corporate Details</h2>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-                    <DetailItem label="Trade Name" value={application.details.tradeName} />
-                    <DetailItem label="Physical Address" value={application.details.physicalAddress} />
-                    <DetailItem label="Postal Address" value={application.details.postalAddress} />
-                    <DetailItem label="Web Address" value={application.details.webAddress} />
-                    <DetailItem label="Nature of Business" value={application.details.natureOfBusiness} />
-                    <DetailItem label="Source of Wealth" value={application.details.sourceOfWealth} />
-                    <DetailItem label="Type of Business" value={application.details.typeOfBusiness} />
-                    <DetailItem label="No. of Employees" value={String(application.details.noOfEmployees)} />
-                    <DetailItem label="Economic Sector" value={application.details.economicSector} />
-                    <DetailItem label="Authorised Capital" value={application.details.authorisedCapital} />
-                    <DetailItem label="Tax Payer Number" value={application.details.taxPayerNumber} />
-                    <DetailItem label="Date of Incorporation" value={application.details.dateOfIncorporation} />
-                    <DetailItem label="Country of Incorporation" value={application.details.countryOfIncorporation} />
-                    <DetailItem label="Cert. of Incorporation Number" value={application.details.certificateOfIncorporationNumber} />
-                    <DetailItem label="Other InnBucks Accounts?" value={application.details.hasOtherAccounts} />
-                    <DetailItem label="Other Account Numbers" value={application.details.otherAccountNumbers} />
-                    <DetailItem label="Communication Preference" value={application.details.communicationPreference} />
-                    <DetailItem label="Premises Status" value={application.details.premisesStatus} />
-                </div>
-            </section>
-        )}
+        <section className="mb-6">
+          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Signatories</h2>
+          <ul className="list-disc list-inside space-y-1">
+            {application.signatories.map((sig, i) => (
+              <li key={i} className="text-sm">
+                {sig.firstName} {sig.surname} ({sig.designation}) - ID: {sig.nationalIdNo}
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <section className="mb-6">
           <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Uploaded Documents</h2>
@@ -102,22 +100,6 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
                 </li>
             ))}
             </ul>
-        </section>
-
-         <section>
-          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Comments</h2>
-           {application.comments.length > 0 ? (
-            <ul className="space-y-2">
-              {application.comments.map(comment => (
-                <li key={comment.id} className="text-sm border-b pb-2 border-gray-200">
-                    <p>{comment.content}</p>
-                    <p className="text-xs text-gray-500 text-right mt-1"> - {comment.user} ({comment.role}) on {new Date(comment.timestamp).toLocaleString()}</p>
-                </li>
-              ))}
-            </ul>
-           ) : (
-             <p className="text-sm text-gray-500">No comments on this application.</p>
-           )}
         </section>
       </main>
 

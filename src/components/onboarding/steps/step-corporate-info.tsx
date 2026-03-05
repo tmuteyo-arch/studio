@@ -6,24 +6,18 @@ import { Input } from '@/components/ui/input';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-lg font-semibold text-foreground mt-6 mb-4 border-b pb-2">{children}</h3>
-);
-
-
 export default function StepCorporateInfo() {
   const form = useFormContext<OnboardingFormData>();
 
   return (
     <div>
       <CardHeader>
-        <CardTitle>Corporate Account Application</CardTitle>
+        <CardTitle>Corporate Details</CardTitle>
         <CardDescription>
-          Please provide the legal and operational details for the company.
+          Please provide the mandatory legal and operational details for the company.
         </CardDescription>
       </CardHeader>
       <div className="space-y-4 px-6">
-        <SectionTitle>1. Business Identification</SectionTitle>
         <FormField
           control={form.control}
           name="organisationLegalName"
@@ -37,20 +31,7 @@ export default function StepCorporateInfo() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="tradeName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Trade Name (if different)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Rubieson's" {...field} value={field.value || ''}/>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <SectionTitle>2. Registration Details</SectionTitle>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -67,24 +48,10 @@ export default function StepCorporateInfo() {
           />
           <FormField
             control={form.control}
-            name="countryOfIncorporation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Country of Incorporation</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Zimbabwe" {...field} value={field.value || ''}/>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <FormField
-            control={form.control}
             name="dateOfIncorporation"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Date of Incorporation/Registration</FormLabel>
+                <FormLabel>Date of Incorporation</FormLabel>
                 <FormControl>
                     <Input type="date" {...field} value={field.value || ''}/>
                 </FormControl>
@@ -92,7 +59,8 @@ export default function StepCorporateInfo() {
                 </FormItem>
             )}
             />
-        <SectionTitle>3. Business Operations</SectionTitle>
+        </div>
+
          <FormField
             control={form.control}
             name="physicalAddress"
@@ -106,19 +74,7 @@ export default function StepCorporateInfo() {
               </FormItem>
             )}
           />
-         <FormField
-            control={form.control}
-            name="natureOfBusiness"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nature of Business Activities</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Retail, Manufacturing, etc." {...field} value={field.value || ''}/>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}

@@ -13,10 +13,6 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import TermsAndConditions from '../terms-and-conditions';
 
-interface StepReviewProps {
-  next?: () => void;
-}
-
 const DetailItem = ({ label, value }: { label: string; value: string | number | undefined | null | boolean; }) => {
     if (value === undefined || value === null || value === '') return null;
 
@@ -36,7 +32,7 @@ const DetailItem = ({ label, value }: { label: string; value: string | number | 
 };
 
 
-export default function StepReview({ next }: StepReviewProps) {
+export default function StepReview() {
   const { control, getValues, formState } = useFormContext<OnboardingFormData>();
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const data = getValues();
@@ -58,7 +54,7 @@ export default function StepReview({ next }: StepReviewProps) {
         <PartyPopper className="mx-auto h-16 w-16 text-green-500 mb-4" />
         <h2 className="text-2xl font-bold">Application Submitted!</h2>
         <p className="text-muted-foreground mt-2 max-w-sm">
-          The application for <strong>{clientName}</strong> has been successfully submitted for validation. You will be returned to the dashboard.
+          The application for <strong>{clientName}</strong> has been successfully submitted.
         </p>
       </div>
     );
@@ -68,39 +64,20 @@ export default function StepReview({ next }: StepReviewProps) {
     <div>
       <CardHeader>
         <CardTitle>Review & Submit</CardTitle>
-        <CardDescription>Please review your information carefully before submitting.</CardDescription>
+        <CardDescription>Review mandatory information before final submission.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
         
         {isIndividual && (
           <div className="rounded-md border p-4 space-y-4">
             <h3 className="font-semibold">Applicant Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DetailItem label="Account Type" value={data.clientType} />
-              <DetailItem label="Branch" value={data.branch} />
-              <DetailItem label="Referred By" value={data.referredBy} />
-              <DetailItem label="Title" value={data.individualTitle} />
-              <DetailItem label="First Name" value={data.individualFirstName} />
-              <DetailItem label="Surname" value={data.individualSurname} />
+              <DetailItem label="Full Name" value={`${data.individualFirstName} ${data.individualSurname}`} />
               <DetailItem label="Date of Birth" value={data.individualDateOfBirth ? format(new Date(data.individualDateOfBirth), 'MMMM d, yyyy') : '-'} />
-              <DetailItem label="Place of Birth" value={data.individualPlaceOfBirth} />
-              <DetailItem label="Gender" value={data.individualGender} />
-              <DetailItem label="Marital Status" value={data.individualMaritalStatus} />
-              <DetailItem label="ID Type" value={data.individualIdType} />
               <DetailItem label="ID Number" value={data.individualIdNumber} />
               <DetailItem label="Address" value={data.individualAddress} />
               <DetailItem label="Mobile Number" value={data.individualMobileNumber} />
-              <DetailItem label="InnBucks Wallet No." value={data.individualInnbucksWalletAccount} />
-            </div>
-            <Separator />
-            <h3 className="font-semibold pt-2">Employment Details</h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <DetailItem label="Occupation" value={data.occupation} />
-              <DetailItem label="Employer" value={data.employerName} />
-              <DetailItem label="Employer Sector" value={data.employerSector} />
-              <DetailItem label="Employment Date" value={data.dateOfEmployment ? format(new Date(data.dateOfEmployment), 'MMMM d, yyyy') : '-'} />
-              <DetailItem label="Gross Monthly Income" value={data.grossMonthlyIncome} />
-              <DetailItem label="Other Income" value={data.otherIncome} />
             </div>
           </div>
         )}
@@ -111,54 +88,34 @@ export default function StepReview({ next }: StepReviewProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <DetailItem label="Account Type" value={data.clientType} />
                     <DetailItem label="Organisation Legal Name" value={data.organisationLegalName} />
-                    <DetailItem label="Trade Name" value={data.tradeName} />
+                    <DetailItem label="Cert. Number" value={data.certificateOfIncorporationNumber} />
+                    <DetailItem label="Date of Inc." value={data.dateOfIncorporation ? format(new Date(data.dateOfIncorporation), 'MMMM d, yyyy') : '-'} />
                     <DetailItem label="Physical Address" value={data.physicalAddress} />
                     <DetailItem label="Business Phone" value={data.businessTelNumber} />
                     <DetailItem label="Business Email" value={data.email} />
-                    <DetailItem label="Nature of Business" value={data.natureOfBusiness} />
-                    <DetailItem label="Cert. of Incorporation Number" value={data.certificateOfIncorporationNumber} />
-                    <DetailItem label="Date of Incorporation" value={data.dateOfIncorporation ? format(new Date(data.dateOfIncorporation), 'MMMM d, yyyy') : '-'} />
-                    <DetailItem label="Country of Incorporation" value={data.countryOfIncorporation} />
                 </div>
             </div>
         )}
         
         {data.signatories && data.signatories.length > 0 && (
              <div className="rounded-md border p-4 space-y-4">
-                <h3 className="font-semibold">Signatories & Mandate</h3>
-                <DetailItem label="Resolution Date" value={data.resolutionDate ? format(new Date(data.resolutionDate), 'MMMM d, yyyy') : '-'} />
+                <h3 className="font-semibold">Signatories ({data.signatories.length})</h3>
                 {data.signatories.map((signatory, index) => (
                     <div key={index} className="space-y-2 border-b pb-2 last:border-b-0">
-                        <p className='font-medium'>Signatory {index + 1}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <DetailItem label="Name" value={`${signatory.firstName} ${signatory.surname}`} />
                             <DetailItem label="ID Number" value={signatory.nationalIdNo} />
-                            <DetailItem label="Designation" value={signatory.designation} />
-                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Signature</p>
-                                {signatory.signature && signatory.signature.startsWith('data:image') ? (
-                                    <div className="border rounded-md p-1 mt-1 inline-block bg-white">
-                                        <img src={signatory.signature} alt="Signature" className="h-12 w-auto" />
-                                    </div>
-                                ) : <p className="font-semibold">-</p>}
-                            </div>
                         </div>
                     </div>
                 ))}
-                <DetailItem label="Signing Instructions" value={data.signingInstruction} />
              </div>
         )}
-         <div className="rounded-md border p-4 space-y-4">
-            <h3 className="font-semibold">Documents</h3>
-            <DetailItem label="Documents Provided" value={data.document1Type && data.document2Type ? `${data.document1Type} & ${data.document2Type}`: '-'} />
-         </div>
-
 
         <Separator />
         
         <div className="space-y-4">
             <h3 className="font-semibold text-lg">Terms & Conditions</h3>
-            <ScrollArea className="h-48 w-full rounded-md border p-4">
+            <ScrollArea className="h-32 w-full rounded-md border p-4">
                 <TermsAndConditions />
             </ScrollArea>
              <FormField
@@ -174,7 +131,7 @@ export default function StepReview({ next }: StepReviewProps) {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                         <FormLabel>
-                         I have read, understood, and agree to the InnBucks MicroBank Terms and Conditions and Client Protection Principles. I confirm that the information provided is true and correct.
+                         I confirm that the information provided is true and correct and I agree to the terms.
                         </FormLabel>
                          <FormMessage />
                     </div>
@@ -186,9 +143,9 @@ export default function StepReview({ next }: StepReviewProps) {
             name="signature"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Digital Signature (Applicant)</FormLabel>
+                <FormLabel>Full Name (Digital Signature)</FormLabel>
                 <FormControl>
-                    <Input placeholder="Type your full name to sign" {...field} value={field.value || ''} />
+                    <Input placeholder="Type your full name" {...field} value={field.value || ''} />
                 </FormControl>
                  <FormMessage />
                 </FormItem>

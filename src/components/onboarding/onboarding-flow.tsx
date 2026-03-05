@@ -35,10 +35,10 @@ import StepSignatories from './steps/step-signatories';
 
 const allSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType', 'region'] },
-  { id: 'individual-info', name: 'Applicant Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualAddress'] },
-  { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'tradeName', 'physicalAddress', 'businessTelNumber', 'email', 'natureOfBusiness', 'dateOfIncorporation', 'countryOfIncorporation', 'certificateOfIncorporationNumber'] },
-  { id: 'signatories', name: 'Signatories & Mandate', fields: ['signatories'] },
-  { id: 'document-upload', name: 'Document Upload', fields: ['document1Type', 'document2Type'] },
+  { id: 'individual-info', name: 'Applicant Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
+  { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
+  { id: 'signatories', name: 'Signatories', fields: ['signatories'] },
+  { id: 'document-upload', name: 'Documents', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
 
@@ -75,67 +75,25 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     defaultValues: {
       clientType: '',
       region: '',
-      // Individual
-      branch: '',
-      accountSpecType: '',
-      accountSpecCurrency: '',
-      referredBy: '',
-      individualTitle: '',
       individualSurname: '',
       individualFirstName: '',
       individualDateOfBirth: '',
-      individualPlaceOfBirth: '',
-      individualIdType: '',
       individualIdNumber: '',
-      individualGender: '',
-      individualMaritalStatus: '',
       individualAddress: '',
       individualMobileNumber: '',
-      individualInnbucksWalletAccount: '',
-      occupation: '',
-      employerName: '',
-      employerAddress: '',
-      employerTel: '',
-      employerSector: '',
-      dateOfEmployment: '',
-      grossMonthlyIncome: undefined,
-      otherIncome: undefined,
-      salaryRate: '',
-      totalIncome: undefined,
-      // Corporate
       organisationLegalName: '',
-      tradeName: '',
       physicalAddress: '',
-      postalAddress: '',
-      webAddress: '',
       businessTelNumber: '',
       email: '',
-      natureOfBusiness: '',
       dateOfIncorporation: '',
-      countryOfIncorporation: '',
       certificateOfIncorporationNumber: '',
-      sourceOfWealth: '',
-      noOfEmployees: undefined,
-      economicSector: '',
-      authorisedCapital: '',
-      taxPayerNumber: '',
-      hasOtherAccounts: 'No',
-      otherAccountNumbers: '',
-      communicationPreference: 'Email',
-      premisesStatus: 'Rented',
-      typeOfBusiness: '',
-      // Signatories
       signatories: [],
       resolutionDate: '',
       signingInstruction: '',
-      // Agency Agreement
-      brNumber: '',
-      walletAccount: '',
       supervisorSignature: '',
       supervisorSignatureTimestamp: '',
       executiveSignature: '',
       executiveSignatureTimestamp: '',
-      // Common
       document1Type: '',
       document2Type: '',
       signature: '',
@@ -157,7 +115,6 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     if (isCorporate) {
       return allSteps.filter(step => step.id !== 'individual-info');
     }
-    // Default to only showing the first step if no client type is selected
     return [allSteps.find(s => s.id === 'account-type')!];
   }, [clientType]);
 
@@ -178,7 +135,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     }
 
     setIsCheckingDuplicates(true);
-    await new Promise(res => setTimeout(res, 600)); // Simulate check
+    await new Promise(res => setTimeout(res, 600)); 
     setIsCheckingDuplicates(false);
 
     const duplicate = applications.find(app => app.clientName.toLowerCase() === nameToCheck.toLowerCase());
@@ -186,7 +143,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     if (duplicate) {
         setDuplicateInfo({ 
           isDuplicate: true, 
-          message: `An existing application for '${nameToCheck}' was found in the system (App ID: ${duplicate.id}). Please verify if this is a new request or a duplicate of the existing record.` 
+          message: `An existing application for '${nameToCheck}' was found in the system (App ID: ${duplicate.id}). Please verify if this is a new request or a duplicate.` 
         });
         return false;
     }
@@ -201,13 +158,12 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     if (!isValid) {
       toast({
         title: "Incomplete Information",
-        description: "Please fill out all required fields before proceeding.",
+        description: "Please fill out all mandatory fields before proceeding.",
         variant: "destructive",
       });
       return;
     }
     
-    // Check for duplicates before moving away from name entry steps
     if (currentStep.id === 'corporate-info' || currentStep.id === 'individual-info') {
       const canProceed = await handleDuplicateCheck();
       if (!canProceed) return;
@@ -306,23 +262,23 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Potential Duplicate Warning
+                Duplicate Warning
               </AlertDialogTitle>
               <AlertDialogDescription className="text-foreground">
                 {duplicateInfo.message}
                 <br /><br />
-                Do you want to continue creating this <strong>new</strong> application, or should this lead be cancelled?
+                Do you want to continue with this application?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel Submission</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => {
                 setDuplicateInfo({ isDuplicate: false, message: '' });
                 if (currentStepIndex < steps.length - 1) {
                   setCurrentStepIndex((step) => step + 1);
                 }
               }}>
-                Continue with New Application
+                Continue
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

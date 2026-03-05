@@ -30,59 +30,21 @@ export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   region: z.string().min(1, { message: 'Please select a region.' }),
   
-  // --- New Individual/Sole Trader Fields ---
-  branch: z.string().optional(),
-  accountSpecType: z.string().optional(),
-  accountSpecCurrency: z.string().optional(),
-  referredBy: z.string().optional(),
-  
-  individualTitle: z.string().optional(),
+  // Simplified Individual/Sole Trader Fields
   individualSurname: z.string().optional(),
   individualFirstName: z.string().optional(),
   individualDateOfBirth: z.string().optional(),
-  individualPlaceOfBirth: z.string().optional(),
-  individualIdType: z.string().optional(),
   individualIdNumber: z.string().optional(),
-  individualGender: z.string().optional(),
-  individualMaritalStatus: z.string().optional(),
   individualAddress: z.string().optional(),
   individualMobileNumber: z.string().optional(),
-  individualInnbucksWalletAccount: z.string().optional(),
 
-  occupation: z.string().optional(),
-  employerName: z.string().optional(),
-  employerAddress: z.string().optional(),
-  employerTel: z.string().optional(),
-  employerSector: z.string().optional(),
-  dateOfEmployment: z.string().optional(),
-
-  grossMonthlyIncome: z.coerce.number().optional(),
-  otherIncome: z.coerce.number().optional(),
-  salaryRate: z.string().optional(),
-  totalIncome: z.coerce.number().optional(),
-
-  // Corporate only fields
+  // Simplified Corporate Fields
   organisationLegalName: z.string().optional(),
-  tradeName: z.string().optional(),
   physicalAddress: z.string().optional(),
-  postalAddress: z.string().optional(),
-  webAddress: z.string().optional(),
   businessTelNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
-  natureOfBusiness: z.string().optional(),
   dateOfIncorporation: z.string().optional().default(''),
-  countryOfIncorporation: z.string().optional(),
   certificateOfIncorporationNumber: z.string().optional().default(''),
-  sourceOfWealth: z.string().optional(),
-  noOfEmployees: z.coerce.number().optional(),
-  economicSector: z.string().optional(),
-  authorisedCapital: z.string().optional(),
-  taxPayerNumber: z.string().optional(),
-  hasOtherAccounts: z.string().optional(),
-  otherAccountNumbers: z.string().optional(),
-  communicationPreference: z.string().optional(),
-  premisesStatus: z.string().optional(),
-  typeOfBusiness: z.string().optional(),
 
   // Mandate and Signatories
   resolutionDate: z.string().optional(),
@@ -97,8 +59,6 @@ export const OnboardingFormSchema = z.object({
   fcbStatus: z.string().optional(),
   
   // Agency Agreement Fields
-  brNumber: z.string().optional(),
-  walletAccount: z.string().optional(),
   supervisorSignature: z.string().optional(),
   supervisorSignatureTimestamp: z.string().optional(),
   executiveSignature: z.string().optional(),
@@ -129,6 +89,7 @@ export const OnboardingFormSchema = z.object({
       if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is required.' });
       if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is required.' });
       if (!data.individualAddress) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualAddress'], message: 'Address is required.' });
+      if (!data.individualIdNumber) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualIdNumber'], message: 'ID Number is required.' });
     }
 });
 
