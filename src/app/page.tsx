@@ -15,10 +15,9 @@ import { users, User, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck, Crown, ShoppingBag } from 'lucide-react';
-import OnboardingFlow from '@/components/onboarding/onboarding-flow';
+import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck, Crown } from 'lucide-react';
 
-const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVariant, delay, icon: Icon }) => {
+const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVariant, delay, icon: Icon }: any) => {
   const ref = React.useRef<HTMLDivElement>(null);
   
   const x = useMotionValue(0);
@@ -81,7 +80,7 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVarian
             className="w-full"
             variant={buttonVariant || 'default'}
             onClick={() => onRoleSelect(role)}>
-            {role === 'customer' ? 'Apply Now' : `Login as ${title}`}
+            Login as {title}
           </Button>
         </CardFooter>
       </Card>
@@ -92,15 +91,11 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVarian
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
-  const [selectedRole, setSelectedRole] = React.useState<Role | 'customer' | null>(null);
+  const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
   const { toast } = useToast();
 
-  const handleRoleSelect = (role: Role | 'customer') => {
+  const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
-    if (role === 'customer') {
-        // Automatically "log in" as a guest customer for the demo flow
-        setLoggedInUser({ id: 'guest', name: 'Guest Customer', role: 'customer', email: 'guest@example.com', initials: 'GC' });
-    }
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -138,8 +133,6 @@ function AppContent() {
         return <SupervisorDashboard user={loggedInUser} />;
       case 'retail-executive':
         return <RetailExecutiveDashboard user={loggedInUser} />;
-      case 'customer':
-        return <div className="p-4 sm:p-8"><OnboardingFlow user={loggedInUser} onCancel={handleLogout} /></div>;
       default:
         return null;
     }
@@ -194,19 +187,10 @@ function AppContent() {
         <Logo className="h-10 w-10" />
         <h1 className="text-3xl font-bold tracking-tight text-white">InnBucks Agent Onboarding</h1>
       </div>
-      <h2 className="text-2xl font-semibold text-white/90 mb-2">Select Your Portal</h2>
-      <p className="text-white/70 mb-12">Choose a role to simulate the onboarding workflow.</p>
+      <h2 className="text-2xl font-semibold text-white/90 mb-2">Internal Administration Portal</h2>
+      <p className="text-white/70 mb-12">Select your role to access the internal onboarding workflow.</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full max-w-7xl">
-        <AnimatedRoleCard 
-          role="customer"
-          title="Customer"
-          icon={ShoppingBag}
-          description="Apply for a new account independently."
-          onRoleSelect={handleRoleSelect}
-          buttonVariant="secondary"
-          delay={0.05}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
         <AnimatedRoleCard 
           role="atl"
           title="ATL"
@@ -268,7 +252,7 @@ function AppContent() {
             </div>
         );
     }
-    if (selectedRole && selectedRole !== 'customer') {
+    if (selectedRole) {
         return renderLoginForm();
     }
     return renderRoleSelection();
