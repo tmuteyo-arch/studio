@@ -4,8 +4,8 @@ import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { applicationsAtom, ApplicationStatus, Application } from '@/lib/mock-data';
 import { zimRegions } from '@/lib/types';
-import { User } from '@/lib/users';
-import { CheckCircle2, AlertCircle, Inbox, BarChart, FileSignature, Edit, FileCheck2, Eraser, MapPin } from 'lucide-react';
+import { User, users as allUsers } from '@/lib/users';
+import { CheckCircle2, AlertCircle, Inbox, BarChart, FileSignature, Edit, FileCheck2, Eraser, MapPin, Users, Award } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
@@ -17,6 +17,7 @@ import SignatureCanvas from 'react-signature-canvas';
 import { useToast } from '@/hooks/use-toast';
 import { Bar, BarChart as ReChartsBarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 
 interface RetailExecutiveDashboardProps {
     user: User;
@@ -99,6 +100,21 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
         })).sort((a, b) => b.count - a.count);
     }, [applications]);
 
+    const atlPerformance = React.useMemo(() => {
+        const atlUsers = allUsers.filter(u => u.role === 'atl');
+        return atlUsers.map(atl => {
+            const atlApps = applications.filter(app => app.submittedBy === atl.name);
+            return {
+                name: atl.name,
+                initials: atl.initials,
+                total: atlApps.length,
+                signed: atlApps.filter(a => a.status === 'Signed').length,
+                rejected: atlApps.filter(a => a.status === 'Rejected').length,
+                pending: atlApps.filter(a => !['Signed', 'Rejected', 'Archived'].includes(a.status)).length,
+            };
+        }).sort((a, b) => b.total - a.total);
+    }, [applications]);
+
     const agreementsToSign = React.useMemo(() => 
         applications.filter(app => app.status === 'Pending Executive Signature'),
     [applications]);
@@ -165,15 +181,15 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
     }
 
     return (
-        <div>
-            <div className="mb-8 flex justify-between items-start">
+        <div className="space-y-6">
+            <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-3xl font-bold">Retail Executive Dashboard</h2>
                   <p className="text-muted-foreground">High-level summary and final verification of agreements across regions.</p>
                 </div>
             </div>
             
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Agreements to Sign</CardTitle>
@@ -226,7 +242,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -283,9 +299,56 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                     </CardContent>
                 </Card>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Award className="h-5 w-5 text-primary" />
+                        ATL Individual Performance
+                    </CardTitle>
+                    <CardDescription>
+                        Performance metrics for Account Taking Leaders based on their submitted applications.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>ATL Name</TableHead>
+                                <TableHead className="text-center">Total Submitted</TableHead>
+                                <TableHead className="text-center text-green-600">Signed (Approved)</TableHead>
+                                <TableHead className="text-center text-red-600">Rejected</TableHead>
+                                <TableHead className="text-center text-amber-600">In Pipeline</TableHead>
+                                <TableHead className="text-right">Success Rate</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {atlPerformance.map((atl) => (
+                                <TableRow key={atl.name}>
+                                    <TableCell className="font-medium flex items-center gap-3">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarFallback>{atl.initials}</AvatarFallback>
+                                        </Avatar>
+                                        {atl.name}
+                                    </TableCell>
+                                    <TableCell className="text-center font-bold">{atl.total}</TableCell>
+                                    <TableCell className="text-center">{atl.signed}</TableCell>
+                                    <TableCell className="text-center">{atl.rejected}</TableCell>
+                                    <TableCell className="text-center">{atl.pending}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Badge variant={atl.total > 0 && (atl.signed / atl.total) > 0.8 ? 'success' : 'outline'}>
+                                            {atl.total > 0 ? Math.round((atl.signed / atl.total) * 100) : 0}%
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
             
             {agreementsToSign.length > 0 && (
-                <Card className="mb-6 border-primary/20 bg-primary/5">
+                <Card className="border-primary/20 bg-primary/5">
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                             <div>
