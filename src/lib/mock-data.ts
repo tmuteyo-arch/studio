@@ -61,7 +61,7 @@ const initialApplications: Application[] = [
     status: 'Submitted',
     submittedDate: '2024-05-10',
     lastUpdated: '2024-05-10T10:00:00Z',
-    submittedBy: 'Tashinga Muteyo',
+    submittedBy: 'CHIDO',
     region: 'Harare',
     fcbStatus: 'Inclusive',
     details: {
@@ -94,12 +94,12 @@ const initialApplications: Application[] = [
       { type: 'CR14', fileName: 'cr14.pdf', url: '#' },
       { type: 'Proof of operating address', fileName: 'proof_of_address.pdf', url: '#' },
     ],
-    history: [{ action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2024-05-10T10:00:00Z' }],
+    history: [{ action: 'Submitted', user: 'CHIDO', timestamp: '2024-05-10T10:00:00Z' }],
     comments: [],
     },
     {
     id: 'APP-LEAD-001',
-    clientName: 'YELLOWCOBB ENTERPRISES (PVT) LTD',
+    clientName: 'YELLOWCOBB ENTERPRISES (PVT) LTD T/A SPAR RETAIL',
     clientType: 'Company (Private / Public Limited)',
     status: 'Submitted',
     submittedDate: '2024-05-21',
@@ -170,7 +170,7 @@ const initialApplications: Application[] = [
     status: 'Returned to ATL',
     submittedDate: '2024-05-09',
     lastUpdated: '2024-05-11T14:30:00Z',
-    submittedBy: 'Tashinga Muteyo',
+    submittedBy: 'COLLETOR',
     region: 'Manicaland',
     fcbStatus: 'Good',
      details: {
@@ -189,7 +189,7 @@ const initialApplications: Application[] = [
     signatories: [],
     documents: [{ type: 'National ID Card', fileName: 'national_id.pdf', url: '#' }],
     history: [
-      { action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2024-05-09T09:00:00Z' },
+      { action: 'Submitted', user: 'COLLETOR', timestamp: '2024-05-09T09:00:00Z' },
       { action: 'Returned to ATL', user: 'Fadzai Zesa', timestamp: '2024-05-11T14:30:00Z', notes: "Missing proof of residence. Please upload a recent utility bill." },
     ],
     comments: [{ id: 'c1', user: 'Fadzai Zesa', role: 'back-office', timestamp: '2024-05-11T14:29:00Z', content: 'Missing proof of residence. Returning to ATL.' }],
@@ -201,7 +201,7 @@ const initialApplications: Application[] = [
     status: 'Pending Supervisor',
     submittedDate: '2024-05-08',
     lastUpdated: '2024-05-12T11:00:00Z',
-    submittedBy: 'Tendai Moyo',
+    submittedBy: 'CONCILLIA',
     region: 'Harare',
     fcbStatus: 'PEP',
     details: {
@@ -223,7 +223,7 @@ const initialApplications: Application[] = [
       { type: 'Proof of Residence', fileName: 'proof_of_res.pdf', url: '#' },
     ],
     history: [
-        { action: 'Submitted', user: 'Tendai Moyo', timestamp: '2024-05-08T15:00:00Z' },
+        { action: 'Submitted', user: 'CONCILLIA', timestamp: '2024-05-08T15:00:00Z' },
         { action: 'In Review', user: 'Fadzai Zesa', timestamp: '2024-05-10T12:00:00Z' },
         { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-12T11:00:00Z', notes: 'FCB check returned a PEP status. Requires supervisor review.' },
     ],
@@ -238,7 +238,7 @@ const initialApplications: Application[] = [
     status: 'Signed',
     submittedDate: '2024-05-07',
     lastUpdated: '2024-05-14T18:00:00Z',
-    submittedBy: 'Tendai Moyo',
+    submittedBy: 'HEYZREST',
     region: 'Bulawayo',
     fcbStatus: 'Good',
      details: {
@@ -261,7 +261,7 @@ const initialApplications: Application[] = [
       { type: 'CR14', fileName: 'cr14_agri.pdf', url: '#' },
     ],
     history: [
-      { action: 'Submitted', user: 'Tendai Moyo', timestamp: '2024-05-07T11:00:00Z' },
+      { action: 'Submitted', user: 'HEYZREST', timestamp: '2024-05-07T11:00:00Z' },
       { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-10T14:00:00Z' },
       { action: 'Pending Executive Signature', user: 'Blessing Zulu', timestamp: '2024-05-13T16:00:00Z', notes: 'Supervisor has signed.' },
       { action: 'Signed', user: 'Tafadzwa Chihota', timestamp: '2024-05-14T18:00:00Z', notes: 'Final signature from Retail Executive.' },
@@ -275,7 +275,7 @@ const initialApplications: Application[] = [
     status: 'Pending Executive Signature',
     submittedDate: '2024-05-18',
     lastUpdated: '2024-05-20T10:00:00Z',
-    submittedBy: 'Tashinga Muteyo',
+    submittedBy: 'LIBERTY',
     region: 'Harare',
     fcbStatus: 'Good',
     details: {
@@ -310,7 +310,7 @@ const initialApplications: Application[] = [
       { type: 'CR14', fileName: 'zeroed_cr14.pdf', url: '#' },
     ],
     history: [
-        { action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2024-05-18T14:00:00Z' },
+        { action: 'Submitted', user: 'LIBERTY', timestamp: '2024-05-18T14:00:00Z' },
         { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-19T11:00:00Z' },
         { action: 'Agreement Signed by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-20T09:00:00Z', notes: 'Verified and signed. Forwarding to Executive.' },
     ],
@@ -323,7 +323,7 @@ const initialApplications: Application[] = [
     status: 'Pending Executive Signature',
     submittedDate: '2024-05-19',
     lastUpdated: '2024-05-20T11:30:00Z',
-    submittedBy: 'Tendai Moyo',
+    submittedBy: 'MERCY',
     region: 'Bulawayo',
     fcbStatus: 'Inclusive',
     details: {
@@ -358,7 +358,7 @@ const initialApplications: Application[] = [
       { type: 'CR14', fileName: 'zan_cr14.pdf', url: '#' },
     ],
     history: [
-        { action: 'Submitted', user: 'Tendai Moyo', timestamp: '2024-05-19T09:00:00Z' },
+        { action: 'Submitted', user: 'MERCY', timestamp: '2024-05-19T09:00:00Z' },
         { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-19T16:00:00Z' },
         { action: 'Agreement Signed by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-20T11:00:00Z' },
     ],
@@ -371,7 +371,7 @@ const initialApplications: Application[] = [
     status: 'Pending Executive Signature',
     submittedDate: '2024-05-20',
     lastUpdated: '2024-05-20T14:00:00Z',
-    submittedBy: 'Tashinga Muteyo',
+    submittedBy: 'PAMELA',
     region: 'Harare',
     fcbStatus: 'Good',
     details: {
@@ -406,10 +406,38 @@ const initialApplications: Application[] = [
       { type: 'CR14', fileName: 'yedu_cr14.pdf', url: '#' },
     ],
     history: [
-        { action: 'Submitted', user: 'Tashinga Muteyo', timestamp: '2024-05-20T10:00:00Z' },
+        { action: 'Submitted', user: 'PAMELA', timestamp: '2024-05-20T10:00:00Z' },
         { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-20T11:00:00Z' },
         { action: 'Agreement Signed by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-20T13:30:00Z' },
     ],
+    comments: [],
+  },
+  {
+    id: 'APP-005',
+    clientName: 'PARADZAI ELECTRONICS',
+    clientType: 'Proprietorship / Sole Trader',
+    status: 'In Review',
+    submittedDate: '2024-05-22',
+    lastUpdated: '2024-05-22T14:00:00Z',
+    submittedBy: 'PARADZAI',
+    region: 'Masvingo',
+    fcbStatus: 'Good',
+    details: {
+        clientType: 'Proprietorship / Sole Trader',
+        region: 'Masvingo',
+        individualFirstName: "Paradzai",
+        individualSurname: "Moyo",
+        individualAddress: "Masvingo CBD",
+        individualDateOfBirth: "1985-04-10",
+        signatories: [],
+        document1Type: 'National ID Card',
+        document2Type: 'Trading License',
+        agreedToTerms: true,
+        signature: 'Paradzai Moyo',
+    },
+    signatories: [],
+    documents: [{ type: 'National ID Card', fileName: 'paradzai_id.pdf', url: '#' }],
+    history: [{ action: 'Submitted', user: 'PARADZAI', timestamp: '2024-05-22T14:00:00Z' }],
     comments: [],
   }
 ];
