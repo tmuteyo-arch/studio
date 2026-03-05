@@ -44,6 +44,7 @@ export type Application = {
   submittedDate: string;
   lastUpdated: string;
   submittedBy: string;
+  region: string;
   fcbStatus: FcbStatus;
   details: OnboardingFormData;
   signatories: Signatory[];
@@ -61,9 +62,11 @@ const initialApplications: Application[] = [
     submittedDate: '2024-05-10',
     lastUpdated: '2024-05-10T10:00:00Z',
     submittedBy: 'Tashinga Muteyo',
+    region: 'Harare',
     fcbStatus: 'Inclusive',
     details: {
         clientType: 'Company (Private / Public Limited)',
+        region: 'Harare',
         organisationLegalName: 'EcoVentures Inc.',
         tradeName: 'EcoVentures',
         physicalAddress: '123 Green Way, Harare',
@@ -102,9 +105,11 @@ const initialApplications: Application[] = [
     submittedDate: '2024-05-09',
     lastUpdated: '2024-05-11T14:30:00Z',
     submittedBy: 'Tashinga Muteyo',
+    region: 'Manicaland',
     fcbStatus: 'Good',
      details: {
         clientType: 'Proprietorship / Sole Trader',
+        region: 'Manicaland',
         individualFirstName: "Rudo",
         individualSurname: "Moyo",
         individualAddress: "789 Baobab Close, Mutare",
@@ -131,9 +136,11 @@ const initialApplications: Application[] = [
     submittedDate: '2024-05-08',
     lastUpdated: '2024-05-12T11:00:00Z',
     submittedBy: 'Tendai Moyo',
+    region: 'Harare',
     fcbStatus: 'PEP',
     details: {
         clientType: 'Personal Account',
+        region: 'Harare',
         individualFirstName: "Tendai",
         individualSurname: "Moyo",
         individualAddress: "111 Jacaranda Lane, Harare",
@@ -166,9 +173,11 @@ const initialApplications: Application[] = [
     submittedDate: '2024-05-07',
     lastUpdated: '2024-05-14T18:00:00Z',
     submittedBy: 'Tendai Moyo',
+    region: 'Bulawayo',
     fcbStatus: 'Good',
      details: {
         clientType: 'Company (Private / Public Limited)',
+        region: 'Bulawayo',
         organisationLegalName: 'Agri-Innovate Ltd',
         signatories: [],
         document1Type: 'Certificate of Incorporation',
@@ -201,9 +210,11 @@ const initialApplications: Application[] = [
     submittedDate: '2024-05-18',
     lastUpdated: '2024-05-20T10:00:00Z',
     submittedBy: 'Tashinga Muteyo',
+    region: 'Harare',
     fcbStatus: 'Good',
     details: {
         clientType: 'Company (Private / Public Limited)',
+        region: 'Harare',
         organisationLegalName: 'ZEROED INVESTMENTS',
         tradeName: 'Zeroed',
         physicalAddress: '55 Industrial Loop, Harare',
@@ -247,9 +258,11 @@ const initialApplications: Application[] = [
     submittedDate: '2024-05-19',
     lastUpdated: '2024-05-20T11:30:00Z',
     submittedBy: 'Tendai Moyo',
+    region: 'Bulawayo',
     fcbStatus: 'Inclusive',
     details: {
         clientType: 'Company (Private / Public Limited)',
+        region: 'Bulawayo',
         organisationLegalName: 'ZANEXPRESS INVESTMENTS',
         tradeName: 'ZanExpress',
         physicalAddress: '12 Logistics Hub, Bulawayo',
@@ -293,9 +306,11 @@ const initialApplications: Application[] = [
     submittedDate: '2024-05-20',
     lastUpdated: '2024-05-20T14:00:00Z',
     submittedBy: 'Tashinga Muteyo',
+    region: 'Harare',
     fcbStatus: 'Good',
     details: {
         clientType: 'Company (Private / Public Limited)',
+        region: 'Harare',
         organisationLegalName: 'YEDUAI',
         tradeName: 'Yedu AI Solutions',
         physicalAddress: 'Tech Tower, Level 4, Harare',

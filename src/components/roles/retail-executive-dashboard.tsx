@@ -1,10 +1,11 @@
 'use client';
 import * as React from 'react';
 import { useAtom } from 'jotai';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { applicationsAtom, ApplicationStatus, Application } from '@/lib/mock-data';
+import { zimRegions } from '@/lib/types';
 import { User } from '@/lib/users';
-import { CheckCircle2, AlertCircle, Inbox, BarChart, FileSignature, Edit, FileCheck2, CheckSquare, Eraser, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Inbox, BarChart, FileSignature, Edit, FileCheck2, Eraser, MapPin } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
@@ -14,6 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '../ui/label';
 import SignatureCanvas from 'react-signature-canvas';
 import { useToast } from '@/hooks/use-toast';
+import { Bar, BarChart as ReChartsBarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 
 interface RetailExecutiveDashboardProps {
     user: User;
@@ -64,6 +67,13 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
   );
 };
 
+const regionalChartConfig = {
+  count: {
+    label: 'Applications',
+    color: 'hsl(var(--chart-1))',
+  },
+} satisfies ChartConfig;
+
 export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashboardProps) {
     const { toast } = useToast();
     const [applications, setApplications] = useAtom(applicationsAtom);
@@ -80,6 +90,13 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
             totalApplications: applications.length,
             pendingAgreementSignature: applications.filter(a => a.status === 'Pending Executive Signature').length,
         };
+    }, [applications]);
+
+    const regionalData = React.useMemo(() => {
+        return zimRegions.map(region => ({
+            name: region,
+            count: applications.filter(app => app.region === region).length,
+        })).sort((a, b) => b.count - a.count);
     }, [applications]);
 
     const agreementsToSign = React.useMemo(() => 
@@ -152,7 +169,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
             <div className="mb-8 flex justify-between items-start">
                 <div>
                   <h2 className="text-3xl font-bold">Retail Executive Dashboard</h2>
-                  <p className="text-muted-foreground">High-level summary and final verification of agreements.</p>
+                  <p className="text-muted-foreground">High-level summary and final verification of agreements across regions.</p>
                 </div>
             </div>
             
@@ -208,6 +225,64 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                     </CardContent>
                 </Card>
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <MapPin className="h-5 w-5 text-primary" />
+                            Regional Performance (Zimbabwe)
+                        </CardTitle>
+                        <CardDescription>Breakdown of all account applications by province.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ChartContainer config={regionalChartConfig} className="h-80 w-full">
+                            <ResponsiveContainer>
+                                <ReChartsBarChart data={regionalData} layout="vertical" margin={{ left: 50, right: 20 }}>
+                                    <CartesianGrid horizontal={false} />
+                                    <XAxis type="number" hide />
+                                    <YAxis 
+                                        dataKey="name" 
+                                        type="category" 
+                                        tickLine={false} 
+                                        axisLine={false} 
+                                        width={140}
+                                        className="text-xs"
+                                    />
+                                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                                    <Bar dataKey="count" radius={4}>
+                                        {regionalData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--muted))'} />
+                                        ))}
+                                    </Bar>
+                                </ReChartsBarChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Regional Ranking</CardTitle>
+                        <CardDescription>Top performing regions by volume.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {regionalData.slice(0, 5).map((region, index) => (
+                                <div key={region.name} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/20 text-primary text-xs font-bold">
+                                            {index + 1}
+                                        </div>
+                                        <span className="text-sm font-medium">{region.name}</span>
+                                    </div>
+                                    <Badge variant="secondary">{region.count} Apps</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
             
             {agreementsToSign.length > 0 && (
                 <Card className="mb-6 border-primary/20 bg-primary/5">
@@ -242,7 +317,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                     </TableHead>
                                     <TableHead>App ID</TableHead>
                                     <TableHead>Client Name</TableHead>
-                                    <TableHead>Client Type</TableHead>
+                                    <TableHead>Region</TableHead>
                                     <TableHead>Supervisor Signature</TableHead>
                                     <TableHead className="text-right">Action</TableHead>
                                 </TableRow>
@@ -258,7 +333,9 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                         </TableCell>
                                         <TableCell className="font-mono text-xs">{app.id}</TableCell>
                                         <TableCell className="font-medium">{app.clientName}</TableCell>
-                                        <TableCell>{app.clientType}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="font-normal">{app.region}</Badge>
+                                        </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -294,7 +371,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                 <TableRow>
                                     <TableHead>App ID</TableHead>
                                     <TableHead>Client Name</TableHead>
-                                    <TableHead>Client Type</TableHead>
+                                    <TableHead>Region</TableHead>
                                     <TableHead>Date Finalized</TableHead>
                                     <TableHead className="text-right">Action</TableHead>
                                 </TableRow>
@@ -304,7 +381,9 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                     <TableRow key={app.id}>
                                         <TableCell className="font-mono text-xs">{app.id}</TableCell>
                                         <TableCell className="font-medium">{app.clientName}</TableCell>
-                                        <TableCell>{app.clientType}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="font-normal">{app.region}</Badge>
+                                        </TableCell>
                                         <TableCell>{app.details.executiveSignatureTimestamp ? new Date(app.details.executiveSignatureTimestamp).toLocaleDateString() : 'N/A'}</TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>View Record</Button>

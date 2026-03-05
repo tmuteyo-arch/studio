@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, MapPin } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
@@ -47,7 +47,8 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
     
   const filteredApplications = myApplications.filter(app => {
     return app.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           app.clientName.toLowerCase().includes(searchTerm.toLowerCase());
+           app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           app.region.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const applicationForReview = selectedApplication 
@@ -71,7 +72,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
       <div className="mb-8 flex items-center justify-between">
         <div>
             <h2 className="text-3xl font-bold">ATL Dashboard</h2>
-            <p className="text-muted-foreground">Submit and track new account applications.</p>
+            <p className="text-muted-foreground">Submit and track new account applications across your assigned regions.</p>
         </div>
         <Button onClick={() => setIsCreatingApplication(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -88,7 +89,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
-                        placeholder="Search by ID or Client..."
+                        placeholder="Search ID, Client, or Region..."
                         className="pl-10"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -113,6 +114,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
+                      <p className="flex items-center gap-2"><MapPin className="h-3 w-3 text-muted-foreground" /> {app.region}</p>
                       <p><span className="font-medium text-muted-foreground">Client Type:</span> {app.clientType}</p>
                       <p><span className="font-medium text-muted-foreground">Submitted:</span> {app.submittedDate}</p>
                       <Button className="w-full mt-2" variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>View Details</Button>
@@ -128,6 +130,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                     <TableRow>
                       <TableHead>App ID</TableHead>
                       <TableHead>Client Name</TableHead>
+                      <TableHead>Region</TableHead>
                       <TableHead>Client Type</TableHead>
                       <TableHead>Submission Date</TableHead>
                       <TableHead>Status</TableHead>
@@ -139,6 +142,12 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       <TableRow key={app.id}>
                         <TableCell className="font-mono text-xs">{app.id}</TableCell>
                         <TableCell className="font-medium">{app.clientName}</TableCell>
+                        <TableCell>
+                            <div className="flex items-center gap-2">
+                                <MapPin className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs">{app.region}</span>
+                            </div>
+                        </TableCell>
                         <TableCell>{app.clientType}</TableCell>
                         <TableCell>{app.submittedDate}</TableCell>
                         <TableCell>

@@ -3,6 +3,19 @@ import { type FormState as RHFFormState } from 'react-hook-form';
 
 export type FormState<TFieldValues extends Record<string, any>> = RHFFormState<TFieldValues>;
 
+export const zimRegions = [
+  'Bulawayo',
+  'Harare',
+  'Manicaland',
+  'Mashonaland Central',
+  'Mashonaland East',
+  'Mashonaland West',
+  'Masvingo',
+  'Matabeleland North',
+  'Matabeleland South',
+  'Midlands',
+] as const;
+
 const SignatorySchema = z.object({
   surname: z.string().min(1, "Surname is required."),
   firstName: z.string().min(1, "First name is required."),
@@ -15,6 +28,7 @@ export type Signatory = z.infer<typeof SignatorySchema>;
 
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
+  region: z.string().min(1, { message: 'Please select a region.' }),
   
   // --- New Individual/Sole Trader Fields ---
   branch: z.string().optional(),

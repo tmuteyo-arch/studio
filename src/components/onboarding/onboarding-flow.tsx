@@ -34,7 +34,7 @@ import StepSignatories from './steps/step-signatories';
 
 
 const allSteps: Step[] = [
-  { id: 'account-type', name: 'Account Type', fields: ['clientType'] },
+  { id: 'account-type', name: 'Account Type', fields: ['clientType', 'region'] },
   { id: 'individual-info', name: 'Applicant Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualAddress'] },
   { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'tradeName', 'physicalAddress', 'businessTelNumber', 'email', 'natureOfBusiness', 'dateOfIncorporation', 'countryOfIncorporation', 'certificateOfIncorporationNumber'] },
   { id: 'signatories', name: 'Signatories & Mandate', fields: ['signatories'] },
@@ -74,6 +74,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     mode: 'onChange',
     defaultValues: {
       clientType: '',
+      region: '',
       // Individual
       branch: '',
       accountSpecType: '',
@@ -226,6 +227,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       id: `APP-${Date.now()}`,
       clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
       clientType: data.clientType,
+      region: data.region,
       status: 'Submitted',
       submittedDate: format(new Date(), 'yyyy-MM-dd'),
       lastUpdated: new Date().toISOString(),
