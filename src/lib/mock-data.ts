@@ -184,9 +184,9 @@ const initialApplications: Application[] = [
     documents: [{ type: 'National ID Card', fileName: 'national_id.pdf', url: '#' }],
     history: [
       { action: 'Submitted', user: 'COLLETOR', timestamp: '2024-05-09T09:00:00Z' },
-      { action: 'Returned to ATL', user: 'Fadzai Zesa', timestamp: '2024-05-11T14:30:00Z', notes: "Missing proof of residence. Please upload a recent utility bill." },
+      { action: 'Returned to ATL', user: 'TENDAI', timestamp: '2024-05-11T14:30:00Z', notes: "Missing proof of residence. Please upload a recent utility bill." },
     ],
-    comments: [{ id: 'c1', user: 'Fadzai Zesa', role: 'back-office', timestamp: '2024-05-11T14:29:00Z', content: 'Missing proof of residence. Returning to ATL.' }],
+    comments: [{ id: 'c1', user: 'TENDAI', role: 'back-office', timestamp: '2024-05-11T14:29:00Z', content: 'Missing proof of residence. Returning to ATL.' }],
   },
   {
     id: 'APP-003',
@@ -218,11 +218,11 @@ const initialApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'CONCILLIA', timestamp: '2024-05-08T15:00:00Z' },
-        { action: 'In Review', user: 'Fadzai Zesa', timestamp: '2024-05-10T12:00:00Z' },
-        { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-12T11:00:00Z', notes: 'FCB check returned a PEP status. Requires supervisor review.' },
+        { action: 'In Review', user: 'TASHINGA', timestamp: '2024-05-10T12:00:00Z' },
+        { action: 'Pending Supervisor', user: 'TASHINGA', timestamp: '2024-05-12T11:00:00Z', notes: 'FCB check returned a PEP status. Requires supervisor review.' },
     ],
     comments: [
-        {id: 'c2', user: 'Fadzai Zesa', role: 'back-office', timestamp: '2024-05-12T10:59:00Z', content: 'Applicant is a Politically Exposed Person. Escalating to supervisor.'}
+        {id: 'c2', user: 'TASHINGA', role: 'back-office', timestamp: '2024-05-12T10:59:00Z', content: 'Applicant is a Politically Exposed Person. Escalating to supervisor.'}
     ],
   },
    {
@@ -257,7 +257,7 @@ const initialApplications: Application[] = [
     ],
     history: [
       { action: 'Submitted', user: 'HEYZREST', timestamp: '2024-05-07T11:00:00Z' },
-      { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-10T14:00:00Z' },
+      { action: 'Pending Supervisor', user: 'RICHARD', timestamp: '2024-05-10T14:00:00Z' },
       { action: 'Pending Executive Signature', user: 'Blessing Zulu', timestamp: '2024-05-13T16:00:00Z', notes: 'Supervisor has signed.' },
       { action: 'Signed', user: 'Tafadzwa Chihota', timestamp: '2024-05-14T18:00:00Z', notes: 'Final signature from Retail Executive.' },
     ],
@@ -304,7 +304,7 @@ const initialApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'LIBERTY', timestamp: '2024-05-18T14:00:00Z' },
-        { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-19T11:00:00Z' },
+        { action: 'Pending Supervisor', user: 'NYARADZO', timestamp: '2024-05-19T11:00:00Z' },
         { action: 'Agreement Signed by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-20T09:00:00Z', notes: 'Verified and signed. Forwarding to Executive.' },
     ],
     comments: [],
@@ -350,7 +350,7 @@ const initialApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'MERCY', timestamp: '2024-05-19T09:00:00Z' },
-        { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-19T16:00:00Z' },
+        { action: 'Pending Supervisor', user: 'TENDAI', timestamp: '2024-05-19T16:00:00Z' },
         { action: 'Agreement Signed by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-20T11:00:00Z' },
     ],
     comments: [],
@@ -396,7 +396,7 @@ const initialApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'PAMELA', timestamp: '2024-05-20T10:00:00Z' },
-        { action: 'Pending Supervisor', user: 'Fadzai Zesa', timestamp: '2024-05-20T11:00:00Z' },
+        { action: 'Pending Supervisor', user: 'TASHINGA', timestamp: '2024-05-20T11:00:00Z' },
         { action: 'Agreement Signed by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-20T13:30:00Z' },
     ],
     comments: [],

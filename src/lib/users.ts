@@ -24,7 +24,10 @@ export const users: User[] = [
   { id: 'atl-10', name: 'TARIRO', role: 'atl', email: 'tariro@inbucks.app', initials: 'TA' },
   { id: 'atl-11', name: 'TATENDA', role: 'atl', email: 'tatenda@inbucks.app', initials: 'TT' },
   { id: 'atl-12', name: 'TERENCE', role: 'atl', email: 'terence@inbucks.app', initials: 'TE' },
-  { id: 'bo-1', name: 'Fadzai Zesa', role: 'back-office', email: 'bo1@inbucks.app', initials: 'FZ' },
+  { id: 'bo-1', name: 'TENDAI', role: 'back-office', email: 'tendai@inbucks.app', initials: 'TE' },
+  { id: 'bo-2', name: 'TASHINGA', role: 'back-office', email: 'tashinga@inbucks.app', initials: 'TS' },
+  { id: 'bo-3', name: 'RICHARD', role: 'back-office', email: 'richard@inbucks.app', initials: 'RI' },
+  { id: 'bo-4', name: 'NYARADZO', role: 'back-office', email: 'nyaradzo@inbucks.app', initials: 'NY' },
   { 
     id: 'sup-1', 
     name: 'Blessing Zulu', 
