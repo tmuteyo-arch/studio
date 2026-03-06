@@ -189,7 +189,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                       <Card>
                           <CardHeader>
                               <CardTitle>ATL Activity Monitor</CardTitle>
-                              <CardDescription>Oversight of incoming leads and applications submitted by Account Taking Leaders.</CardDescription>
+                              <CardDescription>Oversight of incoming customer applications and submissions by Account Taking Leaders.</CardDescription>
                           </CardHeader>
                           <CardContent>
                               <Table>

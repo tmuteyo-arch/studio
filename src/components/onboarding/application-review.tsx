@@ -28,6 +28,7 @@ import { generateApplicationSummary } from '@/lib/actions';
 import { Alert, AlertDescription as AlertDescriptionComponent, AlertTitle as AlertTitleComponent } from '../ui/alert';
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepSignatories from './steps/step-signatories';
+import StepIndividualInfo from './steps/step-individual-info';
 import AccountResolutionPrintView from './account-resolution-print-view';
 import SignatureCanvas from 'react-signature-canvas';
 
@@ -132,10 +133,10 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleClaimLead = () => {
     const newHistoryLog: HistoryLog = {
-        action: 'Lead Claimed & Verified',
+        action: 'Application Accepted & Verified',
         user: user.name,
         timestamp: new Date().toISOString(),
-        notes: 'ATL has verified the customer lead and forwarded it to Back Office.',
+        notes: 'ATL has verified the customer application and forwarded it to Back Office.',
     };
     handleUpdateApplication({
         submittedBy: user.name,
@@ -143,8 +144,8 @@ export default function ApplicationReview({ application: initialApplication, onB
         history: [...application.history, newHistoryLog]
     });
     toast({
-        title: "Lead Processed",
-        description: "Customer lead has been claimed and forwarded to Back Office.",
+        title: "Application Accepted",
+        description: "Customer application has been accepted and forwarded to Back Office.",
     });
     setTimeout(() => onBack(), 500);
   };
@@ -244,7 +245,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     switch (user.role) {
       case 'atl':
         if (application.submittedBy === 'Customer' && application.status === 'Submitted') {
-            return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Claim & Forward to Back Office</Button>;
+            return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Accept & Forward to Back Office</Button>;
         }
         return null;
       case 'back-office':
@@ -297,7 +298,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               </div>
               <div className="flex flex-col items-end gap-2">
                 <Badge variant={ application.status === 'Signed' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
-                {application.submittedBy === 'Customer' && <Badge variant="outline" className="bg-blue-50 text-blue-700">Self-Service Lead</Badge>}
+                {application.submittedBy === 'Customer' && <Badge variant="outline" className="bg-blue-50 text-blue-700">Self-Service Application</Badge>}
               </div>
             </div>
           </CardHeader>

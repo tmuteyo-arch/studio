@@ -102,7 +102,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                       <Inbox className="h-4 w-4" />
-                      Customer Leads ({filteredLeads.length})
+                      Customer Applications ({filteredLeads.length})
                       {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
                   </TabsTrigger>
               </TabsList>
@@ -199,16 +199,16 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   <CardHeader className="bg-primary/10">
                       <CardTitle className="flex items-center gap-2">
                           <Inbox className="h-5 w-5 text-primary" />
-                          Self-Service Customer Inbox
+                          Self-Service Customer Applications
                       </CardTitle>
-                      <CardDescription className="text-primary/80">Applications submitted by customers via separate portal. Please verify and claim these leads.</CardDescription>
+                      <CardDescription className="text-primary/80">Applications submitted by customers via separate portal. Please verify and claim these applications.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredLeads.length > 0 ? (
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-primary/5">
-                                      <TableHead className="pl-6">Lead ID</TableHead>
+                                      <TableHead className="pl-6">Application ID</TableHead>
                                       <TableHead>Customer / Company</TableHead>
                                       <TableHead>Region</TableHead>
                                       <TableHead>Type</TableHead>
@@ -227,7 +227,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                           <TableCell className="text-xs">{app.clientType}</TableCell>
                                           <TableCell className="text-xs text-muted-foreground">{app.submittedDate}</TableCell>
                                           <TableCell className="text-right pr-6">
-                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Review & Claim</Button>
+                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Review Application</Button>
                                           </TableCell>
                                       </TableRow>
                                   ))}
@@ -236,7 +236,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                               <Inbox className="h-12 w-12 mb-2 opacity-20" />
-                              <p>No incoming customer leads at this time.</p>
+                              <p>No incoming customer applications at this time.</p>
                           </div>
                       )}
                   </CardContent>
