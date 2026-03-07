@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Mail, Lock, LogIn, User as UserIcon, ShieldCheck, Crown } from 'lucide-react';
 
-const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVariant, delay, icon: Icon }: any) => {
+const AnimatedRoleCard = ({ role, title, description, onRoleSelect, delay, icon: Icon }: any) => {
   const ref = React.useRef<HTMLDivElement>(null);
   
   const x = useMotionValue(0);
@@ -26,8 +26,8 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVarian
   const xSpring = useSpring(x, { stiffness: 200, damping: 25 });
   const ySpring = useSpring(y, { stiffness: 200, damping: 25 });
 
-  const rotateX = useTransform(ySpring, [-0.5, 0.5], ["12.5deg", "-12.5deg"]);
-  const rotateY = useTransform(xSpring, [-0.5, 0.5], ["-12.5deg", "12.5deg"]);
+  const rotateX = useTransform(ySpring, [-0.5, 0.5], ["10deg", "-10deg"]);
+  const rotateY = useTransform(xSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!ref.current) return;
@@ -63,24 +63,24 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVarian
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
+      className="h-full"
     >
       <Card
-        className="text-left h-full flex flex-col bg-white/5 backdrop-blur-xl border-white/10 text-white hover:bg-white/10 transition-colors group"
+        className="text-left h-full flex flex-col bg-white/5 backdrop-blur-xl border-white/10 text-white hover:bg-white/10 transition-colors group cursor-default"
         style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}
       >
-        <CardHeader>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
                 {Icon && <Icon className="h-5 w-5 text-primary" />}
             </div>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle className="text-xl font-bold">{title}</CardTitle>
           </div>
-          <CardDescription className="text-white/60">{description}</CardDescription>
+          <CardDescription className="text-white/50 text-sm leading-relaxed">{description}</CardDescription>
         </CardHeader>
-        <CardFooter className="mt-auto">
+        <CardFooter className="mt-auto pt-4">
           <Button 
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-            variant={buttonVariant || 'default'}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-11 rounded-xl"
             onClick={() => onRoleSelect(role)}>
             Enter Portal
           </Button>
@@ -183,12 +183,12 @@ function AppContent() {
   );
   
   const renderRoleSelection = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-br from-[#001f3f] via-[#002d5a] to-[#001f3f] p-8 text-center" style={{ perspective: 1200 }}>
-       <div className="flex flex-col items-center gap-4 mb-12">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-b from-[#001f3f] via-[#002d5a] to-[#001f3f] p-8 text-center">
+       <div className="flex flex-col items-center gap-4 mb-16">
         <Logo className="h-20 w-20 mb-2" />
-        <div>
-            <h1 className="text-4xl font-black tracking-tight text-white mb-1">InnBucks</h1>
-            <p className="text-primary font-bold tracking-widest text-xs uppercase">Agent Onboarding System</p>
+        <div className="space-y-1">
+            <h1 className="text-5xl font-black tracking-tight text-white">InnBucks</h1>
+            <p className="text-primary font-bold tracking-[0.25em] text-sm uppercase">Agent Onboarding System</p>
         </div>
       </div>
       
@@ -227,7 +227,7 @@ function AppContent() {
         />
       </div>
       
-      <p className="mt-16 text-white/30 text-xs uppercase tracking-widest">InnBucks MicroBank Limited &copy; {new Date().getFullYear()}</p>
+      <p className="mt-24 text-white/20 text-[10px] uppercase tracking-[0.3em] font-medium">InnBucks MicroBank Limited &copy; 2026</p>
     </div>
   );
 
