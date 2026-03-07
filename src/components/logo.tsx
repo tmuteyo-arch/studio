@@ -7,9 +7,9 @@ export const Logo = (props: React.SVGProps<SVGSVGElement>) => (
     {...props}
   >
     <rect width="40" height="40" rx="8" fill="none" />
-    <circle cx="12" cy="12" r="8" fill="#FBBF24" /> {/* Yellow */}
-    <circle cx="28" cy="12" r="8" fill="#A755F7" /> {/* Purple */}
-    <circle cx="12" cy="28" r="8" fill="#5EEAD4" /> {/* Teal */}
-    <circle cx="28" cy="28" r="8" fill="#F43F5E" /> {/* Red */}
+    <circle cx="12" cy="12" r="8" fill="#FFD700" /> {/* Brand Yellow */}
+    <circle cx="28" cy="12" r="8" fill="#A020F0" /> {/* Brand Purple */}
+    <circle cx="12" cy="28" r="8" fill="#40E0D0" /> {/* Brand Teal */}
+    <circle cx="28" cy="28" r="8" fill="#E31B23" /> {/* Brand Red */}
   </svg>
 );

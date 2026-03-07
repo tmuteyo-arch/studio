@@ -4,53 +4,53 @@
 
 @layer base {
   :root {
-    --background: 225 24% 12%; /* Dark Navy from logo */
+    /* Brand Colors derived from Logo */
+    --background: 217 89% 10%; /* Brand Deep Navy */
     --foreground: 210 40% 98%;
-    --card: 225 24% 16%;
+    --card: 217 89% 14%;
     --card-foreground: 210 40% 98%;
-    --popover: 225 24% 12%;
+    --popover: 217 89% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 41 94% 56%; /* Yellow from logo */
-    --primary-foreground: 225 24% 12%;
-    --secondary: 278 78% 55%; /* Purple from logo */
+    --primary: 45 100% 51%; /* Brand Vibrant Yellow */
+    --primary-foreground: 217 89% 10%;
+    --secondary: 271 91% 65%; /* Brand Purple */
     --secondary-foreground: 210 40% 98%;
-    --muted: 225 24% 20%;
-    --muted-foreground: 225 24% 65%;
-    --accent: 162 65% 55%; /* Teal from logo */
-    --accent-foreground: 225 24% 12%;
-    --destructive: 0 72% 51%; /* Red from logo */
+    --muted: 217 30% 20%;
+    --muted-foreground: 217 20% 70%;
+    --accent: 171 77% 64%; /* Brand Teal */
+    --accent-foreground: 217 89% 10%;
+    --destructive: 353 91% 60%; /* Brand Red */
     --destructive-foreground: 210 40% 98%;
-    --border: 225 24% 22%;
-    --input: 225 24% 22%;
-    --ring: 41 94% 56%; /* Yellow for focus rings */
-    --radius: 0.5rem;
+    --border: 217 30% 25%;
+    --input: 217 30% 25%;
+    --ring: 45 100% 51%;
+    --radius: 0.75rem;
 
-    --chart-1: hsl(41, 94%, 56%); /* primary */
-    --chart-2: hsl(142, 71%, 45%); /* a shade of green */
+    --chart-1: hsl(45, 100%, 51%); /* Yellow */
+    --chart-2: hsl(171, 77%, 64%); /* Teal */
+    --chart-3: hsl(271, 91%, 65%); /* Purple */
+    --chart-4: hsl(353, 91%, 60%); /* Red */
   }
   .dark {
-    --background: 225 24% 12%;
+    --background: 217 89% 10%;
     --foreground: 210 40% 98%;
-    --card: 225 24% 16%;
+    --card: 217 89% 14%;
     --card-foreground: 210 40% 98%;
-    --popover: 225 24% 12%;
+    --popover: 217 89% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 41 94% 56%;
-    --primary-foreground: 225 24% 12%;
-    --secondary: 278 78% 55%;
+    --primary: 45 100% 51%;
+    --primary-foreground: 217 89% 10%;
+    --secondary: 271 91% 65%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 225 24% 20%;
-    --muted-foreground: 225 24% 65%;
-    --accent: 162 65% 55%;
-    --accent-foreground: 225 24% 12%;
-    --destructive: 0 72% 51%;
+    --muted: 217 30% 20%;
+    --muted-foreground: 217 20% 70%;
+    --accent: 171 77% 64%;
+    --accent-foreground: 217 89% 10%;
+    --destructive: 353 91% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 225 24% 22%;
-    --input: 225 24% 22%;
-    --ring: 41 94% 56%;
-
-    --chart-1: hsl(41, 94%, 56%);
-    --chart-2: hsl(142, 71%, 45%);
+    --border: 217 30% 25%;
+    --input: 217 30% 25%;
+    --ring: 45 100% 51%;
   }
 }
 

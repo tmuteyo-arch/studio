@@ -65,22 +65,24 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, buttonVarian
       transition={{ duration: 0.5, delay }}
     >
       <Card
-        className="text-left h-full flex flex-col bg-white/10 backdrop-blur-lg border-white/20 text-white"
+        className="text-left h-full flex flex-col bg-white/5 backdrop-blur-xl border-white/10 text-white hover:bg-white/10 transition-colors group"
         style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}
       >
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
-            {Icon && <Icon className="h-5 w-5 text-primary" />}
+            <div className="p-2 rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
+                {Icon && <Icon className="h-5 w-5 text-primary" />}
+            </div>
             <CardTitle>{title}</CardTitle>
           </div>
-          <CardDescription className="text-white/80">{description}</CardDescription>
+          <CardDescription className="text-white/60">{description}</CardDescription>
         </CardHeader>
         <CardFooter className="mt-auto">
           <Button 
-            className="w-full"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             variant={buttonVariant || 'default'}
             onClick={() => onRoleSelect(role)}>
-            Login as {title}
+            Enter Portal
           </Button>
         </CardFooter>
       </Card>
@@ -139,42 +141,41 @@ function AppContent() {
   };
 
   const renderLoginForm = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-br from-[#001f3f] via-[#002d5a] to-[#001f3f] p-4">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm"
       >
-        <Card className="overflow-hidden shadow-2xl">
-          <div className="bg-slate-900 p-6 text-center text-card-foreground">
-              {selectedRole === 'retail-executive' ? 
-                <Crown className="mx-auto h-8 w-8 mb-2 text-primary"/> :
-                <UserIcon className="mx-auto h-8 w-8 mb-2 text-primary"/>
-              }
-              <h2 className="text-2xl font-bold">Welcome Back</h2>
-              <p className="text-sm text-muted-foreground">Sign in to access your {selectedRole?.replace('-', ' ')} dashboard.</p>
+        <Card className="overflow-hidden shadow-2xl border-white/10 bg-white/5 backdrop-blur-md text-white">
+          <div className="bg-[#001533] p-8 text-center border-b border-white/5">
+              <div className='flex justify-center mb-4'>
+                <Logo className="h-12 w-12" />
+              </div>
+              <h2 className="text-2xl font-bold">Secure Access</h2>
+              <p className="text-sm text-white/60">Logging in as {selectedRole?.replace('-', ' ')}</p>
           </div>
           <CardContent className="p-6 space-y-4">
             <form onSubmit={handleLogin} className='space-y-4'>
               <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="email"><Mail className="h-4 w-4 text-muted-foreground" />Email Address</label>
-                  <Input id="email" type="email" placeholder="email@example.com" required defaultValue={users.find(u => u.role === (selectedRole as Role))?.email}/>
+                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="email"><Mail className="h-4 w-4 text-primary" />Email Address</label>
+                  <Input id="email" type="email" placeholder="email@example.com" className='bg-white/10 border-white/20 text-white placeholder:text-white/30' required defaultValue={users.find(u => u.role === (selectedRole as Role))?.email}/>
               </div>
               <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="password"><Lock className="h-4 w-4 text-muted-foreground"/>Password</label>
-                  <Input id="password" type="password" required defaultValue="password"/>
+                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="password"><Lock className="h-4 w-4 text-primary"/>Password</label>
+                  <Input id="password" type="password" className='bg-white/10 border-white/20 text-white placeholder:text-white/30' required defaultValue="password"/>
               </div>
-              <Button type="submit" className="w-full !mt-6">
+              <Button type="submit" className="w-full !mt-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
                 <LogIn className="mr-2 h-4 w-4"/> Sign In
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="bg-slate-50 dark:bg-slate-900/50 p-4 text-center text-xs text-muted-foreground justify-center">
-            <ShieldCheck className="mr-2 h-4 w-4 text-green-500"/> Your data is secure and protected
+          <CardFooter className="bg-black/20 p-4 text-center text-xs text-white/40 justify-center">
+            <ShieldCheck className="mr-2 h-4 w-4 text-accent"/> Your session is encrypted and secure
           </CardFooter>
         </Card>
-        <Button variant="link" className="mt-4 text-white/80" onClick={() => setSelectedRole(null)}>
+        <Button variant="link" className="mt-4 text-white/60 hover:text-primary transition-colors" onClick={() => setSelectedRole(null)}>
           Back to portal selection
         </Button>
       </motion.div>
@@ -182,52 +183,51 @@ function AppContent() {
   );
   
   const renderRoleSelection = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-8 text-center" style={{ perspective: 1200 }}>
-       <div className="flex items-center gap-4 mb-4">
-        <Logo className="h-10 w-10" />
-        <h1 className="text-3xl font-bold tracking-tight text-white">InnBucks Agent Onboarding</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-br from-[#001f3f] via-[#002d5a] to-[#001f3f] p-8 text-center" style={{ perspective: 1200 }}>
+       <div className="flex flex-col items-center gap-4 mb-12">
+        <Logo className="h-20 w-20 mb-2" />
+        <div>
+            <h1 className="text-4xl font-black tracking-tight text-white mb-1">InnBucks</h1>
+            <p className="text-primary font-bold tracking-widest text-xs uppercase">Agent Onboarding System</p>
+        </div>
       </div>
-      <h2 className="text-2xl font-semibold text-white/90 mb-2">Internal Administration Portal</h2>
-      <p className="text-white/70 mb-12">Select your role to access the internal onboarding workflow.</p>
-
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
         <AnimatedRoleCard 
           role="atl"
-          title="ATL"
+          title="Field ATL"
           icon={UserIcon}
-          description="Account Taking Leaders who submit and verify leads."
+          description="Account Taking Leaders submitting regional leads."
           onRoleSelect={handleRoleSelect}
-          buttonVariant="default"
           delay={0.1}
         />
         <AnimatedRoleCard 
           role="back-office"
           title="Back Office"
           icon={ShieldCheck}
-          description="Officers who validate and process applications."
+          description="Validation officers processing applications."
           onRoleSelect={handleRoleSelect}
-          buttonVariant="secondary"
           delay={0.2}
         />
         <AnimatedRoleCard 
           role="supervisor"
           title="Supervisor"
           icon={Crown}
-          description="Supervisors who review and sign agreements."
+          description="Regulatory oversight and team management."
           onRoleSelect={handleRoleSelect}
-          buttonVariant="outline"
           delay={0.3}
         />
         <AnimatedRoleCard 
           role="retail-executive"
-          title="Retail Executive"
+          title="Executive"
           icon={Crown}
-          description="High-level performance and final verification."
+          description="High-level performance and regional oversight."
           onRoleSelect={handleRoleSelect}
-          buttonVariant="ghost"
           delay={0.4}
         />
       </div>
+      
+      <p className="mt-16 text-white/30 text-xs uppercase tracking-widest">InnBucks MicroBank Limited &copy; {new Date().getFullYear()}</p>
     </div>
   );
 
@@ -235,20 +235,23 @@ function AppContent() {
     if (loggedInUser) {
         return (
             <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-                <header className="mb-8 flex items-center justify-between">
+                <header className="mb-8 flex items-center justify-between bg-card/50 p-4 rounded-xl border border-white/5 backdrop-blur-sm">
                     <div className="flex items-center gap-3">
                         <Logo className="h-8 w-8" />
-                        <h1 className="text-2xl font-bold text-foreground">InnBucks Agent Onboarding</h1>
+                        <div>
+                            <h1 className="text-xl font-bold text-white leading-tight">InnBucks</h1>
+                            <p className="text-[10px] uppercase tracking-tighter text-primary font-bold">Onboarding Portal</p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="text-right">
-                        <p className="font-semibold">{loggedInUser.name}</p>
-                        <p className="text-sm text-muted-foreground capitalize">{loggedInUser.role.replace('-', ' ')}</p>
+                        <div className="text-right hidden sm:block">
+                            <p className="font-semibold text-white">{loggedInUser.name}</p>
+                            <p className="text-[10px] text-white/50 uppercase font-bold">{loggedInUser.role.replace('-', ' ')}</p>
                         </div>
-                        <Button variant="outline" onClick={handleLogout}>Log Out</Button>
+                        <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-white" onClick={handleLogout}>Log Out</Button>
                     </div>
                 </header>
-                <main>{renderDashboard()}</main>
+                <main className="animate-in fade-in slide-in-from-bottom-4 duration-500">{renderDashboard()}</main>
             </div>
         );
     }
@@ -259,7 +262,7 @@ function AppContent() {
   }
 
   return (
-    <div className="w-full bg-background min-h-screen">
+    <div className="w-full bg-background min-h-screen selection:bg-primary selection:text-primary-foreground">
       {renderContent()}
     </div>
   );
