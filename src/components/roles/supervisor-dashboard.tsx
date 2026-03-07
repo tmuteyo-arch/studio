@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import TeamPerformanceChart from './team-performance-chart';
-import TeamAppraisal from './team-appraisal';
 import KpiTracker from './kpi-tracker';
 import AccountSummaryReport from './account-summary-report';
 import ReportsTab from './reports-tab';
@@ -44,7 +43,6 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     const [applications] = useAtom(applicationsAtom);
     const [searchTerm, setSearchTerm] = React.useState('');
 
-    const teamMembers = allUsers.filter(u => user.team?.includes(u.name));
     const backOfficeTeam = allUsers.filter(u => u.role === 'back-office');
 
     const myApprovalQueue = applications.filter(app => app.status === 'Pending Supervisor');
@@ -236,7 +234,6 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
           <TabsContent value="team">
             <div className="space-y-6">
              <div className="grid grid-cols-1 gap-6">
-                <TeamAppraisal applications={applications} team={teamMembers} />
                 <BackOfficeAppraisal applications={applications} team={backOfficeTeam} />
              </div>
             </div>
