@@ -448,10 +448,10 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-primary">
                                 <Award className="h-5 w-5" />
-                                ATL Individual Performance Metrics
+                                Area Team Leaders (ATL) Individual Performance Metrics
                             </CardTitle>
                             <CardDescription>
-                                Contribution and success rates for Area Team Leaders (ATL).
+                                Contribution and success rates for each Area Team Leader in the network.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
