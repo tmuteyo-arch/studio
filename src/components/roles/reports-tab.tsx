@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
-import { FileDown } from 'lucide-react';
+import { FileDown, FileSpreadsheet } from 'lucide-react';
 
 interface ReportsTabProps {
   applications: Application[];
@@ -40,21 +40,23 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
   }, [signedApplications]);
   
   const handleDownloadCsv = () => {
-    const headers = ['Name', 'Address', 'Mobile Number', 'Date Opened'];
+    const headers = ['DATE', 'CONTACT PERSON', 'REGION', 'ADDRESS'];
     const rows = signedApplications.map(app => {
         const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(app.clientType);
-        const name = app.clientName;
+        
+        const date = format(new Date(app.lastUpdated), 'yyyy-MM-dd');
+        const contactPerson = app.clientName;
+        const region = app.region;
         const address = isCorporate ? app.details.physicalAddress : app.details.individualAddress;
-        const mobile = isCorporate ? app.details.businessTelNumber : app.details.individualMobileNumber;
-        const dateOpened = format(new Date(app.lastUpdated), 'yyyy-MM-dd');
-        return [name, address, mobile, dateOpened].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
+        
+        return [date, contactPerson, region, address].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
     });
 
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `signed_applications_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.setAttribute("download", `Final_Onboarding_Report_${format(new Date(), 'yyyy-MM-dd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -63,24 +65,27 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <CardTitle>Signed Applications Report</CardTitle>
-            <CardDescription>A detailed list of all finalized and signed applications.</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+                <FileSpreadsheet className="h-5 w-5 text-green-600" />
+                Final Onboarding Report
+            </CardTitle>
+            <CardDescription>Detailed export of finalized agent agreements for regulatory filing.</CardDescription>
           </div>
-          <Button onClick={handleDownloadCsv} variant="outline" size="sm" disabled={signedApplications.length === 0}>
+          <Button onClick={handleDownloadCsv} className="bg-green-600 hover:bg-green-700 text-white font-bold" disabled={signedApplications.length === 0}>
             <FileDown className="mr-2 h-4 w-4" />
-            Download CSV
+            Download Final Report (Excel/CSV)
           </Button>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client Name</TableHead>
+                <TableHead>Date Finalized</TableHead>
+                <TableHead>Contact Person</TableHead>
+                <TableHead>Region</TableHead>
                 <TableHead>Address</TableHead>
-                <TableHead>Mobile Number</TableHead>
-                <TableHead>Date Opened</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -88,10 +93,12 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
                 const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(app.clientType);
                 return (
                   <TableRow key={app.id}>
-                    <TableCell className="font-medium">{app.clientName}</TableCell>
-                    <TableCell>{isCorporate ? app.details.physicalAddress : app.details.individualAddress}</TableCell>
-                    <TableCell>{isCorporate ? app.details.businessTelNumber : app.details.individualMobileNumber}</TableCell>
-                    <TableCell>{format(new Date(app.lastUpdated), 'PPP')}</TableCell>
+                    <TableCell className="font-medium">{format(new Date(app.lastUpdated), 'yyyy-MM-dd')}</TableCell>
+                    <TableCell>{app.clientName}</TableCell>
+                    <TableCell>{app.region}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground truncate max-w-[250px]">
+                        {isCorporate ? app.details.physicalAddress : app.details.individualAddress}
+                    </TableCell>
                   </TableRow>
                 );
               }) : (
@@ -109,7 +116,7 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
       <Card>
         <CardHeader>
           <CardTitle>Monthly Application Volume</CardTitle>
-          <CardDescription>A summary of signed applications per month.</CardDescription>
+          <CardDescription>Visual summary of finalized onboarding per month.</CardDescription>
         </CardHeader>
         <CardContent>
             {monthlyData.length > 0 ? (
