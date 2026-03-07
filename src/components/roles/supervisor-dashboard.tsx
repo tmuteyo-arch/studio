@@ -77,7 +77,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     <div className="space-y-6">
       <div className="mb-8">
         <h2 className="text-3xl font-bold">Regulatory Oversight Dashboard</h2>
-        <p className="text-muted-foreground">Monitoring and regulating operations for Account Taking Leaders and Back Office staff.</p>
+        <p className="text-muted-foreground">Monitoring and regulating operations for Area Team Leaders (ATL) and Back Office staff.</p>
       </div>
 
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
@@ -187,7 +187,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                       <Card>
                           <CardHeader>
                               <CardTitle>ATL Activity Monitor</CardTitle>
-                              <CardDescription>Oversight of incoming customer applications and submissions by Account Taking Leaders.</CardDescription>
+                              <CardDescription>Oversight of incoming customer applications and submissions by Area Team Leaders (ATL).</CardDescription>
                           </CardHeader>
                           <CardContent>
                               <Table>

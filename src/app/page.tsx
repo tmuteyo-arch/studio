@@ -197,7 +197,7 @@ function AppContent() {
           role="atl"
           title="Field ATL"
           icon={UserIcon}
-          description="Account Taking Leaders submitting regional leads."
+          description="Area Team Leaders submitting regional customer applications."
           onRoleSelect={handleRoleSelect}
           delay={0.1}
         />

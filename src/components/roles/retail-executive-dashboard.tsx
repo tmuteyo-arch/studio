@@ -451,7 +451,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                 ATL Individual Performance Metrics
                             </CardTitle>
                             <CardDescription>
-                                Contribution and success rates for Account Taking Leaders.
+                                Contribution and success rates for Area Team Leaders (ATL).
                             </CardDescription>
                         </CardHeader>
                         <CardContent>

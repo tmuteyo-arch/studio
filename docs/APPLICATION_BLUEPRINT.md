@@ -9,7 +9,7 @@ This document provides a comprehensive technical blueprint for the SwiftAccount 
 **SwiftAccount** is a web application designed to streamline and digitize the agent onboarding process for a financial institution. It provides a role-based system for submitting, reviewing, validating, and approving new account applications, with integrated AI capabilities to assist in data extraction and risk assessment.
 
 ### Core Features:
-- **Role-Based Dashboards**: Separate interfaces for Account Taking Leaders (ATL), Back Office staff, and Supervisors.
+- **Role-Based Dashboards**: Separate interfaces for Area Team Leaders (ATL), Back Office staff, and Supervisors.
 - **Multi-Step Onboarding Form**: A guided flow for creating new personal and corporate account applications.
 - **Application Review Workflow**: A system for moving applications through states (e.g., Submitted, In Review, Pending Supervisor, Approved, Rejected).
 - **AI-Powered Document Verification**: Uses Gemini to extract data from uploaded documents and validate it against user input.
