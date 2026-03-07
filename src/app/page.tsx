@@ -71,8 +71,8 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, delay, icon:
       >
         <CardHeader className="pb-2">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                {Icon && <Icon className="h-5 w-5 text-primary" />}
+            <div className="p-2 rounded-lg bg-secondary/10 group-hover:bg-secondary/20 transition-colors">
+                {Icon && <Icon className="h-5 w-5 text-secondary" />}
             </div>
             <CardTitle className="text-xl font-bold">{title}</CardTitle>
           </div>
@@ -80,7 +80,7 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, delay, icon:
         </CardHeader>
         <CardFooter className="mt-auto pt-4">
           <Button 
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold h-11 rounded-xl"
+            className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold h-11 rounded-xl"
             onClick={() => onRoleSelect(role)}>
             Enter Portal
           </Button>
@@ -141,7 +141,7 @@ function AppContent() {
   };
 
   const renderLoginForm = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-br from-[#001f3f] via-[#002d5a] to-[#001f3f] p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-br from-[#001f3f] via-[#1a0b2e] to-[#001f3f] p-4">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -149,7 +149,7 @@ function AppContent() {
         className="w-full max-w-sm"
       >
         <Card className="overflow-hidden shadow-2xl border-white/10 bg-white/5 backdrop-blur-md text-white">
-          <div className="bg-[#001533] p-8 text-center border-b border-white/5">
+          <div className="bg-black/20 p-8 text-center border-b border-white/5">
               <div className='flex justify-center mb-4'>
                 <Logo className="h-12 w-12" />
               </div>
@@ -159,14 +159,14 @@ function AppContent() {
           <CardContent className="p-6 space-y-4">
             <form onSubmit={handleLogin} className='space-y-4'>
               <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="email"><Mail className="h-4 w-4 text-primary" />Email Address</label>
+                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="email"><Mail className="h-4 w-4 text-secondary" />Email Address</label>
                   <Input id="email" type="email" placeholder="email@example.com" className='bg-white/10 border-white/20 text-white placeholder:text-white/30' required defaultValue={users.find(u => u.role === (selectedRole as Role))?.email}/>
               </div>
               <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="password"><Lock className="h-4 w-4 text-primary"/>Password</label>
+                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="password"><Lock className="h-4 w-4 text-secondary"/>Password</label>
                   <Input id="password" type="password" className='bg-white/10 border-white/20 text-white placeholder:text-white/30' required defaultValue="password"/>
               </div>
-              <Button type="submit" className="w-full !mt-6 bg-primary text-primary-foreground hover:bg-primary/90 font-bold">
+              <Button type="submit" className="w-full !mt-6 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold">
                 <LogIn className="mr-2 h-4 w-4"/> Sign In
               </Button>
             </form>
@@ -175,7 +175,7 @@ function AppContent() {
             <ShieldCheck className="mr-2 h-4 w-4 text-accent"/> Your session is encrypted and secure
           </CardFooter>
         </Card>
-        <Button variant="link" className="mt-4 text-white/60 hover:text-primary transition-colors" onClick={() => setSelectedRole(null)}>
+        <Button variant="link" className="mt-4 text-white/60 hover:text-secondary transition-colors" onClick={() => setSelectedRole(null)}>
           Back to portal selection
         </Button>
       </motion.div>
@@ -183,12 +183,12 @@ function AppContent() {
   );
   
   const renderRoleSelection = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-b from-[#001f3f] via-[#002d5a] to-[#001f3f] p-8 text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-b from-[#001f3f] via-[#1a0b2e] to-[#001f3f] p-8 text-center">
        <div className="flex flex-col items-center gap-4 mb-16">
         <Logo className="h-20 w-20 mb-2" />
         <div className="space-y-1">
             <h1 className="text-5xl font-black tracking-tight text-white">InnBucks</h1>
-            <p className="text-primary font-bold tracking-[0.25em] text-sm uppercase">Agent Onboarding System</p>
+            <p className="text-secondary font-bold tracking-[0.25em] text-sm uppercase">Agent Onboarding System</p>
         </div>
       </div>
       
@@ -240,7 +240,7 @@ function AppContent() {
                         <Logo className="h-8 w-8" />
                         <div>
                             <h1 className="text-xl font-bold text-white leading-tight">InnBucks</h1>
-                            <p className="text-[10px] uppercase tracking-tighter text-primary font-bold">Onboarding Portal</p>
+                            <p className="text-[10px] uppercase tracking-tighter text-secondary font-bold">Onboarding Portal</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -262,7 +262,7 @@ function AppContent() {
   }
 
   return (
-    <div className="w-full bg-background min-h-screen selection:bg-primary selection:text-primary-foreground">
+    <div className="w-full bg-background min-h-screen selection:bg-secondary selection:text-secondary-foreground">
       {renderContent()}
     </div>
   );
