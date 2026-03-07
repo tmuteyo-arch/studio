@@ -66,21 +66,21 @@ const AnimatedRoleCard = ({ role, title, description, onRoleSelect, delay, icon:
       className="h-full"
     >
       <Card
-        className="text-left h-full flex flex-col bg-white/5 backdrop-blur-xl border-white/10 text-white hover:bg-white/10 transition-colors group cursor-default"
+        className="text-left h-full flex flex-col bg-white/10 backdrop-blur-xl border-white/20 text-white hover:bg-white/15 transition-colors group cursor-default"
         style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}
       >
         <CardHeader className="pb-2">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-secondary/10 group-hover:bg-secondary/20 transition-colors">
-                {Icon && <Icon className="h-5 w-5 text-secondary" />}
+            <div className="p-2 rounded-lg bg-white/10 group-hover:bg-white/20 transition-colors">
+                {Icon && <Icon className="h-5 w-5 text-white" />}
             </div>
             <CardTitle className="text-xl font-bold">{title}</CardTitle>
           </div>
-          <CardDescription className="text-white/50 text-sm leading-relaxed">{description}</CardDescription>
+          <CardDescription className="text-white/70 text-sm leading-relaxed">{description}</CardDescription>
         </CardHeader>
         <CardFooter className="mt-auto pt-4">
           <Button 
-            className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold h-11 rounded-xl"
+            className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold h-11 rounded-xl shadow-lg"
             onClick={() => onRoleSelect(role)}>
             Enter Portal
           </Button>
@@ -141,41 +141,41 @@ function AppContent() {
   };
 
   const renderLoginForm = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-br from-[#001f3f] via-[#1a0b2e] to-[#001f3f] p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#4c1d95] bg-gradient-to-br from-[#1e1b4b] via-[#7c3aed] to-[#1e1b4b] p-4">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm"
       >
-        <Card className="overflow-hidden shadow-2xl border-white/10 bg-white/5 backdrop-blur-md text-white">
-          <div className="bg-black/20 p-8 text-center border-b border-white/5">
+        <Card className="overflow-hidden shadow-2xl border-white/20 bg-white/10 backdrop-blur-md text-white">
+          <div className="bg-black/20 p-8 text-center border-b border-white/10">
               <div className='flex justify-center mb-4'>
                 <Logo className="h-12 w-12" />
               </div>
               <h2 className="text-2xl font-bold">Secure Access</h2>
-              <p className="text-sm text-white/60">Logging in as {selectedRole?.replace('-', ' ')}</p>
+              <p className="text-sm text-white/70">Logging in as {selectedRole?.replace('-', ' ')}</p>
           </div>
           <CardContent className="p-6 space-y-4">
             <form onSubmit={handleLogin} className='space-y-4'>
               <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="email"><Mail className="h-4 w-4 text-secondary" />Email Address</label>
-                  <Input id="email" type="email" placeholder="email@example.com" className='bg-white/10 border-white/20 text-white placeholder:text-white/30' required defaultValue={users.find(u => u.role === (selectedRole as Role))?.email}/>
+                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="email"><Mail className="h-4 w-4 text-white" />Email Address</label>
+                  <Input id="email" type="email" placeholder="email@example.com" className='bg-white/10 border-white/30 text-white placeholder:text-white/40' required defaultValue={users.find(u => u.role === (selectedRole as Role))?.email}/>
               </div>
               <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="password"><Lock className="h-4 w-4 text-secondary"/>Password</label>
-                  <Input id="password" type="password" className='bg-white/10 border-white/20 text-white placeholder:text-white/30' required defaultValue="password"/>
+                  <label className="text-sm font-medium leading-none flex items-center gap-2" htmlFor="password"><Lock className="h-4 w-4 text-white"/>Password</label>
+                  <Input id="password" type="password" className='bg-white/10 border-white/30 text-white placeholder:text-white/40' required defaultValue="password"/>
               </div>
-              <Button type="submit" className="w-full !mt-6 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold">
+              <Button type="submit" className="w-full !mt-6 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold shadow-lg">
                 <LogIn className="mr-2 h-4 w-4"/> Sign In
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="bg-black/20 p-4 text-center text-xs text-white/40 justify-center">
+          <CardFooter className="bg-black/20 p-4 text-center text-xs text-white/50 justify-center">
             <ShieldCheck className="mr-2 h-4 w-4 text-accent"/> Your session is encrypted and secure
           </CardFooter>
         </Card>
-        <Button variant="link" className="mt-4 text-white/60 hover:text-secondary transition-colors" onClick={() => setSelectedRole(null)}>
+        <Button variant="link" className="mt-4 text-white/70 hover:text-white transition-colors" onClick={() => setSelectedRole(null)}>
           Back to portal selection
         </Button>
       </motion.div>
@@ -183,12 +183,12 @@ function AppContent() {
   );
   
   const renderRoleSelection = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#001f3f] bg-gradient-to-b from-[#001f3f] via-[#1a0b2e] to-[#001f3f] p-8 text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#1e1b4b] bg-gradient-to-b from-[#1e1b4b] via-[#6d28d9] to-[#1e1b4b] p-8 text-center">
        <div className="flex flex-col items-center gap-4 mb-16">
         <Logo className="h-20 w-20 mb-2" />
         <div className="space-y-1">
-            <h1 className="text-5xl font-black tracking-tight text-white">InnBucks</h1>
-            <p className="text-secondary font-bold tracking-[0.25em] text-sm uppercase">Agent Onboarding System</p>
+            <h1 className="text-5xl font-black tracking-tight text-white drop-shadow-md">InnBucks</h1>
+            <p className="text-white font-bold tracking-[0.25em] text-sm uppercase opacity-90">Agent Onboarding System</p>
         </div>
       </div>
       
@@ -227,7 +227,7 @@ function AppContent() {
         />
       </div>
       
-      <p className="mt-24 text-white/20 text-[10px] uppercase tracking-[0.3em] font-medium">InnBucks MicroBank Limited &copy; 2026</p>
+      <p className="mt-24 text-white/30 text-[10px] uppercase tracking-[0.3em] font-medium">InnBucks MicroBank Limited &copy; 2026</p>
     </div>
   );
 
