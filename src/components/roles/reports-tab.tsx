@@ -115,7 +115,7 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
       
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Application Volume</CardTitle>
+          <CardTitle>Bar Graphs</CardTitle>
           <CardDescription>Visual summary of finalized onboarding per month.</CardDescription>
         </CardHeader>
         <CardContent>

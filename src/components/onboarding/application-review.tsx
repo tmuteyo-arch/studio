@@ -136,7 +136,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         action: 'Application Accepted & Verified',
         user: user.name,
         timestamp: new Date().toISOString(),
-        notes: 'ATL has verified the customer application and forwarded it to Back Office.',
+        notes: 'Area Team Leader has verified the customer application and forwarded it to Back Office.',
     };
     handleUpdateApplication({
         submittedBy: user.name,
@@ -245,7 +245,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     switch (user.role) {
       case 'atl':
         if (application.submittedBy === 'Customer' && application.status === 'Submitted') {
-            return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Accept & Forward to Back Office</Button>;
+            return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Accept & Claim Application</Button>;
         }
         return null;
       case 'back-office':
@@ -254,7 +254,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         }
         if (['Archived', 'Pending Supervisor', 'Rejected', 'Pending Executive Signature'].includes(application.status)) return null;
         if(application.status === 'Submitted' || application.status === 'Returned to ATL') {
-            return <div className="space-x-2"><Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ATL</Button><Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button></div>;
+            return <div className="space-x-2"><Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to Area Team Leader</Button><Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button></div>;
         }
         return null;
       case 'supervisor':
@@ -312,15 +312,60 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList>
                       <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Mandatory Details</TabsTrigger>
-                      {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy === 'Customer')) && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Edit Form</TabsTrigger>}
+                      {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy !== 'Customer')) && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Edit Form</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
                       {(user.role === 'supervisor' && application.status === 'Pending Supervisor') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
                       {(user.role === 'retail-executive' && application.status === 'Pending Executive Signature') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
                   </TabsList>
-                  <TabsContent value="details" className="pt-4"><Card><CardHeader><CardTitle>Mandatory Application Details</CardTitle></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><DetailItem label="Client Name" value={application.clientName} /><DetailItem label="Client Type" value={application.clientType} /><DetailItem label="Region" value={application.region} /><DetailItem label="Submission Date" value={application.submittedDate} /><DetailItem label="Status" value={application.status} /></div><Separator/>{isCorporate ? (<div className="grid grid-cols-1 md:grid-cols-2 gap-4"><DetailItem label="Legal Name" value={application.details.organisationLegalName} /><DetailItem label="Reg. Number" value={application.details.certificateOfIncorporationNumber} /><DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} /><DetailItem label="Address" value={application.details.physicalAddress} /></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 gap-4"><DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} /><DetailItem label="ID Number" value={application.details.individualIdNumber} /><DetailItem label="Address" value={application.details.individualAddress} /><DetailItem label="Mobile" value={application.details.individualMobileNumber} /><DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} /></div>)}</CardContent></Card>{user.role === 'back-office' && (<Card className="mt-6"><CardHeader><CardTitle>FCB Status Check</CardTitle><CardDescription>Confirm the applicant's status from the Financial Clearing Bureau.</CardDescription></CardHeader><CardContent><RadioGroup defaultValue={application.fcbStatus} onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)} className="flex flex-col sm:flex-row gap-4"><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Inclusive" id="fcb-inclusive" /><Label htmlFor="fcb-inclusive" className="font-normal">Inclusive</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Good" id="fcb-good" /><Label htmlFor="fcb-good" className="font-normal">Good</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adverse" id="fcb-adverse" /><Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Prior Adverse" id="fcb-prior-adverse" /><Label htmlFor="fcb-prior-adverse" className="font-normal">Prior Adverse</Label></div><div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="PEP" id="fcb-pep" /><Label htmlFor="fcb-pep" className="font-normal">PEP</Label></div></RadioGroup></CardContent></Card>)}</TabsContent>
-                   {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy === 'Customer')) && (<TabsContent value="form-data" className="pt-4"><Card><CardContent className="pt-6">{isCorporate ? <StepCorporateInfo /> : <StepIndividualInfo />}<div className="mt-6"><StepSignatories /></div></CardContent></Card></TabsContent>)}
+                  <TabsContent value="details" className="pt-4">
+                    <Card>
+                      <CardHeader><CardTitle>Mandatory Application Details</CardTitle></CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <DetailItem label="Client Name" value={application.clientName} />
+                          <DetailItem label="Client Type" value={application.clientType} />
+                          <DetailItem label="Originating Area Team Leader / Submitter" value={application.submittedBy} />
+                          <DetailItem label="Region" value={application.region} />
+                          <DetailItem label="Submission Date" value={application.submittedDate} />
+                          <DetailItem label="Status" value={application.status} />
+                        </div>
+                        <Separator/>
+                        {isCorporate ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <DetailItem label="Legal Name" value={application.details.organisationLegalName} />
+                            <DetailItem label="Reg. Number" value={application.details.certificateOfIncorporationNumber} />
+                            <DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} />
+                            <DetailItem label="Address" value={application.details.physicalAddress} />
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
+                            <DetailItem label="ID Number" value={application.details.individualIdNumber} />
+                            <DetailItem label="Address" value={application.details.individualAddress} />
+                            <DetailItem label="Mobile" value={application.details.individualMobileNumber} />
+                            <DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} />
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                    {user.role === 'back-office' && (
+                      <Card className="mt-6">
+                        <CardHeader><CardTitle>FCB Status Check</CardTitle><CardDescription>Confirm the applicant's status from the Financial Clearing Bureau.</CardDescription></CardHeader>
+                        <CardContent>
+                          <RadioGroup defaultValue={application.fcbStatus} onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)} className="flex flex-col sm:flex-row gap-4">
+                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Inclusive" id="fcb-inclusive" /><Label htmlFor="fcb-inclusive" className="font-normal">Inclusive</Label></div>
+                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Good" id="fcb-good" /><Label htmlFor="fcb-good" className="font-normal">Good</Label></div>
+                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adverse" id="fcb-adverse" /><Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label></div>
+                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Prior Adverse" id="fcb-prior-adverse" /><Label htmlFor="fcb-prior-adverse" className="font-normal">Prior Adverse</Label></div>
+                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="PEP" id="fcb-pep" /><Label htmlFor="fcb-pep" className="font-normal">PEP</Label></div>
+                          </RadioGroup>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </TabsContent>
+                   {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy !== 'Customer')) && (<TabsContent value="form-data" className="pt-4"><Card><CardContent className="pt-6">{isCorporate ? <StepCorporateInfo /> : <StepIndividualInfo />}<div className="mt-6"><StepSignatories /></div></CardContent></Card></TabsContent>)}
                   <TabsContent value="documents" className="pt-4"><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Document Checklist</CardTitle></CardHeader><CardContent><ul className="space-y-3">{documentRequirements.map((req) => { const isUploaded = uploadedDocumentTypes.includes(req.document); return (<li key={req.document} className="flex items-center">{isUploaded ? (<CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />) : (<AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />)}<div><p className="font-medium">{req.document}</p></div></li>); })}</ul></CardContent></Card><Card><CardHeader><CardTitle>Uploaded Documents</CardTitle></CardHeader><CardContent>{application.documents.length > 0 ? (<ul className="space-y-3">{application.documents.map(doc => (<li key={doc.type} className="flex items-center justify-between p-3 rounded-md border"><div><p className="font-medium">{doc.type}</p><p className="text-sm text-muted-foreground">{doc.fileName}</p></div><Button variant="outline" size="sm">View</Button></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-8">No documents uploaded.</p>)}</CardContent></Card></div></TabsContent>
                   <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Activity Log</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action.includes('Submitted') ? <FileText className="h-5 w-5"/> : <User className="h-5 w-5"/>}</div></div><div className="ml-4"><p className="font-medium">{entry.action} by {entry.user}</p><p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
                   <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Comments</CardTitle></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}{application.comments.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">No comments.</p>)}</div>{application.status !== 'Signed' && (<div className="space-y-2"><Textarea placeholder="Type your comment here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Comment</Button></div>)}</CardContent></Card></TabsContent>
