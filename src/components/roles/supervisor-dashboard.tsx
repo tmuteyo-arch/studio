@@ -131,7 +131,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                 <ClipboardList className="mr-2 h-4 w-4"/>Workflow Oversight
                 {totalTasks > 0 && <Badge variant="destructive" className="ml-2 animate-pulse">{totalTasks}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value="analytics"><AreaChart className="mr-2 h-4 w-4"/>Compliance Analytics</TabsTrigger>
+              <TabsTrigger value="analytics"><AreaChart className="mr-2 h-4 w-4"/>Performance Appraisal</TabsTrigger>
               <TabsTrigger value="team"><Users className="mr-2 h-4 w-4"/>Staff Regulation</TabsTrigger>
               <TabsTrigger value="reports"><FileDown className="mr-2 h-4 w-4"/>Audit Reports</TabsTrigger>
           </TabsList>
