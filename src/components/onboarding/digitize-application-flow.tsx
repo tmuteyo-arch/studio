@@ -78,7 +78,6 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     setPages(prev => prev.filter((_, i) => i !== pageIndex));
   };
 
-  // CAMERA LOGIC
   const startScan = async () => {
     setIsScanning(true);
     if (hasCameraPermission === false) {
@@ -244,7 +243,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                 </div>
                             )}
                             <div className="absolute top-1 left-1">
-                                <Badge variant="primary" className="text-[8px] px-1 py-0">{page.documentType}</Badge>
+                                <Badge variant="secondary" className="text-[8px] px-1 py-0">{page.documentType}</Badge>
                             </div>
                             <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
                                 <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePage(index)}>

@@ -500,5 +500,5 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
               count={selectedIds.length}
             />
         </div>
-      )
+      );
 }
