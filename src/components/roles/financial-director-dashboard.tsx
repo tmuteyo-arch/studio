@@ -6,56 +6,31 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { User, users as allUsers } from '@/lib/users';
 import { 
-  BarChart, 
-  TrendingUp, 
   Users, 
   Wallet, 
   FileText, 
   Clock, 
   CheckCircle2, 
   AlertCircle, 
-  Search,
-  LayoutDashboard,
   Database,
-  History,
   ShieldCheck,
-  Briefcase
+  TrendingUp
 } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { 
-  Bar, 
-  BarChart as ReChartsBarChart, 
-  CartesianGrid, 
-  XAxis, 
-  YAxis, 
-  ResponsiveContainer, 
-  Cell,
-  Tooltip as ReChartsTooltip 
-} from 'recharts';
-import { ChartContainer, ChartConfig } from '@/components/ui/chart';
 import { differenceInHours, parseISO } from 'date-fns';
 
 interface FinancialDirectorDashboardProps {
     user: User;
 }
 
-const efficiencyChartConfig = {
-  count: {
-    label: 'Processed',
-    color: 'hsl(var(--primary))',
-  },
-} satisfies ChartConfig;
-
 export default function FinancialDirectorDashboard({ user }: FinancialDirectorDashboardProps) {
     const [applications] = useAtom(applicationsAtom);
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
-    const [searchTerm, setSearchTerm] = React.useState('');
 
     const backOfficeUsers = React.useMemo(() => 
         allUsers.filter(u => u.role === 'back-office'), 
@@ -128,15 +103,6 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
         });
     }, [applications, supervisors]);
 
-    const regionalVolume = React.useMemo(() => {
-        const regions: Record<string, number> = {};
-        applications.forEach(app => {
-            regions[app.region] = (regions[app.region] || 0) + 1;
-        });
-        return Object.entries(regions).map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count);
-    }, [applications]);
-
     const applicationForReview = selectedApplication 
       ? applications.find(app => app.id === selectedApplication.id) 
       : null;
@@ -154,7 +120,7 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h2 className="text-3xl font-bold">Financial Director Portal</h2>
-                  <p className="text-muted-foreground">Strategic oversight of Operations, Supervisors, and Back Office efficiency.</p>
+                  <p className="text-muted-foreground">Oversight of Supervisory efficiency and Back Office operational performance.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge className="bg-secondary text-secondary-foreground font-bold">
@@ -221,79 +187,17 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                 </Card>
             </div>
 
-            <Tabs defaultValue="operations" className="w-full">
+            <Tabs defaultValue="supervisors" className="w-full">
                 <TabsList className="bg-muted/50 p-1 mb-6">
-                    <TabsTrigger value="operations" className="flex items-center gap-2">
-                        <LayoutDashboard className="h-4 w-4" />
-                        Operational Efficiency
-                    </TabsTrigger>
                     <TabsTrigger value="supervisors" className="flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4" />
                         Supervisory Oversight
                     </TabsTrigger>
                     <TabsTrigger value="back-office" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        Back Office Team
+                        Back Office Team Performance
                     </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="operations" className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card className="lg:col-span-2">
-                            <CardHeader>
-                                <CardTitle>Processing Volume by Region</CardTitle>
-                                <CardDescription>Throughput monitoring across Zimbabwean provinces.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ChartContainer config={efficiencyChartConfig} className="h-[300px] w-full">
-                                    <ResponsiveContainer>
-                                        <ReChartsBarChart data={regionalVolume}>
-                                            <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.1} />
-                                            <XAxis 
-                                                dataKey="name" 
-                                                axisLine={false} 
-                                                tickLine={false}
-                                                className="text-[10px]"
-                                            />
-                                            <YAxis axisLine={false} tickLine={false} hide />
-                                            <ReChartsTooltip cursor={false} content={<div className="bg-background border p-2 rounded shadow-sm text-xs font-bold" />} />
-                                            <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={40}>
-                                                {regionalVolume.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={`hsl(var(--chart-${(index % 5) + 1}))`} />
-                                                ))}
-                                            </Bar>
-                                        </ReChartsBarChart>
-                                    </ResponsiveContainer>
-                                </ChartContainer>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Status Distribution</CardTitle>
-                                <CardDescription>Overall health of the onboarding pipeline.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between p-2 border-b">
-                                    <span className="text-sm font-medium">Approved / Signed</span>
-                                    <Badge variant="success">{stats.approved}</Badge>
-                                </div>
-                                <div className="flex items-center justify-between p-2 border-b">
-                                    <span className="text-sm font-medium">Pending Review</span>
-                                    <Badge variant="secondary">{stats.pending}</Badge>
-                                </div>
-                                <div className="flex items-center justify-between p-2">
-                                    <span className="text-sm font-medium">Total Rejected</span>
-                                    <Badge variant="destructive">{stats.rejected}</Badge>
-                                </div>
-                                <div className="pt-4 mt-4 border-t">
-                                    <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Efficiency Note</p>
-                                    <p className="text-xs italic text-muted-foreground">Current system TAT is within the 48-hour SLA target.</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
 
                 <TabsContent value="supervisors" className="space-y-6">
                     <Card>
@@ -309,10 +213,10 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                                 <TableHeader>
                                     <TableRow className="bg-muted/30">
                                         <TableHead>Supervisor Name</TableHead>
-                                        <TableHead className="text-center">Managed ATLs</TableHead>
+                                        <TableHead className="text-center">Managed Agents (ATL)</TableHead>
                                         <TableHead className="text-center">Agreements Signed</TableHead>
                                         <TableHead className="text-center">Rejections Issued</TableHead>
-                                        <TableHead className="text-right">Action</TableHead>
+                                        <TableHead className="text-right">Audit Status</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
