@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -98,6 +99,7 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
   const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
+  const needsMandate = application.clientType !== 'Personal Account';
   
   const uploadedDocumentTypes = application.documents.map(d => d.type);
   const documentRequirements = getDocumentRequirements(application.clientType);
@@ -204,7 +206,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         isFirstPage = false;
     };
     
-    if (resolutionElement && isCorporate) await addCanvasToPdf(resolutionElement);
+    if (resolutionElement && needsMandate) await addCanvasToPdf(resolutionElement);
     if (isCorporate && checklistElement) await addCanvasToPdf(checklistElement);
     await addCanvasToPdf(summaryElement);
 
@@ -287,10 +289,10 @@ export default function ApplicationReview({ application: initialApplication, onB
           </div>
           <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1 }}>
             <div ref={printRef}><ApplicationPrintView application={applicationForPrint} /></div>
-            {isCorporate && (
+            {needsMandate && (
                 <>
                     <div ref={resolutionRef}><AccountResolutionPrintView application={applicationForPrint} /></div>
-                    <div ref={checklistRef}><CorporateChecklist application={applicationForPrint} supervisor={supervisorForChecklist} /></div>
+                    {isCorporate && <div ref={checklistRef}><CorporateChecklist application={applicationForPrint} supervisor={supervisorForChecklist} /></div>}
                 </>
             )}
           </div>
@@ -338,7 +340,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                           <DetailItem label="Status" value={application.status} />
                         </div>
                         <Separator/>
-                        {!isCorporate ? (
+                        {isPersonalOrIndividual ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
                             <DetailItem label="ID Number" value={application.details.individualIdNumber} />
@@ -375,8 +377,8 @@ export default function ApplicationReview({ application: initialApplication, onB
                        <TabsContent value="form-data" className="pt-4">
                            <Card>
                                <CardContent className="pt-6">
-                                   {!isCorporate ? <StepIndividualInfo /> : <StepCorporateInfo />}
-                                   {isCorporate && (
+                                   {isPersonalOrIndividual ? <StepIndividualInfo /> : <StepCorporateInfo />}
+                                   {needsMandate && (
                                        <div className="mt-6">
                                            <StepSignatories />
                                        </div>
@@ -393,7 +395,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                            <CardHeader><CardTitle>Sign Agency Agreement</CardTitle></CardHeader>
                            <CardContent className="space-y-6">
                                <div className="scale-75 origin-top-left">
-                                   {isCorporate ? (
+                                   {needsMandate ? (
                                        <AccountResolutionPrintView application={applicationForPrint} />
                                    ) : (
                                        <div className="p-8 border bg-white text-black min-h-[200px] w-[210mm]">

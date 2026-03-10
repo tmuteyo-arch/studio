@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import { type FormState as RHFFormState } from 'react-hook-form';
 
@@ -85,7 +86,21 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the terms and conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType) && data.clientType;
+    const isPersonal = data.clientType === 'Personal Account';
+    const isSoleTrader = data.clientType === 'Proprietorship / Sole Trader';
+    const isCorporate = !isPersonal && !isSoleTrader && !!data.clientType;
+
+    // Signatories check for anything except basic Personal account
+    if (!!data.clientType && !isPersonal) {
+      if (!data.signatories || data.signatories.length === 0) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['signatories'],
+            message: 'At least one authorized signatory is required.',
+        });
+      }
+    }
+
     if (isCorporate) {
       if (!data.organisationLegalName) {
         ctx.addIssue({
@@ -107,15 +122,7 @@ export const OnboardingFormSchema = z.object({
       if (!data.certificateOfIncorporationNumber) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['certificateOfIncorporationNumber'], message: 'Certificate number is required.' });
       }
-      // Require at least one signatory for corporate accounts
-      if (!data.signatories || data.signatories.length === 0) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['signatories'],
-            message: 'At least one authorized signatory is required for corporate accounts.',
-        });
-      }
-    } else if (data.clientType) { // Individual or Sole Trader
+    } else if (data.clientType) { // Personal or Sole Trader
       if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is required.' });
       if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is required.' });
       if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is required.' });

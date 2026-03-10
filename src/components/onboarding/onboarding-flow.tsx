@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -107,17 +108,27 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const clientType = form.watch('clientType');
   
   const steps = React.useMemo(() => {
-    const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
-    const isCorporate = !isPersonalOrIndividual && clientType !== '';
+    if (!clientType) return [allSteps.find(s => s.id === 'account-type')!];
 
-    if (isPersonalOrIndividual) {
-      // Personal or Individual accounts do not need Corporate Details or Mandate & Signatories step
+    const isPersonal = clientType === 'Personal Account';
+    const isSoleTrader = clientType === 'Proprietorship / Sole Trader';
+    const isCorporate = !isPersonal && !isSoleTrader;
+
+    if (isPersonal) {
+      // Personal accounts do not need Corporate Details or Mandate & Signatories step
       return allSteps.filter(step => ['account-type', 'individual-info', 'document-upload', 'review-submit'].includes(step.id));
     }
+    
+    if (isSoleTrader) {
+      // Sole Trader needs Applicant Details AND Mandate & Signatories
+      return allSteps.filter(step => ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'].includes(step.id));
+    }
+
     if (isCorporate) {
       // Corporate accounts do not need Applicant Details (Individual info) step as it uses Corporate Details
       return allSteps.filter(step => step.id !== 'individual-info');
     }
+    
     return [allSteps.find(s => s.id === 'account-type')!];
   }, [clientType]);
 

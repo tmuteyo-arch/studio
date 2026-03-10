@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -44,8 +45,10 @@ export default function StepReview() {
   }, [formState.isSubmitting]);
   
   const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
-  const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
-  const isCorporate = !isPersonalOrIndividual && !!data.clientType;
+  const isPersonal = data.clientType === 'Personal Account';
+  const isSoleTrader = data.clientType === 'Proprietorship / Sole Trader';
+  const isCorporate = !isPersonal && !isSoleTrader && !!data.clientType;
+  const needsMandate = data.clientType !== 'Personal Account';
 
 
   if (isSubmitted) {
@@ -68,7 +71,7 @@ export default function StepReview() {
       </CardHeader>
       <div className="space-y-6 px-6">
         
-        {isPersonalOrIndividual && (
+        {(isPersonal || isSoleTrader) && (
           <div className="rounded-md border p-4 space-y-4">
             <h3 className="font-semibold">Applicant Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -98,7 +101,7 @@ export default function StepReview() {
             </div>
         )}
         
-        {isCorporate && data.signatories && data.signatories.length > 0 && (
+        {needsMandate && data.signatories && data.signatories.length > 0 && (
              <div className="rounded-md border p-4 space-y-4">
                 <h3 className="font-semibold">Signatories ({data.signatories.length})</h3>
                 {data.signatories.map((signatory, index) => (
