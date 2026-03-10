@@ -37,7 +37,7 @@ const allSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType', 'region'] },
   { id: 'individual-info', name: 'Applicant Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
   { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
-  { id: 'signatories', name: 'Signatories', fields: ['signatories'] },
+  { id: 'signatories', name: 'Mandate & Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
   { id: 'document-upload', name: 'Documents', fields: ['document1Type', 'document2Type'] },
   { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
 ];
@@ -107,14 +107,15 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const clientType = form.watch('clientType');
   
   const steps = React.useMemo(() => {
-    const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
-    const isCorporate = !isIndividual && clientType !== '';
+    const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(clientType);
+    const isCorporate = !isPersonalOrIndividual && clientType !== '';
 
-    if (isIndividual) {
-      // Personal or Individual accounts do not need Mandate & Signatories step
+    if (isPersonalOrIndividual) {
+      // Personal or Individual accounts do not need Corporate Details or Mandate & Signatories step
       return allSteps.filter(step => ['account-type', 'individual-info', 'document-upload', 'review-submit'].includes(step.id));
     }
     if (isCorporate) {
+      // Corporate accounts do not need Applicant Details (Individual info) step as it uses Corporate Details
       return allSteps.filter(step => step.id !== 'individual-info');
     }
     return [allSteps.find(s => s.id === 'account-type')!];

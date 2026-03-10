@@ -44,8 +44,8 @@ export default function StepReview() {
   }, [formState.isSubmitting]);
   
   const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
-  const isIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
-  const isCorporate = !isIndividual && !!data.clientType;
+  const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(data.clientType);
+  const isCorporate = !isPersonalOrIndividual && !!data.clientType;
 
 
   if (isSubmitted) {
@@ -68,7 +68,7 @@ export default function StepReview() {
       </CardHeader>
       <div className="space-y-6 px-6">
         
-        {isIndividual && (
+        {isPersonalOrIndividual && (
           <div className="rounded-md border p-4 space-y-4">
             <h3 className="font-semibold">Applicant Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -98,7 +98,7 @@ export default function StepReview() {
             </div>
         )}
         
-        {data.signatories && data.signatories.length > 0 && (
+        {isCorporate && data.signatories && data.signatories.length > 0 && (
              <div className="rounded-md border p-4 space-y-4">
                 <h3 className="font-semibold">Signatories ({data.signatories.length})</h3>
                 {data.signatories.map((signatory, index) => (

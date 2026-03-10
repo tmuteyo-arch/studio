@@ -69,16 +69,18 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
           </div>
         </section>
 
-        <section className="mb-6">
-          <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Signatories</h2>
-          <ul className="list-disc list-inside space-y-1">
-            {application.signatories.map((sig, i) => (
-              <li key={i} className="text-sm">
-                {sig.firstName} {sig.surname} ({sig.designation}) - ID: {sig.nationalIdNo}
-              </li>
-            ))}
-          </ul>
-        </section>
+        {isCorporate && application.signatories && application.signatories.length > 0 && (
+            <section className="mb-6">
+                <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Signatories</h2>
+                <ul className="list-disc list-inside space-y-1">
+                    {application.signatories.map((sig, i) => (
+                    <li key={i} className="text-sm">
+                        {sig.firstName} {sig.surname} ({sig.designation}) - ID: {sig.nationalIdNo}
+                    </li>
+                    ))}
+                </ul>
+            </section>
+        )}
 
         <section className="mb-6">
           <h2 className="text-lg font-semibold border-b mb-3 pb-1 border-gray-300">Uploaded Documents</h2>

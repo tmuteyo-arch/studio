@@ -97,6 +97,8 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [aiSummary, setAiSummary] = React.useState<string | null>(null);
 
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
+  const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
+  
   const uploadedDocumentTypes = application.documents.map(d => d.type);
   const documentRequirements = getDocumentRequirements(application.clientType);
 
@@ -178,7 +180,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     const summaryElement = printRef.current;
     const resolutionElement = resolutionRef.current;
 
-    if (!summaryElement || !resolutionElement) { console.error("Required print elements not found"); return; }
+    if (!summaryElement) { console.error("Required print element not found"); return; }
     setIsPrinting(true);
     
     const appDataForPrint = { ...application, details: { ...application.details, ...form.getValues() } };
@@ -202,7 +204,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         isFirstPage = false;
     };
     
-    await addCanvasToPdf(resolutionElement);
+    if (resolutionElement && isCorporate) await addCanvasToPdf(resolutionElement);
     if (isCorporate && checklistElement) await addCanvasToPdf(checklistElement);
     await addCanvasToPdf(summaryElement);
 
@@ -285,8 +287,12 @@ export default function ApplicationReview({ application: initialApplication, onB
           </div>
           <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1 }}>
             <div ref={printRef}><ApplicationPrintView application={applicationForPrint} /></div>
-            <div ref={resolutionRef}><AccountResolutionPrintView application={applicationForPrint} /></div>
-            {isCorporate && (<div ref={checklistRef}><CorporateChecklist application={applicationForPrint} supervisor={supervisorForChecklist} /></div>)}
+            {isCorporate && (
+                <>
+                    <div ref={resolutionRef}><AccountResolutionPrintView application={applicationForPrint} /></div>
+                    <div ref={checklistRef}><CorporateChecklist application={applicationForPrint} supervisor={supervisorForChecklist} /></div>
+                </>
+            )}
           </div>
           
         <Card>
@@ -332,20 +338,20 @@ export default function ApplicationReview({ application: initialApplication, onB
                           <DetailItem label="Status" value={application.status} />
                         </div>
                         <Separator/>
-                        {isCorporate ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <DetailItem label="Legal Name" value={application.details.organisationLegalName} />
-                            <DetailItem label="Reg. Number" value={application.details.certificateOfIncorporationNumber} />
-                            <DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} />
-                            <DetailItem label="Address" value={application.details.physicalAddress} />
-                          </div>
-                        ) : (
+                        {!isCorporate ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
                             <DetailItem label="ID Number" value={application.details.individualIdNumber} />
                             <DetailItem label="Address" value={application.details.individualAddress} />
                             <DetailItem label="Mobile" value={application.details.individualMobileNumber} />
                             <DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} />
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <DetailItem label="Legal Name" value={application.details.organisationLegalName} />
+                            <DetailItem label="Reg. Number" value={application.details.certificateOfIncorporationNumber} />
+                            <DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} />
+                            <DetailItem label="Address" value={application.details.physicalAddress} />
                           </div>
                         )}
                       </CardContent>
@@ -365,7 +371,20 @@ export default function ApplicationReview({ application: initialApplication, onB
                       </Card>
                     )}
                   </TabsContent>
-                   {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy !== 'Customer')) && (<TabsContent value="form-data" className="pt-4"><Card><CardContent className="pt-6">{isCorporate ? <StepCorporateInfo /> : <StepIndividualInfo />}<div className="mt-6"><StepSignatories /></div></CardContent></Card></TabsContent>)}
+                   {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy !== 'Customer')) && (
+                       <TabsContent value="form-data" className="pt-4">
+                           <Card>
+                               <CardContent className="pt-6">
+                                   {!isCorporate ? <StepIndividualInfo /> : <StepCorporateInfo />}
+                                   {isCorporate && (
+                                       <div className="mt-6">
+                                           <StepSignatories />
+                                       </div>
+                                   )}
+                               </CardContent>
+                           </Card>
+                       </TabsContent>
+                   )}
                   <TabsContent value="documents" className="pt-4"><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Document Checklist</CardTitle></CardHeader><CardContent><ul className="space-y-3">{documentRequirements.map((req) => { const isUploaded = uploadedDocumentTypes.includes(req.document); return (<li key={req.document} className="flex items-center">{isUploaded ? (<CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />) : (<AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />)}<div><p className="font-medium">{req.document}</p></div></li>); })}</ul></CardContent></Card><Card><CardHeader><CardTitle>Uploaded Documents</CardTitle></CardHeader><CardContent>{application.documents.length > 0 ? (<ul className="space-y-3">{application.documents.map(doc => (<li key={doc.type} className="flex items-center justify-between p-3 rounded-md border"><div><p className="font-medium">{doc.type}</p><p className="text-sm text-muted-foreground">{doc.fileName}</p></div><Button variant="outline" size="sm">View</Button></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-8">No documents uploaded.</p>)}</CardContent></Card></div></TabsContent>
                   <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Activity Log</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action.includes('Submitted') ? <FileText className="h-5 w-5"/> : <User className="h-5 w-5"/>}</div></div><div className="ml-4"><p className="font-medium">{entry.action} by {entry.user}</p><p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
                   <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Comments</CardTitle></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}{application.comments.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">No comments.</p>)}</div>{application.status !== 'Signed' && (<div className="space-y-2"><Textarea placeholder="Type your comment here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Comment</Button></div>)}</CardContent></Card></TabsContent>
@@ -373,7 +392,20 @@ export default function ApplicationReview({ application: initialApplication, onB
                        <TabsContent value="sign-agreement" className="pt-4"><Card>
                            <CardHeader><CardTitle>Sign Agency Agreement</CardTitle></CardHeader>
                            <CardContent className="space-y-6">
-                               <div className="scale-75 origin-top-left"><AccountResolutionPrintView application={applicationForPrint} /></div>
+                               <div className="scale-75 origin-top-left">
+                                   {isCorporate ? (
+                                       <AccountResolutionPrintView application={applicationForPrint} />
+                                   ) : (
+                                       <div className="p-8 border bg-white text-black min-h-[200px] w-[210mm]">
+                                           <h2 className="text-xl font-bold mb-4">Agency Approval: {application.clientName}</h2>
+                                           <p>Onboarding approval for Personal/Individual account type.</p>
+                                           <div className="mt-8 grid grid-cols-2 gap-4">
+                                               <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
+                                               <DetailItem label="ID Number" value={application.details.individualIdNumber} />
+                                           </div>
+                                       </div>
+                                   )}
+                               </div>
                                <Separator />
                                 <div className="grid grid-cols-2 gap-6">
                                     <div>
