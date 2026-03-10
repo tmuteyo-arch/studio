@@ -13,6 +13,7 @@ import RetailExecutiveDashboard from '@/components/roles/retail-executive-dashbo
 import MerchantServicesDashboard from '@/components/roles/merchant-services-dashboard';
 import BusinessBankingDashboard from '@/components/roles/business-banking-dashboard';
 import InnerCircleDashboard from '@/components/roles/inner-circle-dashboard';
+import FinancialDirectorDashboard from '@/components/roles/financial-director-dashboard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
@@ -93,6 +94,8 @@ function AppContent() {
         return <BusinessBankingDashboard user={loggedInUser} />;
       case 'inner-circle':
         return <InnerCircleDashboard user={loggedInUser} />;
+      case 'financial-director':
+        return <FinancialDirectorDashboard user={loggedInUser} />;
       default:
         return null;
     }
@@ -165,6 +168,7 @@ function AppContent() {
                       <SelectItem value="back-office">Back Office Operations</SelectItem>
                       <SelectItem value="supervisor">Regulatory Supervisor</SelectItem>
                       <SelectItem value="retail-executive">Retail Executive</SelectItem>
+                      <SelectItem value="financial-director">Financial Director</SelectItem>
                     </SelectContent>
                   </Select>
               </div>

@@ -1,6 +1,6 @@
 'use client';
 
-export type Role = 'atl' | 'back-office' | 'supervisor' | 'retail-executive' | 'merchant-services' | 'business-banking' | 'inner-circle';
+export type Role = 'atl' | 'back-office' | 'supervisor' | 'retail-executive' | 'merchant-services' | 'business-banking' | 'inner-circle' | 'financial-director';
 
 export interface User {
   id: string;
@@ -42,6 +42,13 @@ export const users: User[] = [
     role: 'retail-executive',
     email: 'exec@inbucks.app',
     initials: 'TC',
+  },
+  {
+    id: 'fd-1',
+    name: 'Farai Mukarati',
+    role: 'financial-director',
+    email: 'fd@inbucks.app',
+    initials: 'FM',
   },
   {
     id: 'ms-1',
