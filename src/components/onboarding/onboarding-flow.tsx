@@ -111,7 +111,8 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     const isCorporate = !isIndividual && clientType !== '';
 
     if (isIndividual) {
-      return allSteps.filter(step => ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'].includes(step.id));
+      // Personal or Individual accounts do not need Mandate & Signatories step
+      return allSteps.filter(step => ['account-type', 'individual-info', 'document-upload', 'review-submit'].includes(step.id));
     }
     if (isCorporate) {
       return allSteps.filter(step => step.id !== 'individual-info');

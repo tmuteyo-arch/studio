@@ -62,10 +62,10 @@ export const OnboardingFormSchema = z.object({
   dateOfIncorporation: z.string().optional().default(''),
   certificateOfIncorporationNumber: z.string().optional().default(''),
 
-  // Mandate and Signatories
+  // Mandate and Signatories (Optional for Individual accounts)
   resolutionDate: z.string().optional(),
   signingInstruction: z.string().optional(),
-  signatories: z.array(SignatorySchema).min(1, "At least one signatory is required."),
+  signatories: z.array(SignatorySchema).default([]),
 
   // Document Info
   document1Type: z.string().min(1, { message: 'Please upload at least one document.' }),
@@ -106,6 +106,14 @@ export const OnboardingFormSchema = z.object({
       }
       if (!data.certificateOfIncorporationNumber) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['certificateOfIncorporationNumber'], message: 'Certificate number is required.' });
+      }
+      // Require at least one signatory for corporate accounts
+      if (!data.signatories || data.signatories.length === 0) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['signatories'],
+            message: 'At least one authorized signatory is required for corporate accounts.',
+        });
       }
     } else if (data.clientType) { // Individual or Sole Trader
       if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is required.' });
