@@ -17,7 +17,9 @@ import {
   Search,
   LayoutDashboard,
   Database,
-  History
+  History,
+  ShieldCheck,
+  Briefcase
 } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -59,6 +61,10 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
         allUsers.filter(u => u.role === 'back-office'), 
     []);
 
+    const supervisors = React.useMemo(() => 
+        allUsers.filter(u => u.role === 'supervisor'), 
+    []);
+
     const stats = React.useMemo(() => {
         const total = applications.length;
         const approved = applications.filter(a => a.status === 'Signed').length;
@@ -89,7 +95,6 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
 
     const boPerformance = React.useMemo(() => {
         return backOfficeUsers.map(bo => {
-            // Logic to find applications where this BO user performed a review action
             const processedApps = applications.filter(app => 
                 app.history.some(h => h.user === bo.name && (h.action === 'Pending Supervisor' || h.action === 'Returned to ATL'))
             );
@@ -99,10 +104,29 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                 initials: bo.initials,
                 processed: processedApps.length,
                 pending: processedApps.filter(a => a.status === 'In Review').length,
-                accuracy: 98, // Mocked for now
+                accuracy: 98,
             };
         }).sort((a, b) => b.processed - a.processed);
     }, [applications, backOfficeUsers]);
+
+    const supervisorPerformance = React.useMemo(() => {
+        return supervisors.map(sup => {
+            const signedApps = applications.filter(app => 
+                app.history.some(h => h.user === sup.name && h.action === 'Agreement Signed by Supervisor')
+            );
+            const rejectedApps = applications.filter(app => 
+                app.history.some(h => h.user === sup.name && h.action === 'Rejected')
+            );
+
+            return {
+                name: sup.name,
+                initials: sup.initials,
+                signed: signedApps.length,
+                rejected: rejectedApps.length,
+                teamSize: sup.team?.length || 0,
+            };
+        });
+    }, [applications, supervisors]);
 
     const regionalVolume = React.useMemo(() => {
         const regions: Record<string, number> = {};
@@ -130,7 +154,7 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h2 className="text-3xl font-bold">Financial Director Portal</h2>
-                  <p className="text-muted-foreground">Operational oversight of Back Office efficiency and regional volume throughput.</p>
+                  <p className="text-muted-foreground">Strategic oversight of Operations, Supervisors, and Back Office efficiency.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge className="bg-secondary text-secondary-foreground font-bold">
@@ -203,6 +227,10 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                         <LayoutDashboard className="h-4 w-4" />
                         Operational Efficiency
                     </TabsTrigger>
+                    <TabsTrigger value="supervisors" className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" />
+                        Supervisory Oversight
+                    </TabsTrigger>
                     <TabsTrigger value="back-office" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
                         Back Office Team
@@ -269,6 +297,51 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                             </CardContent>
                         </Card>
                     </div>
+                </TabsContent>
+
+                <TabsContent value="supervisors" className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <ShieldCheck className="h-5 w-5 text-primary" />
+                                Regulatory Supervisor Performance
+                            </CardTitle>
+                            <CardDescription>Oversight of final validation accuracy and team management by department supervisors.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-muted/30">
+                                        <TableHead>Supervisor Name</TableHead>
+                                        <TableHead className="text-center">Managed ATLs</TableHead>
+                                        <TableHead className="text-center">Agreements Signed</TableHead>
+                                        <TableHead className="text-center">Rejections Issued</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {supervisorPerformance.map((sup) => (
+                                        <TableRow key={sup.name} className="hover:bg-muted/20">
+                                            <TableCell className="font-medium flex items-center gap-3">
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarFallback className="text-[10px]">{sup.initials}</AvatarFallback>
+                                                </Avatar>
+                                                {sup.name}
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant="secondary">{sup.teamSize} Agents</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-center font-bold text-green-600">{sup.signed}</TableCell>
+                                            <TableCell className="text-center font-bold text-destructive">{sup.rejected}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="sm">Audit Decisions</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 <TabsContent value="back-office" className="space-y-6">
