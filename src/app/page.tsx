@@ -10,6 +10,9 @@ import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
 import RetailExecutiveDashboard from '@/components/roles/retail-executive-dashboard';
+import MerchantServicesDashboard from '@/components/roles/merchant-services-dashboard';
+import BusinessBankingDashboard from '@/components/roles/business-banking-dashboard';
+import InnerCircleDashboard from '@/components/roles/inner-circle-dashboard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
@@ -38,15 +41,13 @@ function AppContent() {
       return;
     }
 
-    // In this mock demo environment, we find the first user matching the role
-    // and assume the login is successful for any password provided.
     const userToLogin = users.find(u => u.role === selectedRole);
     
     if (userToLogin) {
       setLoggedInUser(userToLogin);
       toast({
         title: `Welcome, ${userToLogin.name}!`,
-        description: `Access granted to the ${userToLogin.role === 'atl' ? 'Area Team Leader' : userToLogin.role.replace('-', ' ')} portal.`,
+        description: `Access granted to the ${userToLogin.role.replace('-', ' ')} portal.`,
       });
     } else {
        toast({
@@ -64,13 +65,12 @@ function AppContent() {
     setPassword("");
   };
 
-  // Auto-fill credentials for demo purposes when role is selected
   React.useEffect(() => {
     if (selectedRole) {
       const u = users.find(u => u.role === selectedRole);
       if (u) {
         setEmail(u.email);
-        setPassword("DemoPassword123!"); // Auto-filled for current demo phase
+        setPassword("DemoPassword123!");
       }
     }
   }, [selectedRole]);
@@ -87,6 +87,12 @@ function AppContent() {
         return <SupervisorDashboard user={loggedInUser} />;
       case 'retail-executive':
         return <RetailExecutiveDashboard user={loggedInUser} />;
+      case 'merchant-services':
+        return <MerchantServicesDashboard user={loggedInUser} />;
+      case 'business-banking':
+        return <BusinessBankingDashboard user={loggedInUser} />;
+      case 'inner-circle':
+        return <InnerCircleDashboard user={loggedInUser} />;
       default:
         return null;
     }
@@ -153,6 +159,9 @@ function AppContent() {
                     </SelectTrigger>
                     <SelectContent className="bg-[#1e1b4b] border-white/20 text-white">
                       <SelectItem value="atl">Area Team Leaders (ATL)</SelectItem>
+                      <SelectItem value="merchant-services">Merchant Services</SelectItem>
+                      <SelectItem value="business-banking">Business Banking</SelectItem>
+                      <SelectItem value="inner-circle">Inner Circle</SelectItem>
                       <SelectItem value="back-office">Back Office Operations</SelectItem>
                       <SelectItem value="supervisor">Regulatory Supervisor</SelectItem>
                       <SelectItem value="retail-executive">Retail Executive</SelectItem>
@@ -191,7 +200,7 @@ function AppContent() {
                         <div className="text-right hidden sm:block">
                             <p className="font-semibold text-white">{loggedInUser.name}</p>
                             <p className="text-[10px] text-white/50 uppercase font-bold">
-                                {loggedInUser.role === 'atl' ? 'Area Team Leader' : loggedInUser.role.replace('-', ' ')}
+                                {loggedInUser.role.replace('-', ' ')}
                             </p>
                         </div>
                         <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-white" onClick={handleLogout}>Log Out</Button>

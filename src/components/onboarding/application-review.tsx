@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -140,7 +139,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         action: 'Application Accepted & Verified',
         user: user.name,
         timestamp: new Date().toISOString(),
-        notes: 'Area Team Leader has verified the customer application and forwarded it to Back Office.',
+        notes: `${user.role.replace('-', ' ')} team has verified the customer application and forwarded it to Back Office.`,
     };
     handleUpdateApplication({
         submittedBy: user.name,
@@ -246,8 +245,13 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const renderActions = () => {
+    const isSalesRole = ['atl', 'merchant-services', 'business-banking', 'inner-circle'].includes(user.role);
+    
     switch (user.role) {
       case 'atl':
+      case 'merchant-services':
+      case 'business-banking':
+      case 'inner-circle':
         if (application.submittedBy === 'Customer' && application.status === 'Submitted') {
             return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Accept & Claim Application</Button>;
         }
@@ -276,6 +280,7 @@ export default function ApplicationReview({ application: initialApplication, onB
   const supervisorForChecklist = application.history.find(h => h.action.includes('Supervisor'))?.user;
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
   const isSigningStep = ['Pending Supervisor', 'Pending Executive Signature'].includes(application.status);
+  const isSalesRole = ['atl', 'merchant-services', 'business-banking', 'inner-circle'].includes(user.role);
 
   return (
     <FormProvider {...form}>
@@ -320,7 +325,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList>
                       <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Mandatory Details</TabsTrigger>
-                      {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy !== 'Customer')) && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Edit Form</TabsTrigger>}
+                      {(user.role === 'back-office' || (isSalesRole && application.submittedBy !== 'Customer')) && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Edit Form</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
@@ -334,7 +339,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           <DetailItem label="Client Name" value={application.clientName} />
                           <DetailItem label="Client Type" value={application.clientType} />
-                          <DetailItem label="Originating Area Team Leader / Submitter" value={application.submittedBy} />
+                          <DetailItem label="Originating Submitter" value={application.submittedBy} />
                           <DetailItem label="Region" value={application.region} />
                           <DetailItem label="Submission Date" value={application.submittedDate} />
                           <DetailItem label="Status" value={application.status} />
@@ -373,7 +378,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                       </Card>
                     )}
                   </TabsContent>
-                   {(user.role === 'back-office' || (user.role === 'atl' && application.submittedBy !== 'Customer')) && (
+                   {(user.role === 'back-office' || (isSalesRole && application.submittedBy !== 'Customer')) && (
                        <TabsContent value="form-data" className="pt-4">
                            <Card>
                                <CardContent className="pt-6">
