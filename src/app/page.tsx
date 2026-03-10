@@ -64,11 +64,14 @@ function AppContent() {
     setPassword("");
   };
 
-  // Auto-fill email for demo purposes when role is selected
+  // Auto-fill credentials for demo purposes when role is selected
   React.useEffect(() => {
     if (selectedRole) {
       const u = users.find(u => u.role === selectedRole);
-      if (u) setEmail(u.email);
+      if (u) {
+        setEmail(u.email);
+        setPassword("DemoPassword123!"); // Auto-filled for current demo phase
+      }
     }
   }, [selectedRole]);
 
