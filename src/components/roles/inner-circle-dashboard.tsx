@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Star, Award, UserCheck, Inbox } from 'lucide-react';
+import { PlusCircle, Search, Star, Award } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
@@ -35,10 +35,6 @@ export default function InnerCircleDashboard({ user }: InnerCircleDashboardProps
   const myApplications = applications
     .filter(app => app.submittedBy === user.name)
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
-    
-  const vipLeads = applications
-    .filter(app => app.submittedBy === 'Customer' && app.status === 'Submitted')
-    .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime());
 
   const filteredApplications = myApplications.filter(app => 
     app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -78,10 +74,6 @@ export default function InnerCircleDashboard({ user }: InnerCircleDashboardProps
                 <TabsTrigger value="pipeline" className="flex items-center gap-2">
                     <Award className="h-4 w-4" />
                     VIP Pipeline ({filteredApplications.length})
-                </TabsTrigger>
-                <TabsTrigger value="referrals" className="flex items-center gap-2">
-                    <Inbox className="h-4 w-4" />
-                    New Referrals
                 </TabsTrigger>
             </TabsList>
             <div className="relative w-full sm:w-64">
@@ -133,18 +125,6 @@ export default function InnerCircleDashboard({ user }: InnerCircleDashboardProps
                     ) : (
                         <div className="p-20 text-center text-muted-foreground font-medium">No VIP applications in your pipeline.</div>
                     )}
-                </CardContent>
-            </Card>
-        </TabsContent>
-
-        <TabsContent value="referrals">
-            <Card className="border-[#7c3aed]/20">
-                <CardHeader>
-                    <CardTitle>VIP Enquiries</CardTitle>
-                    <CardDescription>Inbound premium requests awaiting concierge assignment.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                    <p>Referral system is currently clear. All VIP enquirers have been assigned.</p>
                 </CardContent>
             </Card>
         </TabsContent>

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, MapPin, Inbox, UserCheck } from 'lucide-react';
+import { PlusCircle, Search, UserCheck } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
@@ -40,17 +40,8 @@ export default function BusinessBankingDashboard({ user }: BusinessBankingDashbo
   const myApplications = applications
     .filter(app => app.submittedBy === user.name)
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
-    
-  const customerLeads = applications
-    .filter(app => app.submittedBy === 'Customer' && app.status === 'Submitted')
-    .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime());
 
   const filteredApplications = myApplications.filter(app => {
-    return app.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           app.clientName.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
-  const filteredLeads = customerLeads.filter(app => {
     return app.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
            app.clientName.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -87,10 +78,6 @@ export default function BusinessBankingDashboard({ user }: BusinessBankingDashbo
                   <TabsTrigger value="my-apps" className="flex items-center gap-2">
                       <UserCheck className="h-4 w-4" />
                       Portfolio ({filteredApplications.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="leads" className="flex items-center gap-2">
-                      <Inbox className="h-4 w-4" />
-                      Inbound Enquiries ({filteredLeads.length})
                   </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-64">
@@ -143,39 +130,6 @@ export default function BusinessBankingDashboard({ user }: BusinessBankingDashbo
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground italic">
                               <p>Portfolio is currently empty.</p>
                           </div>
-                      )}
-                  </CardContent>
-              </Card>
-          </TabsContent>
-
-          <TabsContent value="leads">
-              <Card className="border-primary/20 bg-primary/5 shadow-md">
-                  <CardHeader>
-                      <CardTitle>Qualified Business Leads</CardTitle>
-                      <CardDescription>Corporate applications requiring personal banker attention.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                      {filteredLeads.length > 0 ? (
-                          <Table>
-                              <TableHeader>
-                                  <TableHead className="pl-6">ID</TableHead>
-                                  <TableHead>Entity Name</TableHead>
-                                  <TableHead className="text-right pr-6">Management</TableHead>
-                              </TableHeader>
-                              <TableBody>
-                                  {filteredLeads.map((app) => (
-                                      <TableRow key={app.id}>
-                                          <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
-                                          <TableCell className="font-medium">{app.clientName}</TableCell>
-                                          <TableCell className="text-right pr-6">
-                                              <Button size="sm" onClick={() => setSelectedApplication(app)}>Assign to Me</Button>
-                                          </TableCell>
-                                      </TableRow>
-                                  ))}
-                              </TableBody>
-                          </Table>
-                      ) : (
-                          <div className="p-12 text-center text-muted-foreground">No pending business enquiries.</div>
                       )}
                   </CardContent>
               </Card>

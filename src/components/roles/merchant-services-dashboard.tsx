@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, MapPin, Inbox, UserCheck, AlertCircle } from 'lucide-react';
+import { PlusCircle, Search, MapPin, UserCheck } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -46,18 +46,8 @@ export default function MerchantServicesDashboard({ user }: MerchantServicesDash
   const myApplications = applications
     .filter(app => app.submittedBy === user.name)
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
-    
-  const customerLeads = applications
-    .filter(app => app.submittedBy === 'Customer' && app.status === 'Submitted')
-    .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime());
 
   const filteredApplications = myApplications.filter(app => {
-    return app.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           app.region.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
-  const filteredLeads = customerLeads.filter(app => {
     return app.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
            app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
            app.region.toLowerCase().includes(searchTerm.toLowerCase());
@@ -99,11 +89,6 @@ export default function MerchantServicesDashboard({ user }: MerchantServicesDash
                   <TabsTrigger value="my-apps" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                       <UserCheck className="h-4 w-4" />
                       My Pipeline ({filteredApplications.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="leads" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                      <Inbox className="h-4 w-4" />
-                      Customer Leads ({filteredLeads.length})
-                      {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
                   </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-64">
@@ -171,51 +156,6 @@ export default function MerchantServicesDashboard({ user }: MerchantServicesDash
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                               <p>No active merchant applications found.</p>
-                          </div>
-                      )}
-                  </CardContent>
-              </Card>
-          </TabsContent>
-
-          <TabsContent value="leads">
-              <Card className="border-primary/20 bg-primary/5 shadow-md overflow-hidden">
-                  <CardHeader className="bg-primary/10">
-                      <CardTitle className="flex items-center gap-2">
-                          <Inbox className="h-5 w-5 text-primary" />
-                          Unclaimed Merchant Leads
-                      </CardTitle>
-                      <CardDescription className="text-primary/80">Self-service merchant applications awaiting verification.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                      {filteredLeads.length > 0 ? (
-                          <Table>
-                              <TableHeader>
-                                  <TableRow className="bg-primary/5">
-                                      <TableHead className="pl-6">Application ID</TableHead>
-                                      <TableHead>Customer / Company</TableHead>
-                                      <TableHead>Type</TableHead>
-                                      <TableHead>Submitted</TableHead>
-                                      <TableHead className="text-right pr-6">Actions</TableHead>
-                                  </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                  {filteredLeads.map((app) => (
-                                      <TableRow key={app.id} className="hover:bg-primary/10 group animate-in slide-in-from-left-2 duration-300">
-                                          <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
-                                          <TableCell className="font-medium">{app.clientName}</TableCell>
-                                          <TableCell className="text-xs">{app.clientType}</TableCell>
-                                          <TableCell className="text-xs text-muted-foreground">{app.submittedDate}</TableCell>
-                                          <TableCell className="text-right pr-6">
-                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Claim Lead</Button>
-                                          </TableCell>
-                                      </TableRow>
-                                  ))}
-                              </TableBody>
-                          </Table>
-                      ) : (
-                          <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                              <Inbox className="h-12 w-12 mb-2 opacity-20" />
-                              <p>No new merchant leads at this time.</p>
                           </div>
                       )}
                   </CardContent>

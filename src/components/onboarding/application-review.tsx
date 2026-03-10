@@ -249,12 +249,14 @@ export default function ApplicationReview({ application: initialApplication, onB
     
     switch (user.role) {
       case 'atl':
-      case 'merchant-services':
-      case 'business-banking':
-      case 'inner-circle':
         if (application.submittedBy === 'Customer' && application.status === 'Submitted') {
             return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Accept & Claim Application</Button>;
         }
+        return null;
+      case 'merchant-services':
+      case 'business-banking':
+      case 'inner-circle':
+        // These roles no longer handle general customer leads
         return null;
       case 'back-office':
         if (application.status === 'Signed') {
