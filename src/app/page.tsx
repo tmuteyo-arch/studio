@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -24,7 +23,7 @@ function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
   const [selectedRole, setSelectedRole] = React.useState<Role | "">("");
   const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("password");
+  const [password, setPassword] = React.useState("");
   const { toast } = useToast();
 
   const handleLogin = (e: React.FormEvent) => {
@@ -39,20 +38,21 @@ function AppContent() {
       return;
     }
 
-    // In this mock, we find the first user matching the role
+    // In this mock demo environment, we find the first user matching the role
+    // and assume the login is successful for any password provided.
     const userToLogin = users.find(u => u.role === selectedRole);
     
     if (userToLogin) {
       setLoggedInUser(userToLogin);
       toast({
         title: `Welcome, ${userToLogin.name}!`,
-        description: `Access granted to the ${userToLogin.role.replace('-', ' ')} portal.`,
+        description: `Access granted to the ${userToLogin.role === 'atl' ? 'Area Team Leader' : userToLogin.role.replace('-', ' ')} portal.`,
       });
     } else {
        toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: `Credentials invalid or role not found.`,
+        description: `Credentials invalid or role not found in the system.`,
       });
     }
   };
@@ -61,9 +61,10 @@ function AppContent() {
     setLoggedInUser(null);
     setSelectedRole("");
     setEmail("");
+    setPassword("");
   };
 
-  // Sync email when role changes for easy demoing
+  // Auto-fill email for demo purposes when role is selected
   React.useEffect(() => {
     if (selectedRole) {
       const u = users.find(u => u.role === selectedRole);
@@ -106,8 +107,8 @@ function AppContent() {
 
         <Card className="overflow-hidden shadow-2xl border-white/20 bg-white/10 backdrop-blur-xl text-white">
           <CardHeader className="bg-black/20 p-8 text-center border-b border-white/10">
-              <CardTitle className="text-2xl font-bold">Secure Sign In</CardTitle>
-              <CardDescription className="text-white/60">Enter your credentials and select your workspace.</CardDescription>
+              <CardTitle className="text-2xl font-bold tracking-tight">Secure Sign In</CardTitle>
+              <CardDescription className="text-white/60">Enter credentials and select your designated workspace.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <form onSubmit={handleLogin} className='space-y-5'>
@@ -119,7 +120,7 @@ function AppContent() {
                     id="email" 
                     type="email" 
                     placeholder="name@inbucks.app" 
-                    className='h-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:ring-secondary focus:border-secondary' 
+                    className='h-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#7c3aed] transition-all' 
                     required 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -132,7 +133,8 @@ function AppContent() {
                   <Input 
                     id="password" 
                     type="password" 
-                    className='h-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:ring-secondary focus:border-secondary' 
+                    placeholder="••••••••"
+                    className='h-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#7c3aed] transition-all' 
                     required 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -143,7 +145,7 @@ function AppContent() {
                     <LayoutDashboard className="h-3 w-3" /> Designated Dashboard
                   </Label>
                   <Select value={selectedRole} onValueChange={(v: Role) => setSelectedRole(v)}>
-                    <SelectTrigger className="h-12 bg-white/10 border-white/20 text-white focus:ring-secondary">
+                    <SelectTrigger className="h-12 bg-white/10 border-white/20 text-white focus:ring-2 focus:ring-[#7c3aed] transition-all">
                       <SelectValue placeholder="Search or select dashboard..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1e1b4b] border-white/20 text-white">
@@ -185,7 +187,9 @@ function AppContent() {
                     <div className="flex items-center gap-4">
                         <div className="text-right hidden sm:block">
                             <p className="font-semibold text-white">{loggedInUser.name}</p>
-                            <p className="text-[10px] text-white/50 uppercase font-bold">{loggedInUser.role.replace('-', ' ')}</p>
+                            <p className="text-[10px] text-white/50 uppercase font-bold">
+                                {loggedInUser.role === 'atl' ? 'Area Team Leader' : loggedInUser.role.replace('-', ' ')}
+                            </p>
                         </div>
                         <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-white" onClick={handleLogout}>Log Out</Button>
                     </div>
