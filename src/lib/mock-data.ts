@@ -1,6 +1,8 @@
+
 'use client';
 
 import { atom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
 import type { OnboardingFormData, Signatory } from './types';
 
 export type ApplicationStatus =
@@ -382,5 +384,5 @@ const initialApplications: Application[] = [
   }
 ];
 
-export const applicationsAtom = atom<Application[]>(initialApplications);
+export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v1', initialApplications);
 export const activeUserAtom = atom<any>(null);
