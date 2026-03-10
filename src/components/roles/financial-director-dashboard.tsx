@@ -235,10 +235,6 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                         <Users className="h-4 w-4" />
                         Back Office Team
                     </TabsTrigger>
-                    <TabsTrigger value="audit" className="flex items-center gap-2">
-                        <History className="h-4 w-4" />
-                        Compliance Audit
-                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="operations" className="space-y-6">
@@ -387,61 +383,6 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <Button variant="ghost" size="sm">Audit Output</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="audit" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                                <div>
-                                    <CardTitle>System-Wide Audit Registry</CardTitle>
-                                    <CardDescription>Search and verify any application within the financial onboarding network.</CardDescription>
-                                </div>
-                                <div className="relative w-full sm:w-64">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input 
-                                        placeholder="Search by ID or Client..." 
-                                        className="pl-10"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>App ID</TableHead>
-                                        <TableHead>Client Name</TableHead>
-                                        <TableHead>Originator</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Action</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {applications
-                                        .filter(a => a.id.toLowerCase().includes(searchTerm.toLowerCase()) || a.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
-                                        .slice(0, 10)
-                                        .map((app) => (
-                                        <TableRow key={app.id}>
-                                            <TableCell className="font-mono text-[10px]">{app.id}</TableCell>
-                                            <TableCell className="font-medium text-xs">{app.clientName}</TableCell>
-                                            <TableCell className="text-xs">{app.submittedBy}</TableCell>
-                                            <TableCell className="text-xs text-muted-foreground">{app.submittedDate}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className="text-[9px] uppercase">{app.status}</Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => setSelectedApplication(app)}>Inspect</Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
