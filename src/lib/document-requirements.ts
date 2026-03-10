@@ -7,18 +7,18 @@ export type DocumentRequirement = {
 const personalAccountRequirements: DocumentRequirement[] = [
     {
         document: 'Valid Identity Documents',
-        details: 'Valid Passport, Driver’s License, or National ID.',
-        comment: 'Submit certified copies. The bank will verify them against originals.',
+        details: 'Valid Passport/Driver’s License/Plastic or Metal ID',
+        comment: 'Submit copies. The bank will verify them against originals and certify them.',
     },
     {
-        document: 'Proof of Residence',
-        details: 'Utility bills (e.g., ZESA, TelOne) or a valid lease agreement.',
-        comment: 'Must not be more than 3 months old. Submit original or certified copies.',
+        document: 'Proof of residence',
+        details: 'Utility bills (ZESA/TelOne/Water) or Letter from employer on letterhead signed by HR.',
+        comment: 'Submit original bills. Proof of Residence must not be more than 3 months old.',
     },
     {
         document: 'Passport size photos',
         details: 'Recent color photographs.',
-        comment: 'Required for client record.'
+        comment: 'Submit recent photos.'
     },
 ];
 
