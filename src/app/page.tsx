@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
-import FinancialDirectorDashboard from '@/components/roles/financial-director-dashboard';
-import RetailExecutiveDashboard from '@/components/roles/retail-executive-dashboard';
+import ManagementDashboard from '@/components/roles/management-dashboard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
@@ -44,6 +43,8 @@ function AppContent() {
       return;
     }
 
+    // Special case for management: we have multiple users but one role string in the selector
+    // We'll pick the first user that matches the role for this demo
     const userToLogin = users.find(u => u.role === selectedRole);
     
     if (userToLogin) {
@@ -96,10 +97,8 @@ function AppContent() {
         return <BackOfficeDashboard user={loggedInUser} />;
       case 'supervisor':
         return <SupervisorDashboard user={loggedInUser} />;
-      case 'retail-executive':
-        return <RetailExecutiveDashboard user={loggedInUser} />;
-      case 'financial-director':
-        return <FinancialDirectorDashboard user={loggedInUser} />;
+      case 'management':
+        return <ManagementDashboard user={loggedInUser} />;
       default:
         return null;
     }
@@ -168,8 +167,7 @@ function AppContent() {
                       <SelectItem value="asl">Area Sales Leaders (ASL)</SelectItem>
                       <SelectItem value="back-office">Back Office Clerks</SelectItem>
                       <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
-                      <SelectItem value="retail-executive">Executive Boss</SelectItem>
-                      <SelectItem value="financial-director">Finance Boss</SelectItem>
+                      <SelectItem value="management">Management Hub</SelectItem>
                     </SelectContent>
                   </Select>
               </div>

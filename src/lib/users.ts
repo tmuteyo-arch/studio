@@ -1,6 +1,6 @@
 'use client';
 
-export type Role = 'asl' | 'back-office' | 'supervisor' | 'retail-executive' | 'financial-director';
+export type Role = 'asl' | 'back-office' | 'supervisor' | 'management';
 
 export interface User {
   id: string;
@@ -37,16 +37,16 @@ export const users: User[] = [
     team: ['CHIDO', 'COLLETOR', 'CONCILLIA', 'HEYZREST', 'LIBERTY', 'MERCY', 'PAMELA', 'PARADZAI', 'PRIDE', 'TARIRO', 'TATENDA', 'TERENCE']
   },
   {
-    id: 'exec-1',
+    id: 'mgmt-1',
     name: 'Tafadzwa Chihota',
-    role: 'retail-executive',
+    role: 'management',
     email: 'exec@inbucks.app',
     initials: 'TC',
   },
   {
-    id: 'fd-1',
+    id: 'mgmt-2',
     name: 'Farai Mukarati',
-    role: 'financial-director',
+    role: 'management',
     email: 'fd@inbucks.app',
     initials: 'FM',
   },
