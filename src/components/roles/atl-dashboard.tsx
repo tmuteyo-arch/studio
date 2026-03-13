@@ -38,7 +38,7 @@ const translateStatus = (status: ApplicationStatus) => {
         case 'Submitted': return 'Sent';
         case 'In Review': return 'Checking';
         case 'Pending Supervisor': return 'Supervisor Check';
-        case 'Pending Executive Signature': return 'Final Check';
+        case 'Pending Executive Signature': return 'Boss Check';
         case 'Signed': return 'Done';
         case 'Rejected': return 'Declined';
         case 'Returned to ATL': return 'Need Fixes';
@@ -99,11 +99,11 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
         <div className="mb-8 flex items-center justify-between">
           <div>
               <h2 className="text-3xl font-bold">Sales Leader (ASL) Home</h2>
-              <p className="text-muted-foreground">Track and manage sign up requests for your area.</p>
+              <p className="text-muted-foreground">Manage your applications and pick up new sign ups.</p>
           </div>
           <Button onClick={() => setIsCreatingApplication(true)} className="shadow-lg hover:scale-105 transition-transform bg-primary text-primary-foreground font-bold">
               <PlusCircle className="mr-2 h-4 w-4" />
-              New Sign Up
+              New Application
           </Button>
         </div>
 
@@ -112,7 +112,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
               <TabsList className="bg-muted/50 p-1">
                   <TabsTrigger value="my-apps" className="flex items-center gap-2">
                       <UserCheck className="h-4 w-4" />
-                      My Work List ({filteredApplications.length})
+                      My Applications ({filteredApplications.length})
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-2">
                       <Inbox className="h-4 w-4" />
@@ -134,8 +134,8 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
           <TabsContent value="my-apps">
               <Card className="border-none shadow-md overflow-hidden">
                   <CardHeader className="bg-muted/30">
-                      <CardTitle>Work Tracker</CardTitle>
-                      <CardDescription>See what is happening with your requests.</CardDescription>
+                      <CardTitle>My Applications</CardTitle>
+                      <CardDescription>Track the status of applications you created.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredApplications.length > 0 ? (
@@ -201,7 +201,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                           </Table>
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                              <p>Nothing found here yet.</p>
+                              <p>No applications found.</p>
                           </div>
                       )}
                   </CardContent>
@@ -213,9 +213,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   <CardHeader className="bg-primary/10">
                       <CardTitle className="flex items-center gap-2">
                           <Inbox className="h-5 w-5 text-primary" />
-                          New Sign Ups
+                          New Sign Ups (from Customers)
                       </CardTitle>
-                      <CardDescription className="text-primary/80">These people signed up themselves. Please pick them up and check their details.</CardDescription>
+                      <CardDescription className="text-primary/80">These requests were submitted by customers. Please claim and verify them.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredLeads.length > 0 ? (
@@ -250,7 +250,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                               <Inbox className="h-12 w-12 mb-2 opacity-20" />
-                              <p>No new sign ups right now.</p>
+                              <p>No new customer sign ups right now.</p>
                           </div>
                       )}
                   </CardContent>

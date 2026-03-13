@@ -20,8 +20,7 @@ import {
   History, 
   TrendingUp,
   Users,
-  ShieldCheck,
-  Search
+  ShieldCheck
 } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
