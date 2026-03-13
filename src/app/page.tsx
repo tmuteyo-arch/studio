@@ -167,7 +167,7 @@ function AppContent() {
                       <SelectItem value="asl">Area Sales Leaders (ASL)</SelectItem>
                       <SelectItem value="back-office">Back Office Clerks</SelectItem>
                       <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
-                      <SelectItem value="management">Management Hub</SelectItem>
+                      <SelectItem value="management">MANAGEMENT</SelectItem>
                     </SelectContent>
                   </Select>
               </div>
@@ -206,6 +206,7 @@ function AppContent() {
                                 {loggedInUser.role === 'asl' ? 'Area Sales Leader' : 
                                  loggedInUser.role === 'back-office' ? 'Back Office Clerk' :
                                  loggedInUser.role === 'supervisor' ? 'Back Office Supervisor' :
+                                 loggedInUser.role === 'management' ? 'MANAGEMENT' :
                                  loggedInUser.role.replace('-', ' ')}
                             </p>
                         </div>

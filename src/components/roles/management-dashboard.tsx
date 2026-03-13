@@ -201,7 +201,7 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold">Management Hub</h2>
+                  <h2 className="text-3xl font-bold">MANAGEMENT</h2>
                   <p className="text-muted-foreground">Strategic oversight, executive approvals, and operational metrics.</p>
                 </div>
                 <Badge variant="outline" className="px-3 py-1 bg-primary/5 border-primary/20 text-primary font-bold">

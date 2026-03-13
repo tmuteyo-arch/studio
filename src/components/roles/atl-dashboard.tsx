@@ -116,7 +116,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-2">
                       <Inbox className="h-4 w-4" />
-                      New Sign Ups ({filteredLeads.length})
+                      New Sign Ups (from Customers) ({filteredLeads.length})
                       {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
                   </TabsTrigger>
               </TabsList>
@@ -213,7 +213,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   <CardHeader className="bg-primary/10">
                       <CardTitle className="flex items-center gap-2">
                           <Inbox className="h-5 w-5 text-primary" />
-                          New Sign Ups (Customer Self-Service)
+                          New Sign Ups (from Customers)
                       </CardTitle>
                       <CardDescription className="text-primary/80">Pending registrations submitted via customer portals. Action required to claim and verify.</CardDescription>
                   </CardHeader>
