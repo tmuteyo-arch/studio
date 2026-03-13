@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -35,12 +34,12 @@ import StepSignatories from './steps/step-signatories';
 
 
 const allSteps: Step[] = [
-  { id: 'account-type', name: 'Account Type', fields: ['clientType', 'region'] },
-  { id: 'individual-info', name: 'Applicant Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
-  { id: 'corporate-info', name: 'Corporate Details', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
-  { id: 'signatories', name: 'Mandate & Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
-  { id: 'document-upload', name: 'Documents', fields: ['document1Type', 'document2Type'] },
-  { id: 'review-submit', name: 'Review & Submit', fields: ['signature', 'agreedToTerms'] },
+  { id: 'account-type', name: 'Start Here', fields: ['clientType', 'region'] },
+  { id: 'individual-info', name: 'Your Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
+  { id: 'corporate-info', name: 'Company Details', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
+  { id: 'signatories', name: 'People Signing', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
+  { id: 'document-upload', name: 'Add Photos/Files', fields: ['document1Type', 'document2Type'] },
+  { id: 'review-submit', name: 'Final Check', fields: ['signature', 'agreedToTerms'] },
 ];
 
 const StepComponents: Record<string, React.ElementType> = {
@@ -115,17 +114,14 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     const isCorporate = !isPersonal && !isSoleTrader;
 
     if (isPersonal) {
-      // Personal accounts do not need Corporate Details or Mandate & Signatories step
       return allSteps.filter(step => ['account-type', 'individual-info', 'document-upload', 'review-submit'].includes(step.id));
     }
     
     if (isSoleTrader) {
-      // Sole Trader needs Applicant Details AND Mandate & Signatories
       return allSteps.filter(step => ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'].includes(step.id));
     }
 
     if (isCorporate) {
-      // Corporate accounts do not need Applicant Details (Individual info) step as it uses Corporate Details
       return allSteps.filter(step => step.id !== 'individual-info');
     }
     
@@ -157,7 +153,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     if (duplicate) {
         setDuplicateInfo({ 
           isDuplicate: true, 
-          message: `An existing application for '${nameToCheck}' was found in the system (App ID: ${duplicate.id}). Please verify if this is a new request or a duplicate.` 
+          message: `Someone named '${nameToCheck}' is already in the system. Please check if this is new or a mistake.` 
         });
         return false;
     }
@@ -171,8 +167,8 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     
     if (!isValid) {
       toast({
-        title: "Incomplete Information",
-        description: "Please fill out all mandatory fields before proceeding.",
+        title: "Almost Done",
+        description: "Please fill in all the required boxes first.",
         variant: "destructive",
       });
       return;
@@ -216,7 +212,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
         { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
       ].filter(doc => doc.type),
       history: [
-        { action: 'Submitted', user: user.name, timestamp: new Date().toISOString() },
+        { action: 'Request Sent', user: user.name, timestamp: new Date().toISOString() },
       ],
       comments: [],
     };
@@ -224,8 +220,8 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     setApplications((prev) => [newApplication, ...prev]);
 
     toast({
-      title: "Application Submitted!",
-      description: `Application for ${newApplication.clientName} has been successfully created.`,
+      title: "All Set!",
+      description: `We've received the request for ${newApplication.clientName}.`,
     });
     
      setTimeout(() => {
@@ -252,18 +248,18 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
                 <CardFooter className="border-t px-6 py-4 justify-between bg-muted/10">
                   <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev}>
                      {currentStepIndex > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
-                    {currentStepIndex === 0 ? 'Cancel' : 'Back'}
+                    {currentStepIndex === 0 ? 'Cancel' : 'Go Back'}
                   </Button>
                   {currentStepIndex < steps.length - 1 && (
                      <Button type="button" onClick={next} disabled={isCheckingDuplicates}>
                       {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      {isCheckingDuplicates ? 'Validating...' : 'Next'}
+                      {isCheckingDuplicates ? 'Checking...' : 'Next Step'}
                     </Button>
                   )}
                   {currentStepIndex === steps.length - 1 && (
                      <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                       {isSubmitting ? 'Finalizing...' : 'Submit Application'}
+                       {isSubmitting ? 'Sending...' : 'Finish & Send'}
                      </Button>
                   )}
                 </CardFooter>
@@ -281,18 +277,18 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
               <AlertDialogDescription className="text-foreground">
                 {duplicateInfo.message}
                 <br /><br />
-                Do you want to continue with this application?
+                Do you still want to go ahead?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>No, Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={() => {
                 setDuplicateInfo({ isDuplicate: false, message: '' });
                 if (currentStepIndex < steps.length - 1) {
                   setCurrentStepIndex((step) => step + 1);
                 }
               }}>
-                Continue
+                Yes, Continue
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

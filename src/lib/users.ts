@@ -8,7 +8,7 @@ export interface User {
   role: Role;
   email: string;
   initials: string;
-  team?: string[]; // Names of ATLs this supervisor manages
+  team?: string[]; // Names of people this manager looks after
 }
 
 export const users: User[] = [

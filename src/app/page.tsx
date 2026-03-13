@@ -31,7 +31,6 @@ function AppContent() {
   const [mounted, setMounted] = React.useState(false);
   const { toast } = useToast();
 
-  // Prevent hydration mismatch/hangs by waiting for mount
   React.useEffect(() => {
     setMounted(true);
   }, []);
@@ -42,8 +41,8 @@ function AppContent() {
     if (!selectedRole) {
       toast({
         variant: 'destructive',
-        title: 'Selection Required',
-        description: 'Please select a designated dashboard to enter.',
+        title: 'Please Choose',
+        description: 'Please select a workplace to enter.',
       });
       return;
     }
@@ -54,13 +53,13 @@ function AppContent() {
       setLoggedInUser(userToLogin);
       toast({
         title: `Welcome, ${userToLogin.name}!`,
-        description: `Access granted to the ${userToLogin.role.replace('-', ' ')} portal.`,
+        description: `You are now in the ${userToLogin.role.replace('-', ' ')} section.`,
       });
     } else {
        toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: `Credentials invalid or role not found in the system.`,
+        description: `Your login details did not work.`,
       });
     }
   };
@@ -127,20 +126,20 @@ function AppContent() {
           <Logo className="h-20 w-20 drop-shadow-2xl" />
           <div className="space-y-1">
               <h1 className="text-4xl font-black tracking-tight text-white">InnBucks</h1>
-              <p className="text-white font-bold tracking-[0.2em] text-[10px] uppercase opacity-80">Agent Onboarding System</p>
+              <p className="text-white font-bold tracking-[0.2em] text-[10px] uppercase opacity-80">Simple Sign Up System</p>
           </div>
         </div>
 
         <Card className="overflow-hidden shadow-2xl border-white/20 bg-white/10 backdrop-blur-xl text-white">
           <CardHeader className="bg-black/20 p-8 text-center border-b border-white/10">
               <CardTitle className="text-2xl font-bold tracking-tight">Secure Sign In</CardTitle>
-              <CardDescription className="text-white/60">Enter credentials and select your designated workspace.</CardDescription>
+              <CardDescription className="text-white/60">Enter your details and pick your workspace.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <form onSubmit={handleLogin} className='space-y-5'>
               <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2" htmlFor="email">
-                    <Mail className="h-3 w-3" /> Email Address / Username
+                    <Mail className="h-3 w-3" /> Email Address
                   </Label>
                   <Input 
                     id="email" 
@@ -168,32 +167,32 @@ function AppContent() {
               </div>
               <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2" htmlFor="role">
-                    <LayoutDashboard className="h-3 w-3" /> Designated Dashboard
+                    <LayoutDashboard className="h-3 w-3" /> Workspace
                   </Label>
                   <Select value={selectedRole} onValueChange={(v: Role) => setSelectedRole(v)}>
                     <SelectTrigger className="h-12 bg-white/10 border-white/20 text-white focus:ring-2 focus:ring-[#7c3aed] transition-all">
-                      <SelectValue placeholder="Search or select dashboard..." />
+                      <SelectValue placeholder="Pick your workspace..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1e1b4b] border-white/20 text-white">
-                      <SelectItem value="atl">Area Team Leaders (ATL)</SelectItem>
-                      <SelectItem value="merchant-services">Merchant Services</SelectItem>
+                      <SelectItem value="atl">Team Leaders (ATL)</SelectItem>
+                      <SelectItem value="merchant-services">Merchant Team</SelectItem>
                       <SelectItem value="business-banking">Business Banking</SelectItem>
-                      <SelectItem value="inner-circle">Inner Circle</SelectItem>
-                      <SelectItem value="back-office">Back Office Operations</SelectItem>
-                      <SelectItem value="supervisor">Regulatory Supervisor</SelectItem>
-                      <SelectItem value="retail-executive">Retail Executive</SelectItem>
-                      <SelectItem value="financial-director">Financial Director</SelectItem>
+                      <SelectItem value="inner-circle">VIP Team</SelectItem>
+                      <SelectItem value="back-office">Admin Team</SelectItem>
+                      <SelectItem value="supervisor">Manager</SelectItem>
+                      <SelectItem value="retail-executive">Executive Boss</SelectItem>
+                      <SelectItem value="financial-director">Finance Boss</SelectItem>
                     </SelectContent>
                   </Select>
               </div>
               
               <Button type="submit" className="w-full h-12 !mt-8 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold shadow-xl border-t border-white/20 transition-all active:scale-[0.98]">
-                <LogIn className="mr-2 h-5 w-5"/> Sign Into Portal
+                <LogIn className="mr-2 h-5 w-5"/> Sign In Now
               </Button>
             </form>
           </CardContent>
           <CardFooter className="bg-black/30 p-4 text-center text-[10px] text-white/40 justify-center uppercase tracking-widest border-t border-white/5">
-            <ShieldCheck className="mr-2 h-3 w-3 text-accent/50"/> End-to-End Encrypted Session
+            <ShieldCheck className="mr-2 h-3 w-3 text-accent/50"/> Fully Secured Session
           </CardFooter>
         </Card>
         
@@ -211,7 +210,7 @@ function AppContent() {
                         <Logo className="h-8 w-8" />
                         <div>
                             <h1 className="text-xl font-bold text-white leading-tight">InnBucks</h1>
-                            <p className="text-[10px] uppercase tracking-tighter text-secondary font-bold">Onboarding Portal</p>
+                            <p className="text-[10px] uppercase tracking-tighter text-secondary font-bold">Sign Up Portal</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
