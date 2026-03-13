@@ -40,13 +40,13 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Batch Sign Agreements</DialogTitle>
+          <DialogTitle>Group Approval</DialogTitle>
           <DialogDescription>
-            You are about to apply your signature to <strong>{count}</strong> selected agreements. This action will finalize all of them at once.
+            You are adding your sign-off to <strong>{count}</strong> selected requests. This will finish them all at once.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <Label>Your Digital Signature</Label>
+          <Label>Your Digital Sign-off</Label>
           <div className="w-full border rounded-md bg-white p-2">
             <SignatureCanvas 
               ref={sigPadRef} 
@@ -62,7 +62,7 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleConfirm}>Sign & Finalize {count} Items</Button>
+          <Button onClick={handleConfirm}>Approve & Finish {count} Items</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -71,7 +71,7 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
 
 const regionalChartConfig = {
   count: {
-    label: 'Applications',
+    label: 'Requests',
     color: 'hsl(var(--primary))',
   },
 } satisfies ChartConfig;
@@ -102,7 +102,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
     }, [applications]);
 
     const atlPerformance = React.useMemo(() => {
-        const atlUsers = allUsers.filter(u => u.role === 'atl');
+        const atlUsers = allUsers.filter(u => u.role === 'asl');
         return atlUsers.map(atl => {
             const atlApps = applications.filter(app => app.submittedBy === atl.name);
             return {
@@ -153,7 +153,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                     },
                     history: [
                         ...app.history,
-                        { action: 'Agreement Signed by Executive (Batch)', user: user.name, timestamp }
+                        { action: 'Approved by Executive (Group)', user: user.name, timestamp }
                     ]
                 };
             }
@@ -161,8 +161,8 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
         }));
         
         toast({
-            title: "Batch Signing Successful",
-            description: `Successfully finalized ${selectedIds.length} agreements.`,
+            title: "Success",
+            description: `Finished ${selectedIds.length} requests.`,
         });
         
         setSelectedIds([]);
@@ -185,12 +185,12 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold">Retail Executive Portal</h2>
-                  <p className="text-muted-foreground">Oversight and final verification of regional agency agreements.</p>
+                  <h2 className="text-3xl font-bold">Executive Boss Portal</h2>
+                  <p className="text-muted-foreground">Final check and sign-off for all area requests.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge variant="outline" className="px-3 py-1 bg-primary/5 border-primary/20 text-primary font-bold">
-                        {summaryStats.pendingAgreementSignature} Pending Signatures
+                        {summaryStats.pendingAgreementSignature} Waiting for Sign-off
                     </Badge>
                 </div>
             </div>
@@ -198,7 +198,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 <Card className="border-primary/50 bg-primary/5 shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary">To Sign</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary">To Finish</CardTitle>
                         <FileSignature className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
@@ -207,7 +207,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                 </Card>
                 <Card className="shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pending Pipeline</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Queue</CardTitle>
                         <Inbox className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -216,7 +216,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                 </Card>
                 <Card className="shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Onboarded</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Done</CardTitle>
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
@@ -225,7 +225,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                 </Card>
                 <Card className="shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rejected</CardTitle>
+                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Declined</CardTitle>
                         <AlertCircle className="h-4 w-4 text-destructive" />
                     </CardHeader>
                     <CardContent>
@@ -247,11 +247,11 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                 <TabsList className="bg-muted/50 p-1 mb-6">
                     <TabsTrigger value="operations" className="flex items-center gap-2">
                         <LayoutDashboard className="h-4 w-4" />
-                        Daily Operations
+                        Daily Work
                     </TabsTrigger>
                     <TabsTrigger value="analytics" className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4" />
-                        Business Analytics
+                        Regional Stats
                     </TabsTrigger>
                 </TabsList>
 
@@ -263,16 +263,16 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                     <div>
                                         <CardTitle className="flex items-center gap-2">
                                             <Edit className="h-5 w-5 text-primary" />
-                                            Agreements Pending Your Signature
+                                            Requests Waiting for Sign-off
                                         </CardTitle>
                                         <CardDescription>
-                                            Review and bulk-sign agreements verified by supervisors.
+                                            Quickly approve items checked by the Back Office Supervisors.
                                         </CardDescription>
                                     </div>
                                     {selectedIds.length > 0 && (
                                         <Button onClick={() => setIsBulkSignOpen(true)} className="bg-primary text-primary-foreground shadow-lg animate-in slide-in-from-right-2">
                                             <FileSignature className="mr-2 h-4 w-4" />
-                                            Batch Sign ({selectedIds.length})
+                                            Group Approval ({selectedIds.length})
                                         </Button>
                                     )}
                                 </div>
@@ -287,9 +287,9 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                                     onCheckedChange={toggleSelectAll}
                                                 />
                                             </TableHead>
-                                            <TableHead>Client Name</TableHead>
-                                            <TableHead>Region</TableHead>
-                                            <TableHead>Supervisor Signature</TableHead>
+                                            <TableHead>Customer Name</TableHead>
+                                            <TableHead>Place</TableHead>
+                                            <TableHead>Supervisor Check</TableHead>
                                             <TableHead className="text-right">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -312,12 +312,12 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
                                                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                                            Signed by {app.history.find(h => h.action.includes('Supervisor'))?.user || 'Supervisor'}
+                                                            OK by {app.history.find(h => h.action.includes('Supervisor'))?.user || 'Supervisor'}
                                                         </Badge>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Individual Review</Button>
+                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Check & Sign</Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -330,7 +330,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
                                 <CheckCircle2 className="h-12 w-12 text-muted-foreground opacity-20 mb-4" />
                                 <p className="text-lg font-medium text-muted-foreground">Queue is empty</p>
-                                <p className="text-sm text-muted-foreground">All pending agreements have been signed.</p>
+                                <p className="text-sm text-muted-foreground">All waiting items have been finished.</p>
                             </CardContent>
                         </Card>
                     )}
@@ -339,10 +339,10 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <History className="h-5 w-5" />
-                                Finalized Agency Agreements
+                                Finished Requests
                             </CardTitle>
                             <CardDescription>
-                                Registry of fully executed agreements across the network.
+                                A full list of all completed sign-ups across the network.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -350,9 +350,9 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Client Name</TableHead>
-                                            <TableHead>Region</TableHead>
-                                            <TableHead>Date Finalized</TableHead>
+                                            <TableHead>Customer Name</TableHead>
+                                            <TableHead>Place</TableHead>
+                                            <TableHead>Date Finished</TableHead>
                                             <TableHead className="text-right">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -370,7 +370,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                                     {app.details.executiveSignatureTimestamp ? new Date(app.details.executiveSignatureTimestamp).toLocaleDateString() : 'N/A'}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>View Record</Button>
+                                                    <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -378,7 +378,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                 </Table>
                             ) : (
                                 <div className="text-center p-12 text-muted-foreground italic">
-                                    No finalized agency agreements found.
+                                    No finished requests found.
                                 </div>
                             )}
                         </CardContent>
@@ -391,9 +391,9 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-primary">
                                     <MapPin className="h-5 w-5" />
-                                    Regional Performance
+                                    Regional Stats
                                 </CardTitle>
-                                <CardDescription>Application volume breakdown by province (Zimbabwe).</CardDescription>
+                                <CardDescription>Where the sign-ups are coming from.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <ChartContainer config={regionalChartConfig} className="h-[350px] w-full">
@@ -423,8 +423,8 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                         
                         <Card className="shadow-sm">
                             <CardHeader>
-                                <CardTitle>Regional Ranking</CardTitle>
-                                <CardDescription>Top provinces by onboarding volume.</CardDescription>
+                                <CardTitle>Top Places</CardTitle>
+                                <CardDescription>Ranking by volume.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
@@ -448,21 +448,21 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-primary">
                                 <Award className="h-5 w-5" />
-                                Area Team Leaders (ATL) Individual Performance Metrics
+                                Sales Leader (ASL) Results
                             </CardTitle>
                             <CardDescription>
-                                Contribution and success rates for each Area Team Leader in the network.
+                                Performance and success rates for the Sales team.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/30">
-                                        <TableHead>ATL Name</TableHead>
-                                        <TableHead className="text-center">Total Submitted</TableHead>
-                                        <TableHead className="text-center text-green-600">Approved</TableHead>
-                                        <TableHead className="text-center text-destructive">Rejected</TableHead>
-                                        <TableHead className="text-center text-amber-600">In Pipeline</TableHead>
+                                        <TableHead>ASL Name</TableHead>
+                                        <TableHead className="text-center">Total Sent</TableHead>
+                                        <TableHead className="text-center text-green-600">Done</TableHead>
+                                        <TableHead className="text-center text-destructive">Declined</TableHead>
+                                        <TableHead className="text-center text-amber-600">Active</TableHead>
                                         <TableHead className="text-right">Success Rate</TableHead>
                                     </TableRow>
                                 </TableHeader>

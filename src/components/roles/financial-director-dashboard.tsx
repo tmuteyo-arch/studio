@@ -119,83 +119,26 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold">Financial Director Portal</h2>
-                  <p className="text-muted-foreground">Oversight of Supervisory efficiency and Back Office operational performance.</p>
+                  <h2 className="text-3xl font-bold">Finance Boss Portal</h2>
+                  <p className="text-muted-foreground">Checking results for Supervisors and the Back Office team.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge className="bg-secondary text-secondary-foreground font-bold">
                         <Database className="mr-2 h-3 w-3" />
-                        System Runtime: Stable
+                        System: Working OK
                     </Badge>
                 </div>
-            </div>
-
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total volume</CardTitle>
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.total}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Success Rate</CardTitle>
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.successRate}%</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Avg. TAT</CardTitle>
-                        <Clock className="h-4 w-4 text-blue-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.avgTat}h</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Approved</CardTitle>
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.approved}</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rejected</CardTitle>
-                        <AlertCircle className="h-4 w-4 text-destructive" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.rejected}</div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-primary/5 border-primary/20">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary">In Pipeline</CardTitle>
-                        <Wallet className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-primary">{stats.pending}</div>
-                    </CardContent>
-                </Card>
             </div>
 
             <Tabs defaultValue="supervisors" className="w-full">
                 <TabsList className="bg-muted/50 p-1 mb-6">
                     <TabsTrigger value="supervisors" className="flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4" />
-                        Supervisory Oversight
+                        Supervisor Check
                     </TabsTrigger>
                     <TabsTrigger value="back-office" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        Back Office Team Performance
+                        Clerk Work
                     </TabsTrigger>
                 </TabsList>
 
@@ -204,19 +147,19 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <ShieldCheck className="h-5 w-5 text-primary" />
-                                Regulatory Supervisor Performance
+                                Supervisor Work Results
                             </CardTitle>
-                            <CardDescription>Oversight of final validation accuracy and team management by department supervisors.</CardDescription>
+                            <CardDescription>Final checks and team management results.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/30">
                                         <TableHead>Supervisor Name</TableHead>
-                                        <TableHead className="text-center">Managed Agents (ATL)</TableHead>
-                                        <TableHead className="text-center">Agreements Signed</TableHead>
-                                        <TableHead className="text-center">Rejections Issued</TableHead>
-                                        <TableHead className="text-right">Audit Status</TableHead>
+                                        <TableHead className="text-center">Managed ASLs</TableHead>
+                                        <TableHead className="text-center">Sign-offs</TableHead>
+                                        <TableHead className="text-center">Declined</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -229,12 +172,12 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                                                 {sup.name}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge variant="secondary">{sup.teamSize} Agents</Badge>
+                                                <Badge variant="secondary">{sup.teamSize} ASLs</Badge>
                                             </TableCell>
                                             <TableCell className="text-center font-bold text-green-600">{sup.signed}</TableCell>
                                             <TableCell className="text-center font-bold text-destructive">{sup.rejected}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm">Audit Decisions</Button>
+                                                <Button variant="ghost" size="sm">Audit</Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -249,18 +192,18 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Users className="h-5 w-5 text-primary" />
-                                Back Office Staff Performance Metrics
+                                Back Office Clerk Results
                             </CardTitle>
-                            <CardDescription>Monitoring processing volumes and accuracy for the Operations team.</CardDescription>
+                            <CardDescription>How much work the clerical team is doing.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/30">
                                         <TableHead>Clerk Name</TableHead>
-                                        <TableHead className="text-center">Total Processed</TableHead>
+                                        <TableHead className="text-center">Processed</TableHead>
                                         <TableHead className="text-center">Current Load</TableHead>
-                                        <TableHead className="text-center">Accuracy Score</TableHead>
+                                        <TableHead className="text-center">Accuracy</TableHead>
                                         <TableHead className="text-right">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -286,7 +229,7 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm">Audit Output</Button>
+                                                <Button variant="ghost" size="sm">Results</Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}

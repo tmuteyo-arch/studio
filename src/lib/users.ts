@@ -1,6 +1,6 @@
 'use client';
 
-export type Role = 'atl' | 'back-office' | 'supervisor' | 'retail-executive' | 'merchant-services' | 'business-banking' | 'inner-circle' | 'financial-director';
+export type Role = 'asl' | 'back-office' | 'supervisor' | 'retail-executive' | 'financial-director';
 
 export interface User {
   id: string;
@@ -12,18 +12,18 @@ export interface User {
 }
 
 export const users: User[] = [
-  { id: 'atl-1', name: 'CHIDO', role: 'atl', email: 'chido@inbucks.app', initials: 'CH' },
-  { id: 'atl-2', name: 'COLLETOR', role: 'atl', email: 'colletor@inbucks.app', initials: 'CO' },
-  { id: 'atl-3', name: 'CONCILLIA', role: 'atl', email: 'concillia@inbucks.app', initials: 'CN' },
-  { id: 'atl-4', name: 'HEYZREST', role: 'atl', email: 'heyzrest@inbucks.app', initials: 'HE' },
-  { id: 'atl-5', name: 'LIBERTY', role: 'atl', email: 'liberty@inbucks.app', initials: 'LI' },
-  { id: 'atl-6', name: 'MERCY', role: 'atl', email: 'mercy@inbucks.app', initials: 'ME' },
-  { id: 'atl-7', name: 'PAMELA', role: 'atl', email: 'pamela@inbucks.app', initials: 'PA' },
-  { id: 'atl-8', name: 'PARADZAI', role: 'atl', email: 'paradzai@inbucks.app', initials: 'PR' },
-  { id: 'atl-9', name: 'PRIDE', role: 'atl', email: 'pride@inbucks.app', initials: 'PD' },
-  { id: 'atl-10', name: 'TARIRO', role: 'atl', email: 'tariro@inbucks.app', initials: 'TA' },
-  { id: 'atl-11', name: 'TATENDA', role: 'atl', email: 'tatenda@inbucks.app', initials: 'TT' },
-  { id: 'atl-12', name: 'TERENCE', role: 'atl', email: 'terence@inbucks.app', initials: 'TE' },
+  { id: 'asl-1', name: 'CHIDO', role: 'asl', email: 'chido@inbucks.app', initials: 'CH' },
+  { id: 'asl-2', name: 'COLLETOR', role: 'asl', email: 'colletor@inbucks.app', initials: 'CO' },
+  { id: 'asl-3', name: 'CONCILLIA', role: 'asl', email: 'concillia@inbucks.app', initials: 'CN' },
+  { id: 'asl-4', name: 'HEYZREST', role: 'asl', email: 'heyzrest@inbucks.app', initials: 'HE' },
+  { id: 'asl-5', name: 'LIBERTY', role: 'asl', email: 'liberty@inbucks.app', initials: 'LI' },
+  { id: 'asl-6', name: 'MERCY', role: 'asl', email: 'mercy@inbucks.app', initials: 'ME' },
+  { id: 'asl-7', name: 'PAMELA', role: 'asl', email: 'pamela@inbucks.app', initials: 'PA' },
+  { id: 'asl-8', name: 'PARADZAI', role: 'asl', email: 'paradzai@inbucks.app', initials: 'PR' },
+  { id: 'asl-9', name: 'PRIDE', role: 'asl', email: 'pride@inbucks.app', initials: 'PD' },
+  { id: 'asl-10', name: 'TARIRO', role: 'asl', email: 'tariro@inbucks.app', initials: 'TA' },
+  { id: 'asl-11', name: 'TATENDA', role: 'asl', email: 'tatenda@inbucks.app', initials: 'TT' },
+  { id: 'asl-12', name: 'TERENCE', role: 'asl', email: 'terence@inbucks.app', initials: 'TE' },
   { id: 'bo-1', name: 'TENDAI', role: 'back-office', email: 'tendai@inbucks.app', initials: 'TE' },
   { id: 'bo-2', name: 'TASHINGA', role: 'back-office', email: 'tashinga@inbucks.app', initials: 'TS' },
   { id: 'bo-3', name: 'RICHARD', role: 'back-office', email: 'richard@inbucks.app', initials: 'RI' },
@@ -49,26 +49,5 @@ export const users: User[] = [
     role: 'financial-director',
     email: 'fd@inbucks.app',
     initials: 'FM',
-  },
-  {
-    id: 'ms-1',
-    name: 'Merchant Admin',
-    role: 'merchant-services',
-    email: 'merchant@inbucks.app',
-    initials: 'MS',
-  },
-  {
-    id: 'bb-1',
-    name: 'Business Banker',
-    role: 'business-banking',
-    email: 'business@inbucks.app',
-    initials: 'BB',
-  },
-  {
-    id: 'ic-1',
-    name: 'Circle Lead',
-    role: 'inner-circle',
-    email: 'circle@inbucks.app',
-    initials: 'IC',
   },
 ];

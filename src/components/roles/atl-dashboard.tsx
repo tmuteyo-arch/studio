@@ -37,7 +37,7 @@ const translateStatus = (status: ApplicationStatus) => {
     switch (status) {
         case 'Submitted': return 'Sent';
         case 'In Review': return 'Checking';
-        case 'Pending Supervisor': return 'Manager Check';
+        case 'Pending Supervisor': return 'Supervisor Check';
         case 'Pending Executive Signature': return 'Final Check';
         case 'Signed': return 'Done';
         case 'Rejected': return 'Declined';
@@ -98,12 +98,12 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
-              <h2 className="text-3xl font-bold">Team Leader Home</h2>
-              <p className="text-muted-foreground">Send and track requests from customers here.</p>
+              <h2 className="text-3xl font-bold">Sales Leader (ASL) Home</h2>
+              <p className="text-muted-foreground">Track and manage sign up requests for your area.</p>
           </div>
           <Button onClick={() => setIsCreatingApplication(true)} className="shadow-lg hover:scale-105 transition-transform bg-primary text-primary-foreground font-bold">
               <PlusCircle className="mr-2 h-4 w-4" />
-              Start New Sign Up
+              New Sign Up
           </Button>
         </div>
 
@@ -112,18 +112,18 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
               <TabsList className="bg-muted/50 p-1">
                   <TabsTrigger value="my-apps" className="flex items-center gap-2">
                       <UserCheck className="h-4 w-4" />
-                      My Work ({filteredApplications.length})
+                      My Work List ({filteredApplications.length})
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-2">
                       <Inbox className="h-4 w-4" />
-                      Customer Sign Ups ({filteredLeads.length})
+                      New Sign Ups ({filteredLeads.length})
                       {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
                   </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                      placeholder="Search by name or place..."
+                      placeholder="Search name or place..."
                       className="pl-10"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -144,9 +144,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                   <TableRow className="bg-muted/10">
                                       <TableHead className="pl-6">ID</TableHead>
                                       <TableHead>Customer Name</TableHead>
-                                      <TableHead>Region</TableHead>
-                                      <TableHead>Status</TableHead>
-                                      <TableHead>Latest Update</TableHead>
+                                      <TableHead>Place</TableHead>
+                                      <TableHead>Progress</TableHead>
+                                      <TableHead>Latest News</TableHead>
                                       <TableHead className="text-right pr-6">Action</TableHead>
                                   </TableRow>
                               </TableHeader>
@@ -213,7 +213,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   <CardHeader className="bg-primary/10">
                       <CardTitle className="flex items-center gap-2">
                           <Inbox className="h-5 w-5 text-primary" />
-                          New Customer Sign Ups
+                          New Sign Ups
                       </CardTitle>
                       <CardDescription className="text-primary/80">These people signed up themselves. Please pick them up and check their details.</CardDescription>
                   </CardHeader>
@@ -224,7 +224,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                   <TableRow className="bg-primary/5">
                                       <TableHead className="pl-6">ID</TableHead>
                                       <TableHead>Customer / Company</TableHead>
-                                      <TableHead>Region</TableHead>
+                                      <TableHead>Place</TableHead>
                                       <TableHead>Account Type</TableHead>
                                       <TableHead>Date Sent</TableHead>
                                       <TableHead className="text-right pr-6">Action</TableHead>
@@ -250,7 +250,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                               <Inbox className="h-12 w-12 mb-2 opacity-20" />
-                              <p>No new customer sign ups right now.</p>
+                              <p>No new sign ups right now.</p>
                           </div>
                       )}
                   </CardContent>

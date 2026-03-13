@@ -76,29 +76,29 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
   return (
     <div className="space-y-6">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold">Regulatory Oversight Dashboard</h2>
-        <p className="text-muted-foreground">Monitoring and regulating operations for Area Team Leaders (ATL) and Back Office staff.</p>
+        <h2 className="text-3xl font-bold">Back Office Supervisor Home</h2>
+        <p className="text-muted-foreground">Managing ASL submissions and Clerical output performance.</p>
       </div>
 
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
             <Card className="border-primary/20 bg-primary/5">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Regulation Queue</CardTitle>
+                    <CardTitle className="text-sm font-medium">Supervisor Queue</CardTitle>
                     <ShieldCheck className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{myApprovalQueue.length}</div>
-                    <p className="text-xs text-muted-foreground">Awaiting your validation</p>
+                    <p className="text-xs text-muted-foreground">Ready for final sign-off</p>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">ATL Active Load</CardTitle>
+                    <CardTitle className="text-sm font-medium">ASL Active Load</CardTitle>
                     <UserCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{teamPending.length}</div>
-                    <p className="text-xs text-muted-foreground">Submissions in progress</p>
+                    <p className="text-xs text-muted-foreground">New ASL submissions</p>
                 </CardContent>
             </Card>
              <Card>
@@ -108,17 +108,17 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">+{completedToday}</div>
-                    <p className="text-xs text-muted-foreground">Regulatory sign-offs completed</p>
+                    <p className="text-xs text-muted-foreground">Sign-offs completed today</p>
                 </CardContent>
             </Card>
             <Card className={pendingOver3Days > 0 ? "bg-destructive/10 border-destructive" : ""}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">SLA Breaches (&gt;3 Days)</CardTitle>
+                    <CardTitle className="text-sm font-medium">SLA Alerts (&gt;3 Days)</CardTitle>
                     <AlertCircle className={cn("h-4 w-4 text-muted-foreground", pendingOver3Days > 0 && "text-destructive")} />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{pendingOver3Days}</div>
-                    <p className="text-xs text-muted-foreground">Stalled applications requiring intervention</p>
+                    <p className="text-xs text-muted-foreground">Stalled requests needing help</p>
                 </CardContent>
             </Card>
         </div>
@@ -129,8 +129,8 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                 <ClipboardList className="mr-2 h-4 w-4"/>Workflow Oversight
                 {totalTasks > 0 && <Badge variant="destructive" className="ml-2 animate-pulse">{totalTasks}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value="analytics"><AreaChart className="mr-2 h-4 w-4"/>Performance Appraisal</TabsTrigger>
-              <TabsTrigger value="team"><Users className="mr-2 h-4 w-4"/>Back Office Clerk Performance</TabsTrigger>
+              <TabsTrigger value="analytics"><AreaChart className="mr-2 h-4 w-4"/>Appraisal</TabsTrigger>
+              <TabsTrigger value="team"><Users className="mr-2 h-4 w-4"/>Clerk Performance</TabsTrigger>
               <TabsTrigger value="reports"><FileDown className="mr-2 h-4 w-4"/>Audit Reports</TabsTrigger>
           </TabsList>
           
@@ -138,30 +138,30 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
              <Tabs defaultValue="approval" className="w-full">
                   <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                       <TabsList className="w-full sm:w-auto">
-                          <TabsTrigger value="approval">Final Review Queue ({filteredApprovalQueue.length})</TabsTrigger>
-                          <TabsTrigger value="team">ATL Submission Monitor ({filteredTeamApps.length})</TabsTrigger>
+                          <TabsTrigger value="approval">Review Queue ({filteredApprovalQueue.length})</TabsTrigger>
+                          <TabsTrigger value="team">ASL Monitor ({filteredTeamApps.length})</TabsTrigger>
                       </TabsList>
                       <div className="relative w-full sm:w-64">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input placeholder="Search by ID or Client..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                          <Input placeholder="Search ID or Client..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                       </div>
                   </div>
                   <TabsContent value="approval">
                       <Card>
                           <CardHeader>
-                              <CardTitle>Back Office Output Validation</CardTitle>
-                              <CardDescription>Regulating accuracy of applications processed by Back Office before final approval.</CardDescription>
+                              <CardTitle>Clerk Output Validation</CardTitle>
+                              <CardDescription>Check and sign off on requests processed by Back Office Clerks.</CardDescription>
                           </CardHeader>
                           <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>App ID</TableHead>
-                                        <TableHead>Client Name</TableHead>
-                                        <TableHead>ATL (Origin)</TableHead>
-                                        <TableHead>Last Updated</TableHead>
-                                        <TableHead>Current Stage</TableHead>
-                                        <TableHead className="text-right">Regulate</TableHead>
+                                        <TableHead>ID</TableHead>
+                                        <TableHead>Customer</TableHead>
+                                        <TableHead>From ASL</TableHead>
+                                        <TableHead>Last Action</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -179,24 +179,24 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                                     ))}
                                 </TableBody>
                             </Table>
-                            {filteredApprovalQueue.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No matches found.' : 'All Back Office output has been regulated.'}</div>}
+                            {filteredApprovalQueue.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No matches.' : 'Queue is empty.'}</div>}
                           </CardContent>
                       </Card>
                   </TabsContent>
                   <TabsContent value="team">
                       <Card>
                           <CardHeader>
-                              <CardTitle>ATL Activity Monitor</CardTitle>
-                              <CardDescription>Oversight of incoming customer applications and submissions by Area Team Leaders (ATL).</CardDescription>
+                              <CardTitle>ASL Performance Monitor</CardTitle>
+                              <CardDescription>Oversight of requests coming in from Area Sales Leaders (ASL).</CardDescription>
                           </CardHeader>
                           <CardContent>
                               <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>App ID</TableHead>
-                                        <TableHead>Client Name</TableHead>
-                                        <TableHead>ATL Name</TableHead>
-                                        <TableHead>Submission Date</TableHead>
+                                        <TableHead>ID</TableHead>
+                                        <TableHead>Customer</TableHead>
+                                        <TableHead>ASL Name</TableHead>
+                                        <TableHead>Date Sent</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -216,7 +216,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                                     ))}
                                 </TableBody>
                               </Table>
-                               {filteredTeamApps.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No results.' : "No active ATL submissions to monitor."}</div>}
+                               {filteredTeamApps.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No results.' : "No active ASL requests to monitor."}</div>}
                           </CardContent>
                       </Card>
                   </TabsContent>

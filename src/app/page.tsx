@@ -9,11 +9,8 @@ import { Button } from '@/components/ui/button';
 import AtlDashboard from '@/components/roles/atl-dashboard';
 import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
 import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
-import RetailExecutiveDashboard from '@/components/roles/retail-executive-dashboard';
-import MerchantServicesDashboard from '@/components/roles/merchant-services-dashboard';
-import BusinessBankingDashboard from '@/components/roles/business-banking-dashboard';
-import InnerCircleDashboard from '@/components/roles/inner-circle-dashboard';
 import FinancialDirectorDashboard from '@/components/roles/financial-director-dashboard';
+import RetailExecutiveDashboard from '@/components/roles/retail-executive-dashboard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
@@ -93,7 +90,7 @@ function AppContent() {
     if (!loggedInUser) return null;
 
     switch (loggedInUser.role) {
-      case 'atl':
+      case 'asl':
         return <AtlDashboard user={loggedInUser} />;
       case 'back-office':
         return <BackOfficeDashboard user={loggedInUser} />;
@@ -101,12 +98,6 @@ function AppContent() {
         return <SupervisorDashboard user={loggedInUser} />;
       case 'retail-executive':
         return <RetailExecutiveDashboard user={loggedInUser} />;
-      case 'merchant-services':
-        return <MerchantServicesDashboard user={loggedInUser} />;
-      case 'business-banking':
-        return <BusinessBankingDashboard user={loggedInUser} />;
-      case 'inner-circle':
-        return <InnerCircleDashboard user={loggedInUser} />;
       case 'financial-director':
         return <FinancialDirectorDashboard user={loggedInUser} />;
       default:
@@ -126,7 +117,7 @@ function AppContent() {
           <Logo className="h-20 w-20 drop-shadow-2xl" />
           <div className="space-y-1">
               <h1 className="text-4xl font-black tracking-tight text-white">InnBucks</h1>
-              <p className="text-white font-bold tracking-[0.2em] text-[10px] uppercase opacity-80">Simple Sign Up System</p>
+              <p className="text-white font-bold tracking-[0.2em] text-[10px] uppercase opacity-80">Sign Up Portal</p>
           </div>
         </div>
 
@@ -174,12 +165,9 @@ function AppContent() {
                       <SelectValue placeholder="Pick your workspace..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1e1b4b] border-white/20 text-white">
-                      <SelectItem value="atl">Team Leaders (ATL)</SelectItem>
-                      <SelectItem value="merchant-services">Merchant Team</SelectItem>
-                      <SelectItem value="business-banking">Business Banking</SelectItem>
-                      <SelectItem value="inner-circle">VIP Team</SelectItem>
-                      <SelectItem value="back-office">Admin Team</SelectItem>
-                      <SelectItem value="supervisor">Manager</SelectItem>
+                      <SelectItem value="asl">Area Sales Leaders (ASL)</SelectItem>
+                      <SelectItem value="back-office">Back Office Clerks</SelectItem>
+                      <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
                       <SelectItem value="retail-executive">Executive Boss</SelectItem>
                       <SelectItem value="financial-director">Finance Boss</SelectItem>
                     </SelectContent>
@@ -217,7 +205,10 @@ function AppContent() {
                         <div className="text-right hidden sm:block">
                             <p className="font-semibold text-white">{loggedInUser.name}</p>
                             <p className="text-[10px] text-white/50 uppercase font-bold">
-                                {loggedInUser.role.replace('-', ' ')}
+                                {loggedInUser.role === 'asl' ? 'Area Sales Leader' : 
+                                 loggedInUser.role === 'back-office' ? 'Back Office Clerk' :
+                                 loggedInUser.role === 'supervisor' ? 'Back Office Supervisor' :
+                                 loggedInUser.role.replace('-', ' ')}
                             </p>
                         </div>
                         <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-white" onClick={handleLogout}>Log Out</Button>
