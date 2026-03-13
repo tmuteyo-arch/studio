@@ -12,10 +12,20 @@ interface KpiTrackerProps {
   applications: Application[];
 }
 
-const KpiItem = ({ title, value, target, unit, lowerIsBetter = false }) => {
-  const isAboveTarget = !lowerIsBetter && value >= target;
-  const isBelowTarget = lowerIsBetter && value <= target;
+interface KpiItemProps {
+  title: string;
+  value: number | null;
+  target: number;
+  unit: string;
+  lowerIsBetter?: boolean;
+}
+
+const KpiItem = ({ title, value, target, unit, lowerIsBetter = false }: KpiItemProps) => {
+  const isAboveTarget = !lowerIsBetter && (value ?? 0) >= target;
+  const isBelowTarget = lowerIsBetter && (value ?? 0) <= target;
   const isSuccess = isAboveTarget || isBelowTarget;
+
+  const progressValue = value !== null ? Math.min(((value || 0) / target) * 100, 100) : 0;
 
   return (
     <div className="p-4 bg-muted/30 rounded-lg">
@@ -32,7 +42,7 @@ const KpiItem = ({ title, value, target, unit, lowerIsBetter = false }) => {
           </Badge>
         )}
       </div>
-       <Progress value={Math.min((value/target) * 100, 100)} className="h-1 mt-2" />
+       <Progress value={progressValue} className="h-1 mt-2" />
     </div>
   );
 };
