@@ -16,7 +16,6 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-lg font-semibold text-foreground mt-6 mb-4 border-b pb-2">{children}</h3>
 );
 
-// A self-contained component for the signature pad logic
 const SignatureField = ({ control, name }: { control: any; name: string }) => {
   const sigPadRef = React.useRef<SignatureCanvas | null>(null);
   const { watch, setValue } = useFormContext();
@@ -42,19 +41,18 @@ const SignatureField = ({ control, name }: { control: any; name: string }) => {
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => (
+      render={({ field }) => (
         <FormItem>
-          <FormLabel>Signature</FormLabel>
+          <FormLabel>Digital Signature</FormLabel>
           <FormControl>
             <div>
               {field.value ? (
                 <div className="flex items-center gap-4">
-                  <div className="border rounded-md p-2 bg-white">
+                  <div className="border rounded-md p-2 bg-white shadow-sm">
                     <img src={field.value} alt="Signature" className="h-16 w-auto" />
                   </div>
-                  <Button type="button" variant="outline" size="icon" onClick={() => setValue(name, '', { shouldValidate: true })}>
-                    <RotateCcw className="h-4 w-4" />
-                    <span className="sr-only">Redo Signature</span>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setValue(name, '', { shouldValidate: true })}>
+                    <RotateCcw className="mr-2 h-4 w-4" /> Re-sign
                   </Button>
                 </div>
               ) : (
@@ -67,8 +65,8 @@ const SignatureField = ({ control, name }: { control: any; name: string }) => {
                             onEnd={handleEndStroke}
                         />
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={handleClear} className="self-start">
-                        <Eraser className="mr-2 h-4 w-4" /> Clear
+                    <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="self-start text-muted-foreground">
+                        <Eraser className="mr-2 h-4 w-4" /> Clear Canvas
                     </Button>
                 </div>
               )}
@@ -100,26 +98,26 @@ export default function StepSignatories() {
     });
   };
 
-  const clientName = form.getValues('organisationLegalName') || `${form.getValues('individualFirstName')} ${form.getValues('individualSurname')}`.trim() || '[Applicant Name]';
+  const clientName = form.getValues('organisationLegalName') || `${form.getValues('individualFirstName')} ${form.getValues('individualSurname')}`.trim() || '[Client Name]';
 
   return (
     <div>
       <CardHeader>
         <CardTitle>Account Mandate & Signatories</CardTitle>
-        <CardDescription>Provide the resolution details and add all authorized signatories for this account.</CardDescription>
+        <CardDescription>Specify the account mandate and add all authorized signatories for this entity.</CardDescription>
       </CardHeader>
       <div className="space-y-4 px-6">
         
-        <SectionTitle>Account Mandate</SectionTitle>
+        <SectionTitle>Board Resolution / Mandate</SectionTitle>
         <div className="p-4 border rounded-md space-y-4 bg-muted/20">
             <FormField
                 control={form.control}
                 name="resolutionDate"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Resolution Date</FormLabel>
-                    <div className='flex items-center gap-2'>
-                        <span className='text-sm text-muted-foreground'>...resolution passed at the board of Directors/Management... held on the</span>
+                    <FormLabel>Date of Resolution</FormLabel>
+                    <div className='flex flex-wrap items-center gap-2'>
+                        <span className='text-sm text-muted-foreground'>Resolution passed at the board of Directors/Management held on:</span>
                         <FormControl>
                             <Input type="date" {...field} className="w-auto" value={field.value || ''} />
                         </FormControl>
@@ -128,24 +126,24 @@ export default function StepSignatories() {
                     </FormItem>
                 )}
             />
-            <p className='text-sm text-muted-foreground'>
-                That a transaction / account be opened in the name of <strong>{clientName}</strong> with InnBucks in accordance with the services requested for and in line with the terms and subject to the provisions of the Microfinance Act, Rules of the institution pursuant to this application.
+            <p className='text-sm text-muted-foreground leading-relaxed italic border-l-4 border-primary/20 pl-4'>
+                "Resolved that an account be opened in the name of <strong>{clientName}</strong> with InnBucks MicroBank Limited in accordance with the services requested and subject to the provisions of the Microfinance Act."
             </p>
         </div>
 
-        <SectionTitle>Authorised Signatories</SectionTitle>
+        <SectionTitle>Authorized Signatories</SectionTitle>
         <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
           {fields.map((field, index) => (
-            <AccordionItem value={`item-${index}`} key={field.id}>
-              <AccordionTrigger>
+            <AccordionItem value={`item-${index}`} key={field.id} className="border rounded-md px-4 mb-2 bg-card">
+              <AccordionTrigger className="hover:no-underline">
                 <div className="flex justify-between w-full items-center pr-4">
-                  <span>Signatory {index + 1}: {form.watch(`signatories.${index}.firstName`)} {form.watch(`signatories.${index}.surname`)}</span>
+                  <span className="font-semibold">Signatory {index + 1}: {form.watch(`signatories.${index}.firstName`)} {form.watch(`signatories.${index}.surname`)}</span>
                    <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={(e) => {
-                      e.stopPropagation(); // prevent accordion from toggling
+                      e.stopPropagation();
                       remove(index);
                     }}
                    >
@@ -163,15 +161,15 @@ export default function StepSignatories() {
                             <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="e.g. John" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )}/>
                          <FormField control={form.control} name={`signatories.${index}.otherName`} render={({ field }) => (
-                            <FormItem><FormLabel>Other Name</FormLabel><FormControl><Input placeholder="Optional" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Other Names</FormLabel><FormControl><Input placeholder="Optional" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )}/>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField control={form.control} name={`signatories.${index}.nationalIdNo`} render={({ field }) => (
-                            <FormItem><FormLabel>National ID No.</FormLabel><FormControl><Input placeholder="ID document number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>National ID/Passport No.</FormLabel><FormControl><Input placeholder="Enter ID number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name={`signatories.${index}.designation`} render={({ field }) => (
-                            <FormItem><FormLabel>Designation</FormLabel><FormControl><Input placeholder="e.g. CEO, Director" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Designation/Job Title</FormLabel><FormControl><Input placeholder="e.g. Director, Secretary" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
                         )}/>
                     </div>
                     <SignatureField control={form.control} name={`signatories.${index}.signature`} />
@@ -182,20 +180,21 @@ export default function StepSignatories() {
         </Accordion>
 
         {fields.length < 6 && (
-            <Button type="button" variant="outline" className="w-full" onClick={addNewSignatory}>
+            <Button type="button" variant="outline" className="w-full border-dashed" onClick={addNewSignatory}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Signatory
+                Add Authorized Signatory
             </Button>
         )}
         <FormField
             control={form.control}
             name="signingInstruction"
             render={({ field }) => (
-                <FormItem>
+                <FormItem className="mt-6">
                 <FormLabel>Signing Instructions</FormLabel>
                 <FormControl>
-                    <Textarea placeholder="e.g., Any two signatories to sign." {...field} value={field.value || ''} />
+                    <Textarea placeholder="e.g., Any two signatories to sign jointly." {...field} value={field.value || ''} />
                 </FormControl>
+                <FormDescription>Define how signatures should be combined for valid transactions.</FormDescription>
                 <FormMessage />
                 </FormItem>
             )}

@@ -35,14 +35,14 @@ const getStatusVariant = (status: ApplicationStatus) => {
 
 const translateStatus = (status: ApplicationStatus) => {
     switch (status) {
-        case 'Submitted': return 'Sent';
-        case 'In Review': return 'Checking';
-        case 'Pending Supervisor': return 'Supervisor Check';
-        case 'Pending Executive Signature': return 'Boss Check';
-        case 'Signed': return 'Done';
-        case 'Rejected': return 'Declined';
-        case 'Returned to ATL': return 'Need Fixes';
-        case 'Archived': return 'Saved';
+        case 'Submitted': return 'Submitted';
+        case 'In Review': return 'In Review';
+        case 'Pending Supervisor': return 'Pending Supervisor';
+        case 'Pending Executive Signature': return 'Pending Executive';
+        case 'Signed': return 'Signed';
+        case 'Rejected': return 'Rejected';
+        case 'Returned to ATL': return 'Returned to ASL';
+        case 'Archived': return 'Archived';
         default: return status;
     }
 }
@@ -98,8 +98,8 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
-              <h2 className="text-3xl font-bold">Sales Leader (ASL) Home</h2>
-              <p className="text-muted-foreground">Manage your applications and pick up new sign ups.</p>
+              <h2 className="text-3xl font-bold">Area Sales Leader (ASL) Dashboard</h2>
+              <p className="text-muted-foreground">Manage your onboarding portfolio and process new customer registrations.</p>
           </div>
           <Button onClick={() => setIsCreatingApplication(true)} className="shadow-lg hover:scale-105 transition-transform bg-primary text-primary-foreground font-bold">
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -123,7 +123,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
               <div className="relative w-full sm:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                      placeholder="Search name or place..."
+                      placeholder="Search Client or Region..."
                       className="pl-10"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -134,20 +134,20 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
           <TabsContent value="my-apps">
               <Card className="border-none shadow-md overflow-hidden">
                   <CardHeader className="bg-muted/30">
-                      <CardTitle>My Applications</CardTitle>
-                      <CardDescription>Track the status of applications you created.</CardDescription>
+                      <CardTitle>Portfolio Oversight</CardTitle>
+                      <CardDescription>Real-time status tracking for applications submitted by your region.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredApplications.length > 0 ? (
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-muted/10">
-                                      <TableHead className="pl-6">ID</TableHead>
-                                      <TableHead>Customer Name</TableHead>
-                                      <TableHead>Place</TableHead>
-                                      <TableHead>Progress</TableHead>
-                                      <TableHead>Latest News</TableHead>
-                                      <TableHead className="text-right pr-6">Action</TableHead>
+                                      <TableHead className="pl-6">Application ID</TableHead>
+                                      <TableHead>Client Name</TableHead>
+                                      <TableHead>Region</TableHead>
+                                      <TableHead>Status</TableHead>
+                                      <TableHead>Recent Activity</TableHead>
+                                      <TableHead className="text-right pr-6">Actions</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -181,7 +181,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                                                       </Button>
                                                                   </TooltipTrigger>
                                                                   <TooltipContent className="max-w-xs">
-                                                                      <p className="font-bold mb-1">Fix Needed:</p>
+                                                                      <p className="font-bold mb-1">Return Notes:</p>
                                                                       <p className="text-xs">{lastHistory.notes}</p>
                                                                   </TooltipContent>
                                                               </Tooltip>
@@ -191,7 +191,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                               </TableCell>
                                               <TableCell className="text-right pr-6">
                                                   <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                                                      {app.status === 'Returned to ATL' ? 'Fix It' : 'View'}
+                                                      {app.status === 'Returned to ATL' ? 'Edit Application' : 'View Details'}
                                                   </Button>
                                               </TableCell>
                                           </TableRow>
@@ -201,7 +201,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                           </Table>
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                              <p>No applications found.</p>
+                              <p>No active applications found in your portfolio.</p>
                           </div>
                       )}
                   </CardContent>
@@ -213,21 +213,21 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   <CardHeader className="bg-primary/10">
                       <CardTitle className="flex items-center gap-2">
                           <Inbox className="h-5 w-5 text-primary" />
-                          New Sign Ups (from Customers)
+                          New Sign Ups (Customer Self-Service)
                       </CardTitle>
-                      <CardDescription className="text-primary/80">These requests were submitted by customers. Please claim and verify them.</CardDescription>
+                      <CardDescription className="text-primary/80">Pending registrations submitted via customer portals. Action required to claim and verify.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredLeads.length > 0 ? (
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-primary/5">
-                                      <TableHead className="pl-6">ID</TableHead>
-                                      <TableHead>Customer / Company</TableHead>
-                                      <TableHead>Place</TableHead>
-                                      <TableHead>Account Type</TableHead>
-                                      <TableHead>Date Sent</TableHead>
-                                      <TableHead className="text-right pr-6">Action</TableHead>
+                                      <TableHead className="pl-6">Lead ID</TableHead>
+                                      <TableHead>Customer/Legal Entity</TableHead>
+                                      <TableHead>Region</TableHead>
+                                      <TableHead>Account Category</TableHead>
+                                      <TableHead>Submission Date</TableHead>
+                                      <TableHead className="text-right pr-6">Actions</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -241,7 +241,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                           <TableCell className="text-xs">{app.clientType}</TableCell>
                                           <TableCell className="text-xs text-muted-foreground">{app.submittedDate}</TableCell>
                                           <TableCell className="text-right pr-6">
-                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Open Request</Button>
+                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Process Registration</Button>
                                           </TableCell>
                                       </TableRow>
                                   ))}
@@ -250,7 +250,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                               <Inbox className="h-12 w-12 mb-2 opacity-20" />
-                              <p>No new customer sign ups right now.</p>
+                              <p>No new customer sign ups currently pending.</p>
                           </div>
                       )}
                   </CardContent>

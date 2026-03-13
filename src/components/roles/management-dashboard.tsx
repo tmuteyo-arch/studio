@@ -56,13 +56,13 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Group Approval</DialogTitle>
+          <DialogTitle>Bulk Application Approval</DialogTitle>
           <DialogDescription>
-            You are adding your sign-off to <strong>{count}</strong> selected requests. This will finish them all at once.
+            You are applying your executive signature to <strong>{count}</strong> selected applications. This action will finalize the agency agreements.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <Label>Your Digital Sign-off</Label>
+          <Label>Executive Digital Signature</Label>
           <div className="w-full border rounded-md bg-white p-2">
             <SignatureCanvas 
               ref={sigPadRef} 
@@ -72,13 +72,13 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={handleClear}>
-              <Eraser className="mr-2 h-4 w-4" />Clear
+              <Eraser className="mr-2 h-4 w-4" />Clear Signature
             </Button>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleConfirm}>Approve & Finish {count} Items</Button>
+          <Button onClick={handleConfirm}>Sign & Approve {count} Cases</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -87,7 +87,7 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
 
 const regionalChartConfig = {
   count: {
-    label: 'Requests',
+    label: 'Applications',
     color: 'hsl(var(--primary))',
   },
 } satisfies ChartConfig;
@@ -169,7 +169,7 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                     },
                     history: [
                         ...app.history,
-                        { action: 'Approved by Management (Group)', user: user.name, timestamp }
+                        { action: 'Approved by Executive Management', user: user.name, timestamp }
                     ]
                 };
             }
@@ -177,8 +177,8 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
         }));
         
         toast({
-            title: "Success",
-            description: `Finished ${selectedIds.length} requests.`,
+            title: "Bulk Approval Success",
+            description: `Finalized and signed ${selectedIds.length} agency agreements.`,
         });
         
         setSelectedIds([]);
@@ -202,16 +202,16 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h2 className="text-3xl font-bold">Management Hub</h2>
-                  <p className="text-muted-foreground">Oversight, final sign-offs, and team performance tracking.</p>
+                  <p className="text-muted-foreground">Strategic oversight, executive approvals, and operational metrics.</p>
                 </div>
                 <Badge variant="outline" className="px-3 py-1 bg-primary/5 border-primary/20 text-primary font-bold">
-                    {summaryStats.pendingAgreementSignature} Ready for Boss Sign-off
+                    {summaryStats.pendingAgreementSignature} Awaiting Executive Review
                 </Badge>
             </div>
             
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 <Card className="border-primary/50 bg-primary/5">
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-primary">To Finish</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-primary">Pending Sign-off</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.pendingAgreementSignature}</div></CardContent>
                 </Card>
                 <Card>
@@ -219,15 +219,15 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalPending}</div></CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground">Done</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground">Finalized</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalSigned}</div></CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground">Declined</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground">Rejected</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalRejected}</div></CardContent>
                 </Card>
                  <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground">Total Records</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground">Registry Total</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalApplications}</div></CardContent>
                 </Card>
             </div>
@@ -236,15 +236,15 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                 <TabsList className="bg-muted/50 p-1 mb-6">
                     <TabsTrigger value="sign-offs" className="flex items-center gap-2">
                         <FileSignature className="h-4 w-4" />
-                        Finish Sign-offs
+                        Executive Review
                     </TabsTrigger>
                     <TabsTrigger value="team" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        Team Results
+                        Team Performance
                     </TabsTrigger>
                     <TabsTrigger value="analytics" className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4" />
-                        Where Volume Comes From
+                        Regional Trends
                     </TabsTrigger>
                 </TabsList>
 
@@ -254,13 +254,13 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                             <CardHeader>
                                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                                     <div>
-                                        <CardTitle>Waiting for Sign-off</CardTitle>
-                                        <CardDescription>Items checked by Supervisors and ready for your final finish.</CardDescription>
+                                        <CardTitle>Awaiting Executive Mandate</CardTitle>
+                                        <CardDescription>Applications verified by Back Office Supervisors and ready for final execution.</CardDescription>
                                     </div>
                                     {selectedIds.length > 0 && (
                                         <Button onClick={() => setIsBulkSignOpen(true)}>
                                             <FileSignature className="mr-2 h-4 w-4" />
-                                            Finish Selected ({selectedIds.length})
+                                            Execute Selected ({selectedIds.length})
                                         </Button>
                                     )}
                                 </div>
@@ -272,10 +272,10 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                                             <TableHead className="w-[50px]">
                                                 <Checkbox checked={selectedIds.length === agreementsToSign.length} onCheckedChange={toggleSelectAll} />
                                             </TableHead>
-                                            <TableHead>Customer</TableHead>
-                                            <TableHead>Place</TableHead>
-                                            <TableHead>Supervisor Check</TableHead>
-                                            <TableHead className="text-right">Action</TableHead>
+                                            <TableHead>Client Legal Entity</TableHead>
+                                            <TableHead>Region</TableHead>
+                                            <TableHead>Supervisory Sign-off</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -285,12 +285,12 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                                                 <TableCell><div className="font-medium">{app.clientName}</div></TableCell>
                                                 <TableCell><Badge variant="secondary">{app.region}</Badge></TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline" className="bg-green-50 text-green-700">
-                                                        OK by {app.history.find(h => h.action.includes('Supervisor'))?.user || 'Supervisor'}
+                                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                                        Verified by {app.history.find(h => h.action.includes('Supervisor'))?.user || 'Supervisor'}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Check & Sign</Button>
+                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review & Sign</Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -301,7 +301,7 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                     ) : (
                         <div className="text-center p-12 bg-muted/20 rounded-lg border-2 border-dashed">
                             <CheckCircle2 className="mx-auto h-12 w-12 text-muted-foreground opacity-20 mb-4" />
-                            <p className="text-lg font-medium">All sign-offs are finished!</p>
+                            <p className="text-lg font-medium">Approval queue is currently clear.</p>
                         </div>
                     )}
                 </TabsContent>
@@ -309,14 +309,14 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                 <TabsContent value="team" className="space-y-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card>
-                            <CardHeader><CardTitle>Supervisor Results</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Supervisory Output Metrics</CardTitle></CardHeader>
                             <CardContent>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Name</TableHead>
-                                            <TableHead className="text-center">Finished</TableHead>
-                                            <TableHead className="text-center">Declined</TableHead>
+                                            <TableHead>Supervisor</TableHead>
+                                            <TableHead className="text-center">Approved</TableHead>
+                                            <TableHead className="text-center">Rejected</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -332,13 +332,13 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
                             </CardContent>
                         </Card>
                         <Card>
-                            <CardHeader><CardTitle>Clerk Results</CardTitle></CardHeader>
+                            <CardHeader><CardTitle>Clerk Processing Throughput</CardTitle></CardHeader>
                             <CardContent>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Name</TableHead>
-                                            <TableHead className="text-right">Requests Processed</TableHead>
+                                            <TableHead>Clerk</TableHead>
+                                            <TableHead className="text-right">Applications Processed</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -357,7 +357,7 @@ export default function ManagementDashboard({ user }: ManagementDashboardProps) 
 
                 <TabsContent value="analytics" className="space-y-6">
                     <Card>
-                        <CardHeader><CardTitle>Volume by Region</CardTitle></CardHeader>
+                        <CardHeader><CardTitle>Application Volume by Region</CardTitle></CardHeader>
                         <CardContent>
                             <ChartContainer config={regionalChartConfig} className="h-[300px] w-full">
                                 <ResponsiveContainer>

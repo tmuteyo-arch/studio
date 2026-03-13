@@ -115,12 +115,12 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     }
     
     const filterTitles: Record<FilterStatus, string> = {
-        all: "All Active Applications",
-        pendingReview: "My Review Queue",
-        pendingSupervisor: "Pending Supervisor",
-        signed: "Signed & Ready for Filing",
-        rejected: "Rejected Requests",
-        storage: "Archive & Audit",
+        all: "Active Application Pipeline",
+        pendingReview: "Verification Queue",
+        pendingSupervisor: "Pending Supervisory Approval",
+        signed: "Signed & Ready for Archival",
+        rejected: "Rejected Applications",
+        storage: "Application Archive & Audit",
     }
 
     function DashboardContent() {
@@ -128,12 +128,12 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
         <div>
         <div className="mb-8 flex justify-between items-start">
             <div>
-              <h2 className="text-3xl font-bold">Back Office Clerk Portal</h2>
-              <p className="text-muted-foreground">Review, validate, and digitize sign up requests.</p>
+              <h2 className="text-3xl font-bold">Back Office Clerk Workspace</h2>
+              <p className="text-muted-foreground">Review, verify mandatory documentation, and digitize physical records.</p>
             </div>
             <Button onClick={() => setIsDigitizing(true)} variant="secondary">
                 <ScanLine className="mr-2 h-4 w-4" />
-                Digitize Request
+                Digitize Record
             </Button>
         </div>
         
@@ -145,48 +145,48 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             <button onClick={() => setFilter('all')} className={cn("text-left", filter === 'all' && "ring-2 ring-primary rounded-lg")}>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">All Active Apps</CardTitle>
+                        <CardTitle className="text-sm font-medium">All Active Cases</CardTitle>
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{summaryStats.all}</div>
-                        <p className="text-xs text-muted-foreground">All items you can action</p>
+                        <p className="text-xs text-muted-foreground">Total actionable items</p>
                     </CardContent>
                 </Card>
             </button>
             <button onClick={() => setFilter('pendingReview')} className={cn("text-left", filter === 'pendingReview' && "ring-2 ring-primary rounded-lg")}>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
+                        <CardTitle className="text-sm font-medium">Verification Pending</CardTitle>
                         <Inbox className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{summaryStats.pendingReview}</div>
-                        <p className="text-xs text-muted-foreground">New and returned items</p>
+                        <p className="text-xs text-muted-foreground">Awaiting clerk review</p>
                     </CardContent>
                 </Card>
             </button>
             <button onClick={() => setFilter('signed')} className={cn("text-left", filter === 'signed' && "ring-2 ring-primary rounded-lg")}>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Ready for Filing</CardTitle>
+                        <CardTitle className="text-sm font-medium">Awaiting Archival</CardTitle>
                         <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{summaryStats.signed}</div>
-                        <p className="text-xs text-muted-foreground">Signed items awaiting filing.</p>
+                        <p className="text-xs text-muted-foreground">Fully signed & verified</p>
                     </CardContent>
                 </Card>
             </button>
             <button onClick={() => setFilter('rejected')} className={cn("text-left", filter === 'rejected' && "ring-2 ring-primary rounded-lg")}>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Declined Requests</CardTitle>
+                        <CardTitle className="text-sm font-medium">Rejected Cases</CardTitle>
                         <AlertCircle className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{summaryStats.rejected}</div>
-                        <p className="text-xs text-muted-foreground">Total declined requests</p>
+                        <p className="text-xs text-muted-foreground">Total rejected applications</p>
                     </CardContent>
                 </Card>
             </button>
@@ -199,11 +199,11 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                       <CardTitle>{filterTitles[filter]}</CardTitle>
                       <CardDescription>
                          {
-                            filter === 'all' ? 'All active requests requiring action.' :
-                            filter === 'pendingReview' ? 'New requests awaiting your validation.' :
-                            filter === 'signed' ? 'Signed items ready for final archival.' :
-                            filter === 'storage' ? 'Search all past requests for audit.' :
-                            `List of all ${filter} items.`
+                            filter === 'all' ? 'All onboarding applications currently in the processing pipeline.' :
+                            filter === 'pendingReview' ? 'New submissions and returned cases requiring clerk validation.' :
+                            filter === 'signed' ? 'Applications with full mandate signatures ready for final archival.' :
+                            filter === 'storage' ? 'Searchable history of processed and archived applications.' :
+                            `List of applications filtered by ${filter}.`
                          }
                       </CardDescription>
                   </div>
@@ -219,7 +219,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     </div>
                     <Button variant="outline" onClick={() => setFilter(filter === 'storage' ? 'all' : 'storage')}>
                         <Archive className="mr-2 h-4 w-4" />
-                        {filter === 'storage' ? 'Review Queue' : 'Archive / Audit'}
+                        {filter === 'storage' ? 'View Pipeline' : 'View Archive'}
                     </Button>
                   </div>
               </div>
@@ -240,10 +240,10 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
-                          <p><span className="font-medium text-muted-foreground">From ASL:</span> {app.submittedBy}</p>
-                          <p><span className="font-medium text-muted-foreground">Sent:</span> {app.submittedDate}</p>
+                          <p><span className="font-medium text-muted-foreground">Submitter:</span> {app.submittedBy}</p>
+                          <p><span className="font-medium text-muted-foreground">Submitted:</span> {app.submittedDate}</p>
                           <Button className="w-full mt-2" variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                            {filter === 'pendingReview' || filter === 'signed' ? 'Check & File' : 'View'}
+                            {filter === 'pendingReview' || filter === 'signed' ? 'Process Case' : 'View Case'}
                           </Button>
                         </CardContent>
                       </Card>
@@ -254,11 +254,11 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Customer</TableHead>
+                          <TableHead>Application ID</TableHead>
+                          <TableHead>Client Name</TableHead>
                           {filter === 'storage' && <TableHead>Docs</TableHead>}
-                          <TableHead>Sent By</TableHead>
-                          <TableHead>Date Sent</TableHead>
+                          <TableHead>Submitted By</TableHead>
+                          <TableHead>Date Submitted</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -280,7 +280,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                             </TableCell>
                             <TableCell className="text-right">
                               <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                                  {filter === 'pendingReview' || filter === 'signed' ? 'Check & File' : 'View'}
+                                  {filter === 'pendingReview' || filter === 'signed' ? 'Process Case' : 'View Details'}
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -292,7 +292,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
              ) : (
               <div className="flex items-center justify-center p-12 text-center">
                   <p className="text-lg text-muted-foreground">
-                      {searchTerm ? 'No results found.' : `No items in ${filterTitles[filter].toLowerCase()}.`}
+                      {searchTerm ? 'No search results found.' : `No applications found in the ${filterTitles[filter].toLowerCase()} filter.`}
                   </p>
               </div>
              )}
