@@ -6,10 +6,6 @@ import { useAtom } from 'jotai';
 
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
-import AtlDashboard from '@/components/roles/atl-dashboard';
-import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
-import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
-import ManagementDashboard from '@/components/roles/management-dashboard';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { users, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
@@ -18,6 +14,12 @@ import { Input } from '@/components/ui/input';
 import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+
+// Lazy load dashboards to improve initial compilation time
+const AtlDashboard = React.lazy(() => import('@/components/roles/atl-dashboard'));
+const BackOfficeDashboard = React.lazy(() => import('@/components/roles/back-office-dashboard'));
+const SupervisorDashboard = React.lazy(() => import('@/components/roles/supervisor-dashboard'));
+const ManagementDashboard = React.lazy(() => import('@/components/roles/management-dashboard'));
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
@@ -43,8 +45,6 @@ function AppContent() {
       return;
     }
 
-    // Special case for management: we have multiple users but one role string in the selector
-    // We'll pick the first user that matches the role for this demo
     const userToLogin = users.find(u => u.role === selectedRole);
     
     if (userToLogin) {
@@ -90,18 +90,24 @@ function AppContent() {
   const renderDashboard = () => {
     if (!loggedInUser) return null;
 
-    switch (loggedInUser.role) {
-      case 'asl':
-        return <AtlDashboard user={loggedInUser} />;
-      case 'back-office':
-        return <BackOfficeDashboard user={loggedInUser} />;
-      case 'supervisor':
-        return <SupervisorDashboard user={loggedInUser} />;
-      case 'management':
-        return <ManagementDashboard user={loggedInUser} />;
-      default:
-        return null;
-    }
+    return (
+      <React.Suspense fallback={<div className="flex items-center justify-center p-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+        {(() => {
+          switch (loggedInUser.role) {
+            case 'asl':
+              return <AtlDashboard user={loggedInUser} />;
+            case 'back-office':
+              return <BackOfficeDashboard user={loggedInUser} />;
+            case 'supervisor':
+              return <SupervisorDashboard user={loggedInUser} />;
+            case 'management':
+              return <ManagementDashboard user={loggedInUser} />;
+            default:
+              return null;
+          }
+        })()}
+      </React.Suspense>
+    );
   };
 
   const renderUnifiedLogin = () => (

@@ -25,18 +25,18 @@ const KpiItem = ({ title, value, target, unit, lowerIsBetter = false }: KpiItemP
   const isBelowTarget = lowerIsBetter && (value ?? 0) <= target;
   const isSuccess = isAboveTarget || isBelowTarget;
 
-  const progressValue = value !== null ? Math.min(((value || 0) / target) * 100, 100) : 0;
+  const progressValue = value !== null && !isNaN(value) ? Math.min(((value || 0) / target) * 100, 100) : 0;
 
   return (
     <div className="p-4 bg-muted/30 rounded-lg">
       <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
       <div className="flex items-baseline gap-2 mt-1">
-        <p className="text-2xl font-bold">{value?.toLocaleString() ?? 'N/A'}</p>
+        <p className="text-2xl font-bold">{value !== null && !isNaN(value) ? value.toLocaleString() : 'N/A'}</p>
         <span className="text-sm text-muted-foreground">{unit}</span>
       </div>
       <div className="flex items-center text-xs text-muted-foreground mt-2">
         <span className="mr-2">Target: {lowerIsBetter ? '≤' : '≥'}{target}{unit}</span>
-        {value !== null && (
+        {value !== null && !isNaN(value) && (
           <Badge variant={isSuccess ? 'success' : 'destructive'}>
             {isSuccess ? 'Met' : 'Missed'}
           </Badge>
@@ -64,7 +64,7 @@ export default function KpiTracker({ applications }: KpiTrackerProps) {
 
     // 1. KYC Completeness
     const completeAtFirstSubmission = applications.reduce((acc, app) => {
-      const wasReturned = app.history.some(h => h.action === 'Returned to ATL');
+      const wasReturned = app.history.some(h => h.action === 'Returned to ATL' || h.action === 'Returned to ASL');
       if (wasReturned) return acc;
 
       const requiredDocs = getDocumentRequirements(app.clientType);
@@ -86,14 +86,14 @@ export default function KpiTracker({ applications }: KpiTrackerProps) {
     const approvalRate = (approvedCount / totalSubmissions) * 100;
 
     // 4. Rework Rate
-    const reworkCount = applications.filter(a => ['Returned to ATL', 'Rejected'].includes(a.status)).length;
+    const reworkCount = applications.filter(a => ['Returned to ATL', 'Returned to ASL', 'Rejected'].includes(a.status)).length;
     const reworkRate = (reworkCount / totalSubmissions) * 100;
 
     // 5. Onboarding TAT
     let totalOnboardingHours = 0;
     const approvedApps = applications.filter(app => app.status === 'Signed');
     approvedApps.forEach(app => {
-      const submittedLog = app.history.find(h => h.action === 'Submitted');
+      const submittedLog = app.history.find(h => h.action === 'Submitted' || h.action.includes('Sent'));
       const approvedLog = app.history.find(h => h.action === 'Signed');
       if (submittedLog && approvedLog) {
         totalOnboardingHours += differenceInHours(parseISO(approvedLog.timestamp), parseISO(submittedLog.timestamp));
@@ -104,9 +104,9 @@ export default function KpiTracker({ applications }: KpiTrackerProps) {
     // 6. Missing KYC Resolution TAT
     let totalResolutionHours = 0;
     let resolvedCount = 0;
-    const returnedApps = applications.filter(app => app.history.some(h => h.action === 'Returned to ATL'));
+    const returnedApps = applications.filter(app => app.history.some(h => h.action === 'Returned to ATL' || h.action === 'Returned to ASL'));
     returnedApps.forEach(app => {
-        const returnedIndex = app.history.findIndex(h => h.action === 'Returned to ATL');
+        const returnedIndex = app.history.findIndex(h => h.action === 'Returned to ATL' || h.action === 'Returned to ASL');
         if (returnedIndex !== -1 && app.history.length > returnedIndex + 1) {
             const returnedLog = app.history[returnedIndex];
             const nextLog = app.history[returnedIndex + 1];
