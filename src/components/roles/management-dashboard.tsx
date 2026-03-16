@@ -1,3 +1,4 @@
+
 'use client';
 import * as React from 'react';
 import { useAtom } from 'jotai';
@@ -10,7 +11,6 @@ import {
   Users,
   LayoutDashboard,
   MapPin,
-  Clock,
   Award,
   BarChart
 } from 'lucide-react';
@@ -32,11 +32,12 @@ export default function ManagementDashboard() {
     const [applications] = useAtom(applicationsAtom);
 
     const summaryStats = React.useMemo(() => {
+        const activeApps = applications.filter(a => a.status !== 'Archived');
         return {
-            totalApplications: applications.length,
-            totalSigned: applications.filter(a => a.status === 'Signed').length,
-            totalRejected: applications.filter(a => a.status === 'Rejected').length,
-            totalInPipeline: applications.filter(a => !['Signed', 'Rejected', 'Archived'].includes(a.status)).length,
+            totalActive: activeApps.length,
+            totalDone: activeApps.filter(a => a.status === 'Signed').length,
+            totalRejected: activeApps.filter(a => a.status === 'Rejected').length,
+            totalPending: activeApps.filter(a => !['Signed', 'Rejected'].includes(a.status)).length,
         };
     }, [applications]);
 
@@ -55,7 +56,7 @@ export default function ManagementDashboard() {
                 name: atl.name,
                 initials: atl.initials,
                 total: atlApps.length,
-                signed: atlApps.filter(a => a.status === 'Signed').length,
+                done: atlApps.filter(a => a.status === 'Signed' || a.status === 'Archived').length,
                 rejected: atlApps.filter(a => a.status === 'Rejected').length,
                 pending: atlApps.filter(a => !['Signed', 'Rejected', 'Archived'].includes(a.status)).length,
             };
@@ -67,22 +68,22 @@ export default function ManagementDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h2 className="text-3xl font-bold tracking-tight">MANAGEMENT</h2>
-                  <p className="text-muted-foreground font-medium">Strategic oversight of Area Sales Leader (ASL) performance and regional growth.</p>
+                  <p className="text-muted-foreground font-medium">Strategic oversight of Area Sales Leader (ASL) performance and regional capture.</p>
                 </div>
             </div>
             
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
                 <Card className="shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Total Registry</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold">{summaryStats.totalApplications}</div></CardContent>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Active Portfolio</CardTitle></CardHeader>
+                    <CardContent><div className="text-2xl font-bold">{summaryStats.totalActive}</div></CardContent>
                 </Card>
                 <Card className="border-primary/20 bg-primary/5 shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-primary tracking-wider">Finalized Agreements</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold">{summaryStats.totalSigned}</div></CardContent>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-primary tracking-wider">Finalized Apps</CardTitle></CardHeader>
+                    <CardContent><div className="text-2xl font-bold">{summaryStats.totalDone}</div></CardContent>
                 </Card>
                 <Card className="shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Active Pipeline</CardTitle></CardHeader>
-                    <CardContent><div className="text-2xl font-bold">{summaryStats.totalInPipeline}</div></CardContent>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">In Process</CardTitle></CardHeader>
+                    <CardContent><div className="text-2xl font-bold">{summaryStats.totalPending}</div></CardContent>
                 </Card>
                 <Card className="shadow-sm">
                     <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-destructive tracking-wider">Rejected</CardTitle></CardHeader>
@@ -94,7 +95,7 @@ export default function ManagementDashboard() {
                 <TabsList className="bg-muted/50 p-1 mb-6">
                     <TabsTrigger value="team" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        ASL Team Performance
+                        ASL Performance
                     </TabsTrigger>
                     <TabsTrigger value="analytics" className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4" />
@@ -102,7 +103,7 @@ export default function ManagementDashboard() {
                     </TabsTrigger>
                     <TabsTrigger value="history" className="flex items-center gap-2">
                         <LayoutDashboard className="h-4 w-4" />
-                        Operation Log
+                        Registry Activity
                     </TabsTrigger>
                 </TabsList>
 
@@ -113,9 +114,7 @@ export default function ManagementDashboard() {
                                 <Award className="h-5 w-5" />
                                 Area Sales Leader (ASL) Results
                             </CardTitle>
-                            <CardDescription>
-                                Monitoring the field output and success rates of the sales team.
-                            </CardDescription>
+                            <CardDescription> Monitoring field output and success rates of the sales team.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
@@ -139,12 +138,12 @@ export default function ManagementDashboard() {
                                                 <span className="font-bold">{atl.name}</span>
                                             </TableCell>
                                             <TableCell className="text-center font-semibold">{atl.total}</TableCell>
-                                            <TableCell className="text-center font-bold text-green-600">{atl.signed}</TableCell>
+                                            <TableCell className="text-center font-bold text-green-600">{atl.done}</TableCell>
                                             <TableCell className="text-center font-bold text-destructive">{atl.rejected}</TableCell>
                                             <TableCell className="text-center font-bold text-amber-600">{atl.pending}</TableCell>
                                             <TableCell className="text-right">
-                                                <Badge variant={atl.total > 0 && (atl.signed / atl.total) > 0.8 ? 'success' : 'outline'} className="font-mono">
-                                                    {atl.total > 0 ? Math.round((atl.signed / atl.total) * 100) : 0}%
+                                                <Badge variant={atl.total > 0 && (atl.done / atl.total) > 0.8 ? 'success' : 'outline'} className="font-mono">
+                                                    {atl.total > 0 ? Math.round((atl.done / atl.total) * 100) : 0}%
                                                 </Badge>
                                             </TableCell>
                                         </TableRow>
@@ -161,9 +160,9 @@ export default function ManagementDashboard() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <MapPin className="h-5 w-5 text-primary" />
-                                    Application Volume by Province
+                                    Regional Distribution
                                 </CardTitle>
-                                <CardDescription>Distribution of sign-ups across Zimbabwe's regions.</CardDescription>
+                                <CardDescription>Application volume across Zimbabwe's provinces.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <ChartContainer config={regionalChartConfig} className="h-[350px] w-full">
@@ -194,7 +193,7 @@ export default function ManagementDashboard() {
                         <Card className="shadow-sm">
                             <CardHeader>
                                 <CardTitle>Market Ranking</CardTitle>
-                                <CardDescription>Top provinces by agent volume.</CardDescription>
+                                <CardDescription>Top provinces by volume.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
@@ -220,9 +219,9 @@ export default function ManagementDashboard() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <BarChart className="h-5 w-5 text-primary" />
-                                Recent Registry Activity
+                                Recent Activity Log
                             </CardTitle>
-                            <CardDescription>Live feed of finalized agent onboarding requests.</CardDescription>
+                            <CardDescription>Live feed of onboarding requests (Active only).</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
@@ -235,7 +234,7 @@ export default function ManagementDashboard() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {applications.slice(0, 10).map((app) => (
+                                    {applications.filter(a => a.status !== 'Archived').slice(0, 10).map((app) => (
                                         <TableRow key={app.id}>
                                             <TableCell>
                                                 <div className="font-bold">{app.clientName}</div>

@@ -1,3 +1,4 @@
+
 'use client';
 import * as React from 'react';
 import { useAtom } from 'jotai';
@@ -9,16 +10,18 @@ import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-dat
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { Search, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine, Briefcase } from 'lucide-react';
+import { Search, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine, Briefcase, FileSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import DailyActivityTracker from './daily-activity-tracker';
 import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type FilterStatus = 'pendingReview' | 'pendingSupervisor' | 'signed' | 'rejected' | 'all' | 'storage';
+type FilterStatus = 'pendingReview' | 'pendingSupervisor' | 'signed' | 'rejected' | 'all' | 'archived';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
     case 'Signed':
+    case 'Archived':
         return 'success';
     case 'Pending Supervisor':
     case 'In Review':
@@ -27,7 +30,6 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Returned to ATL':
       return 'destructive';
     case 'Submitted':
-    case 'Archived':
       return 'outline';
     default:
       return 'outline';
@@ -42,54 +44,29 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [applications] = useAtom(applicationsAtom);
     const [searchTerm, setSearchTerm] = React.useState('');
-    const [filter, setFilter] = React.useState<FilterStatus>('all');
+    const [activeTab, setActiveTab] = React.useState<string>('pipeline');
     const [isDigitizing, setIsDigitizing] = React.useState<boolean>(false);
 
     const summaryStats = React.useMemo(() => ({
         pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length,
         pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor').length,
-        signed: applications.filter(a => a.status === 'Signed').length,
-        rejected: applications.filter(a => a.status === 'Rejected').length,
-        all: applications.filter(a => ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Signed', 'Rejected'].includes(a.status)).length,
+        archived: applications.filter(a => a.status === 'Archived').length,
+        allActive: applications.filter(a => ['Submitted', 'Returned to ATL', 'Pending Supervisor'].includes(a.status)).length,
     }), [applications]);
 
-    const filteredApplications = React.useMemo(() => {
-        let apps: Application[];
-        switch (filter) {
-            case 'pendingReview':
-                apps = applications.filter(app => app.status === 'Submitted' || app.status === 'Returned to ATL');
-                break;
-            case 'pendingSupervisor':
-                apps = applications.filter(app => app.status === 'Pending Supervisor');
-                break;
-            case 'signed':
-                apps = applications.filter(app => app.status === 'Signed');
-                break;
-            case 'rejected':
-                apps = applications.filter(app => app.status === 'Rejected');
-                break;
-            case 'storage':
-                 return applications.filter(app =>
-                    app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    app.documents.some(doc => doc.type.toLowerCase().includes(searchTerm.toLowerCase()))
-                );
-            case 'all':
-                apps = applications.filter(app => ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Signed', 'Rejected'].includes(app.status));
-                break;
-            default:
-                apps = applications.filter(app => ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Signed', 'Rejected'].includes(app.status));
-                break;
-        }
+    const pipelineApplications = React.useMemo(() => {
+        return applications.filter(app => 
+            ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Signed', 'Rejected'].includes(app.status) &&
+            (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+    }, [applications, searchTerm]);
 
-        if (searchTerm && filter !== 'storage') {
-            return apps.filter(app =>
-                app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                app.clientName.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-        return apps;
-    }, [applications, filter, searchTerm]);
+    const archivedApplications = React.useMemo(() => {
+        return applications.filter(app => 
+            app.status === 'Archived' &&
+            (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+    }, [applications, searchTerm]);
 
     if (isDigitizing) {
         return <DigitizeApplicationFlow user={user} onCancel={() => setIsDigitizing(false)} />;
@@ -104,22 +81,13 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             />
         );
     }
-    
-    const filterTitles: Record<FilterStatus, string> = {
-        all: "Active Application Pipeline",
-        pendingReview: "Verification Queue",
-        pendingSupervisor: "Pending Supervisory Approval",
-        signed: "Signed & Ready for Archival",
-        rejected: "Rejected Applications",
-        storage: "Application Archive & Audit",
-    };
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
                 <div>
-                    <h2 className="text-3xl font-bold">Back Office Clerk Workspace</h2>
-                    <p className="text-muted-foreground">Review, verify mandatory documentation, and digitize physical records.</p>
+                    <h2 className="text-3xl font-bold">Back Office Workspace</h2>
+                    <p className="text-muted-foreground">Verify mandatory documentation and manage the electronic archive.</p>
                 </div>
                 <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="font-bold">
                     <ScanLine className="mr-2 h-4 w-4" />
@@ -130,23 +98,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             <DailyActivityTracker applications={applications} />
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card 
-                    className={cn("cursor-pointer transition-all hover:border-primary", filter === 'all' && "ring-2 ring-primary")}
-                    onClick={() => setFilter('all')}
-                >
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">All Active Cases</CardTitle>
-                        <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.all}</div>
-                        <p className="text-xs text-muted-foreground">Total actionable items</p>
-                    </CardContent>
-                </Card>
-                <Card 
-                    className={cn("cursor-pointer transition-all hover:border-primary", filter === 'pendingReview' && "ring-2 ring-primary")}
-                    onClick={() => setFilter('pendingReview')}
-                >
+                <Card className="bg-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Verification Pending</CardTitle>
                         <Inbox className="h-4 w-4 text-muted-foreground" />
@@ -156,106 +108,160 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                         <p className="text-xs text-muted-foreground">Awaiting clerk review</p>
                     </CardContent>
                 </Card>
-                <Card 
-                    className={cn("cursor-pointer transition-all hover:border-primary", filter === 'signed' && "ring-2 ring-primary")}
-                    onClick={() => setFilter('signed')}
-                >
+                <Card className="bg-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Awaiting Archival</CardTitle>
+                        <CardTitle className="text-sm font-medium">Pending Supervisor</CardTitle>
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{summaryStats.pendingSupervisor}</div>
+                        <p className="text-xs text-muted-foreground">Waiting for audit sign-off</p>
+                    </CardContent>
+                </Card>
+                <Card className="border-primary/20 bg-primary/5">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-primary">Archive Vault</CardTitle>
+                        <Archive className="h-4 w-4 text-primary" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-primary">{summaryStats.archived}</div>
+                        <p className="text-xs text-primary/70">Finalized electronic records</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-card">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Pipeline</CardTitle>
                         <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.signed}</div>
-                        <p className="text-xs text-muted-foreground">Fully signed & verified</p>
-                    </CardContent>
-                </Card>
-                <Card 
-                    className={cn("cursor-pointer transition-all hover:border-primary", filter === 'rejected' && "ring-2 ring-primary")}
-                    onClick={() => setFilter('rejected')}
-                >
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Rejected Cases</CardTitle>
-                        <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.rejected}</div>
-                        <p className="text-xs text-muted-foreground">Total rejected applications</p>
+                        <div className="text-2xl font-bold">{summaryStats.allActive}</div>
+                        <p className="text-xs text-muted-foreground">Active actionable items</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                        <div>
-                            <CardTitle>{filterTitles[filter]}</CardTitle>
-                            <CardDescription>
-                                {filter === 'storage' 
-                                    ? 'Searchable history of processed and archived applications.'
-                                    : 'List of applications currently in the processing pipeline.'}
-                            </CardDescription>
-                        </div>
-                        <div className='flex gap-2 items-center'>
-                            <div className="relative w-full sm:w-64">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search ID or Client..."
-                                    className="pl-10"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-                            <Button variant="outline" onClick={() => setFilter(filter === 'storage' ? 'all' : 'storage')}>
-                                <Archive className="mr-2 h-4 w-4" />
-                                {filter === 'storage' ? 'View Pipeline' : 'View Archive'}
-                            </Button>
-                        </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <TabsList>
+                        <TabsTrigger value="pipeline" className="flex items-center gap-2">
+                            <Briefcase className="h-4 w-4" />
+                            Active Pipeline
+                        </TabsTrigger>
+                        <TabsTrigger value="archive" className="flex items-center gap-2">
+                            <Archive className="h-4 w-4" />
+                            Archive Vault
+                        </TabsTrigger>
+                    </TabsList>
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            placeholder="Search ID or Client..."
+                            className="pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
-                </CardHeader>
-                <CardContent>
-                    {filteredApplications.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Application ID</TableHead>
-                                    <TableHead>Client Name</TableHead>
-                                    <TableHead>Submitted By</TableHead>
-                                    <TableHead>Date Submitted</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredApplications.map((app) => (
-                                    <TableRow key={app.id}>
-                                        <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                        <TableCell>
-                                            <div className="font-medium">{app.clientName}</div>
-                                            <div className="text-[10px] text-muted-foreground">{app.clientType}</div>
-                                        </TableCell>
-                                        <TableCell>{app.submittedBy}</TableCell>
-                                        <TableCell>{app.submittedDate}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                                                {filter === 'pendingReview' || filter === 'signed' ? 'Process Case' : 'View Details'}
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                        <div className="flex items-center justify-center p-12 text-center">
-                            <p className="text-lg text-muted-foreground">
-                                {searchTerm ? 'No search results found.' : 'No applications found in this filter.'}
-                            </p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                </div>
+
+                <TabsContent value="pipeline">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Active Application Pipeline</CardTitle>
+                            <CardDescription>Applications currently moving through the verification and approval stages.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {pipelineApplications.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Application ID</TableHead>
+                                            <TableHead>Client Name</TableHead>
+                                            <TableHead>Submitted By</TableHead>
+                                            <TableHead>Date Submitted</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {pipelineApplications.map((app) => (
+                                            <TableRow key={app.id}>
+                                                <TableCell className="font-mono text-xs">{app.id}</TableCell>
+                                                <TableCell>
+                                                    <div className="font-medium">{app.clientName}</div>
+                                                    <div className="text-[10px] text-muted-foreground">{app.clientType}</div>
+                                                </TableCell>
+                                                <TableCell>{app.submittedBy}</TableCell>
+                                                <TableCell>{app.submittedDate}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
+                                                        Process Case
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <div className="flex items-center justify-center p-12 text-center text-muted-foreground italic">
+                                    No active pipeline applications found.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="archive">
+                    <Card className="border-primary/10 shadow-lg">
+                        <CardHeader className="bg-primary/5">
+                            <CardTitle className="flex items-center gap-2">
+                                <Archive className="h-5 w-5 text-primary" />
+                                Electronic Archive Vault
+                            </CardTitle>
+                            <CardDescription>Secure storage for finalized agent agreements and digitized legacy records.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {archivedApplications.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Archive ID</TableHead>
+                                            <TableHead>Client Name</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Date Archived</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {archivedApplications.map((app) => (
+                                            <TableRow key={app.id} className="hover:bg-muted/20">
+                                                <TableCell className="font-mono text-xs">{app.id}</TableCell>
+                                                <TableCell className="font-bold">{app.clientName}</TableCell>
+                                                <TableCell className="text-xs">{app.clientType}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>
+                                                        <FileSearch className="mr-2 h-4 w-4" />
+                                                        View Record
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-20 text-center text-muted-foreground">
+                                    <Archive className="h-12 w-12 opacity-10 mb-4" />
+                                    <p>The archive vault is currently empty.</p>
+                                    <p className="text-xs">Finalized applications will appear here automatically.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

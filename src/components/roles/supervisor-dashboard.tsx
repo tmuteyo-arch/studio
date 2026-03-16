@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { AlertCircle, AreaChart, CheckCircle2, ClipboardList, Inbox, Search, Users, FileDown, ShieldCheck, UserCheck } from 'lucide-react';
+import { AlertCircle, AreaChart, CheckCircle2, ClipboardList, Inbox, Search, Users, FileDown, ShieldCheck, UserCheck, Archive, FileSearch } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { User, users as allUsers } from '@/lib/users';
 import { Input } from '../ui/input';
@@ -27,6 +28,7 @@ interface SupervisorDashboardProps {
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
     case 'Signed':
+    case 'Archived':
       return 'success';
     case 'Pending Supervisor':
     case 'Pending Executive Signature':
@@ -46,6 +48,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     const backOfficeTeam = allUsers.filter(u => u.role === 'back-office');
 
     const myApprovalQueue = applications.filter(app => app.status === 'Pending Supervisor');
+    const archivedVault = applications.filter(app => app.status === 'Archived');
     
     const teamApplications = applications
         .filter(app => user.team?.includes(app.submittedBy) && app.status !== 'Archived');
@@ -63,7 +66,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         ).length;
 
     const filteredApprovalQueue = myApprovalQueue.filter(app => app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
-    const filteredTeamApps = teamApplications.filter(app => app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredVault = archivedVault.filter(app => app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const applicationForReview = selectedApplication ? applications.find(app => app.id === selectedApplication.id) : null;
     
@@ -124,104 +127,108 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         </div>
 
       <Tabs defaultValue="regulation" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
               <TabsTrigger value="regulation">
-                <ClipboardList className="mr-2 h-4 w-4"/>Workflow Oversight
+                <ClipboardList className="mr-2 h-4 w-4"/>Workflow
                 {totalTasks > 0 && <Badge variant="destructive" className="ml-2 animate-pulse">{totalTasks}</Badge>}
               </TabsTrigger>
+              <TabsTrigger value="vault"><Archive className="mr-2 h-4 w-4"/>Archive Vault</TabsTrigger>
               <TabsTrigger value="analytics"><AreaChart className="mr-2 h-4 w-4"/>Appraisal</TabsTrigger>
-              <TabsTrigger value="team"><Users className="mr-2 h-4 w-4"/>Clerk Performance</TabsTrigger>
+              <TabsTrigger value="team"><Users className="mr-2 h-4 w-4"/>Clerk Results</TabsTrigger>
               <TabsTrigger value="reports"><FileDown className="mr-2 h-4 w-4"/>Audit Reports</TabsTrigger>
           </TabsList>
           
           <TabsContent value="regulation">
-             <Tabs defaultValue="approval" className="w-full">
-                  <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                      <TabsList className="w-full sm:w-auto">
-                          <TabsTrigger value="approval">Review Queue ({filteredApprovalQueue.length})</TabsTrigger>
-                          <TabsTrigger value="team">ASL Monitor ({filteredTeamApps.length})</TabsTrigger>
-                      </TabsList>
+             <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                      <CardTitle>Clerk Output Validation</CardTitle>
                       <div className="relative w-full sm:w-64">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                           <Input placeholder="Search ID or Client..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                       </div>
                   </div>
-                  <TabsContent value="approval">
-                      <Card>
-                          <CardHeader>
-                              <CardTitle>Clerk Output Validation</CardTitle>
-                              <CardDescription>Check and sign off on requests processed by Back Office Clerks.</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>ID</TableHead>
-                                        <TableHead>Customer</TableHead>
-                                        <TableHead>From ASL</TableHead>
-                                        <TableHead>Last Action</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Action</TableHead>
+                  <Card>
+                      <CardContent className="pt-6">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Customer</TableHead>
+                                    <TableHead>From ASL</TableHead>
+                                    <TableHead>Last Action</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredApprovalQueue.map((app) => (
+                                    <TableRow key={app.id}>
+                                        <TableCell className="font-mono text-xs">{app.id}</TableCell>
+                                        <TableCell className="font-medium">{app.clientName}</TableCell>
+                                        <TableCell>{app.submittedBy}</TableCell>
+                                        <TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
+                                        <TableCell><Badge variant="secondary">{app.status}</Badge></TableCell>
+                                        <TableCell className="text-right">
+                                            <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review & Sign</Button>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredApprovalQueue.map((app) => (
-                                        <TableRow key={app.id}>
-                                            <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                            <TableCell className="font-medium">{app.clientName}</TableCell>
-                                            <TableCell>{app.submittedBy}</TableCell>
-                                            <TableCell>{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
-                                            <TableCell><Badge variant="secondary">{app.status}</Badge></TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Review & Sign</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                            {filteredApprovalQueue.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No matches.' : 'Queue is empty.'}</div>}
-                          </CardContent>
-                      </Card>
-                  </TabsContent>
-                  <TabsContent value="team">
-                      <Card>
-                          <CardHeader>
-                              <CardTitle>ASL Performance Monitor</CardTitle>
-                              <CardDescription>Oversight of requests coming in from Area Sales Leaders (ASL).</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                              <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>ID</TableHead>
-                                        <TableHead>Customer</TableHead>
-                                        <TableHead>ASL Name</TableHead>
-                                        <TableHead>Date Sent</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredTeamApps.map((app) => (
-                                        <TableRow key={app.id}>
-                                            <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                            <TableCell className="font-medium">{app.clientName}</TableCell>
-                                            <TableCell>{app.submittedBy}</TableCell>
-                                            <TableCell>{app.submittedDate}</TableCell>
-                                            <TableCell><Badge variant={getStatusVariant(app.status)}>{app.status}</Badge></TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>View Details</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                              </Table>
-                               {filteredTeamApps.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No results.' : "No active ASL requests to monitor."}</div>}
-                          </CardContent>
-                      </Card>
-                  </TabsContent>
-              </Tabs>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        {filteredApprovalQueue.length === 0 && <div className="text-center p-12 text-muted-foreground">{searchTerm ? 'No matches.' : 'Queue is empty.'}</div>}
+                      </CardContent>
+                  </Card>
+             </div>
           </TabsContent>
+
+          <TabsContent value="vault">
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                          <Archive className="h-5 w-5 text-primary" />
+                          Archive Vault Audit
+                      </CardTitle>
+                      <CardDescription>Audit-ready finalized records and digitized documents.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      {filteredVault.length > 0 ? (
+                          <Table>
+                              <TableHeader>
+                                  <TableRow>
+                                      <TableHead>Archive ID</TableHead>
+                                      <TableHead>Customer</TableHead>
+                                      <TableHead>Type</TableHead>
+                                      <TableHead>Date Filed</TableHead>
+                                      <TableHead className="text-right">Actions</TableHead>
+                                  </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                  {filteredVault.map((app) => (
+                                      <TableRow key={app.id}>
+                                          <TableCell className="font-mono text-xs">{app.id}</TableCell>
+                                          <TableCell className="font-bold">{app.clientName}</TableCell>
+                                          <TableCell className="text-xs">{app.clientType}</TableCell>
+                                          <TableCell className="text-xs text-muted-foreground">{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
+                                          <TableCell className="text-right">
+                                              <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>
+                                                  <FileSearch className="mr-2 h-4 w-4" />
+                                                  Full Audit
+                                              </Button>
+                                          </TableCell>
+                                      </TableRow>
+                                  ))}
+                              </TableBody>
+                          </Table>
+                      ) : (
+                          <div className="p-20 text-center text-muted-foreground">
+                              <Archive className="h-12 w-12 opacity-10 mx-auto mb-4" />
+                              <p>No archived records found.</p>
+                          </div>
+                      )}
+                  </CardContent>
+              </Card>
+          </TabsContent>
+
           <TabsContent value="analytics">
             <div className="space-y-6">
                 <KpiTracker applications={applications} />
