@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import { type FormState as RHFFormState } from 'react-hook-form';
 
@@ -70,6 +71,13 @@ export const OnboardingFormSchema = z.object({
   // Documents
   document1Type: z.string().min(1, { message: 'Primary document type is required.' }),
   document2Type: z.string().min(1, { message: 'Secondary document type is required.' }),
+  
+  // Actual Document Data (Data URIs)
+  capturedDocuments: z.array(z.object({
+    type: z.string(),
+    fileName: z.string(),
+    url: z.string()
+  })).optional().default([]),
   
   // Internal Checks
   fcbStatus: z.string().optional(),

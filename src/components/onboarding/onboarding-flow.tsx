@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -97,6 +98,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       executiveSignatureTimestamp: '',
       document1Type: '',
       document2Type: '',
+      capturedDocuments: [],
       signature: '',
       agreedToTerms: false,
     },
@@ -207,10 +209,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       fcbStatus: 'Inclusive',
       details: data,
       signatories: data.signatories || [],
-      documents: [
-        { type: data.document1Type, fileName: `${data.document1Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
-        { type: data.document2Type, fileName: `${data.document2Type.toLowerCase().replace(/\s/g, '_')}.pdf`, url: '#' },
-      ].filter(doc => doc.type),
+      documents: data.capturedDocuments || [],
       history: [
         { action: 'Request Sent', user: user.name, timestamp: new Date().toISOString() },
       ],

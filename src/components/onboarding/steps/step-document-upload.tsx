@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -58,6 +59,18 @@ export default function StepDocumentUpload() {
     form.setValue('document1Type', documentRequirements[0]?.document || 'doc1');
     form.setValue('document2Type', documentRequirements[1]?.document || 'doc2');
   }, [clientType, documentRequirements, form]);
+
+  // Sync documents state to form value for submission
+  React.useEffect(() => {
+    const capturedDocs = Object.values(documents)
+      .filter(doc => doc.pages.length > 0)
+      .map(doc => ({
+        type: doc.documentType,
+        fileName: doc.pages[0].file?.name || `${doc.documentType.toLowerCase().replace(/\s/g, '_')}_1.${doc.pages[0].type === 'pdf' ? 'pdf' : 'jpg'}`,
+        url: doc.pages[0].dataUri // Currently taking the first page as the main document for simplicity
+      }));
+    form.setValue('capturedDocuments', capturedDocs);
+  }, [documents, form]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
     const file = e.target.files?.[0];
@@ -302,8 +315,8 @@ export default function StepDocumentUpload() {
                                                         >
                                                             <div className="flex flex-col items-center justify-center p-6 text-center">
                                                                 <File className="h-16 w-16 text-muted-foreground mb-4" />
-                                                                <p className="font-semibold">PDF Preview Not Available</p>
-                                                                <p className="text-sm text-muted-foreground mb-4">Your browser cannot display this PDF inline.</p>
+                                                                <p className="font-semibold">PDF Preview</p>
+                                                                <p className="text-sm text-muted-foreground mb-4">Viewing PDF data...</p>
                                                                 <Button asChild variant="outline">
                                                                     <a href={page.dataUri} download={page.file?.name || 'document.pdf'}><Download className="mr-2 h-4 w-4" />Download to View</a>
                                                                 </Button>

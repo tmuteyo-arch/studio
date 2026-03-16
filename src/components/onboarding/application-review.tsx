@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -219,7 +220,6 @@ export default function ApplicationReview({ application: initialApplication, onB
   const handleSupervisorSign = (signatureData: string) => {
     const newDetails = { ...application.details, supervisorSignature: signatureData, supervisorSignatureTimestamp: new Date().toISOString() };
     const newHistoryLog: HistoryLog = { action: 'Agreement Finalized by Supervisor', user: user.name, timestamp: new Date().toISOString() };
-    // Process now reaches 'Signed' (Done) status at Supervisor level
     handleUpdateApplication({ details: newDetails, status: 'Signed', history: [...application.history, newHistoryLog] });
     toast({ title: "Agreement Finalized", description: "Agency agreement has been signed and finalized."});
     setTimeout(() => onBack(), 500);
@@ -425,11 +425,11 @@ export default function ApplicationReview({ application: initialApplication, onB
                 </DialogHeader>
                 <div className="flex-1 bg-muted rounded-md overflow-hidden relative flex items-center justify-center min-h-0">
                     {previewDoc?.url && previewDoc.url !== '#' ? (
-                        previewDoc.fileName.toLowerCase().endsWith('.pdf') || previewDoc.url.startsWith('data:application/pdf') ? (
+                        previewDoc.url.includes('application/pdf') || previewDoc.fileName.toLowerCase().endsWith('.pdf') ? (
                             <object data={previewDoc.url} type="application/pdf" className="w-full h-full">
                                 <div className="p-12 text-center">
                                     <FileText className="h-16 w-16 mx-auto opacity-20 mb-4" />
-                                    <p>PDF view not supported by browser.</p>
+                                    <p>Viewing PDF content...</p>
                                     <Button asChild variant="outline" className="mt-4"><a href={previewDoc.url} download={previewDoc.fileName}><Download className="mr-2 h-4 w-4" />Download to View</a></Button>
                                 </div>
                             </object>
