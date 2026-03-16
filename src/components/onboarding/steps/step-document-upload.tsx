@@ -50,26 +50,42 @@ export default function StepDocumentUpload() {
   const clientType = form.watch('clientType');
   const documentRequirements = getDocumentRequirements(clientType);
 
+  // Initialize state from form values to prevent data loss on step switch
   React.useEffect(() => {
     const initialDocs: Record<string, DocumentState> = {};
+    const existingCaptured = form.getValues('capturedDocuments') || [];
+
     documentRequirements.forEach(req => {
-      initialDocs[req.document] = { documentType: req.document, pages: [] };
+      const existing = existingCaptured.find(d => d.type === req.document);
+      initialDocs[req.document] = { 
+        documentType: req.document, 
+        pages: existing ? [{
+            source: 'upload',
+            dataUri: existing.url,
+            type: existing.url.includes('application/pdf') || existing.fileName?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
+        }] : [] 
+      };
     });
     setDocuments(initialDocs);
-    form.setValue('document1Type', documentRequirements[0]?.document || 'doc1');
-    form.setValue('document2Type', documentRequirements[1]?.document || 'doc2');
   }, [clientType, documentRequirements, form]);
 
   // Sync documents state to form value for submission
   React.useEffect(() => {
+    if (Object.keys(documents).length === 0) return;
+
     const capturedDocs = Object.values(documents)
       .filter(doc => doc.pages.length > 0)
       .map(doc => ({
         type: doc.documentType,
         fileName: doc.pages[0].file?.name || `${doc.documentType.toLowerCase().replace(/\s/g, '_')}_1.${doc.pages[0].type === 'pdf' ? 'pdf' : 'jpg'}`,
-        url: doc.pages[0].dataUri // Currently taking the first page as the main document for simplicity
+        url: doc.pages[0].dataUri
       }));
-    form.setValue('capturedDocuments', capturedDocs);
+    
+    // Only update if something actually changed to avoid form reset loops
+    const currentVal = form.getValues('capturedDocuments') || [];
+    if (JSON.stringify(currentVal) !== JSON.stringify(capturedDocs)) {
+        form.setValue('capturedDocuments', capturedDocs);
+    }
   }, [documents, form]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
@@ -95,7 +111,7 @@ export default function StepDocumentUpload() {
         ...prev,
         [documentType]: {
             ...prev[documentType],
-            pages: [...(prev[documentType]?.pages || []), page],
+            pages: [page], // Limiting to 1 page for now as per form schema
         }
     }));
   };
@@ -105,7 +121,7 @@ export default function StepDocumentUpload() {
         ...prev,
         [documentType]: {
             ...prev[documentType],
-            pages: prev[documentType].pages.filter((_, i) => i !== pageIndex),
+            pages: [],
         }
     }));
   };
@@ -266,24 +282,27 @@ export default function StepDocumentUpload() {
                     </div>
 
                     {pages.length > 0 ? (
-                        <div className="grid grid-cols-3 gap-1 h-12 overflow-hidden">
+                        <div className="grid grid-cols-1 gap-1 h-24 overflow-hidden">
                             {pages.map((page, index) => (
-                                <div key={index} className="relative group border rounded h-12 bg-muted flex items-center justify-center overflow-hidden">
+                                <div key={index} className="relative group border rounded h-24 bg-muted flex items-center justify-center overflow-hidden">
                                     {page.type === 'image' ? (
                                         <img src={page.dataUri} alt="doc" className="w-full h-full object-cover" />
                                     ) : (
-                                        <File className="h-4 w-4 text-muted-foreground" />
+                                        <div className="flex flex-col items-center gap-1">
+                                            <File className="h-8 w-8 text-primary" />
+                                            <span className="text-[10px] font-bold">PDF FILE</span>
+                                        </div>
                                     )}
                                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                        <Button variant="destructive" size="icon" className="h-6 w-6" onClick={() => removePageFromDocument(documentType, index)}>
-                                            <Trash2 className="h-3 w-3" />
+                                        <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePageFromDocument(documentType, index)}>
+                                            <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                    <div className="h-12 border-dashed border-2 rounded flex items-center justify-center text-muted-foreground text-[10px]">
+                    <div className="h-24 border-dashed border-2 rounded flex items-center justify-center text-muted-foreground text-[10px]">
                         No pages added
                     </div>
                     )}
@@ -291,46 +310,21 @@ export default function StepDocumentUpload() {
                     {pages.length > 0 && (
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs">
-                                <Eye className="mr-2 h-3 w-3"/>Preview All Pages
+                            <Button variant="secondary" size="sm" className="w-full mt-2 h-8 text-xs font-bold">
+                                <Eye className="mr-2 h-3 w-3"/>View Document
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+                        <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
                             <DialogHeader>
-                                <DialogTitle>Preview: {documentType}</DialogTitle>
+                                <DialogTitle>Document Preview: {documentType}</DialogTitle>
                             </DialogHeader>
-                            <Carousel className="w-full flex-1 min-h-0">
-                                <CarouselContent className="h-full">
-                                    {pages.map((page, index) => (
-                                        <CarouselItem key={index} className="h-full">
-                                            <div className="p-1 h-full">
-                                                <div className="flex h-full items-center justify-center p-2 border rounded-md bg-muted overflow-hidden">
-                                                    {page.type === 'image' ? (
-                                                        <img src={page.dataUri} alt={`Page ${index + 1}`} className="max-w-full max-h-full object-contain rounded-md" />
-                                                    ) : (
-                                                        <object
-                                                            data={page.dataUri}
-                                                            type="application/pdf"
-                                                            className="w-full h-full rounded-md"
-                                                        >
-                                                            <div className="flex flex-col items-center justify-center p-6 text-center">
-                                                                <File className="h-16 w-16 text-muted-foreground mb-4" />
-                                                                <p className="font-semibold">PDF Preview</p>
-                                                                <p className="text-sm text-muted-foreground mb-4">Viewing PDF data...</p>
-                                                                <Button asChild variant="outline">
-                                                                    <a href={page.dataUri} download={page.file?.name || 'document.pdf'}><Download className="mr-2 h-4 w-4" />Download to View</a>
-                                                                </Button>
-                                                            </div>
-                                                        </object>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </CarouselItem>
-                                    ))}
-                                </CarouselContent>
-                                <CarouselPrevious />
-                                <CarouselNext />
-                            </Carousel>
+                            <div className="flex-1 min-h-0 bg-muted rounded-md overflow-hidden flex items-center justify-center">
+                                {pages[0].type === 'image' ? (
+                                    <img src={pages[0].dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
+                                ) : (
+                                    <iframe src={pages[0].dataUri} className="w-full h-full" title="PDF Preview" />
+                                )}
+                            </div>
                         </DialogContent>
                     </Dialog>
                     )}
@@ -345,7 +339,7 @@ export default function StepDocumentUpload() {
             AI Document Verification
           </h4>
           <p className="text-xs text-muted-foreground mb-4">Click below to have Gemini analyze the first pages of your main documents (ID/Registration). It will attempt to verify information across the files.</p>
-          <Button onClick={handleVerification} disabled={isLoading} className="w-full">
+          <Button onClick={handleVerification} disabled={isLoading} className="w-full font-bold">
             {isLoading ? 'AI is analyzing documents...' : 'Run AI Pre-fill & Validation'}
           </Button>
         </div>
@@ -383,7 +377,7 @@ export default function StepDocumentUpload() {
                 </div>
                 <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={stopScan}>Cancel</Button>
-                    <Button onClick={captureImage} disabled={!hasCameraPermission}>Capture Page</Button>
+                    <Button onClick={captureImage} disabled={!hasCameraPermission} className="font-bold">Capture Page</Button>
                 </div>
             </DialogContent>
         </Dialog>

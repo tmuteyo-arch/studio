@@ -5,13 +5,16 @@ import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PartyPopper } from 'lucide-react';
+import { PartyPopper, FileText, Eye, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import TermsAndConditions from '../terms-and-conditions';
 
 const DetailItem = ({ label, value }: { label: string; value: string | number | undefined | null | boolean; }) => {
@@ -49,6 +52,7 @@ export default function StepReview() {
   const isSoleTrader = data.clientType === 'Proprietorship / Sole Trader';
   const isCorporate = !isPersonal && !isSoleTrader && !!data.clientType;
   const needsMandate = data.clientType !== 'Personal Account';
+  const capturedDocs = data.capturedDocuments || [];
 
 
   if (isSubmitted) {
@@ -114,6 +118,45 @@ export default function StepReview() {
                 ))}
              </div>
         )}
+
+        <div className="rounded-md border p-4 space-y-4">
+            <h3 className="font-semibold flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                Uploaded Documents ({capturedDocs.length})
+            </h3>
+            {capturedDocs.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {capturedDocs.map((doc, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 border rounded-md bg-muted/20">
+                            <div className="flex items-center gap-3">
+                                <FileText className="h-5 w-5 text-primary" />
+                                <div className="max-w-[150px]">
+                                    <p className="text-sm font-bold truncate">{doc.type}</p>
+                                    <p className="text-[10px] text-muted-foreground truncate">{doc.fileName}</p>
+                                </div>
+                            </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="h-4 w-4" /></Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl h-[80vh]">
+                                    <DialogHeader><DialogTitle>{doc.type}</DialogTitle></DialogHeader>
+                                    <div className="flex-1 bg-muted rounded-md overflow-hidden flex items-center justify-center">
+                                        {doc.url.includes('application/pdf') || doc.fileName.toLowerCase().endsWith('.pdf') ? (
+                                            <iframe src={doc.url} className="w-full h-full" />
+                                        ) : (
+                                            <img src={doc.url} alt="Document" className="max-w-full max-h-full object-contain" />
+                                        )}
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="text-sm text-destructive font-bold">No documents uploaded! Please go back and add files.</p>
+            )}
+        </div>
 
         <Separator />
         

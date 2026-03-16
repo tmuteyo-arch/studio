@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -28,6 +29,8 @@ const getStatusVariant = (status: ApplicationStatus) => {
       return 'destructive';
     case 'Submitted':
       return 'outline';
+    case 'Archived':
+      return 'success';
     default:
       return 'outline';
   }
@@ -42,7 +45,7 @@ const translateStatus = (status: ApplicationStatus) => {
         case 'Signed': return 'Signed';
         case 'Rejected': return 'Rejected';
         case 'Returned to ATL': return 'Returned to ASL';
-        case 'Archived': return 'Archived';
+        case 'Archived': return 'Archived (Saved)';
         default: return status;
     }
 }
@@ -58,7 +61,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [searchTerm, setSearchTerm] = React.useState('');
 
   const myApplications = applications
-    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected', 'Pending Supervisor', 'Pending Executive Signature'].includes(app.status))
+    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected', 'Pending Supervisor', 'Pending Executive Signature', 'Archived'].includes(app.status))
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     
   const customerLeads = applications
