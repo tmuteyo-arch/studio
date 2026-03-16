@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AlertCircle, Info, Eye, Camera, Trash2, Upload, File, ScanLine } from 'lucide-react';
+import { Info, Eye, Camera, Trash2, Upload, File, ScanLine } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -37,9 +37,9 @@ export default function StepDocumentUpload() {
   const [isScanning, setIsScanning] = React.useState<string | null>(null);
 
   const clientType = form.watch('clientType');
-  const documentRequirements = getDocumentRequirements(clientType);
+  const documentRequirements = React.useMemo(() => getDocumentRequirements(clientType), [clientType]);
 
-  // Initialize state from form values to prevent data loss on step switch
+  // Initialize state from form values
   React.useEffect(() => {
     const initialDocs: Record<string, DocumentState> = {};
     const existingCaptured = form.getValues('capturedDocuments') || [];
@@ -56,7 +56,7 @@ export default function StepDocumentUpload() {
       };
     });
     setDocuments(initialDocs);
-  }, [clientType, documentRequirements, form]);
+  }, [documentRequirements, form]);
 
   // Sync documents state to form value for submission
   React.useEffect(() => {
@@ -70,10 +70,9 @@ export default function StepDocumentUpload() {
         url: doc.pages[0].dataUri
       }));
     
-    // Only update if something actually changed to avoid form reset loops
     const currentVal = form.getValues('capturedDocuments') || [];
     if (JSON.stringify(currentVal) !== JSON.stringify(capturedDocs)) {
-        form.setValue('capturedDocuments', capturedDocs);
+        form.setValue('capturedDocuments', capturedDocs, { shouldValidate: true });
     }
   }, [documents, form]);
 
@@ -90,38 +89,23 @@ export default function StepDocumentUpload() {
     reader.onload = (event) => {
       const dataUri = event.target?.result as string;
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
-      addPageToDocument(documentType, { source: 'upload', dataUri, file, type: fileType });
+      setDocuments(prev => ({
+        ...prev,
+        [documentType]: { ...prev[documentType], pages: [{ source: 'upload', dataUri, file, type: fileType }] }
+      }));
     };
     reader.readAsDataURL(file);
   };
   
-  const addPageToDocument = (documentType: string, page: PageState) => {
+  const removePageFromDocument = (documentType: string) => {
     setDocuments(prev => ({
         ...prev,
-        [documentType]: {
-            ...prev[documentType],
-            pages: [page],
-        }
-    }));
-  };
-
-  const removePageFromDocument = (documentType: string, pageIndex: number) => {
-    setDocuments(prev => ({
-        ...prev,
-        [documentType]: {
-            ...prev[documentType],
-            pages: [],
-        }
+        [documentType]: { ...prev[documentType], pages: [] }
     }));
   };
 
   const startScan = async (docType: string) => {
     setIsScanning(docType);
-    if (hasCameraPermission === false) {
-      toast({ variant: 'destructive', title: 'Camera Access Denied', description: 'Please enable camera permissions to scan documents.' });
-      setIsScanning(null);
-      return;
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) {
@@ -132,7 +116,7 @@ export default function StepDocumentUpload() {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
       setIsScanning(null);
-      toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access the camera. Check your browser settings.' });
+      toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access the camera.' });
     }
   };
 
@@ -146,8 +130,11 @@ export default function StepDocumentUpload() {
         if (context) {
             context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
             const dataUri = canvas.toDataURL('image/jpeg');
-            addPageToDocument(isScanning, { source: 'scan', dataUri, type: 'image' });
-            toast({ title: 'Page Captured', description: `Added a new page to ${isScanning}.` });
+            setDocuments(prev => ({
+                ...prev,
+                [isScanning]: { ...prev[isScanning], pages: [{ source: 'scan', dataUri, type: 'image' }] }
+            }));
+            toast({ title: 'Page Captured', description: `Added to ${isScanning}.` });
         }
         stopScan();
     }
@@ -219,24 +206,20 @@ export default function StepDocumentUpload() {
                     </div>
 
                     {pages.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-1 h-24 overflow-hidden">
-                            {pages.map((page, index) => (
-                                <div key={index} className="relative group border rounded h-24 bg-muted flex items-center justify-center overflow-hidden">
-                                    {page.type === 'image' ? (
-                                        <img src={page.dataUri} alt="doc" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-1">
-                                            <File className="h-8 w-8 text-primary" />
-                                            <span className="text-[10px] font-bold">PDF FILE</span>
-                                        </div>
-                                    )}
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                        <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePageFromDocument(documentType, index)}>
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                        <div className="relative group border rounded h-24 bg-muted flex items-center justify-center overflow-hidden">
+                            {pages[0].type === 'image' ? (
+                                <img src={pages[0].dataUri} alt="doc" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="flex flex-col items-center gap-1">
+                                    <File className="h-8 w-8 text-primary" />
+                                    <span className="text-[10px] font-bold">PDF FILE</span>
                                 </div>
-                            ))}
+                            )}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePageFromDocument(documentType)}>
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
                     ) : (
                     <div className="h-24 border-dashed border-2 rounded flex items-center justify-center text-muted-foreground text-[10px]">
@@ -284,7 +267,7 @@ export default function StepDocumentUpload() {
                             <Alert variant="destructive" className="m-4">
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertTitle>Camera Access Required</AlertTitle>
-                                <AlertDescription>Please allow camera access in your browser settings to scan documents directly.</AlertDescription>
+                                <AlertDescription>Please allow camera access in your browser settings.</AlertDescription>
                             </Alert>
                         </div>
                     )}
