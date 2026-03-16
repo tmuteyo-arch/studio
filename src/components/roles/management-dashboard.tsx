@@ -6,16 +6,15 @@ import { applicationsAtom, Application } from '@/lib/mock-data';
 import { zimRegions } from '@/lib/types';
 import { users as allUsers } from '@/lib/users';
 import { 
-  BarChart, 
-  MapPin, 
-  LayoutDashboard, 
   TrendingUp,
   Users,
-  PieChart as PieChartIcon,
-  CheckCircle2,
-  Clock
+  LayoutDashboard,
+  MapPin,
+  Clock,
+  Award,
+  BarChart
 } from 'lucide-react';
-import { Bar, BarChart as ReChartsBarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip, Pie, PieChart } from 'recharts';
+import { Bar, BarChart as ReChartsBarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,62 +47,58 @@ export default function ManagementDashboard() {
         })).sort((a, b) => b.count - a.count);
     }, [applications]);
 
-    const teamPerformance = React.useMemo(() => {
-        const supervisors = allUsers.filter(u => u.role === 'supervisor');
-        const clerks = allUsers.filter(u => u.role === 'back-office');
-
-        return {
-            supervisors: supervisors.map(sup => ({
-                name: sup.name,
-                initials: sup.initials,
-                signed: applications.filter(a => a.history.some(h => h.user === sup.name && h.action.includes('Signed'))).length,
-                rejected: applications.filter(a => a.history.some(h => h.user === sup.name && h.action === 'Rejected')).length,
-            })),
-            clerks: clerks.map(clk => ({
-                name: clk.name,
-                initials: clk.initials,
-                processed: applications.filter(a => a.history.some(h => h.user === clk.name && (h.action === 'Pending Supervisor' || h.action === 'Returned to ATL'))).length,
-            }))
-        };
+    const atlPerformance = React.useMemo(() => {
+        const atlUsers = allUsers.filter(u => u.role === 'asl');
+        return atlUsers.map(atl => {
+            const atlApps = applications.filter(app => app.submittedBy === atl.name);
+            return {
+                name: atl.name,
+                initials: atl.initials,
+                total: atlApps.length,
+                signed: atlApps.filter(a => a.status === 'Signed').length,
+                rejected: atlApps.filter(a => a.status === 'Rejected').length,
+                pending: atlApps.filter(a => !['Signed', 'Rejected', 'Archived'].includes(a.status)).length,
+            };
+        }).sort((a, b) => b.total - a.total);
     }, [applications]);
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold">MANAGEMENT</h2>
-                  <p className="text-muted-foreground">Strategic oversight and operational performance metrics.</p>
+                  <h2 className="text-3xl font-bold tracking-tight">MANAGEMENT</h2>
+                  <p className="text-muted-foreground font-medium">Strategic oversight of Area Sales Leader (ASL) performance and regional growth.</p>
                 </div>
             </div>
             
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground">Total Registry</CardTitle></CardHeader>
+                <Card className="shadow-sm">
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Total Registry</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalApplications}</div></CardContent>
                 </Card>
-                <Card className="border-primary/20 bg-primary/5">
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-primary">Finalized (Done)</CardTitle></CardHeader>
+                <Card className="border-primary/20 bg-primary/5 shadow-sm">
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-primary tracking-wider">Finalized Agreements</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalSigned}</div></CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground">Active Pipeline</CardTitle></CardHeader>
+                <Card className="shadow-sm">
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Active Pipeline</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalInPipeline}</div></CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-destructive">Rejected</CardTitle></CardHeader>
+                <Card className="shadow-sm">
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-destructive tracking-wider">Rejected</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalRejected}</div></CardContent>
                 </Card>
             </div>
 
-            <Tabs defaultValue="analytics" className="w-full">
+            <Tabs defaultValue="team" className="w-full">
                 <TabsList className="bg-muted/50 p-1 mb-6">
+                    <TabsTrigger value="team" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        ASL Team Performance
+                    </TabsTrigger>
                     <TabsTrigger value="analytics" className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4" />
                         Regional Trends
-                    </TabsTrigger>
-                    <TabsTrigger value="team" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Team Performance
                     </TabsTrigger>
                     <TabsTrigger value="history" className="flex items-center gap-2">
                         <LayoutDashboard className="h-4 w-4" />
@@ -111,9 +106,58 @@ export default function ManagementDashboard() {
                     </TabsTrigger>
                 </TabsList>
 
+                <TabsContent value="team" className="space-y-6">
+                    <Card className="shadow-md">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-primary">
+                                <Award className="h-5 w-5" />
+                                Area Sales Leader (ASL) Results
+                            </CardTitle>
+                            <CardDescription>
+                                Monitoring the field output and success rates of the sales team.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-muted/30">
+                                        <TableHead>ASL Name</TableHead>
+                                        <TableHead className="text-center">Total Sent</TableHead>
+                                        <TableHead className="text-center text-green-600">Done</TableHead>
+                                        <TableHead className="text-center text-destructive">Rejected</TableHead>
+                                        <TableHead className="text-center text-amber-600">Active</TableHead>
+                                        <TableHead className="text-right">Success Rate</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {atlPerformance.map((atl) => (
+                                        <TableRow key={atl.name} className="hover:bg-muted/20 transition-colors">
+                                            <TableCell className="font-medium flex items-center gap-3">
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarFallback className="text-[10px] font-bold">{atl.initials}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="font-bold">{atl.name}</span>
+                                            </TableCell>
+                                            <TableCell className="text-center font-semibold">{atl.total}</TableCell>
+                                            <TableCell className="text-center font-bold text-green-600">{atl.signed}</TableCell>
+                                            <TableCell className="text-center font-bold text-destructive">{atl.rejected}</TableCell>
+                                            <TableCell className="text-center font-bold text-amber-600">{atl.pending}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge variant={atl.total > 0 && (atl.signed / atl.total) > 0.8 ? 'success' : 'outline'} className="font-mono">
+                                                    {atl.total > 0 ? Math.round((atl.signed / atl.total) * 100) : 0}%
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
                 <TabsContent value="analytics" className="space-y-6">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card className="lg:col-span-2">
+                        <Card className="lg:col-span-2 shadow-sm">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <MapPin className="h-5 w-5 text-primary" />
@@ -147,10 +191,10 @@ export default function ManagementDashboard() {
                             </CardContent>
                         </Card>
                         
-                        <Card>
+                        <Card className="shadow-sm">
                             <CardHeader>
-                                <CardTitle>Market Capture Ranking</CardTitle>
-                                <CardDescription>Top regions by total volume.</CardDescription>
+                                <CardTitle>Market Ranking</CardTitle>
+                                <CardDescription>Top provinces by agent volume.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
@@ -171,87 +215,19 @@ export default function ManagementDashboard() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="team" className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-primary" />
-                                    Supervisor Throughput
-                                </CardTitle>
-                                <CardDescription>Sign-off and rejection metrics for Back Office Supervisors.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Supervisor</TableHead>
-                                            <TableHead className="text-center">Finalized</TableHead>
-                                            <TableHead className="text-center">Rejected</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {teamPerformance.supervisors.map(sup => (
-                                            <TableRow key={sup.name}>
-                                                <TableCell className="font-medium flex items-center gap-2">
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[8px]">{sup.initials}</AvatarFallback>
-                                                    </Avatar>
-                                                    {sup.name}
-                                                </TableCell>
-                                                <TableCell className="text-center text-green-600 font-bold">{sup.signed}</TableCell>
-                                                <TableCell className="text-center text-destructive font-bold">{sup.rejected}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-primary" />
-                                    Clerk Verification Output
-                                </CardTitle>
-                                <CardDescription>Total case volume processed by Back Office Clerks.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Clerk</TableHead>
-                                            <TableHead className="text-right">Cases Processed</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {teamPerformance.clerks.map(clk => (
-                                            <TableRow key={clk.name}>
-                                                <TableCell className="font-medium flex items-center gap-2">
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="text-[8px]">{clk.initials}</AvatarFallback>
-                                                    </Avatar>
-                                                    {clk.name}
-                                                </TableCell>
-                                                <TableCell className="text-right font-bold">{clk.processed}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
-
                 <TabsContent value="history">
-                    <Card>
+                    <Card className="shadow-sm">
                         <CardHeader>
-                            <CardTitle>Recent Registry Activity</CardTitle>
-                            <CardDescription>Live feed of finalized agent sign-ups.</CardDescription>
+                            <CardTitle className="flex items-center gap-2">
+                                <BarChart className="h-5 w-5 text-primary" />
+                                Recent Registry Activity
+                            </CardTitle>
+                            <CardDescription>Live feed of finalized agent onboarding requests.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
+                                    <TableRow className="bg-muted/10">
                                         <TableHead>Customer</TableHead>
                                         <TableHead>Province</TableHead>
                                         <TableHead>Account Type</TableHead>
@@ -262,7 +238,7 @@ export default function ManagementDashboard() {
                                     {applications.slice(0, 10).map((app) => (
                                         <TableRow key={app.id}>
                                             <TableCell>
-                                                <div className="font-medium">{app.clientName}</div>
+                                                <div className="font-bold">{app.clientName}</div>
                                                 <div className="text-[10px] text-muted-foreground font-mono">{app.id}</div>
                                             </TableCell>
                                             <TableCell><span className="text-xs">{app.region}</span></TableCell>
