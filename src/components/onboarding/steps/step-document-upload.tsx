@@ -1,13 +1,11 @@
-
 'use client';
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AlertCircle, CheckCircle2, Info, Loader2, Eye, Camera, Trash2, Upload, File, ScanLine, Download } from 'lucide-react';
+import { AlertCircle, Info, Eye, Camera, Trash2, Upload, File, ScanLine } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { verifyDocuments } from '@/lib/actions';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -15,13 +13,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -39,8 +30,6 @@ export default function StepDocumentUpload() {
   const { toast } = useToast();
   const form = useFormContext<OnboardingFormData>();
   const [documents, setDocuments] = React.useState<Record<string, DocumentState>>({});
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [validationResult, setValidationResult] = React.useState<string | null>(null);
   
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -111,7 +100,7 @@ export default function StepDocumentUpload() {
         ...prev,
         [documentType]: {
             ...prev[documentType],
-            pages: [page], // Limiting to 1 page for now as per form schema
+            pages: [page],
         }
     }));
   };
@@ -171,65 +160,13 @@ export default function StepDocumentUpload() {
     }
     setIsScanning(null);
   };
-  
-   const handleVerification = async () => {
-    const doc1 = documents[documentRequirements[0]?.document];
-    const doc2 = documents[documentRequirements[1]?.document];
-    
-    if (!doc1?.pages?.length || !doc2?.pages?.length) {
-      toast({
-        variant: 'destructive',
-        title: 'Missing Documents',
-        description: 'Please capture/upload pages for at least the first two required documents.',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    setValidationResult(null);
-
-    const formData = form.getValues();
-    const input = {
-      document1DataUri: doc1.pages[0].dataUri,
-      document1Type: doc1.documentType,
-      document2DataUri: doc2.pages[0].dataUri,
-      document2Type: doc2.documentType,
-      formDataFields: {
-        fullName: formData.individualFirstName ? `${formData.individualFirstName} ${formData.individualSurname}` : formData.organisationLegalName || '',
-        dateOfBirth: formData.individualDateOfBirth || formData.dateOfIncorporation || '',
-        address: formData.individualAddress || formData.physicalAddress || '',
-      },
-    };
-
-    const result = await verifyDocuments(input);
-    setIsLoading(false);
-
-    if (result.success && result.data) {
-      setValidationResult(result.data.validationResult);
-      Object.entries(result.data.validatedFields).forEach(([key, value]) => {
-        form.setValue(key as keyof OnboardingFormData, value);
-      });
-      form.setValue('fcbStatus', result.data.fcbStatus);
-       toast({
-        title: 'Verification Complete',
-        description: 'AI has processed your documents and pre-filled the form.',
-      });
-    } else {
-      setValidationResult(result.error || 'An unknown error occurred.');
-      toast({
-        variant: 'destructive',
-        title: 'Verification Failed',
-        description: result.error || 'An unknown error occurred during AI processing.',
-      });
-    }
-  };
 
   return (
     <div>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ScanLine className="h-6 w-6 text-primary" />
-          Document Capture & AI Verification
+          Document Capture
         </CardTitle>
         <CardDescription>Capture required documents using your camera or upload existing files.</CardDescription>
       </CardHeader>
@@ -332,29 +269,6 @@ export default function StepDocumentUpload() {
             );
           })}
         </div>
-        
-        <div className="bg-secondary/20 p-4 rounded-lg border border-secondary">
-          <h4 className="font-semibold mb-2 text-sm flex items-center gap-2">
-            <Loader2 className={isLoading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-            AI Document Verification
-          </h4>
-          <p className="text-xs text-muted-foreground mb-4">Click below to have Gemini analyze the first pages of your main documents (ID/Registration). It will attempt to verify information across the files.</p>
-          <Button onClick={handleVerification} disabled={isLoading} className="w-full font-bold">
-            {isLoading ? 'AI is analyzing documents...' : 'Run AI Pre-fill & Validation'}
-          </Button>
-        </div>
-
-        {validationResult && (
-          <Alert variant={validationResult.includes('discrepancies') || validationResult.includes('concerns') ? 'destructive' : 'default'} className="animate-in fade-in slide-in-from-top-2">
-            {validationResult.includes('discrepancies') || validationResult.includes('concerns') ? (
-              <AlertCircle className="h-4 w-4" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4" />
-            )}
-            <AlertTitle>AI Insights</AlertTitle>
-            <AlertDescription className="text-xs">{validationResult}</AlertDescription>
-          </Alert>
-        )}
       </div>
 
        <Dialog open={!!isScanning} onOpenChange={(isOpen) => !isOpen && stopScan()}>
