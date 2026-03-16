@@ -139,7 +139,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         action: 'Application Accepted & Verified',
         user: user.name,
         timestamp: new Date().toISOString(),
-        notes: `${user.role.replace('-', ' ')} team has verified the customer application and forwarded it to Back Office.`,
+        notes: `ASL team has verified the customer sign up and forwarded it to Back Office.`,
     };
     handleUpdateApplication({
         submittedBy: user.name,
@@ -147,8 +147,8 @@ export default function ApplicationReview({ application: initialApplication, onB
         history: [...application.history, newHistoryLog]
     });
     toast({
-        title: "Application Accepted",
-        description: "Customer application has been accepted and forwarded to Back Office.",
+        title: "Sign Up Accepted",
+        description: "Customer sign up has been accepted and forwarded to Back Office.",
     });
     setTimeout(() => onBack(), 500);
   };
@@ -215,17 +215,10 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleSupervisorSign = (signatureData: string) => {
     const newDetails = { ...application.details, supervisorSignature: signatureData, supervisorSignatureTimestamp: new Date().toISOString() };
-    const newHistoryLog: HistoryLog = { action: 'Agreement Signed by Supervisor', user: user.name, timestamp: new Date().toISOString() };
-    handleUpdateApplication({ details: newDetails, status: 'Pending Executive Signature', history: [...application.history, newHistoryLog] });
-    toast({ title: "Agreement Sent", description: "Agreement has been signed and sent to the Retail Executive."});
-    setTimeout(() => onBack(), 500);
-  };
-
-  const handleExecutiveSign = (signatureData: string) => {
-    const newDetails = { ...application.details, executiveSignature: signatureData, executiveSignatureTimestamp: new Date().toISOString() };
-    const newHistoryLog: HistoryLog = { action: 'Agreement Signed by Executive', user: user.name, timestamp: new Date().toISOString() };
+    const newHistoryLog: HistoryLog = { action: 'Agreement Finalized by Supervisor', user: user.name, timestamp: new Date().toISOString() };
+    // Process now reaches 'Signed' (Done) status at Supervisor level
     handleUpdateApplication({ details: newDetails, status: 'Signed', history: [...application.history, newHistoryLog] });
-    toast({ title: "Agreement Finalized", description: "The agency agreement has been fully signed and finalized."});
+    toast({ title: "Agreement Finalized", description: "Agency agreement has been signed and finalized."});
     setTimeout(() => onBack(), 500);
   };
 
@@ -245,26 +238,21 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const renderActions = () => {
-    const isSalesRole = ['atl', 'merchant-services', 'business-banking', 'inner-circle'].includes(user.role);
+    const isSalesRole = user.role === 'asl';
     
     switch (user.role) {
-      case 'atl':
+      case 'asl':
         if (application.submittedBy === 'Customer' && application.status === 'Submitted') {
-            return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Accept & Claim Application</Button>;
+            return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Accept & Claim Sign Up</Button>;
         }
-        return null;
-      case 'merchant-services':
-      case 'business-banking':
-      case 'inner-circle':
-        // These roles no longer handle general customer leads
         return null;
       case 'back-office':
         if (application.status === 'Signed') {
-            return <div className="space-x-2"><Button onClick={() => handleStatusChange('Archived')}><Archive className="mr-2 h-4 w-4" />Archive Application</Button></div>;
+            return <div className="space-x-2"><Button onClick={() => handleStatusChange('Archived')}><Archive className="mr-2 h-4 w-4" />Archive Record</Button></div>;
         }
-        if (['Archived', 'Pending Supervisor', 'Rejected', 'Pending Executive Signature'].includes(application.status)) return null;
+        if (['Archived', 'Pending Supervisor', 'Rejected'].includes(application.status)) return null;
         if(application.status === 'Submitted' || application.status === 'Returned to ATL') {
-            return <div className="space-x-2"><Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to Area Team Leader</Button><Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button></div>;
+            return <div className="space-x-2"><Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ASL</Button><Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button></div>;
         }
         return null;
       case 'supervisor':
@@ -281,8 +269,8 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const supervisorForChecklist = application.history.find(h => h.action.includes('Supervisor'))?.user;
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
-  const isSigningStep = ['Pending Supervisor', 'Pending Executive Signature'].includes(application.status);
-  const isSalesRole = ['atl', 'merchant-services', 'business-banking', 'inner-circle'].includes(user.role);
+  const isSigningStep = user.role === 'supervisor' && application.status === 'Pending Supervisor';
+  const isSalesRole = user.role === 'asl';
 
   return (
     <FormProvider {...form}>
@@ -308,12 +296,12 @@ export default function ApplicationReview({ application: initialApplication, onB
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
-                  <CardTitle>Review Application: {application.id}</CardTitle>
-                  <CardDescription>Reviewing application for <strong>{application.clientName}</strong> submitted on {application.submittedDate}.</CardDescription>
+                  <CardTitle>Review Record: {application.id}</CardTitle>
+                  <CardDescription>Reviewing record for <strong>{application.clientName}</strong>.</CardDescription>
               </div>
               <div className="flex flex-col items-end gap-2">
                 <Badge variant={ application.status === 'Signed' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
-                {application.submittedBy === 'Customer' && <Badge variant="outline" className="bg-blue-50 text-blue-700">Self-Service Application</Badge>}
+                {application.submittedBy === 'Customer' && <Badge variant="outline" className="bg-blue-50 text-blue-700">Self-Service Sign Up</Badge>}
               </div>
             </div>
           </CardHeader>
@@ -331,8 +319,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
-                      {(user.role === 'supervisor' && application.status === 'Pending Supervisor') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
-                      {(user.role === 'retail-executive' && application.status === 'Pending Executive Signature') && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
+                      {isSigningStep && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
                   </TabsList>
                   <TabsContent value="details" className="pt-4">
                     <Card>
@@ -367,7 +354,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                     </Card>
                     {user.role === 'back-office' && (
                       <Card className="mt-6">
-                        <CardHeader><CardTitle>FCB Status Check</CardTitle><CardDescription>Confirm the applicant's status from the Financial Clearing Bureau.</CardDescription></CardHeader>
+                        <CardHeader><CardTitle>FCB Safety Check</CardTitle><CardDescription>Confirm the applicant's status from the Financial Clearing Bureau.</CardDescription></CardHeader>
                         <CardContent>
                           <RadioGroup defaultValue={application.fcbStatus} onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)} className="flex flex-col sm:flex-row gap-4">
                             <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Inclusive" id="fcb-inclusive" /><Label htmlFor="fcb-inclusive" className="font-normal">Inclusive</Label></div>
@@ -416,25 +403,8 @@ export default function ApplicationReview({ application: initialApplication, onB
                                    )}
                                </div>
                                <Separator />
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div>
-                                       {application.details.supervisorSignature && (
-                                           <div>
-                                               <Label>Supervisor Signature</Label>
-                                               <div className="border rounded-md p-2 bg-white mt-1 inline-block">
-                                                   <img src={application.details.supervisorSignature} alt="Supervisor Signature" className="h-16 w-auto" />
-                                               </div>
-                                           </div>
-                                       )}
-                                    </div>
-                                    <div>
-                                       {user.role === 'supervisor' && application.status === 'Pending Supervisor' && (
-                                           <SignatureField onSave={handleSupervisorSign} />
-                                       )}
-                                       {user.role === 'retail-executive' && application.status === 'Pending Executive Signature' && (
-                                           <SignatureField onSave={handleExecutiveSign} />
-                                       )}
-                                    </div>
+                                <div className="max-w-md">
+                                    <SignatureField onSave={handleSupervisorSign} />
                                 </div>
                            </CardContent>
                        </Card></TabsContent>

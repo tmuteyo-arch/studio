@@ -1,4 +1,3 @@
-
 'use client';
 
 import { atom } from 'jotai';
@@ -33,7 +32,7 @@ export type HistoryLog = {
 export type Comment = {
   id: string;
   user: string;
-  role: 'atl' | 'back-office' | 'supervisor' | 'retail-executive' | 'customer';
+  role: 'atl' | 'back-office' | 'supervisor' | 'management' | 'customer';
   timestamp: string;
   content: string;
 };
@@ -80,7 +79,7 @@ const initialApplications: Application[] = [
         document1Type: 'Certificate of Incorporation',
         document2Type: 'CR14',
         agreedToTerms: true,
-        signature: 'CHIDO ATL',
+        signature: 'CHIDO ASL',
     },
     signatories: [{
         surname: 'Madondo',
@@ -153,7 +152,7 @@ const initialApplications: Application[] = [
         document1Type: 'Certificate of Incorporation',
         document2Type: 'CR14',
         agreedToTerms: true,
-        signature: 'COLLETOR ATL',
+        signature: 'COLLETOR ASL',
     },
     signatories: [],
     documents: [
@@ -189,8 +188,6 @@ const initialApplications: Application[] = [
         signature: 'Ewebmart CEO',
         supervisorSignature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mP8/wcAAwAB/epv2AAAAABJRU5ErkJggg==',
         supervisorSignatureTimestamp: '2024-05-16T11:00:00Z',
-        executiveSignature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mP8/wcAAwAB/epv2AAAAABJRU5ErkJggg==',
-        executiveSignatureTimestamp: '2024-05-18T14:30:00Z'
     },
     signatories: [],
     documents: [
@@ -200,8 +197,7 @@ const initialApplications: Application[] = [
     history: [
       { action: 'Submitted', user: 'HEYZREST', timestamp: '2024-05-10T11:00:00Z' },
       { action: 'Pending Supervisor', user: 'RICHARD', timestamp: '2024-05-14T14:00:00Z' },
-      { action: 'Pending Executive Signature', user: 'Blessing Zulu', timestamp: '2024-05-16T11:00:00Z' },
-      { action: 'Signed', user: 'Tafadzwa Chihota', timestamp: '2024-05-18T14:30:00Z' },
+      { action: 'Agreement Signed by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-16T11:00:00Z' },
     ],
     comments: [],
   },
@@ -225,7 +221,7 @@ const initialApplications: Application[] = [
         document1Type: 'Certificate of Incorporation',
         document2Type: 'CR14',
         agreedToTerms: true,
-        signature: 'LIBERTY ATL',
+        signature: 'LIBERTY ASL',
     },
     signatories: [],
     documents: [
@@ -233,7 +229,7 @@ const initialApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'LIBERTY', timestamp: '2024-05-12T15:00:00Z' },
-        { action: 'Rejected', user: 'NYARADZO', timestamp: '2024-05-14T11:00:00Z', notes: 'Failed FCB background check due to prior legal defaults.' },
+        { action: 'Rejected', user: 'NYARADZO', timestamp: '2024-05-14T11:00:00Z', notes: 'Failed FCB safety check due to prior legal defaults.' },
     ],
     comments: [
         {id: 'c1', user: 'NYARADZO', role: 'back-office', timestamp: '2024-05-14T10:59:00Z', content: 'Adverse FCB status found. Application rejected as per policy.'}
@@ -275,7 +271,7 @@ const initialApplications: Application[] = [
     id: 'APP-007',
     clientName: 'Ticlda Tech Talk',
     clientType: 'Company (Private / Public Limited)',
-    status: 'Pending Executive Signature',
+    status: 'Signed',
     submittedDate: '2024-05-19',
     lastUpdated: '2024-05-21T11:30:00Z',
     submittedBy: 'PAMELA',
@@ -313,7 +309,7 @@ const initialApplications: Application[] = [
     history: [
         { action: 'Submitted', user: 'PAMELA', timestamp: '2024-05-19T09:00:00Z' },
         { action: 'Pending Supervisor', user: 'TENDAI', timestamp: '2024-05-20T16:00:00Z' },
-        { action: 'Agreement Signed by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-21T10:00:00Z' },
+        { action: 'Agreement Finalized by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-21T10:00:00Z' },
     ],
     comments: [],
   },
@@ -335,6 +331,7 @@ const initialApplications: Application[] = [
         individualAddress: "Gweru CBD",
         individualDateOfBirth: "1992-08-12",
         individualIdNumber: "12-345678-X-90",
+        individualMobileNumber: '+263 77 123 4567',
         signatories: [],
         document1Type: 'National ID Card',
         document2Type: 'Proof of Residence',
@@ -364,6 +361,7 @@ const initialApplications: Application[] = [
         individualAddress: "Highlands, Harare",
         individualDateOfBirth: "1988-11-20",
         individualIdNumber: "63-112233-Z-42",
+        individualMobileNumber: '+263 77 123 4567',
         signatories: [],
         document1Type: 'National ID Card',
         document2Type: 'Proof of Residence',
@@ -377,7 +375,7 @@ const initialApplications: Application[] = [
     ],
     history: [
         { action: 'Submitted', user: 'TARIRO', timestamp: '2024-05-05T10:00:00Z' },
-        { action: 'Signed', user: 'Tafadzwa Chihota', timestamp: '2024-05-07T15:00:00Z' },
+        { action: 'Agreement Finalized by Supervisor', user: 'Blessing Zulu', timestamp: '2024-05-07T15:00:00Z' },
         { action: 'Archived', user: 'TASHINGA', timestamp: '2024-05-08T10:00:00Z', notes: 'Filing complete. Record archived.' }
     ],
     comments: [],
