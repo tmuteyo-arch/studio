@@ -4,11 +4,11 @@ import * as React from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useAtom } from 'jotai';
-import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData } from '@/lib/mock-data';
+import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -31,6 +31,7 @@ import StepSignatories from './steps/step-signatories';
 import StepIndividualInfo from './steps/step-individual-info';
 import AccountResolutionPrintView from './account-resolution-print-view';
 import SignatureCanvas from 'react-signature-canvas';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -95,6 +96,8 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const [isGeneratingSummary, setIsGeneratingSummary] = React.useState(false);
   const [aiSummary, setAiSummary] = React.useState<string | null>(null);
+  
+  const [previewDoc, setPreviewDoc] = React.useState<Document | null>(null);
 
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
   const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
@@ -381,7 +384,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                            </Card>
                        </TabsContent>
                    )}
-                  <TabsContent value="documents" className="pt-4"><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Document Checklist</CardTitle></CardHeader><CardContent><ul className="space-y-3">{documentRequirements.map((req) => { const isUploaded = uploadedDocumentTypes.includes(req.document); return (<li key={req.document} className="flex items-center">{isUploaded ? (<CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />) : (<AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />)}<div><p className="font-medium">{req.document}</p></div></li>); })}</ul></CardContent></Card><Card><CardHeader><CardTitle>Uploaded Documents</CardTitle></CardHeader><CardContent>{application.documents.length > 0 ? (<ul className="space-y-3">{application.documents.map(doc => (<li key={doc.type} className="flex items-center justify-between p-3 rounded-md border"><div><p className="font-medium">{doc.type}</p><p className="text-sm text-muted-foreground">{doc.fileName}</p></div><Button variant="outline" size="sm">View</Button></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-8">No documents uploaded.</p>)}</CardContent></Card></div></TabsContent>
+                  <TabsContent value="documents" className="pt-4"><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Document Checklist</CardTitle></CardHeader><CardContent><ul className="space-y-3">{documentRequirements.map((req) => { const isUploaded = uploadedDocumentTypes.includes(req.document); return (<li key={req.document} className="flex items-center">{isUploaded ? (<CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />) : (<AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />)}<div><p className="font-medium">{req.document}</p></div></li>); })}</ul></CardContent></Card><Card><CardHeader><CardTitle>Uploaded Documents</CardTitle></CardHeader><CardContent>{application.documents.length > 0 ? (<ul className="space-y-3">{application.documents.map(doc => (<li key={doc.type} className="flex items-center justify-between p-3 rounded-md border"><div><p className="font-medium">{doc.type}</p><p className="text-sm text-muted-foreground">{doc.fileName}</p></div><Button variant="outline" size="sm" onClick={() => setPreviewDoc(doc)}><Eye className="mr-2 h-4 w-4" />View</Button></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-8">No documents uploaded.</p>)}</CardContent></Card></div></TabsContent>
                   <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Activity Log</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action.includes('Submitted') ? <FileText className="h-5 w-5"/> : <User className="h-5 w-5"/>}</div></div><div className="ml-4"><p className="font-medium">{entry.action} by {entry.user}</p><p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
                   <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Comments</CardTitle></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}{application.comments.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">No comments.</p>)}</div>{application.status !== 'Signed' && (<div className="space-y-2"><Textarea placeholder="Type your comment here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Comment</Button></div>)}</CardContent></Card></TabsContent>
                    {isSigningStep && (
@@ -414,6 +417,34 @@ export default function ApplicationReview({ application: initialApplication, onB
         </Card>
 
         <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Reject Application</AlertDialogTitle><AlertDialogDescription>Please provide a reason for rejection.</AlertDialogDescription></AlertDialogHeader><div className="space-y-4 py-4"><div className="space-y-2"><Label htmlFor="rejection-reason">Rejection Reason</Label><Select onValueChange={setRejectionReason} value={rejectionReason}><SelectTrigger id="rejection-reason"><SelectValue placeholder="Select a reason" /></SelectTrigger><SelectContent>{rejectionReasons.map(reason => (<SelectItem key={reason} value={reason}>{reason}</SelectItem>))}</SelectContent></Select></div><div className="space-y-2"><Label htmlFor="rejection-comment">Comment</Label><Textarea id="rejection-comment" placeholder="Explanation..." value={rejectionComment} onChange={(e) => setRejectionComment(e.target.value)} /></div></div><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRejection} disabled={!rejectionReason || !rejectionComment}>Confirm Rejection</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+
+        <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
+            <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>{previewDoc?.type}: {previewDoc?.fileName}</DialogTitle>
+                </DialogHeader>
+                <div className="flex-1 bg-muted rounded-md overflow-hidden relative flex items-center justify-center min-h-0">
+                    {previewDoc?.url && previewDoc.url !== '#' ? (
+                        previewDoc.fileName.toLowerCase().endsWith('.pdf') || previewDoc.url.startsWith('data:application/pdf') ? (
+                            <object data={previewDoc.url} type="application/pdf" className="w-full h-full">
+                                <div className="p-12 text-center">
+                                    <FileText className="h-16 w-16 mx-auto opacity-20 mb-4" />
+                                    <p>PDF view not supported by browser.</p>
+                                    <Button asChild variant="outline" className="mt-4"><a href={previewDoc.url} download={previewDoc.fileName}><Download className="mr-2 h-4 w-4" />Download to View</a></Button>
+                                </div>
+                            </object>
+                        ) : (
+                            <img src={previewDoc.url} alt="Document" className="max-w-full max-h-full object-contain" />
+                        )
+                    ) : (
+                        <div className="flex flex-col items-center justify-center text-muted-foreground p-12">
+                            <FileText className="h-12 w-12 mb-4 opacity-20" />
+                            <p>No preview available for this mock document.</p>
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
 
       </div>
     </FormProvider>

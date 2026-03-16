@@ -6,7 +6,7 @@ import { useAtom } from 'jotai';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, FileUp, Camera, Upload, Trash2, File, ScanLine, Info, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, FileUp, Camera, Upload, Trash2, File, ScanLine, Info, CheckCircle2, AlertCircle, Eye, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   const [documentType, setDocumentType] = React.useState('Other Document');
   const [pages, setPages] = React.useState<PageState[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [previewPage, setPreviewPage] = React.useState<PageState | null>(null);
 
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -157,7 +158,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       documents: pages.map((page, index) => ({
         type: page.documentType,
         fileName: page.file?.name || `scan_${index + 1}.jpg`,
-        url: '#',
+        url: page.dataUri,
       })),
       history: [
         { action: 'Archived', user: user.name, timestamp: new Date().toISOString(), notes: `Digitalized from paper record. Account Type: ${clientType}` },
@@ -245,9 +246,12 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                             <div className="absolute top-1 left-1">
                                 <Badge variant="secondary" className="text-[8px] px-1 py-0">{page.documentType}</Badge>
                             </div>
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                                <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setPreviewPage(page)}>
+                                    <Eye className="h-4 w-4" />
+                                </Button>
                                 <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePage(index)}>
-                                <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
                             </div>
@@ -377,6 +381,33 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                 <Button onClick={captureImage} disabled={!hasCameraPermission} className="bg-primary text-primary-foreground font-bold">Capture Page</Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!previewPage} onOpenChange={(open) => !open && setPreviewPage(null)}>
+        <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+            <DialogHeader>
+                <DialogTitle>Document Preview: {previewPage?.documentType}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 bg-muted rounded-md overflow-hidden relative flex items-center justify-center min-h-0">
+                {previewPage?.type === 'image' ? (
+                    <img src={previewPage.dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
+                ) : (
+                    <object
+                        data={previewPage?.dataUri}
+                        type="application/pdf"
+                        className="w-full h-full"
+                    >
+                        <div className="flex flex-col items-center justify-center p-6 text-center">
+                            <File className="h-16 w-16 text-muted-foreground mb-4" />
+                            <p className="font-semibold">PDF Preview Not Available</p>
+                            <Button asChild variant="outline" className="mt-4">
+                                <a href={previewPage?.dataUri} download="document.pdf"><Download className="mr-2 h-4 w-4" />Download to View</a>
+                            </Button>
+                        </div>
+                    </object>
+                )}
+            </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { AlertCircle, CheckCircle2, Info, Loader2, Eye, Camera, Trash2, Upload, File, ScanLine } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info, Loader2, Eye, Camera, Trash2, Upload, File, ScanLine, Download } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -282,24 +282,33 @@ export default function StepDocumentUpload() {
                                 <Eye className="mr-2 h-3 w-3"/>Preview All Pages
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-3xl">
+                        <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
                             <DialogHeader>
                                 <DialogTitle>Preview: {documentType}</DialogTitle>
                             </DialogHeader>
-                            <Carousel className="w-full">
-                                <CarouselContent>
+                            <Carousel className="w-full flex-1 min-h-0">
+                                <CarouselContent className="h-full">
                                     {pages.map((page, index) => (
-                                        <CarouselItem key={index}>
-                                            <div className="p-1">
-                                                <div className="flex aspect-video items-center justify-center p-2 border rounded-md bg-muted">
+                                        <CarouselItem key={index} className="h-full">
+                                            <div className="p-1 h-full">
+                                                <div className="flex h-full items-center justify-center p-2 border rounded-md bg-muted overflow-hidden">
                                                     {page.type === 'image' ? (
-                                                        <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-contain rounded-md" />
+                                                        <img src={page.dataUri} alt={`Page ${index + 1}`} className="max-w-full max-h-full object-contain rounded-md" />
                                                     ) : (
-                                                        <div className="flex flex-col items-center justify-center p-6">
-                                                            <File className="h-16 w-16 text-muted-foreground" />
-                                                            <p className="font-semibold text-lg mt-4">PDF Document</p>
-                                                            <p className="text-sm text-muted-foreground mt-2">{page.file?.name}</p>
-                                                        </div>
+                                                        <object
+                                                            data={page.dataUri}
+                                                            type="application/pdf"
+                                                            className="w-full h-full rounded-md"
+                                                        >
+                                                            <div className="flex flex-col items-center justify-center p-6 text-center">
+                                                                <File className="h-16 w-16 text-muted-foreground mb-4" />
+                                                                <p className="font-semibold">PDF Preview Not Available</p>
+                                                                <p className="text-sm text-muted-foreground mb-4">Your browser cannot display this PDF inline.</p>
+                                                                <Button asChild variant="outline">
+                                                                    <a href={page.dataUri} download={page.file?.name || 'document.pdf'}><Download className="mr-2 h-4 w-4" />Download to View</a>
+                                                                </Button>
+                                                            </div>
+                                                        </object>
                                                     )}
                                                 </div>
                                             </div>
