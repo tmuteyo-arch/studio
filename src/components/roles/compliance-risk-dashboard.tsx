@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useAtom } from 'jotai';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { zimRegions } from '@/lib/types';
 import { User } from '@/lib/users';
