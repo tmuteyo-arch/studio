@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useAtom } from 'jotai';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { User } from '@/lib/users';
 import { 
@@ -43,14 +43,9 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
   }, [applications, searchTerm]);
 
   const stats = React.useMemo(() => {
-    const peps = applications.filter(a => a.fcbStatus === 'PEP').length;
-    const adverse = applications.filter(a => a.fcbStatus === 'Adverse' || a.fcbStatus === 'Prior Adverse').length;
-    
     return {
-      totalHits: peps + adverse,
-      pepCount: peps,
-      adverseCount: adverse,
       pendingAudit: applications.filter(a => a.status === 'Pending Compliance').length,
+      totalRejections: applications.filter(a => a.status === 'Rejected').length,
     };
   }, [applications]);
 
@@ -79,31 +74,17 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">AML Risk Hits</CardTitle></CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{stats.totalHits}</div>
-            <p className="text-[10px] text-white/40 mt-1 uppercase">Total Identifications</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">PEP Exposure</CardTitle></CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">{stats.pepCount}</div>
-            <p className="text-[10px] text-white/40 mt-1 uppercase">Politically Exposed Persons</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Adverse Records</CardTitle></CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-500">{stats.adverseCount}</div>
-            <p className="text-[10px] text-white/40 mt-1 uppercase">Negative FCB Hits</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Pending Reviews</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Awaiting Approval</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingAudit}</div>
             <p className="text-[10px] text-white/40 mt-1 uppercase">Active Audit Queue</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white/5 border-white/10">
+          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Total Rejections</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{stats.totalRejections}</div>
+            <p className="text-[10px] text-white/40 mt-1 uppercase">Regulatory Declines</p>
           </CardContent>
         </Card>
       </div>

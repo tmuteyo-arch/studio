@@ -1,4 +1,3 @@
-
 'use client';
 import * as React from 'react';
 import { useAtom } from 'jotai';
@@ -10,13 +9,10 @@ import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-dat
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { Search, CheckCircle2, AlertCircle, Inbox, Archive, ScanLine, Briefcase, FileSearch } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Search, CheckCircle2, Inbox, Archive, ScanLine, Briefcase, FileSearch, Send } from 'lucide-react';
 import DailyActivityTracker from './daily-activity-tracker';
 import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-type FilterStatus = 'pendingReview' | 'pendingSupervisor' | 'signed' | 'rejected' | 'all' | 'archived';
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -24,6 +20,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Archived':
         return 'success';
     case 'Pending Supervisor':
+    case 'Pending Compliance':
     case 'In Review':
       return 'secondary';
     case 'Rejected':
@@ -50,13 +47,13 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const summaryStats = React.useMemo(() => ({
         pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length,
         pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor').length,
+        pendingDispatch: applications.filter(a => a.status === 'Archived' && !a.details.isDispatched).length,
         archived: applications.filter(a => a.status === 'Archived').length,
-        allActive: applications.filter(a => ['Submitted', 'Returned to ATL', 'Pending Supervisor'].includes(a.status)).length,
     }), [applications]);
 
     const pipelineApplications = React.useMemo(() => {
         return applications.filter(app => 
-            ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Signed', 'Rejected'].includes(app.status) &&
+            ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Pending Compliance', 'Signed', 'Rejected'].includes(app.status) &&
             (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [applications, searchTerm]);
@@ -120,22 +117,22 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 </Card>
                 <Card className="border-primary/20 bg-primary/5">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-primary">Archive Vault</CardTitle>
-                        <Archive className="h-4 w-4 text-primary" />
+                        <CardTitle className="text-sm font-medium text-primary uppercase tracking-tighter">Needs Dispatch</CardTitle>
+                        <Send className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-primary">{summaryStats.archived}</div>
-                        <p className="text-xs text-primary/70">Finalized electronic records</p>
+                        <div className="text-2xl font-bold text-primary">{summaryStats.pendingDispatch}</div>
+                        <p className="text-xs text-primary/70">Awaiting account handover</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Pipeline</CardTitle>
-                        <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Archive Vault</CardTitle>
+                        <Archive className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.allActive}</div>
-                        <p className="text-xs text-muted-foreground">Active actionable items</p>
+                        <div className="text-2xl font-bold">{summaryStats.archived}</div>
+                        <p className="text-xs text-muted-foreground">Total digitized records</p>
                     </CardContent>
                 </Card>
             </div>
@@ -230,7 +227,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                             <TableHead>Archive ID</TableHead>
                                             <TableHead>Client Name</TableHead>
                                             <TableHead>Type</TableHead>
-                                            <TableHead>Date Archived</TableHead>
+                                            <TableHead>Dispatch Status</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -240,7 +237,17 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                                 <TableCell className="font-mono text-xs">{app.id}</TableCell>
                                                 <TableCell className="font-bold">{app.clientName}</TableCell>
                                                 <TableCell className="text-xs">{app.clientType}</TableCell>
-                                                <TableCell className="text-xs text-muted-foreground">{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
+                                                <TableCell>
+                                                    {app.details.isDispatched ? (
+                                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                                            Dispatched ({app.details.accountNumber})
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 animate-pulse">
+                                                            Pending Dispatch
+                                                        </Badge>
+                                                    )}
+                                                </TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>
                                                         <FileSearch className="mr-2 h-4 w-4" />

@@ -32,12 +32,11 @@ export default function ManagementDashboard() {
     const [allUsers] = useAtom(usersAtom);
 
     const summaryStats = React.useMemo(() => {
-        const activeApps = applications.filter(a => a.status !== 'Archived');
         return {
-            totalActive: activeApps.length,
-            totalDone: activeApps.filter(a => a.status === 'Signed').length,
-            totalRejected: activeApps.filter(a => a.status === 'Rejected').length,
-            totalPending: activeApps.filter(a => !['Signed', 'Rejected'].includes(a.status)).length,
+            totalActive: applications.filter(a => !['Archived', 'Rejected'].includes(a.status)).length,
+            totalDone: applications.filter(a => a.status === 'Archived' || a.status === 'Signed').length,
+            totalRejected: applications.filter(a => a.status === 'Rejected').length,
+            totalPending: applications.filter(a => ['Submitted', 'In Review', 'Pending Compliance', 'Pending Supervisor'].includes(a.status)).length,
         };
     }, [applications]);
 
@@ -67,7 +66,7 @@ export default function ManagementDashboard() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold tracking-tight">Management</h2>
+                  <h2 className="text-3xl font-bold tracking-tight">Management Dashboard</h2>
                   <p className="text-muted-foreground font-medium">Strategic oversight of Area Sales Leader (ASL) performance and regional capture.</p>
                 </div>
             </div>
@@ -82,7 +81,7 @@ export default function ManagementDashboard() {
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalDone}</div></CardContent>
                 </Card>
                 <Card className="shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">In Process</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Awaiting Action</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalPending}</div></CardContent>
                 </Card>
                 <Card className="shadow-sm">
