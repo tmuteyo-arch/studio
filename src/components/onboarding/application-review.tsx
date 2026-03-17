@@ -9,7 +9,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -106,6 +106,11 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const uploadedDocumentTypes = application.documents.map(d => d.type);
   const documentRequirements = getDocumentRequirements(application.clientType);
+  const missingDocs = documentRequirements.filter(req => !uploadedDocumentTypes.includes(req.document));
+  const isMissingDocs = missingDocs.length > 0;
+
+  // CORE RULE: System Auto-approval Eligibility
+  const isRisky = ['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) || isMissingDocs;
 
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
 
@@ -136,6 +141,28 @@ export default function ApplicationReview({ application: initialApplication, onB
      if (status === 'Signed' || status === 'Archived' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL') {
         setTimeout(() => onBack(), 500);
     }
+  };
+
+  const handleAutoApprove = () => {
+    const newHistoryLog: HistoryLog = {
+        action: 'System Auto-Approved',
+        user: 'System (Verified by ' + user.name + ')',
+        timestamp: new Date().toISOString(),
+        notes: 'Verified compliant with no risk flags. Bypassed supervisor queue.',
+    };
+    
+    handleUpdateApplication({ 
+        status: 'Signed', 
+        history: [...application.history, newHistoryLog],
+        details: { ...application.details, supervisorSignature: 'SYSTEM_APPROVED', supervisorSignatureTimestamp: new Date().toISOString() }
+    });
+
+    toast({
+        title: "System Auto-Approved",
+        description: "This record was clean and has been automatically finalized.",
+    });
+    
+    setTimeout(() => onBack(), 500);
   };
 
   const handleClaimLead = () => {
@@ -256,7 +283,21 @@ export default function ApplicationReview({ application: initialApplication, onB
         }
         if (['Archived', 'Pending Supervisor', 'Rejected'].includes(application.status)) return null;
         if(application.status === 'Submitted' || application.status === 'Returned to ATL') {
-            return <div className="space-x-2"><Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ASL</Button><Button onClick={() => handleStatusChange('Pending Supervisor')}><Send className="mr-2 h-4 w-4" />Send to Supervisor</Button></div>;
+            return (
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ASL</Button>
+                    
+                    {isRisky ? (
+                        <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => handleStatusChange('Pending Supervisor')}>
+                            <Send className="mr-2 h-4 w-4" /> Escalate to Supervisor
+                        </Button>
+                    ) : (
+                        <Button className="bg-green-600 hover:bg-green-700" onClick={handleAutoApprove}>
+                            <ShieldCheck className="mr-2 h-4 w-4" /> System Auto-Approve
+                        </Button>
+                    )}
+                </div>
+            );
         }
         return null;
       case 'supervisor':
@@ -310,8 +351,24 @@ export default function ApplicationReview({ application: initialApplication, onB
             </div>
           </CardHeader>
           <CardContent>
-              <div className='flex justify-end mb-4'>
-                  <Button variant="secondary" onClick={handleGenerateSummary} disabled={isGeneratingSummary}>{isGeneratingSummary ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGeneratingSummary ? 'Generating...' : 'Generate AI Summary'}</Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {user.role === 'back-office' && (
+                      <Alert className={isRisky ? "border-amber-500 bg-amber-50" : "border-green-500 bg-green-50"}>
+                          {isRisky ? <ShieldAlert className="h-4 w-4 text-amber-600" /> : <ShieldCheck className="h-4 w-4 text-green-600" />}
+                          <AlertTitleComponent className={isRisky ? "text-amber-800" : "text-green-800"}>
+                              {isRisky ? "Risk Alert: Manual Approval Required" : "System Verified: Eligible for Auto-Approval"}
+                          </AlertTitleComponent>
+                          <AlertDescriptionComponent className={isRisky ? "text-amber-700" : "text-green-700"}>
+                              {isRisky 
+                                ? "This application contains risk flags (Adverse FCB or Missing Documents) and must be escalated to a Supervisor."
+                                : "This application is clean and compliant. You may bypass the supervisor queue by using System Auto-Approval."
+                              }
+                          </AlertDescriptionComponent>
+                      </Alert>
+                  )}
+                  <div className='flex justify-end items-center'>
+                      <Button variant="secondary" onClick={handleGenerateSummary} disabled={isGeneratingSummary}>{isGeneratingSummary ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGeneratingSummary ? 'Generating...' : 'Generate AI Summary'}</Button>
+                  </div>
               </div>
               
               {aiSummary && (<Alert className="mb-6 bg-secondary/50"><Wand2 className="h-4 w-4" /><AlertTitleComponent>AI Summary & Risk Assessment</AlertTitleComponent><AlertDescriptionComponent>{aiSummary}</AlertDescriptionComponent></Alert>)}
