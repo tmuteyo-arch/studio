@@ -4,7 +4,7 @@ import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { applicationsAtom, ApplicationStatus, Application } from '@/lib/mock-data';
 import { zimRegions } from '@/lib/types';
-import { User, users as allUsers } from '@/lib/users';
+import { User, usersAtom } from '@/lib/users';
 import { CheckCircle2, AlertCircle, Inbox, BarChart, FileSignature, Edit, FileCheck2, Eraser, MapPin, Award, LayoutDashboard, History, TrendingUp } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -79,6 +79,7 @@ const regionalChartConfig = {
 export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashboardProps) {
     const { toast } = useToast();
     const [applications, setApplications] = useAtom(applicationsAtom);
+    const [allUsers] = useAtom(usersAtom);
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
     const [isBulkSignOpen, setIsBulkSignOpen] = React.useState(false);
@@ -114,7 +115,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                 pending: atlApps.filter(a => !['Signed', 'Rejected', 'Archived'].includes(a.status)).length,
             };
         }).sort((a, b) => b.total - a.total);
-    }, [applications]);
+    }, [applications, allUsers]);
 
     const agreementsToSign = React.useMemo(() => 
         applications.filter(app => app.status === 'Pending Executive Signature'),

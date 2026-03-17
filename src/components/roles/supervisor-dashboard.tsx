@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -10,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
 import { AlertCircle, AreaChart, CheckCircle2, ClipboardList, Inbox, Search, Users, FileDown, ShieldCheck, UserCheck, Archive, FileSearch } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
-import { User, users as allUsers } from '@/lib/users';
+import { User, usersAtom } from '@/lib/users';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { differenceInDays } from 'date-fns';
@@ -43,9 +42,12 @@ const getStatusVariant = (status: ApplicationStatus) => {
 export default function SupervisorDashboard({ user }: SupervisorDashboardProps) {
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [applications] = useAtom(applicationsAtom);
+    const [allUsers] = useAtom(usersAtom);
     const [searchTerm, setSearchTerm] = React.useState('');
 
-    const backOfficeTeam = allUsers.filter(u => u.role === 'back-office');
+    const backOfficeTeam = React.useMemo(() => 
+        allUsers.filter(u => u.role === 'back-office'), 
+    [allUsers]);
 
     const myApprovalQueue = applications.filter(app => app.status === 'Pending Supervisor');
     const archivedVault = applications.filter(app => app.status === 'Archived');

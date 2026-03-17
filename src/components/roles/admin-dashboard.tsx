@@ -47,6 +47,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
     name: '',
     email: '',
     role: '' as Role,
+    password: '',
   });
 
   const filteredUsers = allUsers.filter(u => 
@@ -120,7 +121,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUser.name || !newUser.email || !newUser.role) return;
+    if (!newUser.name || !newUser.email || !newUser.role || !newUser.password) return;
 
     const initials = newUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
     const id = `${newUser.role}-${Date.now()}`;
@@ -130,13 +131,14 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
       name: newUser.name,
       email: newUser.email,
       role: newUser.role,
+      password: newUser.password,
       initials,
       status: 'active'
     };
 
     setAllUsers(prev => [...prev, createdUser]);
     setIsAddUserOpen(false);
-    setNewUser({ name: '', email: '', role: '' as any });
+    setNewUser({ name: '', email: '', role: '' as any, password: '' });
     toast({ title: "Account Provisioned", description: `${createdUser.name} active in ${createdUser.role} group.` });
   };
 
@@ -343,6 +345,10 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-widest text-white/60">Work Email</Label>
               <Input type="email" placeholder="name@inbucks.app" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} required className="bg-white/5 border-white/10 text-white" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-white/60">Temporary Password</Label>
+              <Input type="password" placeholder="••••••••" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} required className="bg-white/5 border-white/10 text-white" />
             </div>
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase tracking-widest text-white/60">Workspace Authorization</Label>

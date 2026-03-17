@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { applicationsAtom, Application } from '@/lib/mock-data';
-import { User, users as allUsers } from '@/lib/users';
+import { User, usersAtom } from '@/lib/users';
 import { 
   Users, 
   Wallet, 
@@ -30,15 +30,16 @@ interface FinancialDirectorDashboardProps {
 
 export default function FinancialDirectorDashboard({ user }: FinancialDirectorDashboardProps) {
     const [applications] = useAtom(applicationsAtom);
+    const [allUsers] = useAtom(usersAtom);
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
 
     const backOfficeUsers = React.useMemo(() => 
         allUsers.filter(u => u.role === 'back-office'), 
-    []);
+    [allUsers]);
 
     const supervisors = React.useMemo(() => 
         allUsers.filter(u => u.role === 'supervisor'), 
-    []);
+    [allUsers]);
 
     const stats = React.useMemo(() => {
         const total = applications.length;
@@ -205,7 +206,7 @@ export default function FinancialDirectorDashboard({ user }: FinancialDirectorDa
                                         <TableHead className="text-center">Current Load</TableHead>
                                         <TableHead className="text-center">Accuracy</TableHead>
                                         <TableHead className="text-right">Action</TableHead>
-                                    </TableRow>
+                                    </TableHeader>
                                 </TableHeader>
                                 <TableBody>
                                     {boPerformance.map((bo) => (

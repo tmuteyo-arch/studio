@@ -1,11 +1,10 @@
-
 'use client';
 import * as React from 'react';
 import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { zimRegions } from '@/lib/types';
-import { users as allUsers } from '@/lib/users';
+import { usersAtom } from '@/lib/users';
 import { 
   TrendingUp,
   Users,
@@ -30,6 +29,7 @@ const regionalChartConfig = {
 
 export default function ManagementDashboard() {
     const [applications] = useAtom(applicationsAtom);
+    const [allUsers] = useAtom(usersAtom);
 
     const summaryStats = React.useMemo(() => {
         const activeApps = applications.filter(a => a.status !== 'Archived');
@@ -61,7 +61,7 @@ export default function ManagementDashboard() {
                 pending: atlApps.filter(a => !['Signed', 'Rejected', 'Archived'].includes(a.status)).length,
             };
         }).sort((a, b) => b.total - a.total);
-    }, [applications]);
+    }, [applications, allUsers]);
 
     return (
         <div className="space-y-6">

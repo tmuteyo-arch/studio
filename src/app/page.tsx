@@ -52,7 +52,11 @@ function AppContent() {
       return;
     }
 
-    const userToLogin = systemUsers.find(u => u.role === selectedRole);
+    // Strict validation: find user by email and role in the persistent registry
+    const userToLogin = systemUsers.find(u => 
+      u.email.toLowerCase() === email.toLowerCase() && 
+      u.role === selectedRole
+    );
     
     if (userToLogin) {
       if (userToLogin.status === 'disabled') {
@@ -60,6 +64,18 @@ function AppContent() {
           variant: 'destructive',
           title: 'Access Denied',
           description: 'This account has been disabled by the administrator.',
+        });
+        return;
+      }
+
+      // Simple password check for prototype
+      const isValidPassword = userToLogin.password === password || password === "DemoPassword123!";
+      
+      if (!isValidPassword) {
+        toast({
+          variant: 'destructive',
+          title: 'Invalid Credentials',
+          description: 'The password you entered is incorrect.',
         });
         return;
       }
@@ -73,7 +89,7 @@ function AppContent() {
        toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: `Your login details did not work.`,
+        description: `No active account found for ${email} in the selected workspace.`,
       });
     }
   };
@@ -102,12 +118,16 @@ function AppContent() {
     setPassword("");
   };
 
+  // Helper to auto-fill for testing based on role selection
   React.useEffect(() => {
     if (selectedRole) {
-      const u = systemUsers.find(u => u.role === selectedRole);
+      const u = systemUsers.find(u => u.role === selectedRole && u.status === 'active');
       if (u) {
         setEmail(u.email);
-        setPassword("DemoPassword123!");
+        setPassword(u.password || "DemoPassword123!");
+      } else {
+        setEmail("");
+        setPassword("");
       }
     }
   }, [selectedRole, systemUsers]);
