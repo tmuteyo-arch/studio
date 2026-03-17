@@ -11,7 +11,7 @@ import { users, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, KeyRound } from 'lucide-react';
+import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, KeyRound, ShieldAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -72,16 +72,16 @@ function AppContent() {
     if (!resetEmail) return;
 
     setIsResetting(true);
-    // Simulate API call
+    // Simulate high-security reset logic
     setTimeout(() => {
       setIsResetting(false);
       setIsResetOpen(false);
       setResetEmail("");
       toast({
-        title: "Reset Link Sent",
-        description: `A password recovery link has been sent to ${resetEmail}.`,
+        title: "Security Request Sent",
+        description: `A reset request has been logged with Admin. Verify your identity via Google Authenticator to proceed.`,
       });
-    }, 1500);
+    }, 2000);
   };
 
   const handleLogout = () => {
@@ -223,16 +223,16 @@ function AppContent() {
         <p className="mt-12 text-center text-white/20 text-[9px] uppercase tracking-[0.4em] font-medium">InnBucks MicroBank Limited &copy; 2026</p>
       </motion.div>
 
-      {/* Forgot Password Dialog */}
+      {/* Forgot Password Dialog - Secure Banking Workflow */}
       <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
         <DialogContent className="bg-[#1e1b4b] border-white/10 text-white backdrop-blur-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 uppercase tracking-tight">
-              <KeyRound className="h-5 w-5 text-[#7c3aed]" />
-              Reset Password
+              <ShieldAlert className="h-5 w-5 text-primary" />
+              Security Reset Request
             </DialogTitle>
             <DialogDescription className="text-white/60">
-              Enter your email address and we'll send you a link to get back into your account.
+              For security, reset requests are sent to the System Administrator. Verification via <strong>Google Authenticator</strong> is required.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleResetPassword} className="space-y-4 py-4">
@@ -248,6 +248,11 @@ function AppContent() {
                 required
               />
             </div>
+            <div className="p-3 rounded-md bg-primary/10 border border-primary/20">
+              <p className="text-[10px] leading-relaxed text-primary uppercase font-bold flex items-center gap-2">
+                <ShieldCheck className="h-3 w-3" /> Mandatory MFA Protocol Active
+              </p>
+            </div>
             <DialogFooter>
               <Button 
                 type="submit" 
@@ -255,7 +260,7 @@ function AppContent() {
                 disabled={isResetting}
               >
                 {isResetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {isResetting ? "Sending..." : "Send Reset Link"}
+                {isResetting ? "Contacting Admin..." : "Send Secure Request"}
               </Button>
             </DialogFooter>
           </form>
