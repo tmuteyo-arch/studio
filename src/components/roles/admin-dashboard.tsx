@@ -317,7 +317,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
                   <SelectItem value="asl">Area Sales Leaders</SelectItem>
                   <SelectItem value="back-office">Back Office Clerk</SelectItem>
                   <SelectItem value="supervisor">Supervisor</SelectItem>
-                  <SelectItem value="management">MANAGEMENT</SelectItem>
+                  <SelectItem value="management">Management</SelectItem>
                   <SelectItem value="compliance">Compliance & Risk</SelectItem>
                   <SelectItem value="admin">System Administrator</SelectItem>
                 </SelectContent>
@@ -359,7 +359,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
                   <SelectItem value="asl">Area Sales Leaders</SelectItem>
                   <SelectItem value="back-office">Back Office Clerk</SelectItem>
                   <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
-                  <SelectItem value="management">MANAGEMENT</SelectItem>
+                  <SelectItem value="management">Management</SelectItem>
                   <SelectItem value="compliance">Compliance & Risk</SelectItem>
                   <SelectItem value="admin">System Administrator</SelectItem>
                 </SelectContent>

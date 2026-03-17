@@ -18,7 +18,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Badge } from '../ui/badge';
+import { Badge } from '@/components/ui/badge';
 
 const regionalChartConfig = {
   count: {
@@ -67,7 +67,7 @@ export default function ManagementDashboard() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold tracking-tight">MANAGEMENT</h2>
+                  <h2 className="text-3xl font-bold tracking-tight">Management</h2>
                   <p className="text-muted-foreground font-medium">Strategic oversight of Area Sales Leader (ASL) performance and regional capture.</p>
                 </div>
             </div>
