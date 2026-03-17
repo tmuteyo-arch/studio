@@ -7,7 +7,7 @@ import { useAtom } from 'jotai';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { users, Role } from '@/lib/users';
+import { Role, usersAtom } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ const AdminDashboard = React.lazy(() => import('@/components/roles/admin-dashboa
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
+  const [systemUsers] = useAtom(usersAtom);
   const [selectedRole, setSelectedRole] = React.useState<Role | "">("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -51,9 +52,18 @@ function AppContent() {
       return;
     }
 
-    const userToLogin = users.find(u => u.role === selectedRole);
+    const userToLogin = systemUsers.find(u => u.role === selectedRole);
     
     if (userToLogin) {
+      if (userToLogin.status === 'disabled') {
+        toast({
+          variant: 'destructive',
+          title: 'Access Denied',
+          description: 'This account has been disabled by the administrator.',
+        });
+        return;
+      }
+
       setLoggedInUser(userToLogin);
       toast({
         title: `Welcome, ${userToLogin.name}!`,
@@ -94,13 +104,13 @@ function AppContent() {
 
   React.useEffect(() => {
     if (selectedRole) {
-      const u = users.find(u => u.role === selectedRole);
+      const u = systemUsers.find(u => u.role === selectedRole);
       if (u) {
         setEmail(u.email);
         setPassword("DemoPassword123!");
       }
     }
-  }, [selectedRole]);
+  }, [selectedRole, systemUsers]);
 
   if (!mounted) {
     return (

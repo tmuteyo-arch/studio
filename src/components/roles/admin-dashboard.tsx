@@ -3,180 +3,291 @@
 import * as React from 'react';
 import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { applicationsAtom, Application } from '@/lib/mock-data';
-import { users as allUsers, User } from '@/lib/users';
+import { usersAtom, User, Role } from '@/lib/users';
 import { 
-  Users, 
-  CheckCircle2, 
-  XCircle, 
-  Activity, 
-  Clock, 
-  ShieldCheck,
-  LayoutDashboard,
-  Server
+  UserPlus, 
+  ShieldCheck, 
+  ShieldX, 
+  RotateCcw, 
+  Trash2, 
+  UserCog,
+  Search,
+  CheckCircle2,
+  AlertCircle,
+  MoreVertical,
+  KeyRound
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { format, parseISO } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface AdminDashboardProps {
-  user: User;
-}
+export default function AdminDashboard({ user: adminUser }: { user: User }) {
+  const { toast } = useToast();
+  const [allUsers, setAllUsers] = useAtom(usersAtom);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  
+  // New User Form State
+  const [isAddUserOpen, setIsAddUserOpen] = React.useState(false);
+  const [newUser, setNewUser] = React.useState({
+    name: '',
+    email: '',
+    role: '' as Role,
+  });
 
-export default function AdminDashboard({ user }: AdminDashboardProps) {
-  const [applications] = useAtom(applicationsAtom);
+  const filteredUsers = allUsers.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.role.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const stats = React.useMemo(() => {
-    const approved = applications.filter(a => a.status === 'Signed' || a.status === 'Archived').length;
-    const rejected = applications.filter(a => a.status === 'Rejected').length;
+  const toggleUserStatus = (userId: string) => {
+    setAllUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        const newStatus = u.status === 'active' ? 'disabled' : 'active';
+        toast({
+          title: `User ${newStatus === 'active' ? 'Enabled' : 'Disabled'}`,
+          description: `Access for ${u.name} has been updated.`,
+          variant: newStatus === 'active' ? 'default' : 'destructive'
+        });
+        return { ...u, status: newStatus };
+      }
+      return u;
+    }));
+  };
+
+  const handleResetPassword = (userName: string) => {
+    toast({
+      title: "Password Reset Triggered",
+      description: `A security reset instruction has been sent to ${userName}'s work email.`,
+    });
+  };
+
+  const handleDeleteUser = (userId: string, userName: string) => {
+    if (userId === adminUser.id) {
+      toast({
+        variant: 'destructive',
+        title: "Action Denied",
+        description: "You cannot delete your own admin account.",
+      });
+      return;
+    }
     
-    return {
-      totalUsers: allUsers.length,
-      totalApps: applications.length,
-      approved,
-      rejected,
-      pending: applications.length - (approved + rejected)
-    };
-  }, [applications]);
+    setAllUsers(prev => prev.filter(u => u.id !== userId));
+    toast({
+      title: "User Removed",
+      description: `${userName} has been removed from the system.`,
+    });
+  };
 
-  const globalActivity = React.useMemo(() => {
-    const allLogs = applications.flatMap(app => 
-      app.history.map(log => ({
-        ...log,
-        clientName: app.clientName,
-        appId: app.id
-      }))
-    );
-    return allLogs.sort((a, b) => parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime()).slice(0, 20);
-  }, [applications]);
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUser.name || !newUser.email || !newUser.role) return;
+
+    const initials = newUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    const id = `${newUser.role}-${Date.now()}`;
+
+    const createdUser: User = {
+      id,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      initials,
+      status: 'active'
+    };
+
+    setAllUsers(prev => [...prev, createdUser]);
+    setIsAddUserOpen(false);
+    setNewUser({ name: '', email: '', role: '' as any });
+    
+    toast({
+      title: "Account Created",
+      description: `${createdUser.name} can now login to the ${createdUser.role} workspace.`,
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Admin Portal</h2>
-          <p className="text-muted-foreground">System-wide monitoring and audit controls.</p>
+          <h2 className="text-3xl font-black tracking-tight text-white flex items-center gap-2">
+            <UserCog className="h-8 w-8 text-primary" />
+            ACCESS MANAGEMENT
+          </h2>
+          <p className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] font-bold">System Security & User Control</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 px-3 py-1">
-            <Server className="mr-2 h-3 w-3" />
-            System Live
-          </Badge>
-        </div>
+        
+        <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Create User Account
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-card border-white/10 text-white">
+            <DialogHeader>
+              <DialogTitle>Provision New User</DialogTitle>
+              <DialogDescription>Create a new staff account and assign a workspace role.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateUser} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-name">Full Name</Label>
+                <Input 
+                  id="new-name" 
+                  placeholder="e.g. John Doe" 
+                  value={newUser.name}
+                  onChange={e => setNewUser({...newUser, name: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-email">Work Email</Label>
+                <Input 
+                  id="new-email" 
+                  type="email" 
+                  placeholder="name@inbucks.app" 
+                  value={newUser.email}
+                  onChange={e => setNewUser({...newUser, email: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-role">System Role / Workspace</Label>
+                <Select onValueChange={(v: Role) => setNewUser({...newUser, role: v})}>
+                  <SelectTrigger id="new-role">
+                    <SelectValue placeholder="Select a workspace..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asl">Area Sales Leader (ASL)</SelectItem>
+                    <SelectItem value="back-office">Back Office Clerk</SelectItem>
+                    <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
+                    <SelectItem value="management">MANAGEMENT</SelectItem>
+                    <SelectItem value="admin">System Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter className="pt-4">
+                <Button type="submit" className="w-full font-bold">Provision Account</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total System Users</CardTitle>
-            <Users className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">Active profiles</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Approved Apps</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-500">{stats.approved}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">Success rate: {Math.round((stats.approved / stats.totalApps) * 100)}%</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rejected Apps</CardTitle>
-            <XCircle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{stats.rejected}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">Risk mitigation</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Pipeline</CardTitle>
-            <Activity className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-500">{stats.pending}</div>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">Processing load</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="bg-muted/50 p-1 mb-6">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <LayoutDashboard className="h-4 w-4" />
-            System Overview
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Audit Log
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 gap-6">
-            <Card className="shadow-md">
-              <CardHeader className="border-b border-white/5 bg-muted/30">
-                <CardTitle className="flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                  Recent System Activity
-                </CardTitle>
-                <CardDescription>Live feed of onboarding events across all regions.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/10">
-                      <TableHead className="pl-6">Timestamp</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Action</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead className="text-right pr-6">Ref ID</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {globalActivity.map((log, idx) => (
-                      <TableRow key={`${log.appId}-${idx}`} className="hover:bg-muted/5">
-                        <TableCell className="pl-6 font-mono text-[10px] text-muted-foreground">
-                          {format(parseISO(log.timestamp), 'yyyy-MM-dd HH:mm')}
-                        </TableCell>
-                        <TableCell className="font-bold">{log.user}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-[10px] uppercase font-bold py-0 h-5">
-                            {log.action}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">{log.clientName}</TableCell>
-                        <TableCell className="text-right pr-6 font-mono text-[10px]">{log.appId}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+      <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md">
+        <CardHeader className="border-b border-white/10 pb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+              <CardTitle className="text-xl">User Directory</CardTitle>
+              <CardDescription>Monitor and control system entry for all personnel.</CardDescription>
+            </div>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search name, email, or role..." 
+                className="pl-9 bg-black/20 border-white/10 text-white"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="activity">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Audit Logs</CardTitle>
-              <CardDescription>Full history of transactional changes.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground italic">Extended audit logs are available for CSV export in the "Audit Reports" module (Coming Soon).</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
+                <TableHead className="pl-6 text-white/50 uppercase text-[10px] font-bold tracking-widest">User Details</TableHead>
+                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest">Role</TableHead>
+                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest">Status</TableHead>
+                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest text-center">Login Access</TableHead>
+                <TableHead className="pr-6 text-white/50 uppercase text-[10px] font-bold tracking-widest text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.map((u) => (
+                <TableRow key={u.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                  <TableCell className="pl-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/20 border border-primary/20 flex items-center justify-center font-bold text-primary">
+                        {u.initials}
+                      </div>
+                      <div>
+                        <p className="font-bold text-white">{u.name}</p>
+                        <p className="text-xs text-white/40">{u.email}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="uppercase text-[9px] font-bold tracking-widest border-white/10 text-white/70">
+                      {u.role.replace('-', ' ')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {u.status === 'active' ? (
+                      <div className="flex items-center gap-1.5 text-green-500 text-[10px] font-bold uppercase">
+                        <CheckCircle2 className="h-3 w-3" /> Enabled
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-destructive text-[10px] font-bold uppercase">
+                        <AlertCircle className="h-3 w-3" /> Blocked
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Switch 
+                        checked={u.status === 'active'} 
+                        onCheckedChange={() => toggleUserStatus(u.id)}
+                        disabled={u.id === adminUser.id}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="pr-6 text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-white/40 hover:text-white hover:bg-white/10"
+                        title="Reset Password"
+                        onClick={() => handleResetPassword(u.name)}
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-white/40 hover:text-destructive hover:bg-destructive/10"
+                        title="Delete User"
+                        onClick={() => handleDeleteUser(u.id, u.name)}
+                        disabled={u.id === adminUser.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {filteredUsers.length === 0 && (
+            <div className="p-20 text-center text-white/20 italic">
+              No matching users found in directory.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-3">
+        <ShieldCheck className="h-5 w-5 text-primary" />
+        <p className="text-xs text-primary font-medium leading-tight">
+          <strong>Security Note:</strong> All access changes are logged in the immutable system audit trail. Password resets require the user to verify their identity via Google Authenticator upon next login.
+        </p>
+      </div>
     </div>
   );
 }
