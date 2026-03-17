@@ -11,7 +11,7 @@ import { users, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, KeyRound, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, ShieldAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -21,6 +21,7 @@ const AtlDashboard = React.lazy(() => import('@/components/roles/atl-dashboard')
 const BackOfficeDashboard = React.lazy(() => import('@/components/roles/back-office-dashboard'));
 const SupervisorDashboard = React.lazy(() => import('@/components/roles/supervisor-dashboard'));
 const ManagementDashboard = React.lazy(() => import('@/components/roles/management-dashboard'));
+const AdminDashboard = React.lazy(() => import('@/components/roles/admin-dashboard'));
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
@@ -123,7 +124,9 @@ function AppContent() {
             case 'supervisor':
               return <SupervisorDashboard user={loggedInUser} />;
             case 'management':
-              return <ManagementDashboard user={loggedInUser} />;
+              return <ManagementDashboard />;
+            case 'admin':
+              return <AdminDashboard user={loggedInUser} />;
             default:
               return null;
           }
@@ -206,6 +209,7 @@ function AppContent() {
                       <SelectItem value="back-office">Back Office Clerks</SelectItem>
                       <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
                       <SelectItem value="management">MANAGEMENT</SelectItem>
+                      <SelectItem value="admin">System Administrator</SelectItem>
                     </SelectContent>
                   </Select>
               </div>
@@ -289,6 +293,7 @@ function AppContent() {
                                  loggedInUser.role === 'back-office' ? 'Back Office Clerk' :
                                  loggedInUser.role === 'supervisor' ? 'Back Office Supervisor' :
                                  loggedInUser.role === 'management' ? 'MANAGEMENT' :
+                                 loggedInUser.role === 'admin' ? 'System Administrator' :
                                  loggedInUser.role.replace('-', ' ')}
                             </p>
                         </div>
