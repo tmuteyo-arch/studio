@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Inbox, UserCheck, AlertCircle, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Search, Inbox, UserCheck, AlertCircle } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
@@ -145,13 +145,11 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                       <TableHead className="pl-6">ID</TableHead>
                                       <TableHead>Client Name</TableHead>
                                       <TableHead>Status</TableHead>
-                                      <TableHead>Account Details</TableHead>
                                       <TableHead className="text-right pr-6">Actions</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
                                   {filteredApplications.map((app) => {
-                                      const lastHistory = app.history[app.history.length - 1];
                                       return (
                                           <TableRow key={app.id} className="hover:bg-muted/5 group">
                                               <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
@@ -161,16 +159,6 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                               </TableCell>
                                               <TableCell>
                                                   <Badge variant={getStatusVariant(app.status)}>{translateStatus(app.status)}</Badge>
-                                              </TableCell>
-                                              <TableCell>
-                                                  {app.details.isDispatched ? (
-                                                      <div className="flex items-center gap-2">
-                                                          <ShieldCheck className="h-4 w-4 text-primary" />
-                                                          <span className="font-bold font-mono text-primary">{app.details.accountNumber}</span>
-                                                      </div>
-                                                  ) : (
-                                                      <span className="text-xs text-muted-foreground italic">Awaiting Dispatch</span>
-                                                  )}
                                               </TableCell>
                                               <TableCell className="text-right pr-6">
                                                   <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
