@@ -9,7 +9,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -108,9 +108,12 @@ export default function ApplicationReview({ application: initialApplication, onB
   const documentRequirements = getDocumentRequirements(application.clientType);
   const missingDocs = documentRequirements.filter(req => !uploadedDocumentTypes.includes(req.document));
   const isMissingDocs = missingDocs.length > 0;
+  
+  // NEW RULE: FCB Report must be uploaded by Back Office
+  const hasFcbReport = application.documents.some(d => d.type === 'FCB Report');
 
-  // CORE RULE: System Auto-approval Eligibility
-  const isRisky = ['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) || isMissingDocs;
+  // CORE RULE: System Auto-approval Eligibility (Updated to require FCB Report)
+  const isRisky = ['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) || isMissingDocs || !hasFcbReport;
 
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
 
@@ -198,6 +201,32 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleFcbStatusChange = (fcbStatus: Application['fcbStatus']) => {
      handleUpdateApplication({ fcbStatus });
+  };
+
+  const handleFcbReportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUri = event.target?.result as string;
+      const newDoc: Document = {
+        type: 'FCB Report',
+        fileName: file.name,
+        url: dataUri,
+      };
+
+      const otherDocs = application.documents.filter(d => d.type !== 'FCB Report');
+      handleUpdateApplication({
+        documents: [...otherDocs, newDoc]
+      });
+
+      toast({
+        title: "FCB Report Uploaded",
+        description: "Official bureau report has been attached for compliance auditing.",
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleAddComment = () => {
@@ -360,7 +389,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                           </AlertTitleComponent>
                           <AlertDescriptionComponent className={isRisky ? "text-amber-700" : "text-green-700"}>
                               {isRisky 
-                                ? "This application contains risk flags (Adverse FCB or Missing Documents) and must be escalated to a Supervisor."
+                                ? `This application contains risk flags (${!hasFcbReport ? 'Missing FCB Report, ' : ''}${['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) ? 'Adverse Status, ' : ''}${isMissingDocs ? 'Missing Docs' : ''}) and must be escalated.`
                                 : "This application is clean and compliant. You may bypass the supervisor queue by using System Auto-Approval."
                               }
                           </AlertDescriptionComponent>
@@ -415,15 +444,42 @@ export default function ApplicationReview({ application: initialApplication, onB
                     </Card>
                     {user.role === 'back-office' && application.status !== 'Archived' && (
                       <Card className="mt-6">
-                        <CardHeader><CardTitle>FCB Safety Check</CardTitle><CardDescription>Confirm the applicant's status from the Financial Clearing Bureau.</CardDescription></CardHeader>
+                        <CardHeader>
+                            <CardTitle>FCB Safety Check & Report</CardTitle>
+                            <CardDescription>Confirm the applicant's status and upload the official Financial Clearing Bureau report.</CardDescription>
+                        </CardHeader>
                         <CardContent>
-                          <RadioGroup defaultValue={application.fcbStatus} onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)} className="flex flex-col sm:flex-row gap-4">
+                          <RadioGroup defaultValue={application.fcbStatus} onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)} className="flex flex-col sm:flex-row gap-4 mb-6">
                             <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Inclusive" id="fcb-inclusive" /><Label htmlFor="fcb-inclusive" className="font-normal">Inclusive</Label></div>
                             <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Good" id="fcb-good" /><Label htmlFor="fcb-good" className="font-normal">Good</Label></div>
                             <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adverse" id="fcb-adverse" /><Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label></div>
                             <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Prior Adverse" id="fcb-prior-adverse" /><Label htmlFor="fcb-prior-adverse" className="font-normal">Prior Adverse</Label></div>
                             <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="PEP" id="fcb-pep" /><Label htmlFor="fcb-pep" className="font-normal">PEP</Label></div>
                           </RadioGroup>
+                          
+                          <Separator className="my-4" />
+                          
+                          <div className="space-y-3">
+                              <Label className="text-sm font-bold flex items-center gap-2">
+                                  <Upload className="h-4 w-4" />
+                                  Official FCB Report (Audit Mandatory)
+                              </Label>
+                              <div className="flex items-center gap-4">
+                                  <Button asChild variant="outline" size="sm" className="border-dashed">
+                                      <label className="cursor-pointer">
+                                          <Upload className="mr-2 h-4 w-4" />
+                                          {hasFcbReport ? 'Replace Report' : 'Upload Report'}
+                                          <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFcbReportUpload} />
+                                      </label>
+                                  </Button>
+                                  {hasFcbReport && (
+                                      <Badge variant="success" className="bg-green-500/10 text-green-600 border-green-500/20">
+                                          <Check className="mr-1 h-3 w-3" /> Attached
+                                      </Badge>
+                                  )}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground italic">Required for Compliance & Risk team to perform regulatory oversight.</p>
+                          </div>
                         </CardContent>
                       </Card>
                     )}
