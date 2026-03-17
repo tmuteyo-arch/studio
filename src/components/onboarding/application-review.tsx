@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -9,7 +8,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, Send, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -109,10 +108,8 @@ export default function ApplicationReview({ application: initialApplication, onB
   const missingDocs = documentRequirements.filter(req => !uploadedDocumentTypes.includes(req.document));
   const isMissingDocs = missingDocs.length > 0;
   
-  // NEW RULE: FCB Report must be uploaded by Back Office
   const hasFcbReport = application.documents.some(d => d.type === 'FCB Report');
 
-  // CORE RULE: System Auto-approval Eligibility (Updated to require FCB Report)
   const isRisky = ['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) || isMissingDocs || !hasFcbReport;
 
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
@@ -141,7 +138,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-     if (status === 'Signed' || status === 'Archived' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Returned to ATL') {
+     if (status === 'Signed' || status === 'Archived' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Pending Compliance' || status === 'Returned to ATL') {
         setTimeout(() => onBack(), 500);
     }
   };
@@ -275,7 +272,6 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleSupervisorSign = (signatureData: string) => {
     const newDetails = { ...application.details, supervisorSignature: signatureData, supervisorSignatureTimestamp: new Date().toISOString() };
-    // Automatically transition to Archived for finality
     const newHistoryLog: HistoryLog = { action: 'Agreement Finalized & Archived', user: user.name, timestamp: new Date().toISOString() };
     handleUpdateApplication({ details: newDetails, status: 'Archived', history: [...application.history, newHistoryLog] });
     toast({ title: "Agreement Finalized", description: "Agency agreement has been signed and automatically archived."});
@@ -298,8 +294,6 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const renderActions = () => {
-    const isSalesRole = user.role === 'asl';
-    
     switch (user.role) {
       case 'asl':
         if (application.submittedBy === 'Customer' && application.status === 'Submitted') {
@@ -310,15 +304,15 @@ export default function ApplicationReview({ application: initialApplication, onB
         if (application.status === 'Signed') {
             return <div className="space-x-2"><Button onClick={() => handleStatusChange('Archived')}><Archive className="mr-2 h-4 w-4" />Move to Archive Vault</Button></div>;
         }
-        if (['Archived', 'Pending Supervisor', 'Rejected'].includes(application.status)) return null;
+        if (['Archived', 'Pending Supervisor', 'Pending Compliance', 'Rejected'].includes(application.status)) return null;
         if(application.status === 'Submitted' || application.status === 'Returned to ATL') {
             return (
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ASL</Button>
                     
                     {isRisky ? (
-                        <Button className="bg-amber-600 hover:bg-amber-700" onClick={() => handleStatusChange('Pending Supervisor')}>
-                            <Send className="mr-2 h-4 w-4" /> Escalate to Supervisor
+                        <Button className="bg-destructive hover:bg-destructive/90" onClick={() => handleStatusChange('Pending Compliance')}>
+                            <ShieldAlert className="mr-2 h-4 w-4" /> Escalate to Compliance
                         </Button>
                     ) : (
                         <Button className="bg-green-600 hover:bg-green-700" onClick={handleAutoApprove}>
@@ -332,8 +326,16 @@ export default function ApplicationReview({ application: initialApplication, onB
       case 'supervisor':
         if(application.status === 'Pending Supervisor') {
             return <div className="space-x-2">
-                <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject</Button>
+                <Button variant="outline" onClick={() => handleStatusChange('Pending Compliance')}><ShieldAlert className="mr-2 h-4 w-4" />Escalate to Compliance</Button>
                 <Button className="bg-green-600 hover:bg-green-700" onClick={() => setActiveTab('sign-agreement')}><FileSignature className="mr-2 h-4 w-4" />Review & Sign Agreement</Button>
+            </div>;
+        }
+        return null;
+      case 'compliance':
+        if(application.status === 'Pending Compliance') {
+            return <div className="space-x-2">
+                <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject Record</Button>
+                <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Pending Supervisor', 'Compliance check passed. Forwarded for final sign-off.')}><ShieldCheck className="mr-2 h-4 w-4" />Pass Compliance Check</Button>
             </div>;
         }
         return null;
@@ -381,17 +383,26 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardHeader>
           <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {user.role === 'back-office' && (
+                  {(user.role === 'back-office' || user.role === 'supervisor') && (
                       <Alert className={isRisky ? "border-amber-500 bg-amber-50" : "border-green-500 bg-green-50"}>
                           {isRisky ? <ShieldAlert className="h-4 w-4 text-amber-600" /> : <ShieldCheck className="h-4 w-4 text-green-600" />}
                           <AlertTitleComponent className={isRisky ? "text-amber-800" : "text-green-800"}>
-                              {isRisky ? "Risk Alert: Manual Approval Required" : "System Verified: Eligible for Auto-Approval"}
+                              {isRisky ? "Risk Alert: Compliance Audit Required" : "System Verified: Eligible for Auto-Approval"}
                           </AlertTitleComponent>
                           <AlertDescriptionComponent className={isRisky ? "text-amber-700" : "text-green-700"}>
                               {isRisky 
-                                ? `This application contains risk flags (${!hasFcbReport ? 'Missing FCB Report, ' : ''}${['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) ? 'Adverse Status, ' : ''}${isMissingDocs ? 'Missing Docs' : ''}) and must be escalated.`
+                                ? `This application contains risk flags (${!hasFcbReport ? 'Missing FCB Report, ' : ''}${['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) ? 'Adverse Status, ' : ''}${isMissingDocs ? 'Missing Docs' : ''}) and must be escalated to the Compliance Team.`
                                 : "This application is clean and compliant. You may bypass the supervisor queue by using System Auto-Approval."
                               }
+                          </AlertDescriptionComponent>
+                      </Alert>
+                  )}
+                  {user.role === 'compliance' && (
+                      <Alert className="border-primary bg-primary/5">
+                          <ShieldQuestion className="h-4 w-4 text-primary" />
+                          <AlertTitleComponent>Regulatory Audit Case</AlertTitleComponent>
+                          <AlertDescriptionComponent>
+                              Investigate the identified hit: <strong>{application.fcbStatus}</strong> status and {isMissingDocs ? 'Missing Documentation' : 'provided documents'}.
                           </AlertDescriptionComponent>
                       </Alert>
                   )}
@@ -442,7 +453,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                         )}
                       </CardContent>
                     </Card>
-                    {user.role === 'back-office' && application.status !== 'Archived' && (
+                    {(user.role === 'back-office' || user.role === 'compliance') && application.status !== 'Archived' && (
                       <Card className="mt-6">
                         <CardHeader>
                             <CardTitle>FCB Safety Check & Report</CardTitle>

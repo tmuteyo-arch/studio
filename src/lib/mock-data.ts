@@ -8,6 +8,7 @@ export type ApplicationStatus =
   | 'Submitted'
   | 'In Review'
   | 'Pending Supervisor'
+  | 'Pending Compliance'
   | 'Pending Executive Signature'
   | 'Signed'
   | 'Rejected'
@@ -32,7 +33,7 @@ export type HistoryLog = {
 export type Comment = {
   id: string;
   user: string;
-  role: 'atl' | 'back-office' | 'supervisor' | 'management' | 'customer';
+  role: 'atl' | 'back-office' | 'supervisor' | 'management' | 'compliance' | 'customer';
   timestamp: string;
   content: string;
 };
