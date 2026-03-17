@@ -3,23 +3,23 @@
 import * as React from 'react';
 import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { applicationsAtom, Application, FcbStatus } from '@/lib/mock-data';
+import { applicationsAtom, Application } from '@/lib/mock-data';
 import { zimRegions } from '@/lib/types';
 import { User } from '@/lib/users';
 import { 
   ShieldAlert, 
   ShieldCheck, 
-  AlertTriangle, 
-  TrendingDown, 
-  FileWarning, 
   Search, 
-  BarChart, 
-  Activity,
-  UserX,
-  Scale,
-  History,
-  MapPin,
-  Fingerprint
+  Scale, 
+  MapPin, 
+  Fingerprint,
+  AlertTriangle,
+  FileWarning,
+  ListTodo,
+  ShieldQuestion,
+  Lock,
+  Database,
+  Activity
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,7 @@ import { Progress } from '@/components/ui/progress';
 import { Bar, BarChart as ReChartsBarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip, Pie, PieChart } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import ApplicationReview from '../onboarding/application-review';
+import { cn } from '@/lib/utils';
 
 const chartConfig = {
   count: {
@@ -38,17 +39,74 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+type RiskCategory = 'Security' | 'Data' | 'Compliance' | 'System';
+type RiskStatus = 'Open' | 'Closed';
+
+interface RiskItem {
+  id: string;
+  description: string;
+  category: RiskCategory;
+  likelihood: number; // 1-5
+  impact: number; // 1-5
+  mitigation: string;
+  owner: string;
+  status: RiskStatus;
+}
+
+const initialRisks: RiskItem[] = [
+  {
+    id: 'RISK-001',
+    description: 'Unauthorized access to KYC documents by non-authorized personnel.',
+    category: 'Security',
+    likelihood: 2,
+    impact: 5,
+    mitigation: 'Implement strict RBAC and monitor Admin role assignments weekly.',
+    owner: 'IT Admin',
+    status: 'Open',
+  },
+  {
+    id: 'RISK-002',
+    description: 'Data breach during PDF generation/export of agent agreements.',
+    category: 'Data',
+    likelihood: 1,
+    impact: 5,
+    mitigation: 'Encrypt all data at rest and ensure secure download protocols.',
+    owner: 'Compliance Chief',
+    status: 'Open',
+  },
+  {
+    id: 'RISK-003',
+    description: 'System downtime during peak onboarding hours (ZIMRA period).',
+    category: 'System',
+    likelihood: 3,
+    impact: 4,
+    mitigation: 'Increase server redundancy and monitor load via CloudWatch.',
+    owner: 'DevOps',
+    status: 'Open',
+  },
+  {
+    id: 'RISK-004',
+    description: 'Failure to verify Politically Exposed Persons (PEPs) due to LLM error.',
+    category: 'Compliance',
+    likelihood: 2,
+    impact: 4,
+    mitigation: 'Mandatory secondary human audit for all AI-flagged PEP hits.',
+    owner: 'Compliance Chief',
+    status: 'Open',
+  }
+];
+
 export default function ComplianceRiskDashboard({ user }: { user: User }) {
   const [applications] = useAtom(applicationsAtom);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
+  const [risks] = React.useState<RiskItem[]>(initialRisks);
 
   const riskStats = React.useMemo(() => {
     const highRisk = applications.filter(a => a.fcbStatus === 'Adverse' || a.fcbStatus === 'PEP' || a.fcbStatus === 'Prior Adverse');
     const peps = applications.filter(a => a.fcbStatus === 'PEP');
     const pendingAML = applications.filter(a => ['Submitted', 'In Review', 'Pending Supervisor'].includes(a.status));
     
-    // Document accuracy: % of apps with at least 2 docs
     const withDocs = applications.filter(a => a.documents.length >= 2).length;
     const accuracy = applications.length > 0 ? Math.round((withDocs / applications.length) * 100) : 0;
 
@@ -94,6 +152,12 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
       app.history.map(log => ({ ...log, appId: app.id, clientName: app.clientName }))
     ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 20);
   }, [applications]);
+
+  const getScoreColor = (score: number) => {
+    if (score >= 15) return 'text-destructive';
+    if (score >= 8) return 'text-primary';
+    return 'text-green-500';
+  };
 
   if (selectedApplication) {
     return <ApplicationReview application={selectedApplication} onBack={() => setSelectedApplication(null)} user={user} />;
@@ -154,6 +218,7 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
       <Tabs defaultValue="aml" className="w-full">
         <TabsList className="bg-black/20 p-1 mb-6">
           <TabsTrigger value="aml" className="flex items-center gap-2"><ShieldAlert className="h-4 w-4" /> AML Priority List</TabsTrigger>
+          <TabsTrigger value="register" className="flex items-center gap-2"><ListTodo className="h-4 w-4" /> Risk Register</TabsTrigger>
           <TabsTrigger value="regional" className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Regional Compliance</TabsTrigger>
           <TabsTrigger value="audit" className="flex items-center gap-2"><Fingerprint className="h-4 w-4" /> Compliance Audit</TabsTrigger>
         </TabsList>
@@ -166,7 +231,7 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
                   <CardTitle>Risk Priority Attention Queue</CardTitle>
                   <CardDescription>Applications requiring enhanced due diligence due to risk profile.</CardDescription>
                 </div>
-                <div className="relative w-full sm:w-64">
+                <div className="relative w-full sm:w-72">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Search high risk..." className="pl-9 bg-black/20 border-white/10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                 </div>
@@ -240,6 +305,82 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
               </CardFooter>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="register">
+          <Card className="border-none bg-white/5 backdrop-blur-md shadow-2xl">
+            <CardHeader className="flex flex-col sm:flex-row justify-between items-center border-b border-white/10 pb-6">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldQuestion className="h-5 w-5 text-primary" />
+                  Official System Risk Register
+                </CardTitle>
+                <CardDescription>Comprehensive log of security, operational, and data privacy risks.</CardDescription>
+              </div>
+              <Button className="bg-primary text-primary-foreground font-bold">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Report New Risk
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-black/20 hover:bg-black/20 border-white/10">
+                      <TableHead className="pl-6 text-[10px] font-bold uppercase text-white/50">Risk ID & Context</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase text-white/50">Category</TableHead>
+                      <TableHead className="text-center text-[10px] font-bold uppercase text-white/50">L × I</TableHead>
+                      <TableHead className="text-center text-[10px] font-bold uppercase text-white/50">Score</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase text-white/50">Mitigation Strategy</TableHead>
+                      <TableHead className="text-[10px] font-bold uppercase text-white/50">Owner</TableHead>
+                      <TableHead className="pr-6 text-right text-[10px] font-bold uppercase text-white/50">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {risks.map((risk) => {
+                      const score = risk.likelihood * risk.impact;
+                      return (
+                        <TableRow key={risk.id} className="border-white/5 hover:bg-white/5 text-[11px]">
+                          <TableCell className="pl-6 py-4">
+                            <div className="max-w-[200px]">
+                              <p className="font-bold text-white uppercase tracking-tighter">{risk.id}</p>
+                              <p className="text-white/60 leading-relaxed mt-1">{risk.description}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {risk.category === 'Security' && <Lock className="h-3 w-3 text-destructive" />}
+                              {risk.category === 'Data' && <Database className="h-3 w-3 text-accent" />}
+                              {risk.category === 'System' && <Activity className="h-3 w-3 text-primary" />}
+                              {risk.category === 'Compliance' && <Scale className="h-3 w-3 text-white" />}
+                              <span className="font-semibold">{risk.category}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center font-mono">
+                            {risk.likelihood} × {risk.impact}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className={cn("text-lg font-black", getScoreColor(score))}>
+                              {score}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <p className="max-w-[250px] text-white/40 italic">{risk.mitigation}</p>
+                          </TableCell>
+                          <TableCell className="font-medium text-white/80">{risk.owner}</TableCell>
+                          <TableCell className="pr-6 text-right">
+                            <Badge variant={risk.status === 'Open' ? 'destructive' : 'success'} className="uppercase text-[9px] font-bold">
+                              {risk.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="regional">
