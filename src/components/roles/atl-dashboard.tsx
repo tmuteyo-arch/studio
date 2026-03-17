@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Inbox, UserCheck, AlertCircle } from 'lucide-react';
+import { PlusCircle, Search, Inbox, UserCheck, AlertCircle, ShieldCheck } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
@@ -145,7 +145,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                       <TableHead className="pl-6">ID</TableHead>
                                       <TableHead>Client Name</TableHead>
                                       <TableHead>Status</TableHead>
-                                      <TableHead>Recent Activity</TableHead>
+                                      <TableHead>Account Details</TableHead>
                                       <TableHead className="text-right pr-6">Actions</TableHead>
                                   </TableRow>
                               </TableHeader>
@@ -163,24 +163,14 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                                   <Badge variant={getStatusVariant(app.status)}>{translateStatus(app.status)}</Badge>
                                               </TableCell>
                                               <TableCell>
-                                                  <div className="flex items-center gap-2">
-                                                      <div className="text-xs truncate max-w-[150px]">
-                                                          <span className="text-muted-foreground">{lastHistory.action}</span>
-                                                          {lastHistory.notes && (
-                                                              <Tooltip>
-                                                                  <TooltipTrigger asChild>
-                                                                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-1 text-destructive">
-                                                                          <AlertCircle className="h-3 w-3" />
-                                                                      </Button>
-                                                                  </TooltipTrigger>
-                                                                  <TooltipContent className="max-w-xs">
-                                                                      <p className="font-bold mb-1">Return Notes:</p>
-                                                                      <p className="text-xs">{lastHistory.notes}</p>
-                                                                  </TooltipContent>
-                                                              </Tooltip>
-                                                          )}
+                                                  {app.details.isDispatched ? (
+                                                      <div className="flex items-center gap-2">
+                                                          <ShieldCheck className="h-4 w-4 text-primary" />
+                                                          <span className="font-bold font-mono text-primary">{app.details.accountNumber}</span>
                                                       </div>
-                                                  </div>
+                                                  ) : (
+                                                      <span className="text-xs text-muted-foreground italic">Awaiting Dispatch</span>
+                                                  )}
                                               </TableCell>
                                               <TableCell className="text-right pr-6">
                                                   <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>

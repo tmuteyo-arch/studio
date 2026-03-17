@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -8,7 +9,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -31,7 +32,8 @@ import StepSignatories from './steps/step-signatories';
 import StepIndividualInfo from './steps/step-individual-info';
 import AccountResolutionPrintView from './account-resolution-print-view';
 import SignatureCanvas from 'react-signature-canvas';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '../ui/input';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -99,6 +101,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const [previewDoc, setPreviewDoc] = React.useState<Document | null>(null);
 
+  const [isDispatching, setIsDispatching] = React.useState(false);
+  const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
+
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
   const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
   const needsMandate = application.clientType !== 'Personal Account';
@@ -117,10 +122,10 @@ export default function ApplicationReview({ application: initialApplication, onB
   const handleUpdateApplication = (newData: Partial<Application>) => {
     setApplications(prev => prev.map(app => 
       app.id === application.id 
-      ? { ...app, ...newData, lastUpdated: new Date().toISOString(), details: { ...app.details, ...form.getValues() } } 
+      ? { ...app, ...newData, lastUpdated: new Date().toISOString(), details: { ...app.details, ...form.getValues(), ...(newData.details || {}) } } 
       : app
     ));
-    setApplication(prev => ({...prev, ...newData}));
+    setApplication(prev => ({...prev, ...newData, details: { ...prev.details, ...(newData.details || {}) }}));
   };
 
   const handleStatusChange = (status: Application['status'], notes?: string) => {
@@ -278,6 +283,30 @@ export default function ApplicationReview({ application: initialApplication, onB
     setTimeout(() => onBack(), 500);
   };
 
+  const handleDispatchAccount = () => {
+    if (!dispatchAccountNumber) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please enter an account number.' });
+        return;
+    }
+
+    const newDetails = { 
+        ...application.details, 
+        accountNumber: dispatchAccountNumber, 
+        accountOpeningDate: new Date().toISOString(),
+        isDispatched: true 
+    };
+    const newHistoryLog: HistoryLog = { 
+        action: 'Account Details Dispatched', 
+        user: user.name, 
+        timestamp: new Date().toISOString(),
+        notes: `Account Details [${dispatchAccountNumber}] forwarded to ASL digitally.`
+    };
+
+    handleUpdateApplication({ details: newDetails, history: [...application.history, newHistoryLog] });
+    toast({ title: "Details Dispatched", description: `Account number ${dispatchAccountNumber} has been forwarded to the ASL.` });
+    setIsDispatching(false);
+  };
+
 
   const handleGenerateSummary = async () => {
     setIsGeneratingSummary(true);
@@ -301,6 +330,9 @@ export default function ApplicationReview({ application: initialApplication, onB
         }
         return null;
       case 'back-office':
+        if (application.status === 'Archived' && !application.details.isDispatched) {
+            return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg"><Send className="mr-2 h-4 w-4" />Dispatch Account Details</Button>;
+        }
         if (application.status === 'Signed') {
             return <div className="space-x-2"><Button onClick={() => handleStatusChange('Archived')}><Archive className="mr-2 h-4 w-4" />Move to Archive Vault</Button></div>;
         }
@@ -378,6 +410,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               <div className="flex flex-col items-end gap-2">
                 <Badge variant={ application.status === 'Archived' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
                 {application.submittedBy === 'Customer' && <Badge variant="outline" className="bg-blue-50 text-blue-700">Self-Service Sign Up</Badge>}
+                {application.details.isDispatched && <Badge className="bg-primary text-primary-foreground font-black animate-in fade-in zoom-in">Account Dispatched</Badge>}
               </div>
             </div>
           </CardHeader>
@@ -450,6 +483,21 @@ export default function ApplicationReview({ application: initialApplication, onB
                             <DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} />
                             <DetailItem label="Address" value={application.details.physicalAddress} />
                           </div>
+                        )}
+                        {application.details.isDispatched && (
+                            <>
+                                <Separator />
+                                <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                                    <h4 className="text-xs font-bold uppercase text-primary tracking-widest mb-2 flex items-center gap-2">
+                                        <ShieldCheck className="h-3 w-3" />
+                                        Dispatched Account Details
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <DetailItem label="Allocated Account Number" value={application.details.accountNumber} />
+                                        <DetailItem label="Date Dispatched" value={application.details.accountOpeningDate ? new Date(application.details.accountOpeningDate).toLocaleString() : '-'} />
+                                    </div>
+                                </div>
+                            </>
                         )}
                       </CardContent>
                     </Card>
@@ -568,6 +616,38 @@ export default function ApplicationReview({ application: initialApplication, onB
                         </div>
                     )}
                 </div>
+            </DialogContent>
+        </Dialog>
+
+        {/* Dispatch Account Details Dialog */}
+        <Dialog open={isDispatching} onOpenChange={setIsDispatching}>
+            <DialogContent className="bg-card border-primary/20">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Send className="h-5 w-5 text-primary" />
+                        Forward Account Details
+                    </DialogTitle>
+                    <CardDescription>Enter the generated account number to forward it digitally to the ASL.</CardDescription>
+                </DialogHeader>
+                <div className="py-6 space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="account-num" className="text-xs font-black uppercase tracking-widest">New Account Number</Label>
+                        <Input 
+                            id="account-num"
+                            placeholder="e.g. 1002345678"
+                            value={dispatchAccountNumber}
+                            onChange={(e) => setDispatchAccountNumber(e.target.value)}
+                            className="h-12 text-lg font-mono tracking-widest"
+                        />
+                    </div>
+                    <div className="p-3 bg-primary/10 rounded border border-primary/20 text-[10px] text-primary font-bold uppercase leading-relaxed">
+                        Notice: This will immediately notify the originating ASL ({application.submittedBy}) and finalize the digital hand-over.
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDispatching(false)}>Cancel</Button>
+                    <Button onClick={handleDispatchAccount} className="bg-primary text-primary-foreground font-black">Dispatch Details Now</Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
 

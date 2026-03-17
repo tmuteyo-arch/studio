@@ -88,6 +88,11 @@ export const OnboardingFormSchema = z.object({
   executiveSignature: z.string().optional(),
   executiveSignatureTimestamp: z.string().optional(),
 
+  // Final Dispatch Details (Digital Forwarding to ASL)
+  accountNumber: z.string().optional(),
+  accountOpeningDate: z.string().optional(),
+  isDispatched: z.boolean().optional().default(false),
+
   signature: z.string().min(3, { message: 'Please provide your full name as a digital signature.' }),
   agreedToTerms: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
