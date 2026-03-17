@@ -15,7 +15,10 @@ import {
   CheckCircle2,
   AlertCircle,
   MoreVertical,
-  KeyRound
+  KeyRound,
+  ShieldAlert,
+  UserCheck,
+  Edit2
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -32,8 +35,11 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
   const [allUsers, setAllUsers] = useAtom(usersAtom);
   const [searchTerm, setSearchTerm] = React.useState('');
   
-  // New User Form State
+  // Dialog States
   const [isAddUserOpen, setIsAddUserOpen] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<User | null>(null);
+  
+  // New User Form State
   const [newUser, setNewUser] = React.useState({
     name: '',
     email: '',
@@ -61,9 +67,23 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
     }));
   };
 
+  const handleUpdateRole = (userId: string, newRole: Role) => {
+    setAllUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        toast({
+          title: "Access Level Updated",
+          description: `${u.name} is now assigned to the ${newRole.toUpperCase()} workspace.`,
+        });
+        return { ...u, role: newRole };
+      }
+      return u;
+    }));
+    setEditingUser(null);
+  };
+
   const handleResetPassword = (userName: string) => {
     toast({
-      title: "Password Reset Triggered",
+      title: "Security Reset Triggered",
       description: `A security reset instruction has been sent to ${userName}'s work email.`,
     });
   };
@@ -117,22 +137,22 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
         <div>
           <h2 className="text-3xl font-black tracking-tight text-white flex items-center gap-2">
             <UserCog className="h-8 w-8 text-primary" />
-            ACCESS MANAGEMENT
+            ACCESS & ROLE MANAGEMENT
           </h2>
-          <p className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] font-bold">System Security & User Control</p>
+          <p className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] font-bold">System Security, Permissions & User Control</p>
         </div>
         
         <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground font-bold shadow-lg hover:scale-105 transition-transform">
               <UserPlus className="mr-2 h-4 w-4" />
-              Create User Account
+              Provision New Staff
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-card border-white/10 text-white">
             <DialogHeader>
-              <DialogTitle>Provision New User</DialogTitle>
-              <DialogDescription>Create a new staff account and assign a workspace role.</DialogDescription>
+              <DialogTitle>Create Staff Account</DialogTitle>
+              <DialogDescription>Assign an initial workspace and role to new personnel.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleCreateUser} className="space-y-4 py-4">
               <div className="space-y-2">
@@ -143,6 +163,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
                   value={newUser.name}
                   onChange={e => setNewUser({...newUser, name: e.target.value})}
                   required
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
@@ -154,25 +175,26 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
                   value={newUser.email}
                   onChange={e => setNewUser({...newUser, email: e.target.value})}
                   required
+                  className="bg-white/5 border-white/10"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-role">System Role / Workspace</Label>
+                <Label htmlFor="new-role">Assigned Workspace (Role)</Label>
                 <Select onValueChange={(v: Role) => setNewUser({...newUser, role: v})}>
-                  <SelectTrigger id="new-role">
-                    <SelectValue placeholder="Select a workspace..." />
+                  <SelectTrigger id="new-role" className="bg-white/5 border-white/10">
+                    <SelectValue placeholder="Pick workspace..." />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="asl">Area Sales Leader (ASL)</SelectItem>
                     <SelectItem value="back-office">Back Office Clerk</SelectItem>
                     <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
-                    <SelectItem value="management">MANAGEMENT</SelectItem>
+                    <SelectItem value="management">MANAGEMENT (Exec/Finance)</SelectItem>
                     <SelectItem value="admin">System Administrator</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <DialogFooter className="pt-4">
-                <Button type="submit" className="w-full font-bold">Provision Account</Button>
+                <Button type="submit" className="w-full font-bold">Create & Grant Access</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -183,13 +205,13 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
         <CardHeader className="border-b border-white/10 pb-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
-              <CardTitle className="text-xl">User Directory</CardTitle>
-              <CardDescription>Monitor and control system entry for all personnel.</CardDescription>
+              <CardTitle className="text-xl">Personnel Directory</CardTitle>
+              <CardDescription>Monitor roles and enforce system boundary controls.</CardDescription>
             </div>
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search name, email, or role..." 
+                placeholder="Search staff, email, or role..." 
                 className="pl-9 bg-black/20 border-white/10 text-white"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -201,11 +223,11 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
-                <TableHead className="pl-6 text-white/50 uppercase text-[10px] font-bold tracking-widest">User Details</TableHead>
-                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest">Role</TableHead>
-                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest">Status</TableHead>
-                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest text-center">Login Access</TableHead>
-                <TableHead className="pr-6 text-white/50 uppercase text-[10px] font-bold tracking-widest text-right">Actions</TableHead>
+                <TableHead className="pl-6 text-white/50 uppercase text-[10px] font-bold tracking-widest">User Identity</TableHead>
+                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest">Access Level (Role)</TableHead>
+                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest">Access Status</TableHead>
+                <TableHead className="text-white/50 uppercase text-[10px] font-bold tracking-widest text-center">Login Toggle</TableHead>
+                <TableHead className="pr-6 text-white/50 uppercase text-[10px] font-bold tracking-widest text-right">Security Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -223,18 +245,29 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="uppercase text-[9px] font-bold tracking-widest border-white/10 text-white/70">
-                      {u.role.replace('-', ' ')}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="uppercase text-[9px] font-bold tracking-widest border-white/10 text-white/70">
+                        {u.role.replace('-', ' ')}
+                      </Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-white/20 hover:text-primary"
+                        onClick={() => setEditingUser(u)}
+                        title="Change Role"
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {u.status === 'active' ? (
                       <div className="flex items-center gap-1.5 text-green-500 text-[10px] font-bold uppercase">
-                        <CheckCircle2 className="h-3 w-3" /> Enabled
+                        <CheckCircle2 className="h-3 w-3" /> Active
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 text-destructive text-[10px] font-bold uppercase">
-                        <AlertCircle className="h-3 w-3" /> Blocked
+                        <ShieldAlert className="h-3 w-3" /> Blocked
                       </div>
                     )}
                   </TableCell>
@@ -253,7 +286,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-white/40 hover:text-white hover:bg-white/10"
-                        title="Reset Password"
+                        title="Reset Credentials"
                         onClick={() => handleResetPassword(u.name)}
                       >
                         <KeyRound className="h-4 w-4" />
@@ -262,7 +295,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-white/40 hover:text-destructive hover:bg-destructive/10"
-                        title="Delete User"
+                        title="Remove Account"
                         onClick={() => handleDeleteUser(u.id, u.name)}
                         disabled={u.id === adminUser.id}
                       >
@@ -276,7 +309,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
           </Table>
           {filteredUsers.length === 0 && (
             <div className="p-20 text-center text-white/20 italic">
-              No matching users found in directory.
+              No personnel matching your search criteria.
             </div>
           )}
         </CardContent>
@@ -285,9 +318,45 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
       <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-3">
         <ShieldCheck className="h-5 w-5 text-primary" />
         <p className="text-xs text-primary font-medium leading-tight">
-          <strong>Security Note:</strong> All access changes are logged in the immutable system audit trail. Password resets require the user to verify their identity via Google Authenticator upon next login.
+          <strong>Boundary Controls:</strong> Workspace access is enforced by Role-Based Access Control (RBAC). When you change a user's role, their permissions update across the system instantly. Blocking a user revokes their session token immediately.
         </p>
       </div>
+
+      {/* Role Management Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent className="bg-card border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>Modify Access Level</DialogTitle>
+            <DialogDescription>Change the workspace permissions for <strong>{editingUser?.name}</strong>.</DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-4">
+            <div className="space-y-2">
+              <Label>Select New Role</Label>
+              <Select 
+                defaultValue={editingUser?.role} 
+                onValueChange={(v: Role) => editingUser && handleUpdateRole(editingUser.id, v)}
+              >
+                <SelectTrigger className="bg-white/5 border-white/10">
+                  <SelectValue placeholder="Choose Role..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asl">Area Sales Leader (ASL)</SelectItem>
+                  <SelectItem value="back-office">Back Office Clerk</SelectItem>
+                  <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
+                  <SelectItem value="management">MANAGEMENT</SelectItem>
+                  <SelectItem value="admin">System Administrator</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="p-3 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/60 italic">
+              Note: Changing a role will redirect the user to their new dashboard upon their next page load.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
