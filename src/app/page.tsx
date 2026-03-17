@@ -11,9 +11,10 @@ import { users, Role } from '@/lib/users';
 import { activeUserAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2 } from 'lucide-react';
+import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, KeyRound } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 // Lazy load dashboards to improve initial compilation time
 const AtlDashboard = React.lazy(() => import('@/components/roles/atl-dashboard'));
@@ -27,6 +28,10 @@ function AppContent() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [mounted, setMounted] = React.useState(false);
+  const [isResetOpen, setIsResetOpen] = React.useState(false);
+  const [resetEmail, setResetEmail] = React.useState("");
+  const [isResetting, setIsResetting] = React.useState(false);
+  
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -60,6 +65,23 @@ function AppContent() {
         description: `Your login details did not work.`,
       });
     }
+  };
+
+  const handleResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) return;
+
+    setIsResetting(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsResetting(false);
+      setIsResetOpen(false);
+      setResetEmail("");
+      toast({
+        title: "Reset Link Sent",
+        description: `A password recovery link has been sent to ${resetEmail}.`,
+      });
+    }, 1500);
   };
 
   const handleLogout = () => {
@@ -148,9 +170,19 @@ function AppContent() {
                   />
               </div>
               <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2" htmlFor="password">
-                    <Lock className="h-3 w-3" /> Password
-                  </Label>
+                  <div className="flex justify-between items-center">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2" htmlFor="password">
+                      <Lock className="h-3 w-3" /> Password
+                    </Label>
+                    <Button 
+                      type="button" 
+                      variant="link" 
+                      className="text-[10px] text-white/50 hover:text-white uppercase tracking-widest h-auto p-0 font-bold"
+                      onClick={() => setIsResetOpen(true)}
+                    >
+                      Forgot?
+                    </Button>
+                  </div>
                   <Input 
                     id="password" 
                     type="password" 
@@ -190,6 +222,45 @@ function AppContent() {
         
         <p className="mt-12 text-center text-white/20 text-[9px] uppercase tracking-[0.4em] font-medium">InnBucks MicroBank Limited &copy; 2026</p>
       </motion.div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
+        <DialogContent className="bg-[#1e1b4b] border-white/10 text-white backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 uppercase tracking-tight">
+              <KeyRound className="h-5 w-5 text-[#7c3aed]" />
+              Reset Password
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Enter your email address and we'll send you a link to get back into your account.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleResetPassword} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email" className="text-xs font-bold uppercase tracking-wider text-white/70">Work Email</Label>
+              <Input 
+                id="reset-email" 
+                type="email" 
+                placeholder="name@inbucks.app" 
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button 
+                type="submit" 
+                className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] font-bold"
+                disabled={isResetting}
+              >
+                {isResetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {isResetting ? "Sending..." : "Send Reset Link"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
