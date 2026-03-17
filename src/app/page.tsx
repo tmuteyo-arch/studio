@@ -128,7 +128,7 @@ function AppContent() {
 
         <Card className="overflow-hidden shadow-2xl border-white/20 bg-white/10 backdrop-blur-xl text-white">
           <CardHeader className="bg-black/20 p-8 text-center border-b border-white/10">
-              <CardTitle className="text-2xl font-bold tracking-tight">Secure Sign In</CardTitle>
+              <CardTitle className="text-2xl font-bold tracking-tight uppercase">LOGIN</CardTitle>
               <CardDescription className="text-white/60">Enter your details and pick your workspace.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
