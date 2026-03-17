@@ -22,6 +22,7 @@ const BackOfficeDashboard = React.lazy(() => import('@/components/roles/back-off
 const SupervisorDashboard = React.lazy(() => import('@/components/roles/supervisor-dashboard'));
 const ManagementDashboard = React.lazy(() => import('@/components/roles/management-dashboard'));
 const AdminDashboard = React.lazy(() => import('@/components/roles/admin-dashboard'));
+const ComplianceRiskDashboard = React.lazy(() => import('@/components/roles/compliance-risk-dashboard'));
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
@@ -52,7 +53,6 @@ function AppContent() {
       return;
     }
 
-    // Strict validation: find user by email and role in the persistent registry
     const userToLogin = systemUsers.find(u => 
       u.email.toLowerCase() === email.toLowerCase() && 
       u.role === selectedRole
@@ -68,7 +68,6 @@ function AppContent() {
         return;
       }
 
-      // Simple password check for prototype
       const isValidPassword = userToLogin.password === password || password === "DemoPassword123!";
       
       if (!isValidPassword) {
@@ -99,7 +98,6 @@ function AppContent() {
     if (!resetEmail) return;
 
     setIsResetting(true);
-    // Simulate high-security reset logic
     setTimeout(() => {
       setIsResetting(false);
       setIsResetOpen(false);
@@ -118,7 +116,6 @@ function AppContent() {
     setPassword("");
   };
 
-  // Helper to auto-fill for testing based on role selection
   React.useEffect(() => {
     if (selectedRole) {
       const u = systemUsers.find(u => u.role === selectedRole && u.status === 'active');
@@ -157,6 +154,8 @@ function AppContent() {
               return <ManagementDashboard />;
             case 'admin':
               return <AdminDashboard user={loggedInUser} />;
+            case 'compliance':
+              return <ComplianceRiskDashboard user={loggedInUser} />;
             default:
               return null;
           }
@@ -239,6 +238,7 @@ function AppContent() {
                       <SelectItem value="back-office">Back Office Clerks</SelectItem>
                       <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
                       <SelectItem value="management">MANAGEMENT</SelectItem>
+                      <SelectItem value="compliance">Compliance & Risk</SelectItem>
                       <SelectItem value="admin">System Administrator</SelectItem>
                     </SelectContent>
                   </Select>
@@ -257,7 +257,6 @@ function AppContent() {
         <p className="mt-12 text-center text-white/20 text-[9px] uppercase tracking-[0.4em] font-medium">InnBucks MicroBank Limited &copy; 2026</p>
       </motion.div>
 
-      {/* Forgot Password Dialog - Secure Banking Workflow */}
       <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
         <DialogContent className="bg-[#1e1b4b] border-white/10 text-white backdrop-blur-2xl">
           <DialogHeader>
@@ -324,6 +323,7 @@ function AppContent() {
                                  loggedInUser.role === 'supervisor' ? 'Back Office Supervisor' :
                                  loggedInUser.role === 'management' ? 'MANAGEMENT' :
                                  loggedInUser.role === 'admin' ? 'System Administrator' :
+                                 loggedInUser.role === 'compliance' ? 'Compliance Officer' :
                                  loggedInUser.role.replace('-', ' ')}
                             </p>
                         </div>

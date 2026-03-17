@@ -314,11 +314,12 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
               <Select defaultValue={editingUser?.role} onValueChange={(v: Role) => editingUser && handleUpdateRole(editingUser.id, v)}>
                 <SelectTrigger className="bg-white/5 border-white/10"><SelectValue placeholder="Select Role..." /></SelectTrigger>
                 <SelectContent className="bg-[#1e1b4b] border-white/10">
-                  <SelectItem value="asl">Area Sales Leaders (Field Entry)</SelectItem>
-                  <SelectItem value="back-office">Back Office Clerk (Verification)</SelectItem>
-                  <SelectItem value="supervisor">Supervisor (Audit & Sign-off)</SelectItem>
-                  <SelectItem value="management">MANAGEMENT (Business Reporting)</SelectItem>
-                  <SelectItem value="admin">System Administrator (Security)</SelectItem>
+                  <SelectItem value="asl">Area Sales Leaders</SelectItem>
+                  <SelectItem value="back-office">Back Office Clerk</SelectItem>
+                  <SelectItem value="supervisor">Supervisor</SelectItem>
+                  <SelectItem value="management">MANAGEMENT</SelectItem>
+                  <SelectItem value="compliance">Compliance & Risk</SelectItem>
+                  <SelectItem value="admin">System Administrator</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -359,6 +360,7 @@ export default function AdminDashboard({ user: adminUser }: { user: User }) {
                   <SelectItem value="back-office">Back Office Clerk</SelectItem>
                   <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
                   <SelectItem value="management">MANAGEMENT</SelectItem>
+                  <SelectItem value="compliance">Compliance & Risk</SelectItem>
                   <SelectItem value="admin">System Administrator</SelectItem>
                 </SelectContent>
               </Select>
