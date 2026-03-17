@@ -10,7 +10,9 @@ import {
   Search, 
   AlertTriangle,
   UserSearch,
-  FileSpreadsheet
+  History,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ApplicationReview from '../onboarding/application-review';
-import ReportsTab from './reports-tab';
 
 export default function ComplianceRiskDashboard({ user }: { user: User }) {
   const [applications] = useAtom(applicationsAtom);
@@ -26,9 +27,17 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
 
   // Compliance filter logic: Only applications escalated to 'Pending Compliance'
-  const complianceQueue = React.useMemo(() => {
+  const pendingQueue = React.useMemo(() => {
     return applications.filter(app => 
       app.status === 'Pending Compliance' &&
+      (app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || app.id.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [applications, searchTerm]);
+
+  // Rejection History: Only applications that have been rejected
+  const rejectionHistory = React.useMemo(() => {
+    return applications.filter(app => 
+      app.status === 'Rejected' &&
       (app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || app.id.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [applications, searchTerm]);
@@ -56,24 +65,24 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
         <div>
           <h2 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
             <ShieldCheck className="h-8 w-8 text-primary" />
-            COMPLIANCE & REGULATORY HUB
+            COMPLIANCE PORTAL
           </h2>
-          <p className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] font-bold">Priority Auditing: PEP, Adverse, & Missing Doc Investigation</p>
+          <p className="text-muted-foreground uppercase tracking-[0.2em] text-[10px] font-bold">Regulatory Auditing: PEP, Adverse, & Mandatory Document Approval</p>
         </div>
         <div className="flex gap-2">
             <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 font-bold px-3 py-1">
                 <AlertTriangle className="mr-2 h-3 w-3" />
-                {stats.pendingAudit} Awaiting Compliance Approval
+                {stats.pendingAudit} Awaiting Approval
             </Badge>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Historical AML Hits</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">AML Risk Hits</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">{stats.totalHits}</div>
-            <p className="text-[10px] text-white/40 mt-1 uppercase">Total PEP & Adverse Identification</p>
+            <p className="text-[10px] text-white/40 mt-1 uppercase">Total Identifications</p>
           </CardContent>
         </Card>
         <Card className="bg-white/5 border-white/10">
@@ -84,17 +93,17 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
           </CardContent>
         </Card>
         <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Negative Records</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Adverse Records</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-500">{stats.adverseCount}</div>
-            <p className="text-[10px] text-white/40 mt-1 uppercase">Adverse FCB Statuses Identified</p>
+            <p className="text-[10px] text-white/40 mt-1 uppercase">Negative FCB Hits</p>
           </CardContent>
         </Card>
         <Card className="bg-white/5 border-white/10">
-          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Investigation Pipeline</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Pending Reviews</CardTitle></CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingAudit}</div>
-            <p className="text-[10px] text-white/40 mt-1 uppercase">Active Regulatory Audits</p>
+            <p className="text-[10px] text-white/40 mt-1 uppercase">Active Audit Queue</p>
           </CardContent>
         </Card>
       </div>
@@ -103,22 +112,25 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
         <TabsList className="bg-black/20 p-1 mb-6">
           <TabsTrigger value="queue" className="flex items-center gap-2">
             <UserSearch className="h-4 w-4" /> 
-            Investigation Queue
+            Pending Reviews
             {stats.pendingAudit > 0 && <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center p-0 rounded-full animate-pulse">{stats.pendingAudit}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" /> Regulatory Reports</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <History className="h-4 w-4" /> 
+            Rejection History
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="queue">
           <Card className="border-none bg-white/5 backdrop-blur-md">
             <CardHeader className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div>
-                <CardTitle>Escalated AML Investigations</CardTitle>
-                <CardDescription>Records forwarded by Supervisors/Clerks due to High-Risk flags.</CardDescription>
+                <CardTitle>Escalated Compliance Queue</CardTitle>
+                <CardDescription>Records requiring manual oversight due to AML flags or missing documents.</CardDescription>
               </div>
               <div className="relative w-full sm:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search investigation ID..." className="pl-9 bg-black/20 border-white/10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                <Input placeholder="Search pending ID..." className="pl-9 bg-black/20 border-white/10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -126,15 +138,15 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
                 <TableHeader>
                   <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
                     <TableHead className="pl-6 text-[10px] font-bold uppercase text-white/50">Applicant Detail</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase text-white/50">Risk Hit Category</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase text-white/50">Escalated From</TableHead>
-                    <TableHead className="pr-6 text-right text-[10px] font-bold uppercase text-white/50">Audit Action</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase text-white/50">Risk Category</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase text-white/50">Escalated By</TableHead>
+                    <TableHead className="pr-6 text-right text-[10px] font-bold uppercase text-white/50">Approval Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {complianceQueue.map((app) => {
+                  {pendingQueue.map((app) => {
                     const lastLog = app.history[app.history.length - 1];
-                    const isMissingDocs = app.documents.length < 3; // Simplified missing docs check
+                    const isMissingDocs = app.documents.length < 2;
                     return (
                       <TableRow key={app.id} className="border-white/5 hover:bg-white/5">
                         <TableCell className="pl-6 py-4">
@@ -158,16 +170,16 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
                           </div>
                         </TableCell>
                         <TableCell className="pr-6 text-right">
-                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/10" onClick={() => setSelectedApplication(app)}>Investigate ID</Button>
+                          <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/10" onClick={() => setSelectedApplication(app)}>Approval Review</Button>
                         </TableCell>
                       </TableRow>
                     );
                   })}
-                  {complianceQueue.length === 0 && (
+                  {pendingQueue.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="h-32 text-center text-white/20">
-                        <ShieldCheck className="h-12 w-12 mx-auto mb-2 opacity-10" />
-                        <p className="italic">No pending investigations. Regulatory queue clear.</p>
+                        <CheckCircle2 className="h-12 w-12 mx-auto mb-2 opacity-10" />
+                        <p className="italic">No pending reviews. System is compliant.</p>
                       </TableCell>
                     </TableRow>
                   )}
@@ -177,8 +189,58 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="reports">
-          <ReportsTab applications={applications} />
+        <TabsContent value="history">
+          <Card className="border-none bg-white/5 backdrop-blur-md">
+            <CardHeader>
+              <CardTitle>Rejection History</CardTitle>
+              <CardDescription>Archive of records declined by the Compliance department.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-black/20 border-white/5">
+                    <TableHead className="pl-6 text-[10px] font-bold uppercase text-white/50">Applicant Detail</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase text-white/50">Hit Category</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase text-white/50">Date Rejected</TableHead>
+                    <TableHead className="pr-6 text-right text-[10px] font-bold uppercase text-white/50">Outcome</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rejectionHistory.map((app) => {
+                    const rejectionLog = app.history.find(h => h.action === 'Rejected');
+                    return (
+                      <TableRow key={app.id} className="border-white/5 hover:bg-white/5">
+                        <TableCell className="pl-6 py-4">
+                          <div>
+                            <p className="font-bold text-white/70">{app.clientName}</p>
+                            <p className="text-[10px] text-white/30 font-mono">{app.id}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="uppercase text-[9px] border-destructive text-destructive">{app.fcbStatus}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-xs text-white/40">{rejectionLog ? new Date(rejectionLog.timestamp).toLocaleDateString() : 'N/A'}</p>
+                        </TableCell>
+                        <TableCell className="pr-6 text-right">
+                          <div className="flex items-center justify-end gap-2 text-destructive font-bold text-xs uppercase">
+                            <XCircle className="h-3 w-3" /> Declined
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {rejectionHistory.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-32 text-center text-white/20 italic">
+                        No historical rejections recorded.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

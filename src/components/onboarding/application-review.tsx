@@ -335,7 +335,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         if(application.status === 'Pending Compliance') {
             return <div className="space-x-2">
                 <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject Record</Button>
-                <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Pending Supervisor', 'Compliance check passed. Forwarded for final sign-off.')}><ShieldCheck className="mr-2 h-4 w-4" />Pass Compliance Check</Button>
+                <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Pending Supervisor', 'Compliance check passed. Forwarded for final sign-off.')}><ShieldCheck className="mr-2 h-4 w-4" />Approval</Button>
             </div>;
         }
         return null;
