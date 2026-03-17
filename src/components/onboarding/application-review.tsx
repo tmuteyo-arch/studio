@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -8,7 +9,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -24,7 +25,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { rejectionReasons } from '@/lib/types';
 import CorporateChecklist from './corporate-checklist';
 import { Badge } from '@/components/ui/badge';
-import { generateApplicationSummary } from '@/lib/actions';
 import { Alert, AlertDescription as AlertDescriptionComponent, AlertTitle as AlertTitleComponent } from '../ui/alert';
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepSignatories from './steps/step-signatories';
@@ -95,13 +95,13 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [rejectionReason, setRejectionReason] = React.useState('');
   const [rejectionComment, setRejectionComment] = React.useState('');
   
-  const [isGeneratingSummary, setIsGeneratingSummary] = React.useState(false);
-  const [aiSummary, setAiSummary] = React.useState<string | null>(null);
-  
   const [previewDoc, setPreviewDoc] = React.useState<Document | null>(null);
 
-  const [isDispatching, setIsDispatching] = React.useState(false);
+  // New Workflow States
+  const [brIdentity, setBrIdentity] = React.useState(application.details.brIdentity || '');
+  const [activationCode, setActivationCode] = React.useState(application.details.activationCode || '');
   const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
+  const [isDispatching, setIsDispatching] = React.useState(false);
 
   const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
   const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
@@ -113,7 +113,6 @@ export default function ApplicationReview({ application: initialApplication, onB
   const isMissingDocs = missingDocs.length > 0;
   
   const hasFcbReport = application.documents.some(d => d.type === 'FCB Report');
-
   const isRisky = ['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) || isMissingDocs || !hasFcbReport;
 
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
@@ -142,30 +141,63 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-     if (status === 'Signed' || status === 'Archived' || status === 'Rejected' || status === 'Pending Supervisor' || status === 'Pending Compliance' || status === 'Returned to ATL') {
+     if (['Archived', 'Rejected', 'Pending Supervisor', 'Pending Compliance', 'Returned to ATL', 'Approved'].includes(status)) {
         setTimeout(() => onBack(), 500);
     }
   };
 
-  const handleAutoApprove = () => {
-    const newHistoryLog: HistoryLog = {
-        action: 'System Auto-Approved',
-        user: 'System (Verified by ' + user.name + ')',
-        timestamp: new Date().toISOString(),
-        notes: 'Verified compliant with no risk flags. Bypassed supervisor queue.',
-    };
-    
+  const handleForwardToSupervisor = () => {
+    if (!brIdentity) {
+        toast({ variant: 'destructive', title: 'Action Required', description: 'Please provide the BR Identity first.' });
+        return;
+    }
+    const notes = `BR Identity: ${brIdentity} created in legacy system. Forwarded for audit.`;
     handleUpdateApplication({ 
-        status: 'Signed', 
-        history: [...application.history, newHistoryLog],
-        details: { ...application.details, supervisorSignature: 'SYSTEM_APPROVED', supervisorSignatureTimestamp: new Date().toISOString() }
+        status: 'Pending Supervisor', 
+        details: { ...application.details, brIdentity },
+        history: [...application.history, { action: 'Pending Supervisor', user: user.name, timestamp: new Date().toISOString(), notes }] 
     });
+    toast({ title: "Forwarded to Supervisor", description: "Identity data has been sent for final audit." });
+    setTimeout(() => onBack(), 500);
+  };
 
-    toast({
-        title: "System Auto-Approved",
-        description: "This record was clean and has been automatically finalized.",
+  const handleSupervisorApproval = () => {
+    if (!activationCode) {
+        toast({ variant: 'destructive', title: 'Action Required', description: 'Please provide the Wallet Activation Code.' });
+        return;
+    }
+    const notes = `Supervisor Audit Passed. Activation Code: ${activationCode} issued to Back Office.`;
+    handleUpdateApplication({ 
+        status: 'Approved', 
+        details: { ...application.details, activationCode },
+        history: [...application.history, { action: 'Approved & Activation Code Issued', user: user.name, timestamp: new Date().toISOString(), notes }] 
     });
-    
+    toast({ title: "Audit Approved", description: "Activation code has been issued to the Back Office team." });
+    setTimeout(() => onBack(), 500);
+  };
+
+  const handleDispatchAccount = () => {
+    if (!dispatchAccountNumber) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please enter an account number.' });
+        return;
+    }
+
+    const newDetails = { 
+        ...application.details, 
+        accountNumber: dispatchAccountNumber, 
+        accountOpeningDate: new Date().toISOString(),
+        isDispatched: true 
+    };
+    const newHistoryLog: HistoryLog = { 
+        action: 'Account Details Dispatched', 
+        user: user.name, 
+        timestamp: new Date().toISOString(),
+        notes: `Account Details [${dispatchAccountNumber}] forwarded to ASL digitally. Activation Code [${application.details.activationCode}] utilized.`
+    };
+
+    handleUpdateApplication({ status: 'Archived', details: newDetails, history: [...application.history, newHistoryLog] });
+    toast({ title: "Account Created & Dispatched", description: `Account number ${dispatchAccountNumber} has been finalized and archived.` });
+    setIsDispatching(false);
     setTimeout(() => onBack(), 500);
   };
 
@@ -198,7 +230,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     setIsRejecting(false);
     setRejectionReason('');
     setRejectionComment('');
-};
+  };
 
   const handleFcbStatusChange = (fcbStatus: Application['fcbStatus']) => {
      handleUpdateApplication({ fcbStatus });
@@ -274,53 +306,6 @@ export default function ApplicationReview({ application: initialApplication, onB
     setIsPrinting(false);
   };
 
-  const handleSupervisorSign = (signatureData: string) => {
-    const newDetails = { ...application.details, supervisorSignature: signatureData, supervisorSignatureTimestamp: new Date().toISOString() };
-    const newHistoryLog: HistoryLog = { action: 'Agreement Finalized & Archived', user: user.name, timestamp: new Date().toISOString() };
-    handleUpdateApplication({ details: newDetails, status: 'Archived', history: [...application.history, newHistoryLog] });
-    toast({ title: "Agreement Finalized", description: "Agency agreement has been signed and automatically archived."});
-    setTimeout(() => onBack(), 500);
-  };
-
-  const handleDispatchAccount = () => {
-    if (!dispatchAccountNumber) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Please enter an account number.' });
-        return;
-    }
-
-    const newDetails = { 
-        ...application.details, 
-        accountNumber: dispatchAccountNumber, 
-        accountOpeningDate: new Date().toISOString(),
-        isDispatched: true 
-    };
-    const newHistoryLog: HistoryLog = { 
-        action: 'Account Details Dispatched', 
-        user: user.name, 
-        timestamp: new Date().toISOString(),
-        notes: `Account Details [${dispatchAccountNumber}] forwarded to ASL digitally.`
-    };
-
-    handleUpdateApplication({ details: newDetails, history: [...application.history, newHistoryLog] });
-    toast({ title: "Details Dispatched", description: `Account number ${dispatchAccountNumber} has been forwarded to the ASL.` });
-    setIsDispatching(false);
-  };
-
-
-  const handleGenerateSummary = async () => {
-    setIsGeneratingSummary(true);
-    setAiSummary(null);
-    const summaryInput = { clientType: application.clientType, clientName: application.clientName, status: application.status, fcbStatus: application.fcbStatus, documents: application.documents, history: application.history };
-    const result = await generateApplicationSummary(summaryInput);
-    setIsGeneratingSummary(false);
-    if (result.success && result.data) {
-      setAiSummary(result.data.summary);
-      toast({ title: 'AI Summary Generated', description: 'The application summary and risk assessment is ready.' });
-    } else {
-      toast({ variant: 'destructive', title: 'Summary Failed', description: result.error || 'Could not generate AI summary.' });
-    }
-  };
-
   const renderActions = () => {
     switch (user.role) {
       case 'asl':
@@ -329,45 +314,41 @@ export default function ApplicationReview({ application: initialApplication, onB
         }
         return null;
       case 'back-office':
-        if (application.status === 'Archived' && !application.details.isDispatched) {
-            return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg"><Send className="mr-2 h-4 w-4" />Dispatch Account Details</Button>;
+        if (application.status === 'Approved') {
+            return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg"><Send className="mr-2 h-4 w-4" />Create Account & Dispatch</Button>;
         }
-        if (application.status === 'Signed') {
-            return <div className="space-x-2"><Button onClick={() => handleStatusChange('Archived')}><Archive className="mr-2 h-4 w-4" />Move to Archive Vault</Button></div>;
-        }
-        if (['Archived', 'Pending Supervisor', 'Pending Compliance', 'Rejected'].includes(application.status)) return null;
-        if(application.status === 'Submitted' || application.status === 'Returned to ATL') {
+        if (application.status === 'Submitted' || application.status === 'Returned to ATL') {
             return (
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ASL</Button>
-                    
-                    {isRisky ? (
-                        <Button className="bg-destructive hover:bg-destructive/90" onClick={() => handleStatusChange('Pending Compliance')}>
-                            <ShieldAlert className="mr-2 h-4 w-4" /> Escalate to Compliance
-                        </Button>
-                    ) : (
-                        <Button className="bg-green-600 hover:bg-green-700" onClick={handleAutoApprove}>
-                            <ShieldCheck className="mr-2 h-4 w-4" /> System Auto-Approve
-                        </Button>
-                    )}
+                    <Button className="bg-green-600 hover:bg-green-700" onClick={handleForwardToSupervisor}>
+                        <ShieldCheck className="mr-2 h-4 w-4" /> Forward to Supervisor
+                    </Button>
                 </div>
             );
         }
         return null;
       case 'supervisor':
-        if(application.status === 'Pending Supervisor') {
-            return <div className="space-x-2">
-                <Button variant="outline" onClick={() => handleStatusChange('Pending Compliance')}><ShieldAlert className="mr-2 h-4 w-4" />Escalate to Compliance</Button>
-                <Button className="bg-green-600 hover:bg-green-700" onClick={() => setActiveTab('sign-agreement')}><FileSignature className="mr-2 h-4 w-4" />Review & Sign Agreement</Button>
-            </div>;
+        if (application.status === 'Pending Supervisor') {
+            return (
+                <div className="flex gap-2">
+                    <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject</Button>
+                    <Button variant="outline" onClick={() => handleStatusChange('Pending Compliance')}><ShieldAlert className="mr-2 h-4 w-4" />Escalate to Compliance</Button>
+                    <Button className="bg-green-600 hover:bg-green-700" onClick={handleSupervisorApproval}>
+                        <Check className="mr-2 h-4 w-4" /> Approve & Issue Code
+                    </Button>
+                </div>
+            );
         }
         return null;
       case 'compliance':
-        if(application.status === 'Pending Compliance') {
-            return <div className="space-x-2">
-                <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject Record</Button>
-                <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Pending Supervisor', 'Compliance check passed. Forwarded for final sign-off.')}><ShieldCheck className="mr-2 h-4 w-4" />Approval</Button>
-            </div>;
+        if (application.status === 'Pending Compliance') {
+            return (
+                <div className="flex gap-2">
+                    <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject Record</Button>
+                    <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved', 'Compliance check passed. Forwarded for final code issuance.')}><ShieldCheck className="mr-2 h-4 w-4" />Approval</Button>
+                </div>
+            );
         }
         return null;
       default: return null;
@@ -376,8 +357,6 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const supervisorForChecklist = application.history.find(h => h.action.includes('Supervisor'))?.user;
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
-  const isSigningStep = user.role === 'supervisor' && application.status === 'Pending Supervisor';
-  const isSalesRole = user.role === 'asl';
 
   return (
     <FormProvider {...form}>
@@ -409,50 +388,89 @@ export default function ApplicationReview({ application: initialApplication, onB
               <div className="flex flex-col items-end gap-2">
                 <Badge variant={ application.status === 'Archived' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
                 {application.submittedBy === 'Customer' && <Badge variant="outline" className="bg-blue-50 text-blue-700">Self-Service Sign Up</Badge>}
-                {application.details.isDispatched && <Badge className="bg-primary text-primary-foreground font-black animate-in fade-in zoom-in">Account Dispatched</Badge>}
+                {application.details.isDispatched && <Badge className="bg-primary text-primary-foreground font-black">Account Finalized</Badge>}
               </div>
             </div>
           </CardHeader>
           <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {(user.role === 'back-office' || user.role === 'supervisor') && (
-                      <Alert className={isRisky ? "border-amber-500 bg-amber-50" : "border-green-500 bg-green-50"}>
-                          {isRisky ? <ShieldAlert className="h-4 w-4 text-amber-600" /> : <ShieldCheck className="h-4 w-4 text-green-600" />}
-                          <AlertTitleComponent className={isRisky ? "text-amber-800" : "text-green-800"}>
-                              {isRisky ? "Risk Alert: Compliance Audit Required" : "System Verified: Eligible for Auto-Approval"}
-                          </AlertTitleComponent>
-                          <AlertDescriptionComponent className={isRisky ? "text-amber-700" : "text-green-700"}>
-                              {isRisky 
-                                ? `This application contains risk flags (${!hasFcbReport ? 'Missing FCB Report, ' : ''}${['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) ? 'Adverse Status, ' : ''}${isMissingDocs ? 'Missing Docs' : ''}) and must be escalated to the Compliance Team.`
-                                : "This application is clean and compliant. You may bypass the supervisor queue by using System Auto-Approval."
-                              }
-                          </AlertDescriptionComponent>
-                      </Alert>
+              {/* Internal Process Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 border-b pb-6">
+                  {/* Back Office Step */}
+                  {(user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL')) && (
+                      <Card className="border-primary/20 bg-primary/5 shadow-sm">
+                          <CardHeader className="pb-2">
+                              <CardTitle className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                  <Fingerprint className="h-4 w-4" /> Step 1: Legacy BR Identity
+                              </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                              <div className="space-y-2">
+                                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">BR Identity Code</Label>
+                                  <Input 
+                                      placeholder="Enter BR ID..." 
+                                      value={brIdentity} 
+                                      onChange={(e) => setBrIdentity(e.target.value)}
+                                      className="bg-background"
+                                  />
+                                  <p className="text-[10px] text-muted-foreground italic">Mandatory: Must be created in legacy system before forwarding.</p>
+                              </div>
+                          </CardContent>
+                      </Card>
                   )}
-                  {user.role === 'compliance' && (
-                      <Alert className="border-primary bg-primary/5">
-                          <ShieldQuestion className="h-4 w-4 text-primary" />
-                          <AlertTitleComponent>Regulatory Audit Case</AlertTitleComponent>
-                          <AlertDescriptionComponent>
-                              Investigate the identified hit: <strong>{application.fcbStatus}</strong> status and {isMissingDocs ? 'Missing Documentation' : 'provided documents'}.
-                          </AlertDescriptionComponent>
-                      </Alert>
+
+                  {/* Supervisor Step */}
+                  {(user.role === 'supervisor' && application.status === 'Pending Supervisor') && (
+                      <Card className="border-green-500/20 bg-green-500/5 shadow-sm">
+                          <CardHeader className="pb-2">
+                              <CardTitle className="text-xs font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
+                                  <Key className="h-4 w-4" /> Step 2: Final Audit & Activation
+                              </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">BR Identity (From Clerk)</Label>
+                                      <p className="font-mono text-sm bg-muted p-2 rounded">{application.details.brIdentity}</p>
+                                  </div>
+                                  <div className="space-y-2">
+                                      <Label className="text-[10px] font-bold uppercase text-green-600">Wallet Activation Code</Label>
+                                      <Input 
+                                          placeholder="Enter Access Code..." 
+                                          value={activationCode} 
+                                          onChange={(e) => setActivationCode(e.target.value)}
+                                          className="bg-background font-mono"
+                                      />
+                                  </div>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground italic">Issuing this code grants the clerk permission to finalize the wallet account.</p>
+                          </CardContent>
+                      </Card>
                   )}
-                  <div className='flex justify-end items-center'>
-                      <Button variant="secondary" onClick={handleGenerateSummary} disabled={isGeneratingSummary}>{isGeneratingSummary ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}{isGeneratingSummary ? 'Generating...' : 'Generate AI Summary'}</Button>
-                  </div>
+
+                  {/* Summary for other roles or stages */}
+                  {(application.details.brIdentity || application.details.activationCode) && (
+                      <div className="col-span-full flex gap-4">
+                          {application.details.brIdentity && (
+                              <Badge variant="outline" className="flex gap-2 items-center bg-muted/50 border-dashed">
+                                  <Fingerprint className="h-3 w-3" /> BR Identity: {application.details.brIdentity}
+                              </Badge>
+                          )}
+                          {application.details.activationCode && (
+                              <Badge variant="outline" className="flex gap-2 items-center bg-green-50 text-green-700 border-green-200">
+                                  <Key className="h-3 w-3" /> Activation: {application.details.activationCode}
+                              </Badge>
+                          )}
+                      </div>
+                  )}
               </div>
-              
-              {aiSummary && (<Alert className="mb-6 bg-secondary/50"><Wand2 className="h-4 w-4" /><AlertTitleComponent>AI Summary & Risk Assessment</AlertTitleComponent><AlertDescriptionComponent>{aiSummary}</AlertDescriptionComponent></Alert>)}
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList>
                       <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Mandatory Details</TabsTrigger>
-                      {(user.role === 'back-office' || (isSalesRole && application.submittedBy !== 'Customer')) && application.status !== 'Archived' && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Edit Form</TabsTrigger>}
+                      {(user.role === 'back-office' || (user.role === 'asl' && application.submittedBy !== 'Customer')) && application.status !== 'Archived' && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Edit Form</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
-                      {isSigningStep && <TabsTrigger value="sign-agreement"><FileSignature className="mr-2 h-4 w-4" />Sign Agreement</TabsTrigger>}
                   </TabsList>
                   <TabsContent value="details" className="pt-4">
                     <Card>
@@ -542,7 +560,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                       </Card>
                     )}
                   </TabsContent>
-                   {(user.role === 'back-office' || (isSalesRole && application.submittedBy !== 'Customer')) && application.status !== 'Archived' && (
+                   {(user.role === 'back-office' || (user.role === 'asl' && application.submittedBy !== 'Customer')) && application.status !== 'Archived' && (
                        <TabsContent value="form-data" className="pt-4">
                            <Card>
                                <CardContent className="pt-6">
@@ -559,31 +577,6 @@ export default function ApplicationReview({ application: initialApplication, onB
                   <TabsContent value="documents" className="pt-4"><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Document Checklist</CardTitle></CardHeader><CardContent><ul className="space-y-3">{documentRequirements.map((req) => { const isUploaded = uploadedDocumentTypes.includes(req.document); return (<li key={req.document} className="flex items-center">{isUploaded ? (<CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />) : (<AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />)}<div><p className="font-medium">{req.document}</p></div></li>); })}</ul></CardContent></Card><Card><CardHeader><CardTitle>Uploaded Documents</CardTitle></CardHeader><CardContent>{application.documents.length > 0 ? (<ul className="space-y-3">{application.documents.map(doc => (<li key={doc.type} className="flex items-center justify-between p-3 rounded-md border"><div><p className="font-medium">{doc.type}</p><p className="text-sm text-muted-foreground">{doc.fileName}</p></div><Button variant="outline" size="sm" onClick={() => setPreviewDoc(doc)}><Eye className="mr-2 h-4 w-4" />View</Button></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-8">No documents uploaded.</p>)}</CardContent></Card></div></TabsContent>
                   <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Activity Log</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action.includes('Submitted') ? <FileText className="h-5 w-5"/> : <User className="h-5 w-5"/>}</div></div><div className="ml-4"><p className="font-medium">{entry.action} by {entry.user}</p><p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
                   <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Comments</CardTitle></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}{application.comments.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">No comments.</p>)}</div>{application.status !== 'Archived' && application.status !== 'Signed' && (<div className="space-y-2"><Textarea placeholder="Type your comment here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Comment</Button></div>)}</CardContent></Card></TabsContent>
-                   {isSigningStep && (
-                       <TabsContent value="sign-agreement" className="pt-4"><Card>
-                           <CardHeader><CardTitle>Sign Agency Agreement</CardTitle></CardHeader>
-                           <CardContent className="space-y-6">
-                               <div className="scale-75 origin-top-left">
-                                   {needsMandate ? (
-                                       <AccountResolutionPrintView application={applicationForPrint} />
-                                   ) : (
-                                       <div className="p-8 border bg-white text-black min-h-[200px] w-[210mm]">
-                                           <h2 className="text-xl font-bold mb-4">Agency Approval: {application.clientName}</h2>
-                                           <p>Onboarding approval for Personal/Individual account type.</p>
-                                           <div className="mt-8 grid grid-cols-2 gap-4">
-                                               <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
-                                               <DetailItem label="ID Number" value={application.details.individualIdNumber} />
-                                           </div>
-                                       </div>
-                                   )}
-                               </div>
-                               <Separator />
-                                <div className="max-w-md">
-                                    <SignatureField onSave={handleSupervisorSign} />
-                                </div>
-                           </CardContent>
-                       </Card></TabsContent>
-                   )}
               </Tabs>
           </CardContent>
         </Card>
@@ -618,19 +611,19 @@ export default function ApplicationReview({ application: initialApplication, onB
             </DialogContent>
         </Dialog>
 
-        {/* Dispatch Account Details Dialog */}
+        {/* Final Step: Dispatch Account Details Dialog */}
         <Dialog open={isDispatching} onOpenChange={setIsDispatching}>
             <DialogContent className="bg-card border-primary/20">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Send className="h-5 w-5 text-primary" />
-                        Forward Account Details
+                        Finalize & Dispatch Wallet
                     </DialogTitle>
-                    <CardDescription>Enter the generated account number to forward it digitally to the ASL.</CardDescription>
+                    <CardDescription>Supervisor has approved with Activation Code: <strong>{application.details.activationCode}</strong>. Provide the final account number.</CardDescription>
                 </DialogHeader>
                 <div className="py-6 space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="account-num" className="text-xs font-black uppercase tracking-widest">New Account Number</Label>
+                        <Label htmlFor="account-num" className="text-xs font-black uppercase tracking-widest">New Wallet Account Number</Label>
                         <Input 
                             id="account-num"
                             placeholder="e.g. 1002345678"
@@ -640,12 +633,12 @@ export default function ApplicationReview({ application: initialApplication, onB
                         />
                     </div>
                     <div className="p-3 bg-primary/10 rounded border border-primary/20 text-[10px] text-primary font-bold uppercase leading-relaxed">
-                        Notice: This will immediately notify the originating ASL ({application.submittedBy}) and finalize the digital hand-over.
+                        Notice: This utilizes the issued Activation Code to complete the digital hand-over to the ASL ({application.submittedBy}).
                     </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsDispatching(false)}>Cancel</Button>
-                    <Button onClick={handleDispatchAccount} className="bg-primary text-primary-foreground font-black">Dispatch Details Now</Button>
+                    <Button onClick={handleDispatchAccount} className="bg-primary text-primary-foreground font-black">Finalize & Dispatch</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

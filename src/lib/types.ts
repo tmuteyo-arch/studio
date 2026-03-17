@@ -79,8 +79,10 @@ export const OnboardingFormSchema = z.object({
     url: z.string()
   })).optional().default([]),
   
-  // Internal Checks
+  // Internal Checks & Workflow IDs
   fcbStatus: z.string().optional(),
+  brIdentity: z.string().optional(),
+  activationCode: z.string().optional(),
   
   // Verification Signatures
   supervisorSignature: z.string().optional(),
@@ -173,13 +175,14 @@ export const rejectionReasons = [
     'Data Discrepancies Found',
     'Regulatory Compliance Failure',
     'Incomplete Form Data',
+    'Invalid BR Identity',
     'Other (See Internal Comments)',
 ];
 
 export type Comment = {
   id: string;
   user: string;
-  role: 'asl' | 'back-office' | 'supervisor' | 'management';
+  role: 'asl' | 'back-office' | 'supervisor' | 'management' | 'compliance';
   timestamp: string;
   content: string;
 };
