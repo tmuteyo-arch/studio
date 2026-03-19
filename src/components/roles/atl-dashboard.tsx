@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown } from 'lucide-react';
+import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User as UserProfile } from '@/lib/users';
@@ -64,6 +64,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
   const [applications] = useAtom(applicationsAtom);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [isNewAppMenuOpen, setIsNewAppMenuOpen] = React.useState(false);
 
   const myApplications = applications
     .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected', 'Pending Supervisor', 'Archived'].includes(app.status))
@@ -86,6 +87,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const handleStartApplication = (type: string) => {
     setPreselectedType(type);
     setIsCreatingApplication(true);
+    setIsNewAppMenuOpen(false);
   };
 
   const applicationForReview = selectedApplication 
@@ -107,117 +109,128 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   return (
     <TooltipProvider>
       <div className="max-w-6xl mx-auto">
-        <div className="mb-10">
-          <div className="mb-6">
-              <h2 className="text-3xl font-black tracking-tight">ASL Dashboard</h2>
-              <p className="text-muted-foreground font-medium">Manage your onboarding portfolio and process new leads.</p>
+        <div className="mb-10 space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                  <h2 className="text-3xl font-black tracking-tight">ASL Dashboard</h2>
+                  <p className="text-muted-foreground font-medium">Manage your onboarding portfolio and process new leads.</p>
+              </div>
+              <Button 
+                onClick={() => setIsNewAppMenuOpen(!isNewAppMenuOpen)}
+                variant={isNewAppMenuOpen ? "outline" : "default"}
+                className="h-12 px-8 font-black shadow-lg transition-all active:scale-[0.98] border-primary/20"
+              >
+                {isNewAppMenuOpen ? <X className="mr-2 h-5 w-5" /> : <PlusCircle className="mr-2 h-5 w-5" />}
+                {isNewAppMenuOpen ? "Cancel Creation" : "New Application"}
+              </Button>
           </div>
           
-          <Card className="border-primary/10 shadow-xl overflow-hidden">
-            <CardHeader className="bg-muted/30 border-b border-primary/5 pb-4">
-                <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
-                    <PlusCircle className="h-4 w-4" />
-                    New Applications
-                </CardTitle>
-                <CardDescription className="text-xs">Select a category to originate a new agent record.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-                <div className="flex flex-wrap gap-4">
-                    {/* Personal Accounts Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="h-14 px-6 border-primary/20 hover:bg-primary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
-                                <User className="mr-3 h-5 w-5 text-primary" />
-                                <div className="text-left">
-                                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Step 1</p>
-                                    <p>Personal Accounts</p>
-                                </div>
-                                <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-64">
-                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Select Product Type</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Individual Accounts')}>
-                                1. Individual Accounts
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Sole traders')}>
-                                2. Sole traders
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+          {isNewAppMenuOpen && (
+            <Card className="border-primary/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                <CardHeader className="bg-primary/5 border-b border-primary/5 pb-4">
+                    <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
+                        Originating Application
+                    </CardTitle>
+                    <CardDescription className="text-xs">Select a category to reveal the account type classes.</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                    <div className="flex flex-wrap gap-4">
+                        {/* Personal Accounts Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="h-14 px-6 border-primary/20 hover:bg-primary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
+                                    <User className="mr-3 h-5 w-5 text-primary" />
+                                    <div className="text-left">
+                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Category</p>
+                                        <p>Personal Accounts</p>
+                                    </div>
+                                    <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-64">
+                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Select Product Type</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Individual Accounts')}>
+                                    1. Individual Accounts
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Sole traders')}>
+                                    2. Sole traders
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
-                    {/* Corporate Banking Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="h-14 px-6 border-secondary/20 hover:bg-secondary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
-                                <Building2 className="mr-3 h-5 w-5 text-secondary" />
-                                <div className="text-left">
-                                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Step 1</p>
-                                    <p>Corporate Banking</p>
-                                </div>
-                                <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-72">
-                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Corporate Entity Classes</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
-                                1. Private Limited (Pvt) Company
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Business Corporate (PBC)')}>
-                                2. Private Business Corporate (PBC)
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Public Limited company')}>
-                                3. Public Limited company
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Partnerships')}>
-                                4. Partnerships
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Investment Group')}>
-                                5. Investment Group
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Parastatal')}>
-                                6. Parastatal
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        {/* Corporate Accounts Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="h-14 px-6 border-secondary/20 hover:bg-secondary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
+                                    <Building2 className="mr-3 h-5 w-5 text-secondary" />
+                                    <div className="text-left">
+                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Category</p>
+                                        <p>Corporate Accounts</p>
+                                    </div>
+                                    <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-72">
+                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Corporate Entity Classes</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
+                                    1. Private Limited (Pvt) Company
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Business Corporate (PBC)')}>
+                                    2. Private Business Corporate (PBC)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Public Limited company')}>
+                                    3. Public Limited company
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Partnerships')}>
+                                    4. Partnerships
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Investment Group')}>
+                                    5. Investment Group
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Parastatal')}>
+                                    6. Parastatal
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
-                    {/* Institutions Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="h-14 px-6 border-accent/20 hover:bg-accent/5 font-bold shadow-sm transition-all active:scale-[0.98]">
-                                <Landmark className="mr-3 h-5 w-5 text-accent" />
-                                <div className="text-left">
-                                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Step 1</p>
-                                    <p>Institutions</p>
-                                </div>
-                                <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-64">
-                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Institutional Classes</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('NGO')}>
-                                1. NGO
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Church')}>
-                                2. Church
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('School')}>
-                                3. School
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Society')}>
-                                4. Society
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Club/ Association')}>
-                                5. Club/ Association
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </CardContent>
-          </Card>
+                        {/* Institutions Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="h-14 px-6 border-accent/20 hover:bg-accent/5 font-bold shadow-sm transition-all active:scale-[0.98]">
+                                    <Landmark className="mr-3 h-5 w-5 text-accent" />
+                                    <div className="text-left">
+                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Category</p>
+                                        <p>Institutions</p>
+                                    </div>
+                                    <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-64">
+                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Institutional Classes</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('NGO')}>
+                                    1. NGO
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Church')}>
+                                    2. Church
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('School')}>
+                                    3. School
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Society')}>
+                                    4. Society
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Club/ Association')}>
+                                    5. Club/ Association
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </CardContent>
+            </Card>
+          )}
         </div>
 
         <Tabs defaultValue="my-apps" className="w-full">
