@@ -1,73 +1,45 @@
+
 'use client';
 
 import { useFormContext } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { zimRegions, OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function StepAccountType() {
   const form = useFormContext<OnboardingFormData>();
+  const clientType = form.watch('clientType');
 
   return (
     <div>
       <CardHeader>
         <CardTitle>Application Context</CardTitle>
-        <CardDescription>Confirm the account category and operating region.</CardDescription>
+        <CardDescription>You are originating a record for a <strong>{clientType}</strong>. Please select the operating region.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
-        <FormField
-          control={form.control}
-          name="clientType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Account Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose an account type..." />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Personal Accounts</SelectLabel>
-                    <SelectItem value="Individual Accounts">Individual Accounts</SelectItem>
-                    <SelectItem value="Sole traders">Sole traders</SelectItem>
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel>Corporate Banking</SelectLabel>
-                    <SelectItem value="Private Limited (Pvt) Company">Private Limited (Pvt) Company</SelectItem>
-                    <SelectItem value="Private Business Corporate (PBC)">Private Business Corporate (PBC)</SelectItem>
-                    <SelectItem value="Public Limited company">Public Limited company</SelectItem>
-                    <SelectItem value="Partnerships">Partnerships</SelectItem>
-                    <SelectItem value="Investment Group">Investment Group</SelectItem>
-                    <SelectItem value="Parastatal">Parastatal</SelectItem>
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel>Institutions</SelectLabel>
-                    <SelectItem value="NGO">NGO</SelectItem>
-                    <SelectItem value="Church">Church</SelectItem>
-                    <SelectItem value="School">School</SelectItem>
-                    <SelectItem value="Society">Society</SelectItem>
-                    <SelectItem value="Club/ Association">Club/ Association</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Read-only display of the pre-selected account type */}
+        <div className="p-4 border rounded-md bg-muted/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Product Category</p>
+                <p className="text-sm font-semibold">Originating Record Type</p>
+            </div>
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black px-4 py-1.5 uppercase tracking-wider text-[11px]">
+                {clientType}
+            </Badge>
+        </div>
 
         <FormField
           control={form.control}
           name="region"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Operating Region (Zimbabwe)</FormLabel>
+              <FormLabel className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Operating Region (Zimbabwe)</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a region..." />
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Select province/region..." />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
