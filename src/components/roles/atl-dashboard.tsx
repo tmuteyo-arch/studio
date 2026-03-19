@@ -107,97 +107,117 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   return (
     <TooltipProvider>
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-              <h2 className="text-3xl font-bold">ASL Dashboard</h2>
-              <p className="text-muted-foreground">Manage your onboarding portfolio and process new leads.</p>
+        <div className="mb-10">
+          <div className="mb-6">
+              <h2 className="text-3xl font-black tracking-tight">ASL Dashboard</h2>
+              <p className="text-muted-foreground font-medium">Manage your onboarding portfolio and process new leads.</p>
           </div>
           
-          <div className="flex flex-wrap gap-3">
-              {/* Personal Accounts Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-12 px-6 border-primary/20 hover:bg-primary/5 font-bold shadow-sm">
-                        <User className="mr-2 h-4 w-4 text-primary" />
-                        Personal Accounts
-                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Personal Banking</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Individual Accounts')}>
-                        1. Individual Accounts
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Sole traders')}>
-                        2. Sole traders
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          <Card className="border-primary/10 shadow-xl overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-primary/5 pb-4">
+                <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
+                    <PlusCircle className="h-4 w-4" />
+                    New Applications
+                </CardTitle>
+                <CardDescription className="text-xs">Select a category to originate a new agent record.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+                <div className="flex flex-wrap gap-4">
+                    {/* Personal Accounts Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="h-14 px-6 border-primary/20 hover:bg-primary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
+                                <User className="mr-3 h-5 w-5 text-primary" />
+                                <div className="text-left">
+                                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Step 1</p>
+                                    <p>Personal Accounts</p>
+                                </div>
+                                <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-64">
+                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Select Product Type</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Individual Accounts')}>
+                                1. Individual Accounts
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Sole traders')}>
+                                2. Sole traders
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
-              {/* Corporate Banking Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-12 px-6 border-secondary/20 hover:bg-secondary/5 font-bold shadow-sm">
-                        <Building2 className="mr-2 h-4 w-4 text-secondary" />
-                        Corporate Banking
-                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                    <DropdownMenuLabel>Corporate Entities</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
-                        1. Private Limited (Pvt) Company
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Private Business Corporate (PBC)')}>
-                        2. Private Business Corporate (PBC)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Public Limited company')}>
-                        3. Public Limited company
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Partnerships')}>
-                        4. Partnerships
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Investment Group')}>
-                        5. Investment Group
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Parastatal')}>
-                        6. Parastatal
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    {/* Corporate Banking Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="h-14 px-6 border-secondary/20 hover:bg-secondary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
+                                <Building2 className="mr-3 h-5 w-5 text-secondary" />
+                                <div className="text-left">
+                                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Step 1</p>
+                                    <p>Corporate Banking</p>
+                                </div>
+                                <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-72">
+                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Corporate Entity Classes</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
+                                1. Private Limited (Pvt) Company
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Business Corporate (PBC)')}>
+                                2. Private Business Corporate (PBC)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Public Limited company')}>
+                                3. Public Limited company
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Partnerships')}>
+                                4. Partnerships
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Investment Group')}>
+                                5. Investment Group
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Parastatal')}>
+                                6. Parastatal
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
-              {/* Institutions Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-12 px-6 border-accent/20 hover:bg-accent/5 font-bold shadow-sm">
-                        <Landmark className="mr-2 h-4 w-4 text-accent" />
-                        Institutions
-                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>Institutional Classes</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('NGO')}>
-                        1. NGO
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Church')}>
-                        2. Church
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('School')}>
-                        3. School
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Society')}>
-                        4. Society
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Club/ Association')}>
-                        5. Club/ Association
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-          </div>
+                    {/* Institutions Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="h-14 px-6 border-accent/20 hover:bg-accent/5 font-bold shadow-sm transition-all active:scale-[0.98]">
+                                <Landmark className="mr-3 h-5 w-5 text-accent" />
+                                <div className="text-left">
+                                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Step 1</p>
+                                    <p>Institutions</p>
+                                </div>
+                                <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-64">
+                            <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Institutional Classes</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('NGO')}>
+                                1. NGO
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Church')}>
+                                2. Church
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('School')}>
+                                3. School
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Society')}>
+                                4. Society
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Club/ Association')}>
+                                5. Club/ Association
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="my-apps" className="w-full">
@@ -205,11 +225,11 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
               <TabsList className="bg-muted/50 p-1">
                   <TabsTrigger value="my-apps" className="flex items-center gap-2">
                       <UserCheck className="h-4 w-4" />
-                      My Applications ({filteredApplications.length})
+                      My Portfolio ({filteredApplications.length})
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-2">
                       <Inbox className="h-4 w-4" />
-                      Pending Registrations ({filteredLeads.length})
+                      Portal Leads ({filteredLeads.length})
                       {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
                   </TabsTrigger>
               </TabsList>
@@ -277,9 +297,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   <CardHeader className="bg-primary/10">
                       <CardTitle className="flex items-center gap-2">
                           <Inbox className="h-5 w-5 text-primary" />
-                          New Sign Ups
+                          New Customer Sign Ups
                       </CardTitle>
-                      <CardDescription className="text-primary/80">Pending registrations from customer portals.</CardDescription>
+                      <CardDescription className="text-primary/80">Self-service registrations awaiting ASL claim.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredLeads.length > 0 ? (
@@ -301,7 +321,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                           <TableCell className="text-xs">{app.clientType}</TableCell>
                                           <TableCell className="text-xs text-muted-foreground">{app.submittedDate}</TableCell>
                                           <TableCell className="text-right pr-6">
-                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Process</Button>
+                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Process Lead</Button>
                                           </TableCell>
                                       </TableRow>
                                   ))}
@@ -310,7 +330,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                               <Inbox className="h-12 w-12 mb-2 opacity-20" />
-                              <p>No new customer leads.</p>
+                              <p>No new customer leads available.</p>
                           </div>
                       )}
                   </CardContent>
