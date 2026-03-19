@@ -109,16 +109,15 @@ const corporateAccountRequirements: DocumentRequirement[] = [
 ];
 
 const pbcAccountRequirements: DocumentRequirement[] = [
-    { document: 'Company Profile', details: '', comment: '' },
-    { document: 'Declaration of Source of Income', details: '', comment: '' },
-    { document: 'Proof of Residence', details: 'For all signatories and directors', comment: '' },
-    { document: 'Passport size photos', details: 'For all signatories and directors', comment: '' },
-    { document: 'Board Resolution letter', details: '', comment: '' },
-    { document: 'Minutes of the last meeting held', details: '', comment: '' },
-    { document: 'Certified Tax Clearance', details: 'Current', comment: '' },
-    { document: 'Stamped Bank Statement', details: '3 months', comment: '' },
-    { document: 'Certified National Identification', details: 'For all signatories and directors', comment: '' },
-    { document: 'CR28', details: 'Certified copy', comment: '' },
+    { document: 'Company Profile', details: 'Full company profile overview.', comment: 'Mandatory for PBC.' },
+    { document: 'Declaration of Source of Income', details: 'Proof or statement of source of wealth.', comment: 'Compliance mandatory.' },
+    { document: 'Proof of Residence', details: 'For all signatories and directors.', comment: 'Not older than 3 months.' },
+    { document: 'Passport size photos', details: 'Recent color photos for all signatories.', comment: 'Required for records.' },
+    { document: 'Board Resolution letter', details: 'Or minutes of the last meeting held.', comment: 'Formally signed.' },
+    { document: 'Certified Tax Clearance', details: 'Current valid ZIMRA clearance.', comment: 'Must be current.' },
+    { document: 'Stamped Bank Statement', details: 'Last 3 months from current bankers.', comment: 'Official stamp required.' },
+    { document: 'Certified National Identification', details: 'For all signatories and directors.', comment: 'Verified against originals.' },
+    { document: 'CR28', details: 'Certified copy of registration.', comment: 'Mandatory PBC document.' },
 ];
 
 const institutionRequirements: DocumentRequirement[] = [
@@ -150,19 +149,19 @@ const institutionRequirements: DocumentRequirement[] = [
 ];
 
 const requirementsMap: Record<string, DocumentRequirement[]> = {
-    'Individual Accounts': personalAccountRequirements,
-    'Sole traders': soleTraderRequirements,
-    'Private Limited (Pvt) Company': corporateAccountRequirements,
-    'Private Business Corporate (PBC)': pbcAccountRequirements,
-    'Public Limited company': corporateAccountRequirements,
-    'Partnerships': corporateAccountRequirements,
-    'Investment Group': corporateAccountRequirements,
-    'Parastatal': corporateAccountRequirements,
+    'Individuals': personalAccountRequirements,
+    'Sole Trader': soleTraderRequirements,
+    'Minors': personalAccountRequirements,
+    'Company (Private / Public Limited)': corporateAccountRequirements,
+    'PBC Account': pbcAccountRequirements,
+    'Merchant Corporate Business': corporateAccountRequirements,
+    'Partnership': corporateAccountRequirements,
+    'Trust': institutionRequirements,
     'NGO': institutionRequirements,
     'Church': institutionRequirements,
     'School': institutionRequirements,
-    'Society': institutionRequirements,
-    'Club/ Association': institutionRequirements,
+    'Society / Club': institutionRequirements,
+    'Government / Local Authority': institutionRequirements,
 };
 
 export function getDocumentRequirements(accountType: string): DocumentRequirement[] {

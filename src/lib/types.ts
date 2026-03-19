@@ -99,12 +99,12 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    const isPersonal = ['Individual Accounts', 'Sole traders'].includes(data.clientType);
+    const isPersonal = ['Individuals', 'Sole Trader', 'Minors'].includes(data.clientType);
     const isCorporate = [
-      'Private Limited (Pvt) Company', 
-      'Private Business Corporate (PBC)', 
-      'Public Limited company', 
-      'Partnerships', 
+      'Company (Private / Public Limited)', 
+      'PBC Account', 
+      'Partnership', 
+      'Merchant Corporate Business',
       'Investment Group', 
       'Parastatal'
     ].includes(data.clientType);
@@ -112,12 +112,13 @@ export const OnboardingFormSchema = z.object({
       'NGO', 
       'Church', 
       'School', 
-      'Society', 
-      'Club/ Association'
+      'Society / Club', 
+      'Government / Local Authority',
+      'Trust'
     ].includes(data.clientType);
 
     // Signatories check for non-individual accounts
-    if (data.clientType && data.clientType !== 'Individual Accounts') {
+    if (data.clientType && data.clientType !== 'Individuals' && data.clientType !== 'Minors') {
       if (!data.signatories || data.signatories.length === 0) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -142,7 +143,7 @@ export const OnboardingFormSchema = z.object({
             message: 'Physical address is required.',
         });
       }
-    } else if (data.clientType === 'Individual Accounts' || data.clientType === 'Sole traders') {
+    } else if (isPersonal) {
       if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is required.' });
       if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is required.' });
       if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is required.' });
@@ -159,19 +160,19 @@ export type Step = {
 };
 
 export const accountTypes = [
-  'Individual Accounts',
-  'Sole traders',
-  'Private Limited (Pvt) Company',
-  'Private Business Corporate (PBC)',
-  'Public Limited company',
-  'Partnerships',
-  'Investment Group',
-  'Parastatal',
+  'Individuals',
+  'Sole Trader',
+  'Minors',
+  'Company (Private / Public Limited)',
+  'PBC Account',
+  'Merchant Corporate Business',
+  'Partnership',
+  'Trust',
   'NGO',
   'Church',
   'School',
-  'Society',
-  'Club/ Association',
+  'Society / Club',
+  'Government / Local Authority',
 ];
 
 export const rejectionReasons = [

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -51,35 +50,6 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
     );
 };
 
-const SignatureField = ({ onSave }: { onSave: (data: string) => void }) => {
-  const sigPadRef = React.useRef<SignatureCanvas | null>(null);
-
-  const handleClear = () => sigPadRef.current?.clear();
-  
-  const handleSave = () => {
-    if (sigPadRef.current && !sigPadRef.current.isEmpty()) {
-      const dataUrl = sigPadRef.current.toDataURL();
-      onSave(dataUrl);
-    } else {
-      alert("Please provide a signature first.");
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      <Label>Your Digital Signature</Label>
-      <div className="w-full border rounded-md bg-white p-2">
-        <SignatureCanvas ref={sigPadRef} penColor="black" canvasProps={{ className: 'w-full h-32' }} />
-      </div>
-      <div className="flex gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={handleClear}><Eraser className="mr-2 h-4 w-4" />Clear</Button>
-        <Button type="button" size="sm" onClick={handleSave}>Confirm Signature</Button>
-      </div>
-    </div>
-  );
-};
-
-
 export default function ApplicationReview({ application: initialApplication, onBack, user }: ApplicationReviewProps) {
   const { toast } = useToast();
   const [applications, setApplications] = useAtom(applicationsAtom);
@@ -103,9 +73,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
 
-  const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
-  const isPersonalOrIndividual = ['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
-  const needsMandate = application.clientType !== 'Personal Account';
+  const isCorporate = !['Individuals', 'Minors'].includes(application.clientType);
+  const isPersonalOrIndividual = ['Individuals', 'Minors'].includes(application.clientType);
+  const needsMandate = application.clientType !== 'Individuals' && application.clientType !== 'Minors';
   
   const uploadedDocumentTypes = application.documents.map(d => d.type);
   const documentRequirements = getDocumentRequirements(application.clientType);
@@ -113,7 +83,6 @@ export default function ApplicationReview({ application: initialApplication, onB
   const isMissingDocs = missingDocs.length > 0;
   
   const hasFcbReport = application.documents.some(d => d.type === 'FCB Report');
-  const isRisky = ['Adverse', 'PEP', 'Prior Adverse'].includes(application.fcbStatus) || isMissingDocs || !hasFcbReport;
 
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
 
@@ -151,11 +120,11 @@ export default function ApplicationReview({ application: initialApplication, onB
         toast({ variant: 'destructive', title: 'Action Required', description: 'Please provide the BR Identity first.' });
         return;
     }
-    const notes = `BR Identity: ${brIdentity} created in legacy system. Forwarded for audit.`;
+    const notes = `BR Identity: ${brIdentity} created in legacy system. Forwarded for final audit.`;
     handleUpdateApplication({ 
         status: 'Pending Supervisor', 
         details: { ...application.details, brIdentity },
-        history: [...application.history, { action: 'Pending Supervisor', user: user.name, timestamp: new Date().toISOString(), notes }] 
+        history: [...application.history, { action: 'BR Identity Created', user: user.name, timestamp: new Date().toISOString(), notes }] 
     });
     toast({ title: "Forwarded to Supervisor", description: "Identity data has been sent for final audit." });
     setTimeout(() => onBack(), 500);
@@ -198,25 +167,6 @@ export default function ApplicationReview({ application: initialApplication, onB
     handleUpdateApplication({ status: 'Archived', details: newDetails, history: [...application.history, newHistoryLog] });
     toast({ title: "Account Created & Dispatched", description: `Account number ${dispatchAccountNumber} has been finalized and archived.` });
     setIsDispatching(false);
-    setTimeout(() => onBack(), 500);
-  };
-
-  const handleClaimLead = () => {
-    const newHistoryLog: HistoryLog = {
-        action: 'Application Accepted & Verified',
-        user: user.name,
-        timestamp: new Date().toISOString(),
-        notes: `ASL team has verified the customer sign up and forwarded it to Back Office.`,
-    };
-    handleUpdateApplication({
-        submittedBy: user.name,
-        status: 'Submitted',
-        history: [...application.history, newHistoryLog]
-    });
-    toast({
-        title: "Sign Up Accepted",
-        description: "Customer sign up has been accepted and forwarded to Back Office.",
-    });
     setTimeout(() => onBack(), 500);
   };
 
@@ -270,15 +220,13 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const handleDownloadPdf = async () => {
-    const checklistElement = checklistRef.current;
     const summaryElement = printRef.current;
     const resolutionElement = resolutionRef.current;
+    const checklistElement = checklistRef.current;
 
-    if (!summaryElement) { console.error("Required print element not found"); return; }
+    if (!summaryElement) return;
     setIsPrinting(true);
     
-    const appDataForPrint = { ...application, details: { ...application.details, ...form.getValues() } };
-    setApplication(appDataForPrint);
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -308,11 +256,6 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const renderActions = () => {
     switch (user.role) {
-      case 'asl':
-        if (application.submittedBy === 'Customer' && application.status === 'Submitted') {
-            return <Button onClick={handleClaimLead}><UserCheck className="mr-2 h-4 w-4" />Accept & Claim Sign Up</Button>;
-        }
-        return null;
       case 'back-office':
         if (application.status === 'Approved') {
             return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg"><Send className="mr-2 h-4 w-4" />Create Account & Dispatch</Button>;
@@ -341,21 +284,10 @@ export default function ApplicationReview({ application: initialApplication, onB
             );
         }
         return null;
-      case 'compliance':
-        if (application.status === 'Pending Compliance') {
-            return (
-                <div className="flex gap-2">
-                    <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Reject Record</Button>
-                    <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('Approved', 'Compliance check passed. Forwarded for final code issuance.')}><ShieldCheck className="mr-2 h-4 w-4" />Approval</Button>
-                </div>
-            );
-        }
-        return null;
       default: return null;
     }
   };
   
-  const supervisorForChecklist = application.history.find(h => h.action.includes('Supervisor'))?.user;
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
 
   return (
@@ -373,7 +305,7 @@ export default function ApplicationReview({ application: initialApplication, onB
             {needsMandate && (
                 <>
                     <div ref={resolutionRef}><AccountResolutionPrintView application={applicationForPrint} /></div>
-                    {isCorporate && <div ref={checklistRef}><CorporateChecklist application={applicationForPrint} supervisor={supervisorForChecklist} /></div>}
+                    {isCorporate && <div ref={checklistRef}><CorporateChecklist application={applicationForPrint} /></div>}
                 </>
             )}
           </div>
@@ -387,50 +319,49 @@ export default function ApplicationReview({ application: initialApplication, onB
               </div>
               <div className="flex flex-col items-end gap-2">
                 <Badge variant={ application.status === 'Archived' ? 'success' : application.status === 'Rejected' ? 'destructive' : 'secondary'}>{application.status}</Badge>
-                {application.submittedBy === 'Customer' && <Badge variant="outline" className="bg-blue-50 text-blue-700">Self-Service Sign Up</Badge>}
                 {application.details.isDispatched && <Badge className="bg-primary text-primary-foreground font-black">Account Finalized</Badge>}
               </div>
             </div>
           </CardHeader>
           <CardContent>
-              {/* Internal Process Fields */}
+              {/* Process Specific Workflow Sections */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 border-b pb-6">
-                  {/* Back Office Step */}
+                  {/* Back Office: Identity Creation */}
                   {(user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL')) && (
                       <Card className="border-primary/20 bg-primary/5 shadow-sm">
                           <CardHeader className="pb-2">
                               <CardTitle className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                                  <Fingerprint className="h-4 w-4" /> Step 1: Legacy BR Identity
+                                  <Fingerprint className="h-4 w-4" /> Step 1: BR Identity Creation
                               </CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-4">
                               <div className="space-y-2">
-                                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">BR Identity Code</Label>
+                                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">Generated BR Identity</Label>
                                   <Input 
-                                      placeholder="Enter BR ID..." 
+                                      placeholder="Type the Identity Code from BR..." 
                                       value={brIdentity} 
                                       onChange={(e) => setBrIdentity(e.target.value)}
-                                      className="bg-background"
+                                      className="bg-background font-mono"
                                   />
-                                  <p className="text-[10px] text-muted-foreground italic">Mandatory: Must be created in legacy system before forwarding.</p>
+                                  <p className="text-[10px] text-muted-foreground italic">Mandatory: Create the record in the banking system before forwarding for audit.</p>
                               </div>
                           </CardContent>
                       </Card>
                   )}
 
-                  {/* Supervisor Step */}
+                  {/* Supervisor: Final Audit & Code Issuance */}
                   {(user.role === 'supervisor' && application.status === 'Pending Supervisor') && (
                       <Card className="border-green-500/20 bg-green-500/5 shadow-sm">
                           <CardHeader className="pb-2">
                               <CardTitle className="text-xs font-black uppercase tracking-widest text-green-600 flex items-center gap-2">
-                                  <Key className="h-4 w-4" /> Step 2: Final Audit & Activation
+                                  <Key className="h-4 w-4" /> Step 2: Supervisor Audit & Access
                               </CardTitle>
                           </CardHeader>
                           <CardContent className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
                                   <div>
-                                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">BR Identity (From Clerk)</Label>
-                                      <p className="font-mono text-sm bg-muted p-2 rounded">{application.details.brIdentity}</p>
+                                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">Identity Linked</Label>
+                                      <p className="font-mono text-sm bg-muted p-2 rounded border border-white/10">{application.details.brIdentity}</p>
                                   </div>
                                   <div className="space-y-2">
                                       <Label className="text-[10px] font-bold uppercase text-green-600">Wallet Activation Code</Label>
@@ -442,22 +373,22 @@ export default function ApplicationReview({ application: initialApplication, onB
                                       />
                                   </div>
                               </div>
-                              <p className="text-[10px] text-muted-foreground italic">Issuing this code grants the clerk permission to finalize the wallet account.</p>
+                              <p className="text-[10px] text-muted-foreground italic">Providing this code grants the clerk final authority to create the wallet account.</p>
                           </CardContent>
                       </Card>
                   )}
 
-                  {/* Summary for other roles or stages */}
+                  {/* Summary for other roles */}
                   {(application.details.brIdentity || application.details.activationCode) && (
                       <div className="col-span-full flex gap-4">
                           {application.details.brIdentity && (
                               <Badge variant="outline" className="flex gap-2 items-center bg-muted/50 border-dashed">
-                                  <Fingerprint className="h-3 w-3" /> BR Identity: {application.details.brIdentity}
+                                  <Fingerprint className="h-3 w-3" /> BR ID: {application.details.brIdentity}
                               </Badge>
                           )}
                           {application.details.activationCode && (
                               <Badge variant="outline" className="flex gap-2 items-center bg-green-50 text-green-700 border-green-200">
-                                  <Key className="h-3 w-3" /> Activation: {application.details.activationCode}
+                                  <Key className="h-3 w-3" /> Auth Code: {application.details.activationCode}
                               </Badge>
                           )}
                       </div>
@@ -466,22 +397,20 @@ export default function ApplicationReview({ application: initialApplication, onB
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList>
-                      <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Mandatory Details</TabsTrigger>
-                      {(user.role === 'back-office' || (user.role === 'asl' && application.submittedBy !== 'Customer')) && application.status !== 'Archived' && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Edit Form</TabsTrigger>}
+                      <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Identity Details</TabsTrigger>
+                      {(user.role === 'back-office' || (user.role === 'asl' && application.status !== 'Archived')) && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Edit Form</TabsTrigger>}
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
-                      <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Activity Log</TabsTrigger>
+                      <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Comments</TabsTrigger>
                   </TabsList>
                   <TabsContent value="details" className="pt-4">
                     <Card>
-                      <CardHeader><CardTitle>Mandatory Application Details</CardTitle></CardHeader>
+                      <CardHeader><CardTitle>Applicant Overview</CardTitle></CardHeader>
                       <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <DetailItem label="Client Name" value={application.clientName} />
-                          <DetailItem label="Client Type" value={application.clientType} />
-                          <DetailItem label="Originating Submitter" value={application.submittedBy} />
+                          <DetailItem label="Technical Type" value={application.clientType} />
+                          <DetailItem label="Originating User" value={application.submittedBy} />
                           <DetailItem label="Region" value={application.region} />
-                          <DetailItem label="Submission Date" value={application.submittedDate} />
                           <DetailItem label="Status" value={application.status} />
                         </div>
                         <Separator/>
@@ -491,13 +420,11 @@ export default function ApplicationReview({ application: initialApplication, onB
                             <DetailItem label="ID Number" value={application.details.individualIdNumber} />
                             <DetailItem label="Address" value={application.details.individualAddress} />
                             <DetailItem label="Mobile" value={application.details.individualMobileNumber} />
-                            <DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} />
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <DetailItem label="Legal Name" value={application.details.organisationLegalName} />
                             <DetailItem label="Reg. Number" value={application.details.certificateOfIncorporationNumber} />
-                            <DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} />
                             <DetailItem label="Address" value={application.details.physicalAddress} />
                           </div>
                         )}
@@ -507,60 +434,19 @@ export default function ApplicationReview({ application: initialApplication, onB
                                 <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                                     <h4 className="text-xs font-bold uppercase text-primary tracking-widest mb-2 flex items-center gap-2">
                                         <ShieldCheck className="h-3 w-3" />
-                                        Dispatched Account Details
+                                        Dispatched Account Number
                                     </h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <DetailItem label="Allocated Account Number" value={application.details.accountNumber} />
-                                        <DetailItem label="Date Dispatched" value={application.details.accountOpeningDate ? new Date(application.details.accountOpeningDate).toLocaleString() : '-'} />
+                                        <DetailItem label="New Wallet Account" value={application.details.accountNumber} />
+                                        <DetailItem label="Date Opened" value={application.details.accountOpeningDate ? new Date(application.details.accountOpeningDate).toLocaleString() : '-'} />
                                     </div>
                                 </div>
                             </>
                         )}
                       </CardContent>
                     </Card>
-                    {(user.role === 'back-office' || user.role === 'compliance') && application.status !== 'Archived' && (
-                      <Card className="mt-6">
-                        <CardHeader>
-                            <CardTitle>FCB Safety Check & Report</CardTitle>
-                            <CardDescription>Confirm the applicant's status and upload the official Financial Clearing Bureau report.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <RadioGroup defaultValue={application.fcbStatus} onValueChange={(value: Application['fcbStatus']) => handleFcbStatusChange(value)} className="flex flex-col sm:flex-row gap-4 mb-6">
-                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Inclusive" id="fcb-inclusive" /><Label htmlFor="fcb-inclusive" className="font-normal">Inclusive</Label></div>
-                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Good" id="fcb-good" /><Label htmlFor="fcb-good" className="font-normal">Good</Label></div>
-                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Adverse" id="fcb-adverse" /><Label htmlFor="fcb-adverse" className="font-normal">Adverse</Label></div>
-                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="Prior Adverse" id="fcb-prior-adverse" /><Label htmlFor="fcb-prior-adverse" className="font-normal">Prior Adverse</Label></div>
-                            <div className="flex items-center space-x-3 space-y-0"><RadioGroupItem value="PEP" id="fcb-pep" /><Label htmlFor="fcb-pep" className="font-normal">PEP</Label></div>
-                          </RadioGroup>
-                          
-                          <Separator className="my-4" />
-                          
-                          <div className="space-y-3">
-                              <Label className="text-sm font-bold flex items-center gap-2">
-                                  <Upload className="h-4 w-4" />
-                                  Official FCB Report (Audit Mandatory)
-                              </Label>
-                              <div className="flex items-center gap-4">
-                                  <Button asChild variant="outline" size="sm" className="border-dashed">
-                                      <label className="cursor-pointer">
-                                          <Upload className="mr-2 h-4 w-4" />
-                                          {hasFcbReport ? 'Replace Report' : 'Upload Report'}
-                                          <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFcbReportUpload} />
-                                      </label>
-                                  </Button>
-                                  {hasFcbReport && (
-                                      <Badge variant="success" className="bg-green-500/10 text-green-600 border-green-500/20">
-                                          <Check className="mr-1 h-3 w-3" /> Attached
-                                      </Badge>
-                                  )}
-                              </div>
-                              <p className="text-[10px] text-muted-foreground italic">Required for Compliance & Risk team to perform regulatory oversight.</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
                   </TabsContent>
-                   {(user.role === 'back-office' || (user.role === 'asl' && application.submittedBy !== 'Customer')) && application.status !== 'Archived' && (
+                   {(user.role === 'back-office' || user.role === 'asl') && application.status !== 'Archived' && (
                        <TabsContent value="form-data" className="pt-4">
                            <Card>
                                <CardContent className="pt-6">
@@ -574,66 +460,77 @@ export default function ApplicationReview({ application: initialApplication, onB
                            </Card>
                        </TabsContent>
                    )}
-                  <TabsContent value="documents" className="pt-4"><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Document Checklist</CardTitle></CardHeader><CardContent><ul className="space-y-3">{documentRequirements.map((req) => { const isUploaded = uploadedDocumentTypes.includes(req.document); return (<li key={req.document} className="flex items-center">{isUploaded ? (<CheckCircle2 className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />) : (<AlertCircle className="h-5 w-5 text-amber-500 mr-3 flex-shrink-0" />)}<div><p className="font-medium">{req.document}</p></div></li>); })}</ul></CardContent></Card><Card><CardHeader><CardTitle>Uploaded Documents</CardTitle></CardHeader><CardContent>{application.documents.length > 0 ? (<ul className="space-y-3">{application.documents.map(doc => (<li key={doc.type} className="flex items-center justify-between p-3 rounded-md border"><div><p className="font-medium">{doc.type}</p><p className="text-sm text-muted-foreground">{doc.fileName}</p></div><Button variant="outline" size="sm" onClick={() => setPreviewDoc(doc)}><Eye className="mr-2 h-4 w-4" />View</Button></li>))}</ul>) : (<p className="text-sm text-muted-foreground text-center py-8">No documents uploaded.</p>)}</CardContent></Card></div></TabsContent>
-                  <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Activity Log</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action.includes('Submitted') ? <FileText className="h-5 w-5"/> : <User className="h-5 w-5"/>}</div></div><div className="ml-4"><p className="font-medium">{entry.action} by {entry.user}</p><p className="text-sm text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-sm mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
-                  <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Comments</CardTitle></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user} <span className="text-xs font-normal text-muted-foreground capitalize">({comment.role.replace('-', ' ')})</span></p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}{application.comments.length === 0 && (<p className="text-sm text-center text-muted-foreground py-4">No comments.</p>)}</div>{application.status !== 'Archived' && application.status !== 'Signed' && (<div className="space-y-2"><Textarea placeholder="Type your comment here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Comment</Button></div>)}</CardContent></Card></TabsContent>
+                  <TabsContent value="documents" className="pt-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <Card>
+                            <CardHeader><CardTitle>Checklist</CardTitle></CardHeader>
+                            <CardContent>
+                                <ul className="space-y-3">
+                                    {documentRequirements.map((req) => { 
+                                        const isUploaded = uploadedDocumentTypes.includes(req.document); 
+                                        return (
+                                            <li key={req.document} className="flex items-center">
+                                                {isUploaded ? <CheckCircle2 className="h-5 w-5 text-green-500 mr-3" /> : <AlertCircle className="h-5 w-5 text-amber-500 mr-3" />}
+                                                <span className="text-sm font-medium">{req.document}</span>
+                                            </li>
+                                        ); 
+                                    })}
+                                </ul>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><CardTitle>Uploaded Files</CardTitle></CardHeader>
+                            <CardContent>
+                                {application.documents.length > 0 ? (
+                                    <ul className="space-y-3">
+                                        {application.documents.map(doc => (
+                                            <li key={doc.type} className="flex items-center justify-between p-3 rounded-md border">
+                                                <div><p className="text-sm font-bold">{doc.type}</p><p className="text-xs text-muted-foreground">{doc.fileName}</p></div>
+                                                <Button variant="outline" size="sm" onClick={() => setPreviewDoc(doc)}><Eye className="mr-2 h-4 w-4" />View</Button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : <p className="text-sm text-center py-12 text-muted-foreground">No documents uploaded.</p>}
+                            </CardContent>
+                        </Card>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="history" className="pt-4"><Card><CardHeader><CardTitle>Activity Registry</CardTitle></CardHeader><CardContent><ul className="space-y-4">{application.history.map((entry, index) => (<li key={index} className="flex items-start"><div className="flex-shrink-0"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">{entry.action.includes('Identity') ? <Fingerprint className="h-4 w-4"/> : <User className="h-4 w-4"/>}</div></div><div className="ml-4"><p className="text-sm font-bold">{entry.action} by {entry.user}</p><p className="text-[10px] text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>{entry.notes && <p className="text-xs mt-1 p-2 bg-muted/50 rounded-md">{entry.notes}</p>}</div></li>))}</ul></CardContent></Card></TabsContent>
+                  <TabsContent value="comments" className="pt-4"><Card><CardHeader><CardTitle>Internal Audit Comments</CardTitle></CardHeader><CardContent className="space-y-6"><div className="space-y-4">{application.comments.map((comment) => (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarFallback>{comment.user.substring(0,2)}</AvatarFallback></Avatar><div className="flex-1 rounded-md border bg-card p-3"><div className="flex justify-between items-center"><p className="font-semibold text-sm">{comment.user}</p><p className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p></div><p className="text-sm mt-1">{comment.content}</p></div></div>))}</div>{application.status !== 'Archived' && (<div className="space-y-2"><Textarea placeholder="Type audit note..." value={newComment} onChange={(e) => setNewComment(e.target.value)} /><Button onClick={handleAddComment}>Add Note</Button></div>)}</CardContent></Card></TabsContent>
               </Tabs>
           </CardContent>
         </Card>
 
-        <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Reject Application</AlertDialogTitle><AlertDialogDescription>Please provide a reason for rejection.</AlertDialogDescription></AlertDialogHeader><div className="space-y-4 py-4"><div className="space-y-2"><Label htmlFor="rejection-reason">Rejection Reason</Label><Select onValueChange={setRejectionReason} value={rejectionReason}><SelectTrigger id="rejection-reason"><SelectValue placeholder="Select a reason" /></SelectTrigger><SelectContent>{rejectionReasons.map(reason => (<SelectItem key={reason} value={reason}>{reason}</SelectItem>))}</SelectContent></Select></div><div className="space-y-2"><Label htmlFor="rejection-comment">Comment</Label><Textarea id="rejection-comment" placeholder="Explanation..." value={rejectionComment} onChange={(e) => setRejectionComment(e.target.value)} /></div></div><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRejection} disabled={!rejectionReason || !rejectionComment}>Confirm Rejection</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+        <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Reject Record</AlertDialogTitle><AlertDialogDescription>Please provide a compliance reason for rejection.</AlertDialogDescription></AlertDialogHeader><div className="space-y-4 py-4"><div className="space-y-2"><Label>Reason</Label><Select onValueChange={setRejectionReason} value={rejectionReason}><SelectTrigger><SelectValue placeholder="Select reason" /></SelectTrigger><SelectContent>{rejectionReasons.map(reason => (<SelectItem key={reason} value={reason}>{reason}</SelectItem>))}</SelectContent></Select></div><div className="space-y-2"><Label>Comment</Label><Textarea placeholder="Details..." value={rejectionComment} onChange={(e) => setRejectionComment(e.target.value)} /></div></div><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleRejection} disabled={!rejectionReason || !rejectionComment}>Confirm Reject</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
 
         <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
             <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
-                <DialogHeader>
-                    <DialogTitle>{previewDoc?.type}: {previewDoc?.fileName}</DialogTitle>
-                </DialogHeader>
-                <div className="flex-1 bg-muted rounded-md overflow-hidden relative flex items-center justify-center min-h-0">
+                <DialogHeader><DialogTitle>{previewDoc?.type}</DialogTitle></DialogHeader>
+                <div className="flex-1 bg-muted rounded-md overflow-hidden relative flex items-center justify-center">
                     {previewDoc?.url && previewDoc.url !== '#' ? (
                         previewDoc.url.includes('application/pdf') || previewDoc.fileName.toLowerCase().endsWith('.pdf') ? (
-                            <object data={previewDoc.url} type="application/pdf" className="w-full h-full">
-                                <div className="p-12 text-center">
-                                    <FileText className="h-16 w-16 mx-auto opacity-20 mb-4" />
-                                    <p>Viewing PDF content...</p>
-                                    <Button asChild variant="outline" className="mt-4"><a href={previewDoc.url} download={previewDoc.fileName}><Download className="mr-2 h-4 w-4" />Download to View</a></Button>
-                                </div>
-                            </object>
-                        ) : (
-                            <img src={previewDoc.url} alt="Document" className="max-w-full max-h-full object-contain" />
-                        )
-                    ) : (
-                        <div className="flex flex-col items-center justify-center text-muted-foreground p-12">
-                            <FileText className="h-12 w-12 mb-4 opacity-20" />
-                            <p>No preview available for this mock document.</p>
-                        </div>
-                    )}
+                            <object data={previewDoc.url} type="application/pdf" className="w-full h-full" />
+                        ) : <img src={previewDoc.url} alt="Document" className="max-w-full max-h-full object-contain" />
+                    ) : <div className="text-muted-foreground p-12 text-center"><p>No preview for mock document.</p></div>}
                 </div>
             </DialogContent>
         </Dialog>
 
-        {/* Final Step: Dispatch Account Details Dialog */}
         <Dialog open={isDispatching} onOpenChange={setIsDispatching}>
             <DialogContent className="bg-card border-primary/20">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <Send className="h-5 w-5 text-primary" />
-                        Finalize & Dispatch Wallet
-                    </DialogTitle>
-                    <CardDescription>Supervisor has approved with Activation Code: <strong>{application.details.activationCode}</strong>. Provide the final account number.</CardDescription>
+                    <DialogTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" /> Finalize & Dispatch</DialogTitle>
+                    <CardDescription>Supervisor has issued Activation Code: <strong>{application.details.activationCode}</strong>. Enter the final Wallet Account Number.</CardDescription>
                 </DialogHeader>
                 <div className="py-6 space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="account-num" className="text-xs font-black uppercase tracking-widest">New Wallet Account Number</Label>
+                        <Label className="text-xs font-black uppercase tracking-widest">New Wallet Account #</Label>
                         <Input 
-                            id="account-num"
                             placeholder="e.g. 1002345678"
                             value={dispatchAccountNumber}
                             onChange={(e) => setDispatchAccountNumber(e.target.value)}
-                            className="h-12 text-lg font-mono tracking-widest"
+                            className="h-12 text-lg font-mono"
                         />
-                    </div>
-                    <div className="p-3 bg-primary/10 rounded border border-primary/20 text-[10px] text-primary font-bold uppercase leading-relaxed">
-                        Notice: This utilizes the issued Activation Code to complete the digital hand-over to the ASL ({application.submittedBy}).
                     </div>
                 </div>
                 <DialogFooter>
@@ -642,7 +539,6 @@ export default function ApplicationReview({ application: initialApplication, onB
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-
       </div>
     </FormProvider>
   );
