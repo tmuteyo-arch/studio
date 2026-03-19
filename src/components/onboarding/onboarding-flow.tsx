@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -16,7 +15,7 @@ import { ProgressTracker } from './progress-tracker';
 import StepAccountType from './steps/step-account-type';
 import StepIndividualInfo from './steps/step-individual-info';
 import StepDocumentUpload from './steps/step-document-upload';
-import StepReview from './steps/step-review';
+import StepReview from './steps/review-step';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
 import { ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
@@ -35,12 +34,12 @@ import StepSignatories from './steps/step-signatories';
 
 
 const allSteps: Step[] = [
-  { id: 'account-type', name: 'Start Here', fields: ['clientType', 'region'] },
-  { id: 'individual-info', name: 'Your Details', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
-  { id: 'corporate-info', name: 'Company Details', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
-  { id: 'signatories', name: 'People Signing', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
-  { id: 'document-upload', name: 'Add Photos/Files', fields: ['document1Type', 'document2Type'] },
-  { id: 'review-submit', name: 'Final Check', fields: ['signature', 'agreedToTerms'] },
+  { id: 'account-type', name: 'Product Type', fields: ['clientType', 'region'] },
+  { id: 'individual-info', name: 'Personal Info', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
+  { id: 'corporate-info', name: 'Legal Entity Details', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
+  { id: 'signatories', name: 'Mandate & Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
+  { id: 'document-upload', name: 'Documentation', fields: ['capturedDocuments'] },
+  { id: 'review-submit', name: 'Review & Send', fields: ['signature', 'agreedToTerms'] },
 ];
 
 const StepComponents: Record<string, React.ElementType> = {
@@ -55,6 +54,7 @@ const StepComponents: Record<string, React.ElementType> = {
 interface OnboardingFlowProps {
   onCancel: () => void;
   user: User;
+  preselectedType?: string | null;
 }
 
 type DuplicateInfo = {
@@ -62,8 +62,8 @@ type DuplicateInfo = {
   message: string;
 }
 
-export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) {
-  const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
+export default function OnboardingFlow({ onCancel, user, preselectedType }: OnboardingFlowProps) {
+  const [currentStepIndex, setCurrentStepIndex] = React.useState(preselectedType ? 0 : 0);
   const [applications, setApplications] = useAtom(applicationsAtom);
   const { toast } = useToast();
 
@@ -74,7 +74,7 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
     resolver: zodResolver(OnboardingFormSchema),
     mode: 'onChange',
     defaultValues: {
-      clientType: '',
+      clientType: preselectedType || '',
       region: '',
       individualSurname: '',
       individualFirstName: '',
@@ -96,8 +96,6 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
       supervisorSignatureTimestamp: '',
       executiveSignature: '',
       executiveSignatureTimestamp: '',
-      document1Type: '',
-      document2Type: '',
       capturedDocuments: [],
       signature: '',
       agreedToTerms: false,
@@ -111,19 +109,21 @@ export default function OnboardingFlow({ onCancel, user }: OnboardingFlowProps) 
   const steps = React.useMemo(() => {
     if (!clientType) return [allSteps.find(s => s.id === 'account-type')!];
 
-    const isPersonal = clientType === 'Personal Account';
-    const isSoleTrader = clientType === 'Proprietorship / Sole Trader';
-    const isCorporate = !isPersonal && !isSoleTrader;
+    const isPersonal = ['Individual Accounts', 'Sole traders'].includes(clientType);
+    const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association'].includes(clientType);
+    const isCorporate = !isPersonal && !isInstitution;
 
     if (isPersonal) {
-      return allSteps.filter(step => ['account-type', 'individual-info', 'document-upload', 'review-submit'].includes(step.id));
+      const personalSteps = ['account-type', 'individual-info', 'document-upload', 'review-submit'];
+      // Sole traders also need signatories/mandate logic in some banks, but user prompt implies dropdown options.
+      // We'll follow the logic from Individual info for Personal group.
+      if (clientType === 'Sole traders') {
+          personalSteps.splice(2, 0, 'signatories');
+      }
+      return allSteps.filter(step => personalSteps.includes(step.id));
     }
     
-    if (isSoleTrader) {
-      return allSteps.filter(step => ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'].includes(step.id));
-    }
-
-    if (isCorporate) {
+    if (isCorporate || isInstitution) {
       return allSteps.filter(step => step.id !== 'individual-info');
     }
     

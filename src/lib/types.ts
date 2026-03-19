@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 import { type FormState as RHFFormState } from 'react-hook-form';
 
@@ -69,8 +68,8 @@ export const OnboardingFormSchema = z.object({
   signatories: z.array(SignatorySchema).default([]),
 
   // Documents
-  document1Type: z.string().min(1, { message: 'Primary document type is required.' }),
-  document2Type: z.string().min(1, { message: 'Secondary document type is required.' }),
+  document1Type: z.string().optional(),
+  document2Type: z.string().optional(),
   
   // Actual Document Data (Data URIs)
   capturedDocuments: z.array(z.object({
@@ -100,12 +99,25 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    const isPersonal = data.clientType === 'Personal Account';
-    const isSoleTrader = data.clientType === 'Proprietorship / Sole Trader';
-    const isCorporate = !isPersonal && !isSoleTrader && !!data.clientType;
+    const isPersonal = ['Individual Accounts', 'Sole traders'].includes(data.clientType);
+    const isCorporate = [
+      'Private Limited (Pvt) Company', 
+      'Private Business Corporate (PBC)', 
+      'Public Limited company', 
+      'Partnerships', 
+      'Investment Group', 
+      'Parastatal'
+    ].includes(data.clientType);
+    const isInstitution = [
+      'NGO', 
+      'Church', 
+      'School', 
+      'Society', 
+      'Club/ Association'
+    ].includes(data.clientType);
 
-    // Signatories check for non-personal accounts
-    if (!!data.clientType && !isPersonal) {
+    // Signatories check for non-individual accounts
+    if (data.clientType && data.clientType !== 'Individual Accounts') {
       if (!data.signatories || data.signatories.length === 0) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -115,32 +127,25 @@ export const OnboardingFormSchema = z.object({
       }
     }
 
-    if (isCorporate) {
+    if (isCorporate || isInstitution) {
       if (!data.organisationLegalName) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['organisationLegalName'],
-            message: 'Organisation legal name is required.',
+            message: 'Legal name is required.',
         });
       }
-      if (!data.natureOfBusiness) {
+      if (!data.physicalAddress) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: ['natureOfBusiness'],
-            message: 'Nature of business is required.',
+            path: ['physicalAddress'],
+            message: 'Physical address is required.',
         });
       }
-       if (!data.dateOfIncorporation) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dateOfIncorporation'], message: 'Date of incorporation is required.' });
-      }
-      if (!data.certificateOfIncorporationNumber) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['certificateOfIncorporationNumber'], message: 'Certificate of incorporation number is required.' });
-      }
-    } else if (data.clientType) { // Personal or Sole Trader
+    } else if (data.clientType === 'Individual Accounts' || data.clientType === 'Sole traders') {
       if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is required.' });
       if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is required.' });
       if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is required.' });
-      if (!data.individualAddress) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualAddress'], message: 'Residential address is required.' });
       if (!data.individualIdNumber) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualIdNumber'], message: 'National ID number is required.' });
     }
 });
@@ -154,17 +159,19 @@ export type Step = {
 };
 
 export const accountTypes = [
-  'Personal Account',
-  'Proprietorship / Sole Trader',
-  'Partnership',
-  'Company (Private / Public Limited)',
-  'PBC Account',
-  'Trust',
-  'NGO / Non-Profit / Embassy',
-  'Society / Association / Club',
-  'Government / Local Authority',
-  'Minors',
-  'Professional Intermediaries',
+  'Individual Accounts',
+  'Sole traders',
+  'Private Limited (Pvt) Company',
+  'Private Business Corporate (PBC)',
+  'Public Limited company',
+  'Partnerships',
+  'Investment Group',
+  'Parastatal',
+  'NGO',
+  'Church',
+  'School',
+  'Society',
+  'Club/ Association',
 ];
 
 export const rejectionReasons = [

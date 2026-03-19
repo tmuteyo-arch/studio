@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -8,13 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Inbox, UserCheck, AlertCircle } from 'lucide-react';
+import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
-import { User } from '@/lib/users';
+import { User as UserProfile } from '@/lib/users';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const getStatusVariant = (status: ApplicationStatus) => {
   switch (status) {
@@ -23,7 +30,6 @@ const getStatusVariant = (status: ApplicationStatus) => {
       return 'success';
     case 'Pending Supervisor':
     case 'In Review':
-    case 'Pending Executive Signature':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
@@ -40,7 +46,6 @@ const translateStatus = (status: ApplicationStatus) => {
         case 'Submitted': return 'Submitted';
         case 'In Review': return 'In Review';
         case 'Pending Supervisor': return 'Pending Supervisor';
-        case 'Pending Executive Signature': return 'Pending Executive';
         case 'Signed': return 'Signed';
         case 'Rejected': return 'Rejected';
         case 'Returned to ATL': return 'Returned to ASL';
@@ -50,11 +55,12 @@ const translateStatus = (status: ApplicationStatus) => {
 }
 
 interface AtlDashboardProps {
-    user: User;
+    user: UserProfile;
 }
 
 export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
+  const [preselectedType, setPreselectedType] = React.useState<string | null>(null);
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
   const [applications] = useAtom(applicationsAtom);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -77,12 +83,17 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
            app.clientName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  const handleStartApplication = (type: string) => {
+    setPreselectedType(type);
+    setIsCreatingApplication(true);
+  };
+
   const applicationForReview = selectedApplication 
       ? applications.find(app => app.id === selectedApplication.id) 
       : null;
 
   if (isCreatingApplication) {
-    return <OnboardingFlow user={user} onCancel={() => setIsCreatingApplication(false)} />;
+    return <OnboardingFlow user={user} onCancel={() => { setIsCreatingApplication(false); setPreselectedType(null); }} preselectedType={preselectedType} />;
   }
 
   if (applicationForReview) {
@@ -96,15 +107,97 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   return (
     <TooltipProvider>
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
               <h2 className="text-3xl font-bold">ASL Dashboard</h2>
               <p className="text-muted-foreground">Manage your onboarding portfolio and process new leads.</p>
           </div>
-          <Button onClick={() => setIsCreatingApplication(true)} className="shadow-lg hover:scale-105 transition-transform bg-primary text-primary-foreground font-bold">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Application
-          </Button>
+          
+          <div className="flex flex-wrap gap-3">
+              {/* Personal Accounts Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-12 px-6 border-primary/20 hover:bg-primary/5 font-bold shadow-sm">
+                        <User className="mr-2 h-4 w-4 text-primary" />
+                        Personal Accounts
+                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Personal Banking</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Individual Accounts')}>
+                        1. Individual Accounts
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Sole traders')}>
+                        2. Sole traders
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Corporate Banking Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-12 px-6 border-secondary/20 hover:bg-secondary/5 font-bold shadow-sm">
+                        <Building2 className="mr-2 h-4 w-4 text-secondary" />
+                        Corporate Banking
+                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>Corporate Entities</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
+                        1. Private Limited (Pvt) Company
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Private Business Corporate (PBC)')}>
+                        2. Private Business Corporate (PBC)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Public Limited company')}>
+                        3. Public Limited company
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Partnerships')}>
+                        4. Partnerships
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Investment Group')}>
+                        5. Investment Group
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Parastatal')}>
+                        6. Parastatal
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Institutions Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-12 px-6 border-accent/20 hover:bg-accent/5 font-bold shadow-sm">
+                        <Landmark className="mr-2 h-4 w-4 text-accent" />
+                        Institutions
+                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Institutional Classes</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('NGO')}>
+                        1. NGO
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Church')}>
+                        2. Church
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('School')}>
+                        3. School
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Society')}>
+                        4. Society
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer py-3" onClick={() => handleStartApplication('Club/ Association')}>
+                        5. Club/ Association
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+          </div>
         </div>
 
         <Tabs defaultValue="my-apps" className="w-full">
@@ -116,7 +209,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-2">
                       <Inbox className="h-4 w-4" />
-                      Pending registrations from customer portals ({filteredLeads.length})
+                      Pending Registrations ({filteredLeads.length})
                       {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
                   </TabsTrigger>
               </TabsList>
