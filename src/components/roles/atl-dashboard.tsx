@@ -135,7 +135,6 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                 </CardHeader>
                 <CardContent className="pt-6">
                     <div className="flex flex-wrap gap-4">
-                        {/* Personal Accounts Dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="h-14 px-6 border-primary/20 hover:bg-primary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
@@ -159,7 +158,6 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        {/* Corporate Accounts Dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="h-14 px-6 border-secondary/20 hover:bg-secondary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
@@ -195,7 +193,6 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        {/* Institutions Dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="h-14 px-6 border-accent/20 hover:bg-accent/5 font-bold shadow-sm transition-all active:scale-[0.98]">
