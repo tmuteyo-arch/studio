@@ -102,9 +102,14 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         comment: 'Required for client records.',
     },
     {
-        document: 'Bank Statements',
-        details: 'Last 3 months bank statements.',
-        comment: 'Submit copies of recent statements.'
+        document: 'Agency Agreement',
+        details: 'Standard InnBucks Agency Contract.',
+        comment: 'Mandatory for all agent accounts.'
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Authorised Dealer with Limited Authority compliance form.',
+        comment: 'Mandatory regulatory declaration.'
     }
 ];
 
@@ -118,6 +123,8 @@ const pbcAccountRequirements: DocumentRequirement[] = [
     { document: 'Stamped Bank Statement', details: 'Last 3 months from current bankers.', comment: 'Official stamp required.' },
     { document: 'Certified National Identification', details: 'For all signatories and directors.', comment: 'Verified against originals.' },
     { document: 'CR28', details: 'Certified copy of registration.', comment: 'Mandatory PBC document.' },
+    { document: 'Agency Agreement', details: 'Standard InnBucks Agency Contract.', comment: 'Mandatory.' },
+    { document: 'ADLA Declaration', details: 'ADLA Compliance form.', comment: 'Mandatory.' }
 ];
 
 const institutionRequirements: DocumentRequirement[] = [
@@ -149,18 +156,21 @@ const institutionRequirements: DocumentRequirement[] = [
 ];
 
 const requirementsMap: Record<string, DocumentRequirement[]> = {
-    'Individuals': personalAccountRequirements,
+    'Individual Accounts': personalAccountRequirements,
     'Sole Trader': soleTraderRequirements,
     'Minors': personalAccountRequirements,
-    'Company (Private / Public Limited)': corporateAccountRequirements,
-    'PBC Account': pbcAccountRequirements,
-    'Merchant Corporate Business': corporateAccountRequirements,
-    'Partnership': corporateAccountRequirements,
+    'Private Limited (Pvt) Company': corporateAccountRequirements,
+    'Private Business Corporate (PBC)': pbcAccountRequirements,
+    'Public Limited company': corporateAccountRequirements,
+    'Partnerships': corporateAccountRequirements,
+    'Investment Group': corporateAccountRequirements,
+    'Parastatal': corporateAccountRequirements,
     'Trust': institutionRequirements,
     'NGO': institutionRequirements,
     'Church': institutionRequirements,
     'School': institutionRequirements,
-    'Society / Club': institutionRequirements,
+    'Society': institutionRequirements,
+    'Club/ Association': institutionRequirements,
     'Government / Local Authority': institutionRequirements,
 };
 

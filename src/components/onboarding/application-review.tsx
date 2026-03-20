@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
 import ApplicationPrintView from './application-print-view';
+import AgencyAgreementPrintView from './agency-agreement-print-view';
+import AdlaDeclarationPrintView from './adla-declaration-print-view';
 import { useToast } from '@/hooks/use-toast';
 import { User as UserProfile } from '@/lib/users';
 import { Label } from '../ui/label';
@@ -59,6 +61,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   const printRef = React.useRef<HTMLDivElement>(null);
   const checklistRef = React.useRef<HTMLDivElement>(null);
   const resolutionRef = React.useRef<HTMLDivElement>(null);
+  const agencyAgreementRef = React.useRef<HTMLDivElement>(null);
+  const adlaRef = React.useRef<HTMLDivElement>(null);
+  
   const [activeTab, setActiveTab] = React.useState("details");
 
   const [isRejecting, setIsRejecting] = React.useState(false);
@@ -73,9 +78,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
 
-  const isCorporate = !['Individuals', 'Minors'].includes(application.clientType);
-  const isPersonalOrIndividual = ['Individuals', 'Minors'].includes(application.clientType);
-  const needsMandate = application.clientType !== 'Individuals' && application.clientType !== 'Minors';
+  const isCorporate = !['Individual Accounts', 'Minors'].includes(application.clientType);
+  const isPersonalOrIndividual = ['Individual Accounts', 'Minors'].includes(application.clientType);
+  const needsMandate = application.clientType !== 'Individual Accounts' && application.clientType !== 'Minors';
   
   const uploadedDocumentTypes = application.documents.map(d => d.type);
   const documentRequirements = getDocumentRequirements(application.clientType);
@@ -100,7 +105,7 @@ export default function ApplicationReview({ application: initialApplication, onB
       action: status,
       user: user.name,
       timestamp: new Date().toISOString(),
-      notes: notes,
+      notes: status === 'Returned to ATL' ? `Returned to ASL: ${notes}` : notes,
     };
     
     handleUpdateApplication({ status: status, history: [...application.history, newHistoryLog] });
@@ -182,36 +187,6 @@ export default function ApplicationReview({ application: initialApplication, onB
     setRejectionComment('');
   };
 
-  const handleFcbStatusChange = (fcbStatus: Application['fcbStatus']) => {
-     handleUpdateApplication({ fcbStatus });
-  };
-
-  const handleFcbReportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUri = event.target?.result as string;
-      const newDoc: Document = {
-        type: 'FCB Report',
-        fileName: file.name,
-        url: dataUri,
-      };
-
-      const otherDocs = application.documents.filter(d => d.type !== 'FCB Report');
-      handleUpdateApplication({
-        documents: [...otherDocs, newDoc]
-      });
-
-      toast({
-        title: "FCB Report Uploaded",
-        description: "Official bureau report has been attached for compliance auditing.",
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleAddComment = () => {
     if (newComment.trim() === '') return;
     const newCommentObject: Comment = { id: `c${Date.now()}`, user: user.name, role: user.role as any, timestamp: new Date().toISOString(), content: newComment.trim() };
@@ -223,6 +198,8 @@ export default function ApplicationReview({ application: initialApplication, onB
     const summaryElement = printRef.current;
     const resolutionElement = resolutionRef.current;
     const checklistElement = checklistRef.current;
+    const agencyElement = agencyAgreementRef.current;
+    const adlaElement = adlaRef.current;
 
     if (!summaryElement) return;
     setIsPrinting(true);
@@ -248,6 +225,8 @@ export default function ApplicationReview({ application: initialApplication, onB
     
     if (resolutionElement && needsMandate) await addCanvasToPdf(resolutionElement);
     if (isCorporate && checklistElement) await addCanvasToPdf(checklistElement);
+    if (isCorporate && agencyElement) await addCanvasToPdf(agencyElement);
+    if (isCorporate && adlaElement) await addCanvasToPdf(adlaElement);
     await addCanvasToPdf(summaryElement);
 
     pdf.save(`Application-${application.id}.pdf`);
@@ -305,7 +284,13 @@ export default function ApplicationReview({ application: initialApplication, onB
             {needsMandate && (
                 <>
                     <div ref={resolutionRef}><AccountResolutionPrintView application={applicationForPrint} /></div>
-                    {isCorporate && <div ref={checklistRef}><CorporateChecklist application={applicationForPrint} /></div>}
+                    {isCorporate && (
+                        <>
+                            <div ref={checklistRef}><CorporateChecklist application={applicationForPrint} /></div>
+                            <div ref={agencyAgreementRef}><AgencyAgreementPrintView data={applicationForPrint.details} /></div>
+                            <div ref={adlaRef}><AdlaDeclarationPrintView data={applicationForPrint.details} /></div>
+                        </>
+                    )}
                 </>
             )}
           </div>
@@ -419,7 +404,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                             <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
                             <DetailItem label="ID Number" value={application.details.individualIdNumber} />
                             <DetailItem label="Address" value={application.details.individualAddress} />
-                            <DetailItem label="Mobile" value={application.details.individualMobileNumber} />
+                            <DetailItem label="Mobile Number" value={application.details.individualMobileNumber} />
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

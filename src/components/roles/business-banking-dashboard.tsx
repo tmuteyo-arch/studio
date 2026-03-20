@@ -77,7 +77,7 @@ export default function BusinessBankingDashboard({ user }: BusinessBankingDashbo
               <TabsList className="bg-muted/50 p-1">
                   <TabsTrigger value="my-apps" className="flex items-center gap-2">
                       <UserCheck className="h-4 w-4" />
-                      Portfolio ({filteredApplications.length})
+                      Applications ({filteredApplications.length})
                   </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-64">
@@ -94,7 +94,7 @@ export default function BusinessBankingDashboard({ user }: BusinessBankingDashbo
           <TabsContent value="my-apps">
               <Card className="border-none shadow-md overflow-hidden">
                   <CardHeader className="bg-muted/30">
-                      <CardTitle>Business Portfolio Tracking</CardTitle>
+                      <CardTitle>Business Application Tracking</CardTitle>
                       <CardDescription>Status oversight for your managed business accounts.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -128,7 +128,7 @@ export default function BusinessBankingDashboard({ user }: BusinessBankingDashbo
                           </Table>
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground italic">
-                              <p>Portfolio is currently empty.</p>
+                              <p>Application list is currently empty.</p>
                           </div>
                       )}
                   </CardContent>

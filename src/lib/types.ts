@@ -99,12 +99,12 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    const isPersonal = ['Individuals', 'Sole Trader', 'Minors'].includes(data.clientType);
+    const isPersonal = ['Individual Accounts', 'Sole Trader', 'Minors'].includes(data.clientType);
     const isCorporate = [
-      'Company (Private / Public Limited)', 
-      'PBC Account', 
-      'Partnership', 
-      'Merchant Corporate Business',
+      'Private Limited (Pvt) Company', 
+      'Private Business Corporate (PBC)', 
+      'Public Limited company',
+      'Partnerships', 
       'Investment Group', 
       'Parastatal'
     ].includes(data.clientType);
@@ -112,13 +112,13 @@ export const OnboardingFormSchema = z.object({
       'NGO', 
       'Church', 
       'School', 
-      'Society / Club', 
-      'Government / Local Authority',
+      'Society', 
+      'Club/ Association',
       'Trust'
     ].includes(data.clientType);
 
     // Signatories check for non-individual accounts
-    if (data.clientType && data.clientType !== 'Individuals' && data.clientType !== 'Minors') {
+    if (data.clientType && data.clientType !== 'Individual Accounts' && data.clientType !== 'Minors') {
       if (!data.signatories || data.signatories.length === 0) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -160,19 +160,21 @@ export type Step = {
 };
 
 export const accountTypes = [
-  'Individuals',
+  'Individual Accounts',
   'Sole Trader',
   'Minors',
-  'Company (Private / Public Limited)',
-  'PBC Account',
-  'Merchant Corporate Business',
-  'Partnership',
+  'Private Limited (Pvt) Company',
+  'Private Business Corporate (PBC)',
+  'Public Limited company',
+  'Partnerships',
+  'Investment Group',
+  'Parastatal',
   'Trust',
   'NGO',
   'Church',
   'School',
-  'Society / Club',
-  'Government / Local Authority',
+  'Society',
+  'Club/ Association',
 ];
 
 export const rejectionReasons = [

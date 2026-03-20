@@ -1,4 +1,3 @@
-
 'use client';
 
 import { atom } from 'jotai';
@@ -42,7 +41,7 @@ export type Comment = {
 export type Application = {
   id: string;
   clientName: string;
-  clientType: 'Company (Private / Public Limited)' | 'Proprietorship / Sole Trader' | 'Personal Account' | 'Archived' | string;
+  clientType: string;
   status: ApplicationStatus;
   submittedDate: string;
   lastUpdated: string;
@@ -60,7 +59,7 @@ const initialApplications: Application[] = [
     {
     id: 'APP-001',
     clientName: 'A.J Madondo investments',
-    clientType: 'Company (Private / Public Limited)',
+    clientType: 'Private Limited (Pvt) Company',
     status: 'Pending Supervisor',
     submittedDate: '2024-05-15',
     lastUpdated: '2024-05-20T10:00:00Z',
@@ -68,7 +67,7 @@ const initialApplications: Application[] = [
     region: 'Harare',
     fcbStatus: 'Good',
     details: {
-        clientType: 'Company (Private / Public Limited)',
+        clientType: 'Private Limited (Pvt) Company',
         region: 'Harare',
         organisationLegalName: 'A.J Madondo investments',
         natureOfBusiness: 'Financial Services',
@@ -105,7 +104,7 @@ const initialApplications: Application[] = [
     {
     id: 'APP-002',
     clientName: 'Beloved T Garadzimba',
-    clientType: 'Personal Account',
+    clientType: 'Individual Accounts',
     status: 'Submitted',
     submittedDate: '2024-05-21',
     lastUpdated: '2024-05-21T08:00:00Z',
@@ -113,7 +112,7 @@ const initialApplications: Application[] = [
     region: 'Manicaland',
     fcbStatus: 'Inclusive',
     details: {
-        clientType: 'Personal Account',
+        clientType: 'Individual Accounts',
         region: 'Manicaland',
         individualFirstName: 'Beloved T',
         individualSurname: 'Garadzimba',
@@ -131,50 +130,7 @@ const initialApplications: Application[] = [
     documents: [],
     history: [{ action: 'Self-Submitted by Customer', user: 'Customer', timestamp: '2024-05-21T08:00:00Z' }],
     comments: [],
-    },
-    {
-    id: 'APP-004',
-    clientName: 'Ewebmart investments',
-    clientType: 'Company (Private / Public Limited)',
-    status: 'Archived',
-    submittedDate: '2024-05-10',
-    lastUpdated: '2024-05-18T14:30:00Z',
-    submittedBy: 'HEYZREST',
-    region: 'Harare',
-    fcbStatus: 'Good',
-     details: {
-        clientType: 'Company (Private / Public Limited)',
-        region: 'Harare',
-        organisationLegalName: 'Ewebmart investments',
-        natureOfBusiness: 'Technology / ICT',
-        physicalAddress: '123 Tech Hub, Harare',
-        signatories: [],
-        document1Type: 'Certificate of Incorporation',
-        document2Type: 'CR14',
-        agreedToTerms: true,
-        signature: 'Ewebmart CEO',
-        brIdentity: 'BR-ID-11223',
-        activationCode: 'ACT-9900',
-        accountNumber: '1002345678',
-        isDispatched: true,
-        supervisorSignature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mP8/wcAAwAB/epv2AAAAABJRU5ErkJggg==',
-        supervisorSignatureTimestamp: '2024-05-16T11:00:00Z',
-    },
-    signatories: [],
-    documents: [
-      { type: 'Certificate of Incorporation', fileName: 'eweb_cert.pdf', url: '#' },
-      { type: 'CR14', fileName: 'eweb_cr14.pdf', url: '#' },
-    ],
-    history: [
-      { action: 'Submitted', user: 'HEYZREST', timestamp: '2024-05-10T11:00:00Z' },
-      { action: 'BR Identity Created', user: 'TASHINGA', timestamp: '2024-05-14T10:00:00Z' },
-      { action: 'Pending Supervisor', user: 'TASHINGA', timestamp: '2024-05-14T14:00:00Z' },
-      { action: 'Approved & Activation Code Issued', user: 'Blessing Zulu', timestamp: '2024-05-16T11:00:00Z', notes: 'Activation Code: ACT-9900' },
-      { action: 'Account Details Dispatched', user: 'TASHINGA', timestamp: '2024-05-18T14:30:00Z' },
-      { action: 'Archived', user: 'TASHINGA', timestamp: '2024-05-18T14:35:00Z' }
-    ],
-    comments: [],
-  }
+    }
 ];
 
 export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v2', initialApplications);

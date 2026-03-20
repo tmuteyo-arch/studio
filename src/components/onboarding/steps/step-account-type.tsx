@@ -7,21 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { zimRegions, OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheck, Calendar, User, ChevronRight } from 'lucide-react';
+import { ShieldCheck, Calendar, User, ChevronRight, LayoutDashboard, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
 const categories = [
   {
     title: 'IDENTITIES',
-    items: ['Individuals', 'Minors']
+    items: ['Individual Accounts', 'Minors']
   },
   {
     title: 'ACCOUNT',
-    items: ['Sole Trader', 'Partnership', 'Company (Private / Public Limited)', 'PBC Account', 'Merchant Corporate Business']
+    items: ['Sole Trader', 'Partnerships', 'Private Limited (Pvt) Company', 'Private Business Corporate (PBC)', 'Public Limited company', 'Investment Group', 'Parastatal']
   },
   {
     title: 'WORKFLOW SETTING',
-    items: ['Trust', 'NGO', 'Church', 'School', 'Society / Club', 'Government / Local Authority']
+    items: ['Trust', 'NGO', 'Church', 'School', 'Society', 'Club/ Association', 'Government / Local Authority']
   }
 ];
 
@@ -29,6 +29,9 @@ export default function StepAccountType() {
   const form = useFormContext<OnboardingFormData>();
   const clientType = form.watch('clientType');
   const [userName, setUserName] = React.useState('CHIDO'); // Mock user
+
+  // Logic to check if we already have a clientType (selected from dashboard)
+  const isTypePreselected = !!clientType;
 
   return (
     <div className="flex flex-col h-full bg-[#1e1b4b] rounded-lg overflow-hidden border border-white/10 shadow-2xl">
@@ -56,37 +59,60 @@ export default function StepAccountType() {
       </header>
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-0">
-        {/* Hierarchical Menu */}
+        {/* Hierarchical Menu / Locked Selection */}
         <div className="md:col-span-3 p-6 space-y-8 bg-black/20">
-          <div className="space-y-1">
-            <h3 className="text-primary text-xs font-black uppercase tracking-[0.3em] mb-4 border-b border-primary/20 pb-2">Product Hierarchy</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {categories.map((cat) => (
-                <div key={cat.title} className="space-y-3">
-                  <h4 className="text-[10px] font-bold text-white/40 tracking-widest uppercase">{cat.title}</h4>
-                  <div className="space-y-1">
-                    {cat.items.map((item) => {
-                      const isActive = clientType === item;
-                      return (
-                        <button
-                          key={item}
-                          type="button"
-                          onClick={() => form.setValue('clientType', item, { shouldValidate: true })}
-                          className={`w-full text-left px-3 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center justify-between group ${
-                            isActive 
-                              ? 'bg-primary text-primary-foreground shadow-lg' 
-                              : 'text-white/60 hover:bg-white/5 hover:text-white'
-                          }`}
-                        >
-                          <span className="truncate">{item}</span>
-                          {isActive && <ChevronRight className="h-3 w-3" />}
-                        </button>
-                      );
-                    })}
+          <div className="space-y-1 h-full flex flex-col">
+            <h3 className="text-primary text-xs font-black uppercase tracking-[0.3em] mb-4 border-b border-primary/20 pb-2 flex items-center gap-2">
+              <LayoutDashboard className="h-3 w-3" />
+              {isTypePreselected ? 'Selected Technical Context' : 'Product Hierarchy'}
+            </h3>
+            
+            {isTypePreselected ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+                <div className="bg-primary/10 border border-primary/20 p-8 rounded-xl max-w-md w-full">
+                  <div className="h-16 w-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FileText className="h-8 w-8 text-primary" />
                   </div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">Active Originating Class</p>
+                  <h4 className="text-2xl font-black text-white uppercase tracking-tight mb-2">{clientType}</h4>
+                  <div className="flex items-center justify-center gap-2">
+                    <Badge className="bg-green-500/20 text-green-500 border-green-500/30 text-[10px] uppercase font-bold px-2 py-0">Validated</Badge>
+                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] uppercase font-bold px-2 py-0">Locked Context</Badge>
+                  </div>
+                  <p className="text-[11px] text-white/40 mt-6 leading-relaxed italic">
+                    The account type has been locked from the dashboard selection. Proceed to specify the operating region in the sidebar.
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {categories.map((cat) => (
+                  <div key={cat.title} className="space-y-3">
+                    <h4 className="text-[10px] font-bold text-white/40 tracking-widest uppercase">{cat.title}</h4>
+                    <div className="space-y-1">
+                      {cat.items.map((item) => {
+                        const isActive = clientType === item;
+                        return (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => form.setValue('clientType', item, { shouldValidate: true })}
+                            className={`w-full text-left px-3 py-2 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center justify-between group ${
+                              isActive 
+                                ? 'bg-primary text-primary-foreground shadow-lg' 
+                                : 'text-white/60 hover:bg-white/5 hover:text-white'
+                            }`}
+                          >
+                            <span className="truncate">{item}</span>
+                            {isActive && <ChevronRight className="h-3 w-3" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

@@ -113,7 +113,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                   <h2 className="text-3xl font-black tracking-tight">ASL Dashboard</h2>
-                  <p className="text-muted-foreground font-medium">Manage your onboarding portfolio and process new leads.</p>
+                  <p className="text-muted-foreground font-medium">Manage your Applications and process new leads.</p>
               </div>
               <Button 
                 onClick={() => setIsNewAppMenuOpen(!isNewAppMenuOpen)}
@@ -153,8 +153,8 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                 <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Individual Accounts')}>
                                     1. Individual Accounts
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Sole traders')}>
-                                    2. Sole traders
+                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Sole Trader')}>
+                                    2. Sole Trader
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -238,7 +238,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
               <TabsList className="bg-muted/50 p-1">
                   <TabsTrigger value="my-apps" className="flex items-center gap-2">
                       <UserCheck className="h-4 w-4" />
-                      My Portfolio ({filteredApplications.length})
+                      My Applications ({filteredApplications.length})
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-2">
                       <Inbox className="h-4 w-4" />
@@ -260,7 +260,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
           <TabsContent value="my-apps">
               <Card className="border-none shadow-md overflow-hidden">
                   <CardHeader className="bg-muted/30">
-                      <CardTitle>Active Portfolio</CardTitle>
+                      <CardTitle>Active Applications</CardTitle>
                       <CardDescription>Status tracking for your applications.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
