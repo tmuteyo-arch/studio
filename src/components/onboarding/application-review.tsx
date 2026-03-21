@@ -8,7 +8,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -64,7 +64,7 @@ export default function ApplicationReview({ application: initialApplication, onB
   const agencyAgreementRef = React.useRef<HTMLDivElement>(null);
   const adlaRef = React.useRef<HTMLDivElement>(null);
   
-  const [activeTab, setActiveTab] = React.useState("details");
+  const [activeTab, setActiveTab] = React.useState("form-data");
 
   const [isRejecting, setIsRejecting] = React.useState(false);
   const [rejectionReason, setRejectionReason] = React.useState('');
@@ -376,48 +376,31 @@ export default function ApplicationReview({ application: initialApplication, onB
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="bg-muted/50 p-1 mb-6">
-                      <TabsTrigger value="details"><User className="mr-2 h-4 w-4"/>Identity Overview</TabsTrigger>
-                      {(user.role === 'back-office' || (user.role === 'asl' && application.status !== 'Archived')) && <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Identity Registry</TabsTrigger>}
+                      <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Account Details</TabsTrigger>
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Technical Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Registry Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Internal Notes</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="details" className="pt-2">
-                    <Card>
-                      <CardContent className="pt-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          <DetailItem label="Technical Classification" value={application.clientType} />
-                          <DetailItem label="Operating Province" value={application.region} />
-                          <DetailItem label="Registry Status" value={application.status} />
-                        </div>
-                        <Separator/>
-                        {isPersonalOrIndividual ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <DetailItem label="Full Applicant Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
-                            <DetailItem label="Identity Record #" value={application.details.individualIdNumber} />
-                            <DetailItem label="Verified Address" value={application.details.individualAddress} />
-                            <DetailItem label="Mobile Terminal" value={application.details.individualMobileNumber} />
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <DetailItem label="Legal Entity Name" value={application.details.organisationLegalName} />
-                            <DetailItem label="Company Registry #" value={application.details.certificateOfIncorporationNumber} />
-                            <DetailItem label="Operational Address" value={application.details.physicalAddress} />
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
+                  
+                  <TabsContent value="form-data" className="pt-2">
+                      <Card>
+                          <CardContent className="pt-6 space-y-8">
+                              {/* High-level status summary for Account Details */}
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-muted/20 rounded-lg border border-primary/5">
+                                  <DetailItem label="Technical Classification" value={application.clientType} />
+                                  <DetailItem label="Operating Province" value={application.region} />
+                                  <DetailItem label="Registry Status" value={application.status} />
+                              </div>
+                              <Separator />
+                              {/* Full record details */}
+                              <div className="space-y-6">
+                                {isPersonalOrIndividual ? <StepIndividualInfo /> : <StepCorporateInfo />}
+                                {needsMandate && <div className="mt-8"><StepSignatories /></div>}
+                              </div>
+                          </CardContent>
+                      </Card>
                   </TabsContent>
-                   {(user.role === 'back-office' || user.role === 'asl') && application.status !== 'Archived' && (
-                       <TabsContent value="form-data" className="pt-2">
-                           <Card>
-                               <CardContent className="pt-6">
-                                   {isPersonalOrIndividual ? <StepIndividualInfo /> : <StepCorporateInfo />}
-                                   {needsMandate && <div className="mt-8"><StepSignatories /></div>}
-                               </CardContent>
-                           </Card>
-                       </TabsContent>
-                   )}
+
                   <TabsContent value="documents" className="pt-2">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card>
