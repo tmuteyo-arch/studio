@@ -377,7 +377,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="bg-muted/50 p-1 mb-6">
                       <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Account Details</TabsTrigger>
-                      <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Technical Documents</TabsTrigger>
+                      <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Account Documents</TabsTrigger>
                       <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Registry Log</TabsTrigger>
                       <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Internal Notes</TabsTrigger>
                   </TabsList>
