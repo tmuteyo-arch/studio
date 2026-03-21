@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -113,7 +112,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Vault Assets</CardTitle>
+                    <CardTitle className="text-sm font-medium uppercase tracking-tighter">ELECTRONIC ACCOUNT ARCHIVE</CardTitle>
                     <Archive className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -129,7 +128,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                 <ClipboardList className="mr-2 h-4 w-4"/>Workflow
                 {totalTasks > 0 && <Badge variant="destructive" className="ml-2 animate-pulse">{totalTasks}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value="vault"><Archive className="mr-2 h-4 w-4"/>Archive Vault</TabsTrigger>
+              <TabsTrigger value="vault"><Archive className="mr-2 h-4 w-4"/>ELECTRONIC ACCOUNT ARCHIVE</TabsTrigger>
               <TabsTrigger value="analytics"><AreaChart className="mr-2 h-4 w-4"/>Appraisal</TabsTrigger>
               <TabsTrigger value="team"><Users className="mr-2 h-4 w-4"/>Clerk Results</TabsTrigger>
               <TabsTrigger value="reports"><FileDown className="mr-2 h-4 w-4"/>Audit Reports</TabsTrigger>
@@ -185,9 +184,9 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
           <TabsContent value="vault">
               <Card>
                   <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                          <Archive className="h-5 w-5 text-primary" />
-                          Archive Vault Audit
+                      <CardTitle className="flex items-center gap-2 text-primary">
+                          <Archive className="h-5 w-5" />
+                          ELECTRONIC ACCOUNT ARCHIVE AUDIT
                       </CardTitle>
                       <CardDescription>Audit-ready finalized records and digitized documents.</CardDescription>
                   </CardHeader>

@@ -129,7 +129,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 </Card>
                 <Card className="bg-card">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Archive Vault</CardTitle>
+                        <CardTitle className="text-sm font-medium uppercase">Electronic Account Archive</CardTitle>
                         <Archive className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -148,7 +148,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                         </TabsTrigger>
                         <TabsTrigger value="archive" className="flex items-center gap-2">
                             <Archive className="h-4 w-4" />
-                            Archive Vault
+                            ELECTRONIC ACCOUNT ARCHIVE
                         </TabsTrigger>
                     </TabsList>
                     <div className="relative w-full sm:w-64">
@@ -221,7 +221,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                         <CardHeader className="bg-primary/5">
                             <CardTitle className="flex items-center gap-2">
                                 <Archive className="h-5 w-5 text-primary" />
-                                Electronic Archive Vault
+                                ELECTRONIC ACCOUNT ARCHIVE
                             </CardTitle>
                             <CardDescription>Finalized wallet records and legacy archives.</CardDescription>
                         </CardHeader>
