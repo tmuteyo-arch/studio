@@ -8,7 +8,7 @@ import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Role, usersAtom } from '@/lib/users';
-import { activeUserAtom } from '@/lib/mock-data';
+import { activeUserAtom, activityLogsAtom } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, ShieldAlert } from 'lucide-react';
@@ -27,6 +27,7 @@ const ComplianceRiskDashboard = React.lazy(() => import('@/components/roles/comp
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
   const [systemUsers] = useAtom(usersAtom);
+  const [, setActivityLogs] = useAtom(activityLogsAtom);
   const [selectedRole, setSelectedRole] = React.useState<Role | "">("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -79,6 +80,16 @@ function AppContent() {
         return;
       }
 
+      // Log Login Event
+      const logEntry = {
+        id: `log-${Date.now()}`,
+        userId: userToLogin.id,
+        userName: userToLogin.name,
+        action: 'Login' as const,
+        timestamp: new Date().toISOString()
+      };
+      setActivityLogs(prev => [logEntry, ...prev]);
+
       setLoggedInUser(userToLogin);
       toast({
         title: `Welcome, ${userToLogin.name}!`,
@@ -110,6 +121,18 @@ function AppContent() {
   };
 
   const handleLogout = () => {
+    if (loggedInUser) {
+      // Log Logout Event
+      const logEntry = {
+        id: `log-${Date.now()}`,
+        userId: loggedInUser.id,
+        userName: loggedInUser.name,
+        action: 'Logout' as const,
+        timestamp: new Date().toISOString()
+      };
+      setActivityLogs(prev => [logEntry, ...prev]);
+    }
+
     setLoggedInUser(null);
     setSelectedRole("");
     setEmail("");

@@ -38,6 +38,14 @@ export type Comment = {
   content: string;
 };
 
+export type UserActivityLog = {
+  id: string;
+  userId: string;
+  userName: string;
+  action: 'Login' | 'Logout' | 'Account Created';
+  timestamp: string;
+}
+
 export type Application = {
   id: string;
   clientName: string;
@@ -135,3 +143,7 @@ const initialApplications: Application[] = [
 
 export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v2', initialApplications);
 export const activeUserAtom = atom<any>(null);
+export const activityLogsAtom = atomWithStorage<UserActivityLog[]>('innbucks_activity_logs_v1', [
+  { id: 'log-1', userId: 'asl-1', userName: 'CHIDO', action: 'Login', timestamp: new Date(Date.now() - 3600000).toISOString() },
+  { id: 'log-2', userId: 'asl-1', userName: 'CHIDO', action: 'Account Created', timestamp: new Date(Date.now() - 1800000).toISOString() },
+]);

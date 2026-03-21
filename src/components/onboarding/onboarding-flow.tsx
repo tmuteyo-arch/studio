@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { useAtom } from 'jotai';
 
 import { OnboardingFormData, OnboardingFormSchema, Step } from '@/lib/types';
-import { applicationsAtom } from '@/lib/mock-data';
+import { applicationsAtom, activityLogsAtom } from '@/lib/mock-data';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressTracker } from './progress-tracker';
@@ -65,6 +65,7 @@ type DuplicateInfo = {
 export default function OnboardingFlow({ onCancel, user, preselectedType }: OnboardingFlowProps) {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [applications, setApplications] = useAtom(applicationsAtom);
+  const [, setActivityLogs] = useAtom(activityLogsAtom);
   const { toast } = useToast();
 
   const [isCheckingDuplicates, setIsCheckingDuplicates] = React.useState(false);
@@ -120,7 +121,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     }
     
     if (isSoleTrader) {
-      // Sole trader uses individual info but needs mandate
+      // Sole trader uses individual info AND needs mandate
       const soleTraderSteps = ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'];
       return allSteps.filter(step => soleTraderSteps.includes(step.id));
     }
@@ -219,6 +220,16 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     };
     
     setApplications((prev) => [newApplication, ...prev]);
+
+    // Log Account Created Event
+    const logEntry = {
+      id: `log-${Date.now()}`,
+      userId: user.id,
+      userName: user.name,
+      action: 'Account Created' as const,
+      timestamp: new Date().toISOString()
+    };
+    setActivityLogs(prev => [logEntry, ...prev]);
 
     toast({
       title: "All Set!",
