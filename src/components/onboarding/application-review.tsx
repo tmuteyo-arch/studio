@@ -339,47 +339,11 @@ export default function ApplicationReview({ application: initialApplication, onB
                   </div>
               )}
 
-              {/* ASL: Final Dispatch Summary (Visible only to ASL when finalized) */}
-              {(user.role === 'asl' && application.status === 'Archived' && application.details.isDispatched) && (
-                  <div className="mb-8 p-6 bg-primary/10 rounded-xl border border-primary/30 shadow-xl animate-in zoom-in-95">
-                      <div className="flex items-center gap-4 mb-6">
-                          <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg">
-                              <CheckCircle2 className="h-6 w-6" />
-                          </div>
-                          <div>
-                              <h4 className="text-lg font-black uppercase tracking-tight text-primary leading-none">Account Ready</h4>
-                              <p className="text-[10px] text-primary/70 font-bold uppercase tracking-widest mt-1">Processed & Dispatched from Back Office</p>
-                          </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <Card className="bg-background border-primary/20 shadow-sm">
-                              <CardContent className="p-4 flex items-center gap-4">
-                                  <Wallet className="h-8 w-8 text-primary" />
-                                  <div>
-                                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Wallet Account #</p>
-                                      <p className="text-xl font-mono font-black text-foreground">{application.details.accountNumber}</p>
-                                  </div>
-                              </CardContent>
-                          </Card>
-                          <Card className="bg-background border-primary/20 shadow-sm">
-                              <CardContent className="p-4 flex items-center gap-4">
-                                  <Fingerprint className="h-8 w-8 text-primary" />
-                                  <div>
-                                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Technical Registry ID</p>
-                                      <p className="text-xl font-mono font-black text-foreground">{application.details.brIdentity}</p>
-                                  </div>
-                              </CardContent>
-                          </Card>
-                      </div>
-                  </div>
-              )}
-
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="bg-muted/50 p-1 mb-6">
                       <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Account Details</TabsTrigger>
                       <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Account Documents</TabsTrigger>
-                      <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>Registry Log</TabsTrigger>
-                      <TabsTrigger value="comments"><MessageSquare className="mr-2 h-4 w-4"/>Internal Notes</TabsTrigger>
+                      <TabsTrigger value="comments"><Wallet className="mr-2 h-4 w-4"/>BR AND WALLET ACCOUNTS</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="form-data" className="pt-2">
@@ -436,47 +400,76 @@ export default function ApplicationReview({ application: initialApplication, onB
                         </Card>
                     </div>
                   </TabsContent>
-                  <TabsContent value="history" className="pt-2">
-                      <Card>
-                          <CardContent className="pt-6">
-                              <ul className="space-y-6">
-                                  {application.history.map((entry, index) => (
-                                      <li key={index} className="flex items-start">
-                                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted border font-bold text-[10px]">{index + 1}</div>
-                                          <div className="ml-4 flex-1">
-                                              <p className="text-sm font-bold uppercase tracking-tight">{entry.action} <span className="text-[10px] font-normal text-muted-foreground lowercase ml-2">by {entry.user}</span></p>
-                                              <p className="text-[10px] text-muted-foreground">{new Date(entry.timestamp).toLocaleString()}</p>
-                                              {entry.notes && <p className="text-xs mt-2 p-3 bg-muted rounded-md italic text-muted-foreground border-l-2 border-primary/20">{entry.notes}</p>}
-                                          </div>
-                                      </li>
-                                  ))}
-                              </ul>
-                          </CardContent>
-                      </Card>
-                  </TabsContent>
+                  
                   <TabsContent value="comments" className="pt-2">
                       <Card>
                           <CardContent className="pt-6 space-y-6">
-                              <div className="space-y-4">
-                                  {application.comments.map((comment) => (
-                                      <div key={comment.id} className="flex items-start gap-3">
-                                          <Avatar className="h-8 w-8"><AvatarFallback className="text-[10px]">{comment.user.substring(0,2)}</AvatarFallback></Avatar>
-                                          <div className="flex-1 rounded-lg border bg-card p-4">
-                                              <div className="flex justify-between items-center mb-1">
-                                                  <p className="font-bold text-sm uppercase">{comment.user}</p>
-                                                  <p className="text-[10px] text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p>
-                                              </div>
-                                              <p className="text-sm">{comment.content}</p>
+                              {/* Accounts only appear when APPROVED and SENT BACK (Archived & Dispatched) */}
+                              {(application.status === 'Archived' && application.details.isDispatched) ? (
+                                  <div className="p-6 bg-primary/10 rounded-xl border border-primary/30 shadow-sm animate-in zoom-in-95">
+                                      <div className="flex items-center gap-4 mb-6">
+                                          <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg">
+                                              <CheckCircle2 className="h-6 w-6" />
+                                          </div>
+                                          <div>
+                                              <h4 className="text-lg font-black uppercase tracking-tight text-primary leading-none">Account Finalized</h4>
+                                              <p className="text-[10px] text-primary/70 font-bold uppercase tracking-widest mt-1">Processed & Dispatched from Back Office</p>
                                           </div>
                                       </div>
-                                  ))}
-                              </div>
-                              {application.status !== 'Archived' && (
-                                  <div className="space-y-3 pt-4 border-t">
-                                      <Textarea placeholder="Type internal registry note..." value={newComment} onChange={(e) => setNewComment(e.target.value)} className="min-h-[100px]" />
-                                      <Button onClick={handleAddComment} className="w-full">Post Note</Button>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <Card className="bg-background border-primary/20 shadow-sm">
+                                              <CardContent className="p-4 flex items-center gap-4">
+                                                  <Wallet className="h-8 w-8 text-primary" />
+                                                  <div>
+                                                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Wallet Account #</p>
+                                                      <p className="text-xl font-mono font-black text-foreground">{application.details.accountNumber}</p>
+                                                  </div>
+                                              </CardContent>
+                                          </Card>
+                                          <Card className="bg-background border-primary/20 shadow-sm">
+                                              <CardContent className="p-4 flex items-center gap-4">
+                                                  <Fingerprint className="h-8 w-8 text-primary" />
+                                                  <div>
+                                                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Technical Registry ID (BR)</p>
+                                                      <p className="text-xl font-mono font-black text-foreground">{application.details.brIdentity}</p>
+                                                  </div>
+                                              </CardContent>
+                                          </Card>
+                                      </div>
+                                  </div>
+                              ) : (
+                                  <div className="p-6 border-dashed border-2 rounded-xl flex flex-col items-center justify-center text-center py-12 bg-muted/5">
+                                      <ShieldAlert className="h-12 w-12 text-muted-foreground opacity-20 mb-4" />
+                                      <p className="text-sm font-bold uppercase tracking-tight text-muted-foreground">Accounts Pending Dispatch</p>
+                                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Technical credentials will reveal here upon Back Office finalization.</p>
                                   </div>
                               )}
+
+                              <div className="space-y-4 pt-6 border-t">
+                                  <h4 className="text-xs font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+                                      <MessageSquare className="h-3 w-3" /> Internal Registry Notes
+                                  </h4>
+                                  <div className="space-y-4">
+                                      {application.comments.map((comment) => (
+                                          <div key={comment.id} className="flex items-start gap-3">
+                                              <Avatar className="h-8 w-8"><AvatarFallback className="text-[10px] font-bold">{comment.user.substring(0,2)}</AvatarFallback></Avatar>
+                                              <div className="flex-1 rounded-lg border bg-card p-4">
+                                                  <div className="flex justify-between items-center mb-1">
+                                                      <p className="font-bold text-sm uppercase">{comment.user}</p>
+                                                      <p className="text-[10px] text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p>
+                                                  </div>
+                                                  <p className="text-sm">{comment.content}</p>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                                  {application.status !== 'Archived' && (
+                                      <div className="space-y-3 pt-4 border-t">
+                                          <Textarea placeholder="Type internal registry note..." value={newComment} onChange={(e) => setNewComment(e.target.value)} className="min-h-[100px]" />
+                                          <Button onClick={handleAddComment} className="w-full font-bold">Post Note</Button>
+                                      </div>
+                                  )}
+                              </div>
                           </CardContent>
                       </Card>
                   </TabsContent>
