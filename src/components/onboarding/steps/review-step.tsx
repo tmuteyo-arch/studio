@@ -47,8 +47,8 @@ export default function ReviewStep() {
   }, [formState.isSubmitting]);
   
   const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
-  const isPersonal = ['Individual Accounts', 'Sole traders'].includes(data.clientType);
-  const needsMandate = data.clientType !== 'Individual Accounts';
+  const isPersonal = ['Individual Accounts', 'Sole Trader', 'Minors'].includes(data.clientType);
+  const needsMandate = !isPersonal;
   const capturedDocs = data.capturedDocuments || [];
 
 

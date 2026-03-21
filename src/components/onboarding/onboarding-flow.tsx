@@ -63,7 +63,7 @@ type DuplicateInfo = {
 }
 
 export default function OnboardingFlow({ onCancel, user, preselectedType }: OnboardingFlowProps) {
-  const [currentStepIndex, setCurrentStepIndex] = React.useState(preselectedType ? 0 : 0);
+  const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [applications, setApplications] = useAtom(applicationsAtom);
   const { toast } = useToast();
 
@@ -109,17 +109,13 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
   const steps = React.useMemo(() => {
     if (!clientType) return [allSteps.find(s => s.id === 'account-type')!];
 
-    const isPersonal = ['Individual Accounts', 'Sole traders'].includes(clientType);
-    const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association'].includes(clientType);
+    // Sole Trader is now treated exactly like Individual Accounts
+    const isPersonal = ['Individual Accounts', 'Sole Trader', 'Minors'].includes(clientType);
+    const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association', 'Trust'].includes(clientType);
     const isCorporate = !isPersonal && !isInstitution;
 
     if (isPersonal) {
       const personalSteps = ['account-type', 'individual-info', 'document-upload', 'review-submit'];
-      // Sole traders also need signatories/mandate logic in some banks, but user prompt implies dropdown options.
-      // We'll follow the logic from Individual info for Personal group.
-      if (clientType === 'Sole traders') {
-          personalSteps.splice(2, 0, 'signatories');
-      }
       return allSteps.filter(step => personalSteps.includes(step.id));
     }
     

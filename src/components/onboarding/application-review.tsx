@@ -78,9 +78,10 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
 
-  const isCorporate = !['Individual Accounts', 'Minors'].includes(application.clientType);
-  const isPersonalOrIndividual = ['Individual Accounts', 'Minors'].includes(application.clientType);
-  const needsMandate = application.clientType !== 'Individual Accounts' && application.clientType !== 'Minors';
+  // Sole Trader is grouped with Personal categories for detail rendering
+  const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
+  const isCorporate = !isPersonalOrIndividual;
+  const needsMandate = !isPersonalOrIndividual;
   
   const uploadedDocumentTypes = application.documents.map(d => d.type);
   const documentRequirements = getDocumentRequirements(application.clientType);

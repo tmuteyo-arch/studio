@@ -99,6 +99,7 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
+    // Sole Trader is now grouped with personal accounts for validation
     const isPersonal = ['Individual Accounts', 'Sole Trader', 'Minors'].includes(data.clientType);
     const isCorporate = [
       'Private Limited (Pvt) Company', 
@@ -117,8 +118,8 @@ export const OnboardingFormSchema = z.object({
       'Trust'
     ].includes(data.clientType);
 
-    // Signatories check for non-individual accounts
-    if (data.clientType && data.clientType !== 'Individual Accounts' && data.clientType !== 'Minors') {
+    // Signatories check for non-personal accounts
+    if (data.clientType && !isPersonal) {
       if (!data.signatories || data.signatories.length === 0) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
