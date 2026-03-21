@@ -1,4 +1,3 @@
-
 'use client';
 import * as React from 'react';
 import { useAtom } from 'jotai';
@@ -145,7 +144,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     <TabsList>
                         <TabsTrigger value="pipeline" className="flex items-center gap-2">
                             <Briefcase className="h-4 w-4" />
-                            Active Pipeline
+                            ACCOUNTS
                         </TabsTrigger>
                         <TabsTrigger value="archive" className="flex items-center gap-2">
                             <Archive className="h-4 w-4" />
@@ -166,7 +165,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 <TabsContent value="pipeline">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Active Application Pipeline</CardTitle>
+                            <CardTitle>ACCOUNTS</CardTitle>
                             <CardDescription>Applications moving through Identity creation, Audit, and Finalization.</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -210,7 +209,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                 </Table>
                             ) : (
                                 <div className="flex items-center justify-center p-12 text-center text-muted-foreground italic">
-                                    No active pipeline applications found.
+                                    No active account applications found.
                                 </div>
                             )}
                         </CardContent>
