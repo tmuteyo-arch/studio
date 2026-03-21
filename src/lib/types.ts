@@ -99,8 +99,9 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    // Technical Logic: Sole Trader is same as Individual technical class
-    const isPersonal = ['Individual Accounts', 'Sole Trader', 'Minors'].includes(data.clientType);
+    // Technical Logic
+    const isPersonal = ['Individual Accounts', 'Minors'].includes(data.clientType);
+    const isSoleTrader = data.clientType === 'Sole Trader';
     
     const isCorporate = [
       'Private Limited (Pvt) Company', 
@@ -120,13 +121,13 @@ export const OnboardingFormSchema = z.object({
       'Trust'
     ].includes(data.clientType);
 
-    // Signatories requirement for legal entities
+    // Signatories requirement for legal entities and Sole Trader
     if (data.clientType && !isPersonal) {
       if (!data.signatories || data.signatories.length === 0) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['signatories'],
-            message: 'At least one authorized signatory is mandatory for this class.',
+            message: 'At least one authorized signatory is mandatory for this account type.',
         });
       }
     }
@@ -146,8 +147,8 @@ export const OnboardingFormSchema = z.object({
             message: 'Verified operating address is mandatory.',
         });
       }
-    } else if (isPersonal) {
-      // Individual and Sole Trader follow the same mandatory fields
+    } else if (isPersonal || isSoleTrader) {
+      // Individual and Sole Trader follow the same mandatory fields for applicant details
       if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is mandatory.' });
       if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is mandatory.' });
       if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is mandatory.' });

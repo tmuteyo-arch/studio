@@ -47,8 +47,8 @@ export default function ReviewStep() {
   }, [formState.isSubmitting]);
   
   const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
-  const isPersonal = ['Individual Accounts', 'Sole Trader', 'Minors'].includes(data.clientType);
-  const needsMandate = !isPersonal;
+  const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(data.clientType);
+  const needsMandate = data.clientType !== 'Individual Accounts' && data.clientType !== 'Minors';
   const capturedDocs = data.capturedDocuments || [];
 
 
@@ -72,7 +72,7 @@ export default function ReviewStep() {
       </CardHeader>
       <div className="space-y-6 px-6">
         
-        {isPersonal && (
+        {isPersonalOrIndividual && (
           <div className="rounded-md border p-4 space-y-4">
             <h3 className="font-semibold">Applicant Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -86,7 +86,7 @@ export default function ReviewStep() {
           </div>
         )}
 
-        {!isPersonal && (
+        {!isPersonalOrIndividual && (
             <div className="rounded-md border p-4 space-y-4">
                 <h3 className="font-semibold">Entity Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

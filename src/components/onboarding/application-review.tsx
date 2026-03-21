@@ -78,10 +78,10 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
 
-  // Logic: Sole Trader is same as Individual technical details
+  // Logic: Sole Trader is same as Individual technical details but needs mandate
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
   const isCorporate = !isPersonalOrIndividual;
-  const needsMandate = !isPersonalOrIndividual;
+  const needsMandate = application.clientType !== 'Individual Accounts' && application.clientType !== 'Minors';
   
   const uploadedDocumentTypes = application.documents.map(d => d.type);
   const documentRequirements = getDocumentRequirements(application.clientType);

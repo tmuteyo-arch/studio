@@ -109,14 +109,20 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
   const steps = React.useMemo(() => {
     if (!clientType) return [allSteps.find(s => s.id === 'account-type')!];
 
-    // Sole Trader is now treated exactly like Individual Accounts
-    const isPersonal = ['Individual Accounts', 'Sole Trader', 'Minors'].includes(clientType);
+    const isPersonal = ['Individual Accounts', 'Minors'].includes(clientType);
+    const isSoleTrader = clientType === 'Sole Trader';
     const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association', 'Trust'].includes(clientType);
-    const isCorporate = !isPersonal && !isInstitution;
+    const isCorporate = !isPersonal && !isSoleTrader && !isInstitution;
 
     if (isPersonal) {
       const personalSteps = ['account-type', 'individual-info', 'document-upload', 'review-submit'];
       return allSteps.filter(step => personalSteps.includes(step.id));
+    }
+    
+    if (isSoleTrader) {
+      // Sole trader uses individual info but needs mandate
+      const soleTraderSteps = ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'];
+      return allSteps.filter(step => soleTraderSteps.includes(step.id));
     }
     
     if (isCorporate || isInstitution) {
