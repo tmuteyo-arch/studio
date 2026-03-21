@@ -45,7 +45,7 @@ export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   region: z.string().min(1, { message: 'Please select an operating region.' }),
   
-  // Individual/Sole Trader Info
+  // Individual/Sole Trader Info (Technical identities)
   individualSurname: z.string().optional(),
   individualFirstName: z.string().optional(),
   individualDateOfBirth: z.string().optional(),
@@ -53,7 +53,7 @@ export const OnboardingFormSchema = z.object({
   individualAddress: z.string().optional(),
   individualMobileNumber: z.string().optional(),
 
-  // Corporate Info
+  // Corporate Info (Entity classes)
   organisationLegalName: z.string().optional(),
   natureOfBusiness: z.string().optional(),
   physicalAddress: z.string().optional(),
@@ -67,40 +67,41 @@ export const OnboardingFormSchema = z.object({
   signingInstruction: z.string().optional(),
   signatories: z.array(SignatorySchema).default([]),
 
-  // Documents
+  // Document Registry
   document1Type: z.string().optional(),
   document2Type: z.string().optional(),
   
-  // Actual Document Data (Data URIs)
+  // Base64 document data
   capturedDocuments: z.array(z.object({
     type: z.string(),
     fileName: z.string(),
     url: z.string()
   })).optional().default([]),
   
-  // Internal Checks & Workflow IDs
+  // Internal Registry IDs (Hidden from ASL until finalized)
   fcbStatus: z.string().optional(),
   brIdentity: z.string().optional(),
   activationCode: z.string().optional(),
   
-  // Verification Signatures
+  // Workflow Finalization Signatures
   supervisorSignature: z.string().optional(),
   supervisorSignatureTimestamp: z.string().optional(),
   executiveSignature: z.string().optional(),
   executiveSignatureTimestamp: z.string().optional(),
 
-  // Final Dispatch Details (Digital Forwarding to ASL)
+  // Dispatched Account Information
   accountNumber: z.string().optional(),
   accountOpeningDate: z.string().optional(),
   isDispatched: z.boolean().optional().default(false),
 
-  signature: z.string().min(3, { message: 'Please provide your full name as a digital signature.' }),
+  signature: z.string().min(3, { message: 'Type your full name as a digital signature.' }),
   agreedToTerms: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    // Sole Trader is now grouped with personal accounts for validation
+    // Technical Logic: Sole Trader is same as Individual technical class
     const isPersonal = ['Individual Accounts', 'Sole Trader', 'Minors'].includes(data.clientType);
+    
     const isCorporate = [
       'Private Limited (Pvt) Company', 
       'Private Business Corporate (PBC)', 
@@ -109,6 +110,7 @@ export const OnboardingFormSchema = z.object({
       'Investment Group', 
       'Parastatal'
     ].includes(data.clientType);
+    
     const isInstitution = [
       'NGO', 
       'Church', 
@@ -118,13 +120,13 @@ export const OnboardingFormSchema = z.object({
       'Trust'
     ].includes(data.clientType);
 
-    // Signatories check for non-personal accounts
+    // Signatories requirement for legal entities
     if (data.clientType && !isPersonal) {
       if (!data.signatories || data.signatories.length === 0) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['signatories'],
-            message: 'At least one authorized signatory is required.',
+            message: 'At least one authorized signatory is mandatory for this class.',
         });
       }
     }
@@ -134,21 +136,22 @@ export const OnboardingFormSchema = z.object({
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['organisationLegalName'],
-            message: 'Legal name is required.',
+            message: 'Legal name is mandatory for corporate classes.',
         });
       }
       if (!data.physicalAddress) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['physicalAddress'],
-            message: 'Physical address is required.',
+            message: 'Verified operating address is mandatory.',
         });
       }
     } else if (isPersonal) {
-      if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is required.' });
-      if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is required.' });
-      if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is required.' });
-      if (!data.individualIdNumber) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualIdNumber'], message: 'National ID number is required.' });
+      // Individual and Sole Trader follow the same mandatory fields
+      if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is mandatory.' });
+      if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is mandatory.' });
+      if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is mandatory.' });
+      if (!data.individualIdNumber) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualIdNumber'], message: 'Registry ID / National ID is mandatory.' });
     }
 });
 
@@ -179,21 +182,13 @@ export const accountTypes = [
 ];
 
 export const rejectionReasons = [
-    'Missing Mandatory Documents',
-    'Incorrect Information Provided',
-    'Poor Document Image Quality',
-    'Expired Identification Documents',
-    'Data Discrepancies Found',
-    'Regulatory Compliance Failure',
-    'Incomplete Form Data',
-    'Invalid BR Identity',
-    'Other (See Internal Comments)',
+    'Regulatory Document Discrepancy',
+    'Invalid ID Document Provided',
+    'Registry Creation Error',
+    'Data Mismatch in Mandate',
+    'Expired Compliance Certificates',
+    'Regulatory Verification Failed',
+    'Incomplete Technical Fields',
+    'Identity Verification Hit',
+    'Other Regulatory Failure',
 ];
-
-export type Comment = {
-  id: string;
-  user: string;
-  role: 'asl' | 'back-office' | 'supervisor' | 'management' | 'compliance';
-  timestamp: string;
-  content: string;
-};

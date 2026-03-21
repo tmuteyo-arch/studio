@@ -45,11 +45,11 @@ const translateStatus = (status: ApplicationStatus) => {
     switch (status) {
         case 'Submitted': return 'Submitted';
         case 'In Review': return 'In Review';
-        case 'Pending Supervisor': return 'Pending Supervisor';
-        case 'Signed': return 'Signed';
+        case 'Pending Supervisor': return 'In Progress';
+        case 'Signed': return 'Finalized';
         case 'Rejected': return 'Rejected';
-        case 'Returned to ATL': return 'Returned to ASL';
-        case 'Archived': return 'Finalized';
+        case 'Returned to ATL': return 'Correction Required';
+        case 'Archived': return 'Account Approved';
         default: return status;
     }
 }
@@ -113,7 +113,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                   <h2 className="text-3xl font-black tracking-tight">ASL Dashboard</h2>
-                  <p className="text-muted-foreground font-medium">Manage your Applications and process new leads.</p>
+                  <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Registry Management & Product Origination</p>
               </div>
               <Button 
                 onClick={() => setIsNewAppMenuOpen(!isNewAppMenuOpen)}
@@ -121,7 +121,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                 className="h-12 px-8 font-black shadow-lg transition-all active:scale-[0.98] border-primary/20"
               >
                 {isNewAppMenuOpen ? <X className="mr-2 h-5 w-5" /> : <PlusCircle className="mr-2 h-5 w-5" />}
-                {isNewAppMenuOpen ? "Cancel Creation" : "New Application"}
+                {isNewAppMenuOpen ? "Cancel Selection" : "New Application"}
               </Button>
           </div>
           
@@ -129,9 +129,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
             <Card className="border-primary/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
                 <CardHeader className="bg-primary/5 border-b border-primary/5 pb-4">
                     <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
-                        Originating Application
+                        Registry Origination Options
                     </CardTitle>
-                    <CardDescription className="text-xs">Select a category to reveal the account type classes.</CardDescription>
+                    <CardDescription className="text-xs">Select a professional category to reveal technical account types.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
                     <div className="flex flex-wrap gap-4">
@@ -140,7 +140,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                 <Button variant="outline" className="h-14 px-6 border-primary/20 hover:bg-primary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
                                     <User className="mr-3 h-5 w-5 text-primary" />
                                     <div className="text-left">
-                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Category</p>
+                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Technical</p>
                                         <p>Personal Accounts</p>
                                     </div>
                                     <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
@@ -163,14 +163,14 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                 <Button variant="outline" className="h-14 px-6 border-secondary/20 hover:bg-secondary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
                                     <Building2 className="mr-3 h-5 w-5 text-secondary" />
                                     <div className="text-left">
-                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Category</p>
+                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Technical</p>
                                         <p>Corporate Accounts</p>
                                     </div>
                                     <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-72">
-                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Corporate Entity Classes</DropdownMenuLabel>
+                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Entity Classes</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
                                     1. Private Limited (Pvt) Company
@@ -198,7 +198,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                 <Button variant="outline" className="h-14 px-6 border-accent/20 hover:bg-accent/5 font-bold shadow-sm transition-all active:scale-[0.98]">
                                     <Landmark className="mr-3 h-5 w-5 text-accent" />
                                     <div className="text-left">
-                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Category</p>
+                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Technical</p>
                                         <p>Institutions</p>
                                     </div>
                                     <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
@@ -257,45 +257,43 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
           <TabsContent value="my-apps">
               <Card className="border-none shadow-md overflow-hidden">
                   <CardHeader className="bg-muted/30">
-                      <CardTitle>Active Applications</CardTitle>
-                      <CardDescription>Status tracking for your applications.</CardDescription>
+                      <CardTitle>Active Application Registry</CardTitle>
+                      <CardDescription>Real-time status tracking for originated records.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredApplications.length > 0 ? (
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-muted/10">
-                                      <TableHead className="pl-6">ID</TableHead>
-                                      <TableHead>Client Name</TableHead>
-                                      <TableHead>Status</TableHead>
-                                      <TableHead className="text-right pr-6">Actions</TableHead>
+                                      <TableHead className="pl-6">Technical ID</TableHead>
+                                      <TableHead>Client Identity</TableHead>
+                                      <TableHead>Current Status</TableHead>
+                                      <TableHead className="text-right pr-6">Action</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
-                                  {filteredApplications.map((app) => {
-                                      return (
-                                          <TableRow key={app.id} className="hover:bg-muted/5 group">
-                                              <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
-                                              <TableCell>
-                                                  <div className="font-medium">{app.clientName}</div>
-                                                  <div className="text-[10px] text-muted-foreground">{app.clientType}</div>
-                                              </TableCell>
-                                              <TableCell>
-                                                  <Badge variant={getStatusVariant(app.status)}>{translateStatus(app.status)}</Badge>
-                                              </TableCell>
-                                              <TableCell className="text-right pr-6">
-                                                  <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                                                      {app.status === 'Returned to ATL' ? 'Edit' : 'View'}
-                                                  </Button>
-                                              </TableCell>
-                                          </TableRow>
-                                      );
-                                  })}
+                                  {filteredApplications.map((app) => (
+                                      <TableRow key={app.id} className="hover:bg-muted/5 group">
+                                          <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
+                                          <TableCell>
+                                              <div className="font-medium">{app.clientName}</div>
+                                              <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">{app.clientType}</div>
+                                          </TableCell>
+                                          <TableCell>
+                                              <Badge variant={getStatusVariant(app.status)}>{translateStatus(app.status)}</Badge>
+                                          </TableCell>
+                                          <TableCell className="text-right pr-6">
+                                              <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
+                                                  {app.status === 'Returned to ATL' ? 'Update Info' : 'View record'}
+                                              </Button>
+                                          </TableCell>
+                                      </TableRow>
+                                  ))}
                               </TableBody>
                           </Table>
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                              <p>No active applications found.</p>
+                              <p>Registry is currently empty.</p>
                           </div>
                       )}
                   </CardContent>
@@ -309,16 +307,16 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                           <Inbox className="h-5 w-5 text-primary" />
                           New Customer Sign Ups
                       </CardTitle>
-                      <CardDescription className="text-primary/80">Self-service registrations awaiting ASL claim.</CardDescription>
+                      <CardDescription className="text-primary/80">Self-service registrations from external portal.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredLeads.length > 0 ? (
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-primary/5">
-                                      <TableHead className="pl-6">Lead ID</TableHead>
-                                      <TableHead>Customer</TableHead>
-                                      <TableHead>Category</TableHead>
+                                      <TableHead className="pl-6">Reference</TableHead>
+                                      <TableHead>Customer Name</TableHead>
+                                      <TableHead>Type</TableHead>
                                       <TableHead>Date</TableHead>
                                       <TableHead className="text-right pr-6">Actions</TableHead>
                                   </TableRow>
@@ -328,7 +326,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                       <TableRow key={app.id} className="hover:bg-primary/10 group animate-in slide-in-from-left-2 duration-300">
                                           <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
                                           <TableCell className="font-medium">{app.clientName}</TableCell>
-                                          <TableCell className="text-xs">{app.clientType}</TableCell>
+                                          <TableCell className="text-xs uppercase font-bold">{app.clientType}</TableCell>
                                           <TableCell className="text-xs text-muted-foreground">{app.submittedDate}</TableCell>
                                           <TableCell className="text-right pr-6">
                                               <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Process Lead</Button>
@@ -340,7 +338,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
                               <Inbox className="h-12 w-12 mb-2 opacity-20" />
-                              <p>No new customer leads available.</p>
+                              <p>No customer portal leads currently available.</p>
                           </div>
                       )}
                   </CardContent>
