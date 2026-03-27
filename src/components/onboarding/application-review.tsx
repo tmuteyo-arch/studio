@@ -98,6 +98,8 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const handleStatusChange = (status: Application['status'], notes?: string) => {
+    const isForwarding = status === 'Sent to Back Office';
+    
     const newHistoryLog: HistoryLog = {
       action: status,
       user: user.name,
@@ -105,16 +107,46 @@ export default function ApplicationReview({ application: initialApplication, onB
       notes: notes,
     };
     
-    handleUpdateApplication({ status: status, history: [...application.history, newHistoryLog] });
+    const updateData: Partial<Application> = { 
+        status: status, 
+        history: [...application.history, newHistoryLog] 
+    };
+
+    // If forwarding a lead, ensure ASL is assigned as owner so they can track it in "My Applications"
+    if (isForwarding && application.submittedBy === 'Customer') {
+        updateData.submittedBy = user.name;
+    }
+    
+    handleUpdateApplication(updateData);
 
     toast({
         title: `Application ${status}`,
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-     if (['Archived', 'Rejected', 'Pending Supervisor', 'Pending Compliance', 'Returned to ATL', 'Approved', 'Sent to Back Office'].includes(status)) {
+     if (['Archived', 'Rejected', 'Pending Supervisor', 'Pending Compliance', 'Returned to ATL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL'].includes(status)) {
         setTimeout(() => onBack(), 500);
     }
+  };
+
+  const handleClaimLead = () => {
+    handleUpdateApplication({ 
+        status: 'Claimed by ASL', 
+        submittedBy: user.name,
+        history: [...application.history, { action: 'Lead Claimed', user: user.name, timestamp: new Date().toISOString() }] 
+    });
+    toast({ title: "Lead Claimed", description: `You are now the owner of ${application.clientName}'s application.` });
+    setTimeout(() => onBack(), 500);
+  };
+
+  const handleRejectLead = () => {
+    handleUpdateApplication({ 
+        status: 'Rejected by ASL', 
+        submittedBy: 'Customer', // Return to public pool
+        history: [...application.history, { action: 'Lead Rejected', user: user.name, timestamp: new Date().toISOString() }] 
+    });
+    toast({ title: "Lead Rejected", description: "Record returned to the customer portal pool." });
+    setTimeout(() => onBack(), 500);
   };
 
   const handleForwardToSupervisor = () => {
@@ -225,7 +257,25 @@ export default function ApplicationReview({ application: initialApplication, onB
   const renderActions = () => {
     switch (user.role) {
       case 'asl':
-        if (application.status === 'Submitted' || application.status === 'Returned to ATL') {
+        const isLead = application.submittedBy === 'Customer';
+        
+        if (isLead) {
+            return (
+                <div className="flex gap-2">
+                    <Button onClick={handleClaimLead} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                        <UserCheck className="mr-2 h-4 w-4" /> Claim
+                    </Button>
+                    <Button onClick={handleRejectLead} variant="destructive" className="font-bold">
+                        <X className="mr-2 h-4 w-4" /> Reject
+                    </Button>
+                    <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-green-600 hover:bg-green-700 text-white font-bold">
+                        <Send className="mr-2 h-4 w-4" /> Forward to Back Office
+                    </Button>
+                </div>
+            );
+        }
+
+        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Claimed by ASL') {
             return (
                 <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black">
                     <Send className="mr-2 h-4 w-4" /> Send to Back Office
@@ -237,7 +287,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         if (application.status === 'Approved') {
             return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black"><Send className="mr-2 h-4 w-4" />Dispatch Approved Account</Button>;
         }
-        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Sent to Back Office') {
+        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') {
             return (
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Correction Required</Button>
@@ -304,7 +354,7 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardHeader>
           <CardContent>
               {/* Back Office: Technical Creation (Clerk only) */}
-              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Sent to Back Office') && (
+              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') && (
                   <div className="mb-8 p-6 bg-primary/5 rounded-xl border border-primary/20 animate-in slide-in-from-top-4">
                       <h4 className="text-xs font-black uppercase text-primary tracking-widest mb-4 flex items-center gap-2">
                           <Fingerprint className="h-4 w-4" /> Step 1: Technical Registry Creation

@@ -31,9 +31,11 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Pending Supervisor':
     case 'In Review':
     case 'Sent to Back Office':
+    case 'Claimed by ASL':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
+    case 'Rejected by ASL':
       return 'destructive';
     case 'Submitted':
       return 'outline';
@@ -52,6 +54,8 @@ const translateStatus = (status: ApplicationStatus) => {
         case 'Returned to ATL': return 'Correction Required';
         case 'Archived': return 'Account Approved';
         case 'Sent to Back Office': return 'Sent to Back Office';
+        case 'Claimed by ASL': return 'Claimed';
+        case 'Rejected by ASL': return 'Lead Rejected';
         default: return status;
     }
 }
@@ -69,11 +73,11 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isNewAppMenuOpen, setIsNewAppMenuOpen] = React.useState(false);
 
   const myApplications = applications
-    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected', 'Pending Supervisor', 'Archived', 'Sent to Back Office'].includes(app.status))
+    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected', 'Pending Supervisor', 'Archived', 'Sent to Back Office', 'Claimed by ASL'].includes(app.status))
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     
   const customerLeads = applications
-    .filter(app => app.submittedBy === 'Customer' && ['Submitted', 'Sent to Back Office'].includes(app.status))
+    .filter(app => app.submittedBy === 'Customer' && ['Submitted', 'Rejected by ASL'].includes(app.status))
     .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime());
 
   const filteredApplications = myApplications.filter(app => {
