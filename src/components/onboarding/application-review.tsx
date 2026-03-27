@@ -112,7 +112,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-     if (['Archived', 'Rejected', 'Pending Supervisor', 'Pending Compliance', 'Returned to ATL', 'Approved'].includes(status)) {
+     if (['Archived', 'Rejected', 'Pending Supervisor', 'Pending Compliance', 'Returned to ATL', 'Approved', 'Sent to Back Office'].includes(status)) {
         setTimeout(() => onBack(), 500);
     }
   };
@@ -224,11 +224,20 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const renderActions = () => {
     switch (user.role) {
+      case 'asl':
+        if (application.status === 'Submitted' || application.status === 'Returned to ATL') {
+            return (
+                <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black">
+                    <Send className="mr-2 h-4 w-4" /> Send to Back Office
+                </Button>
+            );
+        }
+        return null;
       case 'back-office':
         if (application.status === 'Approved') {
             return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black"><Send className="mr-2 h-4 w-4" />Dispatch Approved Account</Button>;
         }
-        if (application.status === 'Submitted' || application.status === 'Returned to ATL') {
+        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Sent to Back Office') {
             return (
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Correction Required</Button>
@@ -295,7 +304,7 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardHeader>
           <CardContent>
               {/* Back Office: Technical Creation (Clerk only) */}
-              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL') && (
+              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Sent to Back Office') && (
                   <div className="mb-8 p-6 bg-primary/5 rounded-xl border border-primary/20 animate-in slide-in-from-top-4">
                       <h4 className="text-xs font-black uppercase text-primary tracking-widest mb-4 flex items-center gap-2">
                           <Fingerprint className="h-4 w-4" /> Step 1: Technical Registry Creation

@@ -30,6 +30,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
       return 'success';
     case 'Pending Supervisor':
     case 'In Review':
+    case 'Sent to Back Office':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
@@ -50,6 +51,7 @@ const translateStatus = (status: ApplicationStatus) => {
         case 'Rejected': return 'Rejected';
         case 'Returned to ATL': return 'Correction Required';
         case 'Archived': return 'Account Approved';
+        case 'Sent to Back Office': return 'Sent to Back Office';
         default: return status;
     }
 }
@@ -67,11 +69,11 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isNewAppMenuOpen, setIsNewAppMenuOpen] = React.useState(false);
 
   const myApplications = applications
-    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected', 'Pending Supervisor', 'Archived'].includes(app.status))
+    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected', 'Pending Supervisor', 'Archived', 'Sent to Back Office'].includes(app.status))
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     
   const customerLeads = applications
-    .filter(app => app.submittedBy === 'Customer' && app.status === 'Submitted')
+    .filter(app => app.submittedBy === 'Customer' && ['Submitted', 'Sent to Back Office'].includes(app.status))
     .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime());
 
   const filteredApplications = myApplications.filter(app => {
@@ -317,7 +319,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                       <TableHead className="pl-6">Reference</TableHead>
                                       <TableHead>Customer Name</TableHead>
                                       <TableHead>Type</TableHead>
-                                      <TableHead>Date</TableHead>
+                                      <TableHead>Current Status</TableHead>
                                       <TableHead className="text-right pr-6">Actions</TableHead>
                                   </TableRow>
                               </TableHeader>
@@ -327,7 +329,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                           <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
                                           <TableCell className="font-medium">{app.clientName}</TableCell>
                                           <TableCell className="text-xs uppercase font-bold">{app.clientType}</TableCell>
-                                          <TableCell className="text-xs text-muted-foreground">{app.submittedDate}</TableCell>
+                                          <TableCell>
+                                              <Badge variant={getStatusVariant(app.status)}>{translateStatus(app.status)}</Badge>
+                                          </TableCell>
                                           <TableCell className="text-right pr-6">
                                               <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Process Lead</Button>
                                           </TableCell>

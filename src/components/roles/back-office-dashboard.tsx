@@ -24,6 +24,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Pending Supervisor':
     case 'Pending Compliance':
     case 'In Review':
+    case 'Sent to Back Office':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
@@ -47,7 +48,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [isDigitizing, setIsDigitizing] = React.useState<boolean>(false);
 
     const summaryStats = React.useMemo(() => ({
-        pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL').length,
+        pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL' || a.status === 'Sent to Back Office').length,
         pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor').length,
         readyToFinalize: applications.filter(a => a.status === 'Approved' && !a.details.isDispatched).length,
         archived: applications.filter(a => a.status === 'Archived').length,
@@ -55,7 +56,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
 
     const pipelineApplications = React.useMemo(() => {
         return applications.filter(app => 
-            ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Pending Compliance', 'Approved', 'Signed', 'Rejected'].includes(app.status) &&
+            ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Pending Compliance', 'Approved', 'Signed', 'Rejected', 'Sent to Back Office'].includes(app.status) &&
             (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [applications, searchTerm]);

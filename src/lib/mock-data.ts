@@ -13,7 +13,8 @@ export type ApplicationStatus =
   | 'Signed'
   | 'Rejected'
   | 'Returned to ATL'
-  | 'Archived';
+  | 'Archived'
+  | 'Sent to Back Office';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
 
