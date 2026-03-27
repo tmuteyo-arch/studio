@@ -69,6 +69,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [isRejecting, setIsRejecting] = React.useState(false);
   const [rejectionReason, setRejectionReason] = React.useState('');
   const [rejectionComment, setRejectionComment] = React.useState('');
+
+  const [isReturning, setIsReturning] = React.useState(false);
+  const [returnComment, setReturnComment] = React.useState('');
   
   const [previewDoc, setPreviewDoc] = React.useState<Document | null>(null);
 
@@ -124,7 +127,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-     if (['Archived', 'Rejected', 'Pending Supervisor', 'Pending Compliance', 'Returned to ATL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL'].includes(status)) {
+     if (['Archived', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Returned to ATL', 'Returned to ASL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL'].includes(status)) {
         setTimeout(() => onBack(), 500);
     }
   };
@@ -156,12 +159,21 @@ export default function ApplicationReview({ application: initialApplication, onB
     }
     const notes = `Technical ID: ${brIdentity} created in registry. Escalate for activation.`;
     handleUpdateApplication({ 
-        status: 'Pending Supervisor', 
+        status: 'Sent to Supervisor', 
         details: { ...application.details, brIdentity },
         history: [...application.history, { action: 'Registry Identity Created', user: user.name, timestamp: new Date().toISOString(), notes }] 
     });
-    toast({ title: "Escalated to Supervisor", description: "Technical identity data has been queued for audit." });
+    toast({ title: "Sent to Supervisor", description: "Technical identity data has been queued for audit." });
     setTimeout(() => onBack(), 500);
+  };
+
+  const handleReturnToAsl = () => {
+    if (!returnComment.trim()) {
+        toast({ variant: 'destructive', title: 'Comment Required', description: 'Please provide a reason for returning the application.' });
+        return;
+    }
+    handleStatusChange('Returned to ASL', returnComment);
+    setIsReturning(false);
   };
 
   const handleSupervisorApproval = () => {
@@ -275,7 +287,7 @@ export default function ApplicationReview({ application: initialApplication, onB
             );
         }
 
-        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Claimed by ASL') {
+        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Claimed by ASL') {
             return (
                 <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black">
                     <Send className="mr-2 h-4 w-4" /> Send to Back Office
@@ -287,19 +299,19 @@ export default function ApplicationReview({ application: initialApplication, onB
         if (application.status === 'Approved') {
             return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black"><Send className="mr-2 h-4 w-4" />Dispatch Approved Account</Button>;
         }
-        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') {
+        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') {
             return (
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => handleStatusChange('Returned to ATL')}><CornerUpLeft className="mr-2 h-4 w-4" />Correction Required</Button>
+                    <Button variant="outline" onClick={() => setIsReturning(true)}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ASL</Button>
                     <Button className="bg-green-600 hover:bg-green-700" onClick={handleForwardToSupervisor}>
-                        <ShieldCheck className="mr-2 h-4 w-4" /> Escalate for Activation
+                        <ShieldCheck className="mr-2 h-4 w-4" /> Send to Back Office Supervisor
                     </Button>
                 </div>
             );
         }
         return null;
       case 'supervisor':
-        if (application.status === 'Pending Supervisor') {
+        if (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor') {
             return (
                 <div className="flex gap-2">
                     <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Decline</Button>
@@ -354,7 +366,7 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardHeader>
           <CardContent>
               {/* Back Office: Technical Creation (Clerk only) */}
-              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') && (
+              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') && (
                   <div className="mb-8 p-6 bg-primary/5 rounded-xl border border-primary/20 animate-in slide-in-from-top-4">
                       <h4 className="text-xs font-black uppercase text-primary tracking-widest mb-4 flex items-center gap-2">
                           <Fingerprint className="h-4 w-4" /> Step 1: Technical Registry Creation
@@ -375,7 +387,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               )}
 
               {/* Supervisor: Final Audit (Supervisor only) */}
-              {user.role === 'supervisor' && application.status === 'Pending Supervisor' && (
+              {user.role === 'supervisor' && (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor') && (
                   <div className="mb-8 p-6 bg-green-500/5 rounded-xl border border-green-500/20 animate-in slide-in-from-top-4">
                       <h4 className="text-xs font-black uppercase text-green-600 tracking-widest mb-4 flex items-center gap-2">
                           <Key className="h-4 w-4" /> Step 2: Regulatory Audit & Authorization
@@ -555,6 +567,36 @@ export default function ApplicationReview({ application: initialApplication, onB
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={handleRejection} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={!rejectionReason || !rejectionComment}>Confirm Decline</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={isReturning} onOpenChange={setIsReturning}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Return to ASL</AlertDialogTitle>
+                    <AlertDialogDescription>Please provide a mandatory reason for returning this application for correction.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase">Return Comments</Label>
+                        <Textarea 
+                            placeholder="Type instructions for ASL..." 
+                            value={returnComment} 
+                            onChange={(e) => setReturnComment(e.target.value)} 
+                            className="min-h-[120px]"
+                        />
+                    </div>
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => { setIsReturning(false); setReturnComment(''); }}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        onClick={handleReturnToAsl} 
+                        className="bg-amber-600 text-white hover:bg-amber-700" 
+                        disabled={!returnComment.trim()}
+                    >
+                        Confirm Return
+                    </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

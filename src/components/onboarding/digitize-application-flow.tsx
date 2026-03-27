@@ -161,7 +161,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
         url: page.dataUri,
       })),
       history: [
-        { action: 'Archived', user: user.name, timestamp: new Date().toISOString(), notes: `Digitalized from paper record. Account Type: ${clientType}` },
+        { action: 'Digitalized Application', user: user.name, timestamp: new Date().toISOString(), notes: `Digitalized Application from paper record. Account Type: ${clientType}` },
       ],
       comments: [],
     } as Application;

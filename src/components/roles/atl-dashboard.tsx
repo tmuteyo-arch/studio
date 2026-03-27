@@ -29,12 +29,14 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Archived':
       return 'success';
     case 'Pending Supervisor':
+    case 'Sent to Supervisor':
     case 'In Review':
     case 'Sent to Back Office':
     case 'Claimed by ASL':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
+    case 'Returned to ASL':
     case 'Rejected by ASL':
       return 'destructive';
     case 'Submitted':
@@ -49,9 +51,11 @@ const translateStatus = (status: ApplicationStatus) => {
         case 'Submitted': return 'Submitted';
         case 'In Review': return 'In Review';
         case 'Pending Supervisor': return 'In Progress';
+        case 'Sent to Supervisor': return 'Awaiting Audit';
         case 'Signed': return 'Finalized';
         case 'Rejected': return 'Rejected';
         case 'Returned to ATL': return 'Correction Required';
+        case 'Returned to ASL': return 'Correction Required';
         case 'Archived': return 'Account Approved';
         case 'Sent to Back Office': return 'Sent to Back Office';
         case 'Claimed by ASL': return 'Claimed';
@@ -73,7 +77,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isNewAppMenuOpen, setIsNewAppMenuOpen] = React.useState(false);
 
   const myApplications = applications
-    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Signed', 'Rejected', 'Pending Supervisor', 'Archived', 'Sent to Back Office', 'Claimed by ASL'].includes(app.status))
+    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Returned to ASL', 'Signed', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Archived', 'Sent to Back Office', 'Claimed by ASL'].includes(app.status))
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     
   const customerLeads = applications
@@ -290,7 +294,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                           </TableCell>
                                           <TableCell className="text-right pr-6">
                                               <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                                                  {app.status === 'Returned to ATL' ? 'Update Info' : 'View record'}
+                                                  {(app.status === 'Returned to ATL' || app.status === 'Returned to ASL') ? 'Update Info' : 'View record'}
                                               </Button>
                                           </TableCell>
                                       </TableRow>

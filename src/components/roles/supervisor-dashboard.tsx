@@ -30,6 +30,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Approved':
       return 'success';
     case 'Pending Supervisor':
+    case 'Sent to Supervisor':
     case 'Pending Compliance':
       return 'secondary';
     case 'Rejected':
@@ -49,7 +50,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         allUsers.filter(u => u.role === 'back-office'), 
     [allUsers]);
 
-    const myApprovalQueue = applications.filter(app => app.status === 'Pending Supervisor');
+    const myApprovalQueue = applications.filter(app => app.status === 'Pending Supervisor' || app.status === 'Sent to Supervisor');
     const archivedVault = applications.filter(app => app.status === 'Archived');
     
     const teamApplications = applications

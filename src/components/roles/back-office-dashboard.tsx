@@ -22,12 +22,14 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Approved':
         return 'success';
     case 'Pending Supervisor':
+    case 'Sent to Supervisor':
     case 'Pending Compliance':
     case 'In Review':
     case 'Sent to Back Office':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
+    case 'Returned to ASL':
       return 'destructive';
     case 'Submitted':
       return 'outline';
@@ -48,15 +50,15 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [isDigitizing, setIsDigitizing] = React.useState<boolean>(false);
 
     const summaryStats = React.useMemo(() => ({
-        pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL' || a.status === 'Sent to Back Office').length,
-        pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor').length,
+        pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL' || a.status === 'Returned to ASL' || a.status === 'Sent to Back Office').length,
+        pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor' || a.status === 'Sent to Supervisor').length,
         readyToFinalize: applications.filter(a => a.status === 'Approved' && !a.details.isDispatched).length,
         archived: applications.filter(a => a.status === 'Archived').length,
     }), [applications]);
 
     const pipelineApplications = React.useMemo(() => {
         return applications.filter(app => 
-            ['Submitted', 'Returned to ATL', 'Pending Supervisor', 'Pending Compliance', 'Approved', 'Signed', 'Rejected', 'Sent to Back Office'].includes(app.status) &&
+            ['Submitted', 'Returned to ATL', 'Returned to ASL', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Approved', 'Signed', 'Rejected', 'Sent to Back Office'].includes(app.status) &&
             (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [applications, searchTerm]);
@@ -91,7 +93,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 </div>
                 <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="font-bold">
                     <ScanLine className="mr-2 h-4 w-4" />
-                    Digitize Paper Record
+                    Digitize Paper Application
                 </Button>
             </div>
             

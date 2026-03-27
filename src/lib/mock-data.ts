@@ -16,7 +16,9 @@ export type ApplicationStatus =
   | 'Archived'
   | 'Sent to Back Office'
   | 'Claimed by ASL'
-  | 'Rejected by ASL';
+  | 'Rejected by ASL'
+  | 'Sent to Supervisor'
+  | 'Returned to ASL';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
 
