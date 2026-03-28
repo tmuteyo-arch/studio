@@ -4,11 +4,11 @@ import * as React from 'react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useAtom } from 'jotai';
-import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document } from '@/lib/mock-data';
+import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document as AppDocument } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -34,6 +34,7 @@ import AccountResolutionPrintView from './account-resolution-print-view';
 import SignatureCanvas from 'react-signature-canvas';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
+import { extractAndValidateData } from '@/ai/flows/extract-and-validate-data';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -73,13 +74,14 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [isReturning, setIsReturning] = React.useState(false);
   const [returnComment, setReturnComment] = React.useState('');
   
-  const [previewDoc, setPreviewDoc] = React.useState<Document | null>(null);
+  const [previewDoc, setPreviewDoc] = React.useState<AppDocument | null>(null);
 
   // Workflow States
   const [brIdentity, setBrIdentity] = React.useState(application.details.brIdentity || '');
   const [activationCode, setActivationCode] = React.useState(application.details.activationCode || '');
   const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
+  const [isAiProcessing, setIsAiProcessing] = React.useState(false);
 
   // Logic: Sole Trader is same as Individual technical details but needs mandate
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
@@ -266,6 +268,57 @@ export default function ApplicationReview({ application: initialApplication, onB
     setIsPrinting(false);
   };
 
+  const handleGeminiVerification = async () => {
+    if (application.documents.length < 2) {
+        toast({
+            variant: 'destructive',
+            title: 'Incomplete Documentation',
+            description: 'AI verification requires at least two documents (e.g., ID and Proof of Residence).'
+        });
+        return;
+    }
+
+    setIsAiProcessing(true);
+    try {
+        const result = await extractAndValidateData({
+            document1DataUri: application.documents[0].url,
+            document1Type: application.documents[0].type,
+            document2DataUri: application.documents[1].url,
+            document2Type: application.documents[1].type,
+            formDataFields: application.details as any,
+        });
+
+        if (result) {
+            handleUpdateApplication({
+                fcbStatus: result.fcbStatus as any,
+                comments: [
+                    ...application.comments,
+                    {
+                        id: `ai-${Date.now()}`,
+                        user: 'Gemini AI',
+                        role: 'compliance',
+                        timestamp: new Date().toISOString(),
+                        content: `AI Verification Complete. Result: ${result.fcbStatus}. Summary: ${result.validationResult}`
+                    }
+                ]
+            });
+            toast({
+                title: 'AI Verification Successful',
+                description: `Determined FCB Status: ${result.fcbStatus}. Check Internal Notes.`,
+            });
+        }
+    } catch (error) {
+        console.error('AI Error:', error);
+        toast({
+            variant: 'destructive',
+            title: 'AI Error',
+            description: 'Failed to process documents with Gemini AI.'
+        });
+    } finally {
+        setIsAiProcessing(false);
+    }
+  };
+
   const renderActions = () => {
     switch (user.role) {
       case 'asl':
@@ -302,8 +355,17 @@ export default function ApplicationReview({ application: initialApplication, onB
         if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') {
             return (
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setIsReturning(true)}><CornerUpLeft className="mr-2 h-4 w-4" />Return to ASL</Button>
-                    <Button className="bg-green-600 hover:bg-green-700" onClick={handleForwardToSupervisor}>
+                    <Button 
+                        variant="outline" 
+                        className="border-primary/20 hover:bg-primary/5 font-bold"
+                        onClick={() => setIsReturning(true)}
+                    >
+                        <CornerUpLeft className="mr-2 h-4 w-4" /> Return to ASL
+                    </Button>
+                    <Button 
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold" 
+                        onClick={handleForwardToSupervisor}
+                    >
                         <ShieldCheck className="mr-2 h-4 w-4" /> Send to Back Office Supervisor
                     </Button>
                 </div>
@@ -368,9 +430,25 @@ export default function ApplicationReview({ application: initialApplication, onB
               {/* Back Office: Technical Creation (Clerk only) */}
               {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') && (
                   <div className="mb-8 p-6 bg-primary/5 rounded-xl border border-primary/20 animate-in slide-in-from-top-4">
-                      <h4 className="text-xs font-black uppercase text-primary tracking-widest mb-4 flex items-center gap-2">
-                          <Fingerprint className="h-4 w-4" /> Step 1: Technical Registry Creation
-                      </h4>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                          <h4 className="text-xs font-black uppercase text-primary tracking-widest flex items-center gap-2">
+                              <Fingerprint className="h-4 w-4" /> Step 1: Technical Registry Creation
+                          </h4>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="bg-white border-primary/20 text-primary font-bold hover:bg-primary/5 transition-all shadow-sm"
+                            onClick={handleGeminiVerification}
+                            disabled={isAiProcessing || application.documents.length < 2}
+                          >
+                            {isAiProcessing ? (
+                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                            ) : (
+                                <Sparkles className="mr-2 h-3 w-3 text-primary fill-primary/20" />
+                            )}
+                            {isAiProcessing ? 'Gemini is Analyzing...' : 'HIE GEMINI: Smart Audit'}
+                          </Button>
+                      </div>
                       <div className="max-w-md space-y-4">
                           <div className="space-y-2">
                               <Label className="text-[10px] font-bold uppercase text-muted-foreground">Internal Technical ID (BR)</Label>
