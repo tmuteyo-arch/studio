@@ -132,7 +132,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Update for ${application.clientName} is done.`,
     });
 
-     if (['Archived', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Returned to ATL', 'Returned to ASL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL', 'Returned to Back Office', 'Sent to Risk & Compliance', 'Approved by Supervisor', 'Rejected by Supervisor'].includes(status)) {
+     if (['Archived', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Returned to ATL', 'Returned to ASL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL', 'Returned to Back Office', 'Sent to Risk & Compliance', 'Approved by Supervisor', 'Rejected by Supervisor', 'Approved by Compliance'].includes(status)) {
         setTimeout(() => onBack(), 500);
     }
   };
@@ -341,10 +341,10 @@ export default function ApplicationReview({ application: initialApplication, onB
             return (
                 <div className="flex gap-2">
                     <Button onClick={handleClaimLead} className="bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md transition-all active:scale-95">
-                        <UserCheck className="mr-2 h-4 w-4" /> Take Lead
+                        <UserCheck className="mr-2 h-4 w-4" /> Claim
                     </Button>
                     <Button onClick={handleRejectLead} variant="destructive" className="font-bold shadow-md transition-all active:scale-95">
-                        <X className="mr-2 h-4 w-4" /> Reject Lead
+                        <X className="mr-2 h-4 w-4" /> Reject
                     </Button>
                     <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-green-600 hover:bg-green-700 text-white font-bold shadow-md transition-all active:scale-95">
                         <Send className="mr-2 h-4 w-4" /> Send to Office
@@ -386,7 +386,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         }
         return null;
       case 'supervisor':
-        if (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor') {
+        if (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor' || application.status === 'Approved by Compliance') {
             return (
                 <div className="flex flex-wrap gap-3">
                     <Button 
@@ -408,6 +408,20 @@ export default function ApplicationReview({ application: initialApplication, onB
                     </Button>
                     <Button className="bg-green-600 hover:bg-green-700 text-white font-black shadow-lg px-8 transition-all active:scale-95" onClick={handleSupervisorApproval}>
                         <CheckCircle2 className="mr-2 h-4 w-4" /> APPROVE & ISSUE CODE
+                    </Button>
+                </div>
+            );
+        }
+        return null;
+      case 'compliance':
+        if (application.status === 'Pending Compliance' || application.status === 'Sent to Risk & Compliance') {
+            return (
+                <div className="flex gap-3">
+                    <Button variant="destructive" className="font-bold shadow-md transition-all active:scale-95" onClick={() => setIsRejecting(true)}>
+                        <X className="mr-2 h-4 w-4" /> Reject
+                    </Button>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white font-black shadow-lg px-8 transition-all active:scale-95" onClick={() => handleStatusChange('Approved by Compliance')}>
+                        <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
                     </Button>
                 </div>
             );
@@ -509,7 +523,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               )}
 
               {/* Supervisor: Final Audit (Supervisor only) */}
-              {user.role === 'supervisor' && (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor') && (
+              {user.role === 'supervisor' && (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor' || application.status === 'Approved by Compliance') && (
                   <div className="mb-8 p-6 bg-green-500/5 rounded-2xl border border-green-500/20 animate-in zoom-in-95 shadow-inner">
                       <h4 className="text-xs font-black uppercase text-green-600 tracking-widest mb-6 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm w-fit">
                           <Key className="h-4 w-4" /> Action: Check & Approve

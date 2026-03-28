@@ -33,6 +33,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'In Review':
     case 'Sent to Back Office':
     case 'Claimed by ASL':
+    case 'Approved by Compliance':
       return 'secondary';
     case 'Rejected':
     case 'Returned to ATL':
@@ -60,6 +61,7 @@ const translateStatus = (status: ApplicationStatus) => {
         case 'Sent to Back Office': return 'Sent to Office';
         case 'Claimed by ASL': return 'Taken';
         case 'Rejected by ASL': return 'Rejected';
+        case 'Approved by Compliance': return 'Cleared';
         default: return status;
     }
 }
@@ -77,7 +79,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isNewAppMenuOpen, setIsNewAppMenuOpen] = React.useState(false);
 
   const myApplications = applications
-    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Returned to ASL', 'Signed', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Archived', 'Sent to Back Office', 'Claimed by ASL'].includes(app.status))
+    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Returned to ASL', 'Signed', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Archived', 'Sent to Back Office', 'Claimed by ASL', 'Approved by Compliance'].includes(app.status))
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     
   const customerLeads = applications

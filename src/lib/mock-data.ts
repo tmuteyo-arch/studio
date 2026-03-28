@@ -22,7 +22,8 @@ export type ApplicationStatus =
   | 'Returned to Back Office'
   | 'Sent to Risk & Compliance'
   | 'Approved by Supervisor'
-  | 'Rejected by Supervisor';
+  | 'Rejected by Supervisor'
+  | 'Approved by Compliance';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
 
