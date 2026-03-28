@@ -80,50 +80,50 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
       <div className="border-b border-white/5 pb-8">
         <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
             <ShieldCheck className="h-10 w-10 text-primary" />
-            SUPERVISOR HUB
+            Supervisor Dashboard
         </h2>
-        <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Final Regulatory Audit • Activation Code Issuance • Performance Appraisal</p>
+        <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Final check and code issuance.</p>
       </div>
 
        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-primary/10 border-primary/20 shadow-2xl rounded-2xl group hover:bg-primary/20 transition-all cursor-default">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Audit Queue</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">To Check</CardTitle>
                     <ShieldAlert className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-4xl font-black text-primary">{myApprovalQueue.length}</div>
-                    <p className="text-[10px] text-primary/60 font-black uppercase mt-2 tracking-widest">Awaiting activation codes</p>
+                    <p className="text-[10px] text-primary/60 font-black uppercase mt-2 tracking-widest">Waiting</p>
                 </CardContent>
             </Card>
             <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl group hover:bg-white/10 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Legacy IDs Linked</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Total IDs</CardTitle>
                     <Fingerprint className="h-8 w-8 text-white/20 group-hover:scale-110 transition-transform" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-4xl font-black text-white">{applications.filter(a => a.details.brIdentity).length}</div>
-                    <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">Total BR identities created</p>
+                    <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">BR IDs</p>
                 </CardContent>
             </Card>
              <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl group hover:bg-white/10 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Approved Today</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Today</CardTitle>
                     <CheckCircle2 className="h-8 w-8 text-green-500 group-hover:scale-110 transition-transform" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-4xl font-black text-green-500">+{completedToday}</div>
-                    <p className="text-[10px] text-green-500/40 font-bold uppercase mt-2 tracking-widest">Codes issued in 24h</p>
+                    <p className="text-[10px] text-green-500/40 font-bold uppercase mt-2 tracking-widest">Approved</p>
                 </CardContent>
             </Card>
             <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl group hover:bg-white/10 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Archived Records</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Archives</CardTitle>
                     <Archive className="h-8 w-8 text-white/20 group-hover:scale-110 transition-transform" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-4xl font-black text-white">{archivedVault.length}</div>
-                    <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">ELECTRONIC ACCOUNT ARCHIVE</p>
+                    <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">Stored records</p>
                 </CardContent>
             </Card>
         </div>
@@ -131,25 +131,25 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
       <Tabs defaultValue="regulation" className="w-full">
           <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5 mb-10 w-full sm:w-auto overflow-x-auto">
               <TabsTrigger value="regulation" className="px-8 h-10 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-black uppercase text-[10px] tracking-[0.2em] transition-all relative">
-                <ClipboardList className="mr-2 h-4 w-4"/>WORKFLOW
+                <ClipboardList className="mr-2 h-4 w-4"/>TO CHECK
                 {totalTasks > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-white text-[8px] flex items-center justify-center rounded-full border-2 border-background animate-pulse">{totalTasks}</span>}
               </TabsTrigger>
-              <TabsTrigger value="vault" className="px-8 h-10 rounded-lg data-[state=active]:bg-foreground data-[state=active]:text-background font-black uppercase text-[10px] tracking-[0.2em] transition-all"><Archive className="mr-2 h-4 w-4"/>ELECTRONIC ACCOUNT ARCHIVE</TabsTrigger>
-              <TabsTrigger value="analytics" className="px-8 h-10 rounded-lg data-[state=active]:bg-white/20 font-black uppercase text-[10px] tracking-[0.2em] transition-all"><AreaChart className="mr-2 h-4 w-4"/>APPRAISAL</TabsTrigger>
-              <TabsTrigger value="team" className="px-8 h-10 rounded-lg data-[state=active]:bg-white/20 font-black uppercase text-[10px] tracking-[0.2em] transition-all"><Users className="mr-2 h-4 w-4"/>CLERK RESULTS</TabsTrigger>
-              <TabsTrigger value="reports" className="px-8 h-10 rounded-lg data-[state=active]:bg-white/20 font-black uppercase text-[10px] tracking-[0.2em] transition-all"><FileDown className="mr-2 h-4 w-4"/>AUDIT REPORTS</TabsTrigger>
+              <TabsTrigger value="vault" className="px-8 h-10 rounded-lg data-[state=active]:bg-foreground data-[state=active]:text-background font-black uppercase text-[10px] tracking-[0.2em] transition-all"><Archive className="mr-2 h-4 w-4"/>ARCHIVES</TabsTrigger>
+              <TabsTrigger value="analytics" className="px-8 h-10 rounded-lg data-[state=active]:bg-white/20 font-black uppercase text-[10px] tracking-[0.2em] transition-all"><AreaChart className="mr-2 h-4 w-4"/>STATS</TabsTrigger>
+              <TabsTrigger value="team" className="px-8 h-10 rounded-lg data-[state=active]:bg-white/20 font-black uppercase text-[10px] tracking-[0.2em] transition-all"><Users className="mr-2 h-4 w-4"/>CLERKS</TabsTrigger>
+              <TabsTrigger value="reports" className="px-8 h-10 rounded-lg data-[state=active]:bg-white/20 font-black uppercase text-[10px] tracking-[0.2em] transition-all"><FileDown className="mr-2 h-4 w-4"/>REPORTS</TabsTrigger>
           </TabsList>
           
           <TabsContent value="regulation" className="animate-in fade-in duration-500">
              <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                       <div>
-                        <CardTitle className="text-2xl font-black uppercase tracking-tight">Final Audit Queue</CardTitle>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Issue activation codes for verified technical identities.</p>
+                        <CardTitle className="text-2xl font-black uppercase tracking-tight">Queue</CardTitle>
+                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Issue codes for verified IDs.</p>
                       </div>
                       <div className="relative w-full sm:w-80">
                           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
-                          <Input placeholder="Search Registry ID or Client..." className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary text-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                          <Input placeholder="Search..." className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary text-white" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                       </div>
                   </div>
                   <Card className="border-none shadow-2xl overflow-hidden bg-white/5 backdrop-blur-md rounded-2xl">
@@ -157,11 +157,11 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-black/20 border-white/5">
-                                    <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">TECHNICAL ID</TableHead>
-                                    <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CUSTOMER IDENTITY</TableHead>
-                                    <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">BR IDENTITY</TableHead>
-                                    <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">ASSIGNED CLERK</TableHead>
-                                    <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">LAST ACTION</TableHead>
+                                    <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ID</TableHead>
+                                    <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
+                                    <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">BR ID</TableHead>
+                                    <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLERK</TableHead>
+                                    <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">DATE</TableHead>
                                     <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -180,7 +180,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                                         <TableCell className="text-white/40 text-xs font-mono">{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
                                         <TableCell className="text-right pr-8">
                                             <Button className="bg-primary text-primary-foreground font-black uppercase tracking-widest h-10 shadow-lg active:scale-95 px-6 rounded-lg" size="sm" onClick={() => setSelectedApplication(app)}>
-                                                <Key className="mr-2 h-4 w-4" /> REVIEW & ISSUE CODE
+                                                <Key className="mr-2 h-4 w-4" /> Check & Approve
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -190,7 +190,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                         {filteredApprovalQueue.length === 0 && (
                             <div className="flex flex-col items-center justify-center p-24 text-center">
                                 <ClipboardList className="h-16 w-16 text-white/5 mb-4" />
-                                <p className="text-white/20 font-black uppercase tracking-widest italic">{searchTerm ? 'No matches found in audit registry.' : 'Regulatory queue is currently empty.'}</p>
+                                <p className="text-white/20 font-black uppercase tracking-widest italic">Queue is empty.</p>
                             </div>
                         )}
                       </CardContent>
@@ -204,8 +204,8 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                       <div className="flex items-center gap-3">
                         <Archive className="h-6 w-6 text-primary" />
                         <div>
-                            <CardTitle className="text-xl font-black uppercase tracking-tight text-white">ELECTRONIC ACCOUNT ARCHIVE AUDIT</CardTitle>
-                            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Audit-ready finalized records and digitized documents.</CardDescription>
+                            <CardTitle className="text-xl font-black uppercase tracking-tight text-white">Archives</CardTitle>
+                            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Finished records.</CardDescription>
                         </div>
                       </div>
                   </CardHeader>
@@ -214,11 +214,11 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-black/20 border-white/5">
-                                      <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ARCHIVE ID</TableHead>
-                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLIENT IDENTITY</TableHead>
+                                      <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">REF</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
                                       <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLASS</TableHead>
-                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">ACTIVATION CODE</TableHead>
-                                      <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">SECURITY ACTION</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CODE</TableHead>
+                                      <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -231,7 +231,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                                           <TableCell className="text-right pr-8">
                                               <Button variant="ghost" size="sm" className="h-9 px-5 rounded-lg font-black uppercase tracking-widest text-[10px] hover:bg-white/10" onClick={() => setSelectedApplication(app)}>
                                                   <FileSearch className="mr-2 h-4 w-4" />
-                                                  FULL AUDIT
+                                                  VIEW
                                               </Button>
                                           </TableCell>
                                       </TableRow>
@@ -241,7 +241,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                       ) : (
                           <div className="p-24 text-center flex flex-col items-center">
                               <Archive className="h-16 w-16 opacity-5 text-white mb-4" />
-                              <p className="text-white/20 font-black uppercase tracking-widest italic">No archived records found in the technical vault.</p>
+                              <p className="text-white/20 font-black uppercase tracking-widest italic">No records found.</p>
                           </div>
                       )}
                   </CardContent>

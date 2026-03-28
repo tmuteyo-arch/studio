@@ -17,10 +17,10 @@ export default function StepAccountType() {
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <CardHeader className="px-6 pb-2">
         <CardTitle className="text-xl font-bold uppercase tracking-tight">
-          Application Settings
+          Settings
         </CardTitle>
         <CardDescription>
-          Specify the operating region for this record.
+          Choose the region.
         </CardDescription>
       </CardHeader>
       
@@ -28,11 +28,11 @@ export default function StepAccountType() {
         {/* Selected Context Display */}
         <div className="p-6 rounded-xl bg-muted/30 border border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Account Type</p>
-            <h3 className="text-xl font-black text-foreground uppercase">{clientType || 'Not Selected'}</h3>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Type</p>
+            <h3 className="text-xl font-black text-foreground uppercase">{clientType || 'None'}</h3>
           </div>
           <Badge variant="success" className="h-8 px-4 flex items-center gap-2 uppercase tracking-wider text-[10px] font-bold">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Context Locked
+            <CheckCircle2 className="h-3.5 w-3.5" /> Locked
           </Badge>
         </div>
 
@@ -41,10 +41,10 @@ export default function StepAccountType() {
           <div className="space-y-1.5">
             <FormLabel className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
               <MapPin className="h-3.5 w-3.5 text-primary" />
-              Operating Province
+              Region
             </FormLabel>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Select the mandatory operating province for this application.
+              Pick the province.
             </p>
           </div>
           
@@ -56,7 +56,7 @@ export default function StepAccountType() {
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger className="h-12 bg-background border-primary/20">
-                      <SelectValue placeholder="Choose a province..." />
+                      <SelectValue placeholder="Choose province..." />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="max-h-[300px]">

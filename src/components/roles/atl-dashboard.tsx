@@ -48,18 +48,18 @@ const getStatusVariant = (status: ApplicationStatus) => {
 
 const translateStatus = (status: ApplicationStatus) => {
     switch (status) {
-        case 'Submitted': return 'Submitted';
-        case 'In Review': return 'In Review';
-        case 'Pending Supervisor': return 'In Progress';
-        case 'Sent to Supervisor': return 'Awaiting Audit';
-        case 'Signed': return 'Finalized';
+        case 'Submitted': return 'Sent';
+        case 'In Review': return 'Checking';
+        case 'Pending Supervisor': return 'Working';
+        case 'Sent to Supervisor': return 'Awaiting Check';
+        case 'Signed': return 'Done';
         case 'Rejected': return 'Rejected';
-        case 'Returned to ATL': return 'Correction Required';
-        case 'Returned to ASL': return 'Correction Required';
-        case 'Archived': return 'Account Approved';
-        case 'Sent to Back Office': return 'Sent to Back Office';
-        case 'Claimed by ASL': return 'Claimed';
-        case 'Rejected by ASL': return 'Lead Rejected';
+        case 'Returned to ATL': return 'Needs Fix';
+        case 'Returned to ASL': return 'Needs Fix';
+        case 'Archived': return 'Approved';
+        case 'Sent to Back Office': return 'Sent to Office';
+        case 'Claimed by ASL': return 'Taken';
+        case 'Rejected by ASL': return 'Rejected';
         default: return status;
     }
 }
@@ -124,9 +124,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
               <div>
                   <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
                     <User className="h-10 w-10 text-primary" />
-                    ASL WORKSPACE
+                    Sales Dashboard
                   </h2>
-                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Registry Management • Product Origination • Lead Processing</p>
+                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Manage your records and leads.</p>
               </div>
               <Button 
                 onClick={() => setIsNewAppMenuOpen(!isNewAppMenuOpen)}
@@ -134,7 +134,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                 className={`h-14 px-10 font-black shadow-2xl transition-all active:scale-95 text-lg rounded-xl border-2 ${isNewAppMenuOpen ? "border-white/20" : "border-primary/50 shadow-primary/20"}`}
               >
                 {isNewAppMenuOpen ? <X className="mr-2 h-6 w-6" /> : <PlusCircle className="mr-2 h-6 w-6" />}
-                {isNewAppMenuOpen ? "CANCEL" : "START NEW APPLICATION"}
+                {isNewAppMenuOpen ? "CANCEL" : "NEW APPLICATION"}
               </Button>
           </div>
           
@@ -144,11 +144,10 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                     <div className="flex items-center justify-between">
                         <div>
                             <CardTitle className="text-sm font-black uppercase tracking-[0.3em] flex items-center gap-2 text-primary">
-                                <Sparkles className="h-4 w-4" /> REGISTRY ORIGINATION
+                                <Sparkles className="h-4 w-4" /> START NEW
                             </CardTitle>
-                            <CardDescription className="text-xs text-white/60 font-medium uppercase mt-1 tracking-widest">Select a professional category to reveal technical account types.</CardDescription>
+                            <CardDescription className="text-xs text-white/60 font-medium uppercase mt-1 tracking-widest">Choose a category to begin.</CardDescription>
                         </div>
-                        <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary">v2.0 ACTIVE</Badge>
                     </div>
                 </CardHeader>
                 <CardContent className="pt-8 pb-10">
@@ -160,17 +159,17 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                         <User className="h-5 w-5 text-primary" />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Technical Category</p>
+                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Type</p>
                                         <p className="text-lg text-white">PERSONAL</p>
                                     </div>
                                     <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="center" className="w-72 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl shadow-2xl">
-                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Select Personal Class</DropdownMenuLabel>
+                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Choose Type</DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-white/5" />
                                 <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-primary hover:text-primary-foreground m-1 transition-colors" onClick={() => handleStartApplication('Individual Accounts')}>
-                                    Individual Accounts
+                                    Person
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-primary hover:text-primary-foreground m-1 transition-colors" onClick={() => handleStartApplication('Sole Trader')}>
                                     Sole Trader
@@ -185,27 +184,27 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                         <Building2 className="h-5 w-5 text-secondary" />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Technical Category</p>
+                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Type</p>
                                         <p className="text-lg text-white">CORPORATE</p>
                                     </div>
                                     <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="center" className="w-80 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl shadow-2xl">
-                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Select Entity Class</DropdownMenuLabel>
+                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Choose Type</DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-white/5" />
                                 <div className="max-h-[400px] overflow-y-auto">
                                     <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-secondary hover:text-white m-1 transition-colors" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
-                                        Private Limited (Pvt) Company
+                                        Pvt Ltd Company
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-secondary hover:text-white m-1 transition-colors" onClick={() => handleStartApplication('Private Business Corporate (PBC)')}>
-                                        Private Business Corporate (PBC)
+                                        PBC Company
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-secondary hover:text-white m-1 transition-colors" onClick={() => handleStartApplication('Public Limited company')}>
-                                        Public Limited company
+                                        Public Company
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-secondary hover:text-white m-1 transition-colors" onClick={() => handleStartApplication('Partnerships')}>
-                                        Partnerships
+                                        Partnership
                                     </DropdownMenuItem>
                                 </div>
                             </DropdownMenuContent>
@@ -218,14 +217,14 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                         <Landmark className="h-5 w-5 text-accent" />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Technical Category</p>
-                                        <p className="text-lg text-white">INSTITUTIONAL</p>
+                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Type</p>
+                                        <p className="text-lg text-white">OTHER</p>
                                     </div>
                                     <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="center" className="w-72 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl shadow-2xl">
-                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Select Institutional Class</DropdownMenuLabel>
+                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Choose Type</DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-white/5" />
                                 <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('NGO')}>
                                     NGO
@@ -249,18 +248,18 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
               <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5">
                   <TabsTrigger value="my-apps" className="flex items-center gap-3 px-6 h-10 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-black uppercase text-xs tracking-widest transition-all">
                       <UserCheck className="h-4 w-4" />
-                      MY APPLICATIONS ({filteredApplications.length})
+                      MY LIST ({filteredApplications.length})
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-3 px-6 h-10 rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground font-black uppercase text-xs tracking-widest transition-all relative">
                       <Inbox className="h-4 w-4" />
-                      CUSTOMER LEADS ({filteredLeads.length})
+                      LEADS ({filteredLeads.length})
                       {filteredLeads.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full animate-pulse border-2 border-background" />}
                   </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-80">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
                   <Input
-                      placeholder="Search Registry..."
+                      placeholder="Search..."
                       className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary text-white placeholder:text-white/20 font-medium"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -272,8 +271,8 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
               <Card className="border-none shadow-2xl overflow-hidden bg-white/5 backdrop-blur-md rounded-2xl">
                   <CardHeader className="bg-white/5 py-6 px-8 border-b border-white/5">
                       <div className="flex justify-between items-center">
-                        <CardTitle className="text-xl font-black uppercase tracking-tight">Active Application Registry</CardTitle>
-                        <Badge variant="outline" className="font-mono text-white/40 border-white/10 px-3">Live Feed</Badge>
+                        <CardTitle className="text-xl font-black uppercase tracking-tight">Applications</CardTitle>
+                        <Badge variant="outline" className="font-mono text-white/40 border-white/10 px-3">Live</Badge>
                       </div>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -281,9 +280,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
-                                      <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">TECHNICAL ID</TableHead>
-                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLIENT IDENTITY</TableHead>
-                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">REGISTRY STATUS</TableHead>
+                                      <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ID</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">STATUS</TableHead>
                                       <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                   </TableRow>
                               </TableHeader>
@@ -300,7 +299,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                           </TableCell>
                                           <TableCell className="text-right pr-8">
                                               <Button variant="outline" size="sm" className="font-black uppercase tracking-widest h-9 border-white/10 hover:bg-white/10 hover:text-white transition-all active:scale-95 px-5 rounded-lg" onClick={() => setSelectedApplication(app)}>
-                                                  {(app.status === 'Returned to ATL' || app.status === 'Returned to ASL') ? 'FIX RECORD' : 'VIEW'}
+                                                  {(app.status === 'Returned to ATL' || app.status === 'Returned to ASL') ? 'FIX' : 'VIEW'}
                                               </Button>
                                           </TableCell>
                                       </TableRow>
@@ -310,7 +309,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-24 text-center">
                               <UserCheck className="h-16 w-16 text-white/10 mb-4" />
-                              <p className="text-white/40 font-black uppercase tracking-widest">Your registry is currently empty.</p>
+                              <p className="text-white/40 font-black uppercase tracking-widest">List is empty.</p>
                           </div>
                       )}
                   </CardContent>
@@ -323,9 +322,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       <div className="flex justify-between items-center">
                         <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight text-white">
                             <Inbox className="h-6 w-6 text-secondary" />
-                            NEW CUSTOMER SIGN UPS
+                            NEW LEADS
                         </CardTitle>
-                        <Badge variant="outline" className="font-mono border-secondary/30 text-secondary px-3 uppercase font-black">Portal Sync Active</Badge>
+                        <Badge variant="outline" className="font-mono border-secondary/30 text-secondary px-3 uppercase font-black">Sync Active</Badge>
                       </div>
                   </CardHeader>
                   <CardContent className="p-0">
@@ -333,11 +332,11 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
-                                      <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">REFERENCE</TableHead>
-                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CUSTOMER NAME</TableHead>
+                                      <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">REF</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
                                       <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">TYPE</TableHead>
                                       <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">STATUS</TableHead>
-                                      <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTIONS</TableHead>
+                                      <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -354,7 +353,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                               <Badge variant={getStatusVariant(app.status)} className="font-black uppercase text-[10px] tracking-widest px-3 py-1">{translateStatus(app.status)}</Badge>
                                           </TableCell>
                                           <TableCell className="text-right pr-8">
-                                              <Button variant="default" size="sm" className="font-black uppercase tracking-widest h-9 bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-all active:scale-95 px-6 rounded-lg shadow-lg" onClick={() => setSelectedApplication(app)}>PROCESS LEAD</Button>
+                                              <Button variant="default" size="sm" className="font-black uppercase tracking-widest h-9 bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-all active:scale-95 px-6 rounded-lg shadow-lg" onClick={() => setSelectedApplication(app)}>PROCESS</Button>
                                           </TableCell>
                                       </TableRow>
                                   ))}
@@ -363,7 +362,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-24 text-center">
                               <Inbox className="h-16 w-16 text-secondary/20 mb-4 animate-pulse" />
-                              <p className="text-white/40 font-black uppercase tracking-widest">No customer portal leads available.</p>
+                              <p className="text-white/40 font-black uppercase tracking-widest">No leads found.</p>
                           </div>
                       )}
                   </CardContent>

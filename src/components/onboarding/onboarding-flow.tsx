@@ -34,12 +34,12 @@ import StepSignatories from './steps/step-signatories';
 
 
 const allSteps: Step[] = [
-  { id: 'account-type', name: 'Product Type', fields: ['clientType', 'region'] },
-  { id: 'individual-info', name: 'Personal Info', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
-  { id: 'corporate-info', name: 'Legal Entity Details', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
-  { id: 'signatories', name: 'Mandate & Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
-  { id: 'document-upload', name: 'Documentation', fields: ['capturedDocuments'] },
-  { id: 'review-submit', name: 'Review & Send', fields: ['signature', 'agreedToTerms'] },
+  { id: 'account-type', name: 'Product', fields: ['clientType', 'region'] },
+  { id: 'individual-info', name: 'Personal', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
+  { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
+  { id: 'signatories', name: 'Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
+  { id: 'document-upload', name: 'Files', fields: ['capturedDocuments'] },
+  { id: 'review-submit', name: 'Review', fields: ['signature', 'agreedToTerms'] },
 ];
 
 const StepComponents: Record<string, React.ElementType> = {
@@ -158,7 +158,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     if (duplicate) {
         setDuplicateInfo({ 
           isDuplicate: true, 
-          message: `Someone named '${nameToCheck}' is already in the system. Please check if this is new or a mistake.` 
+          message: `'${nameToCheck}' is already in the system.` 
         });
         return false;
     }
@@ -172,8 +172,8 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     
     if (!isValid) {
       toast({
-        title: "Almost Done",
-        description: "Please fill in all the required boxes first.",
+        title: "Incomplete",
+        description: "Please fill in all required boxes.",
         variant: "destructive",
       });
       return;
@@ -232,8 +232,8 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     setActivityLogs(prev => [logEntry, ...prev]);
 
     toast({
-      title: "All Set!",
-      description: `We've received the request for ${newApplication.clientName}.`,
+      title: "Finished!",
+      description: `Sent request for ${newApplication.clientName}.`,
     });
     
      setTimeout(() => {
@@ -260,18 +260,16 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
                 <CardFooter className="border-t px-6 py-4 justify-between bg-muted/10">
                   <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev}>
                      {currentStepIndex > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
-                    {currentStepIndex === 0 ? 'Cancel' : 'Go Back'}
+                    {currentStepIndex === 0 ? 'Cancel' : 'Back'}
                   </Button>
                   {currentStepIndex < steps.length - 1 && (
                      <Button type="button" onClick={next} disabled={isCheckingDuplicates}>
-                      {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      {isCheckingDuplicates ? 'Checking...' : 'Next Step'}
+                      {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Next'}
                     </Button>
                   )}
                   {currentStepIndex === steps.length - 1 && (
                      <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
-                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                       {isSubmitting ? 'Sending...' : 'Finish & Send'}
+                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Finish'}
                      </Button>
                   )}
                 </CardFooter>
@@ -284,23 +282,23 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Duplicate Warning
+                Duplicate Found
               </AlertDialogTitle>
               <AlertDialogDescription className="text-foreground">
                 {duplicateInfo.message}
                 <br /><br />
-                Do you still want to go ahead?
+                Continue anyway?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>No, Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>No</AlertDialogCancel>
               <AlertDialogAction onClick={() => {
                 setDuplicateInfo({ isDuplicate: false, message: '' });
                 if (currentStepIndex < steps.length - 1) {
                   setCurrentStepIndex((step) => step + 1);
                 }
               }}>
-                Yes, Continue
+                Yes
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

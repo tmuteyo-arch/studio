@@ -13,9 +13,9 @@ export default function StepCorporateInfo() {
   return (
     <div>
       <CardHeader>
-        <CardTitle>Corporate Details</CardTitle>
+        <CardTitle>Business Info</CardTitle>
         <CardDescription>
-          Please provide the mandatory legal and operational details for the company.
+          Enter company details.
         </CardDescription>
       </CardHeader>
       <div className="space-y-4 px-6">
@@ -24,9 +24,9 @@ export default function StepCorporateInfo() {
           name="organisationLegalName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Organisation’s Legal Name</FormLabel>
+              <FormLabel>Legal Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Rubieson Enterprises (Pvt) Ltd" {...field} value={field.value || ''}/>
+                <Input placeholder="e.g. Acme Ltd" {...field} value={field.value || ''}/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -38,11 +38,11 @@ export default function StepCorporateInfo() {
           name="natureOfBusiness"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Type of Business (Industry)</FormLabel>
+              <FormLabel>Industry</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select business industry..." />
+                    <SelectValue placeholder="Choose industry..." />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -64,9 +64,9 @@ export default function StepCorporateInfo() {
             name="certificateOfIncorporationNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Certificate of Incorporation Number</FormLabel>
+                <FormLabel>ID Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. 12345/2021" {...field} value={field.value || ''}/>
+                  <Input placeholder="e.g. 12345" {...field} value={field.value || ''}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -77,7 +77,7 @@ export default function StepCorporateInfo() {
             name="dateOfIncorporation"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Date of Incorporation</FormLabel>
+                <FormLabel>Start Date</FormLabel>
                 <FormControl>
                     <Input type="date" {...field} value={field.value || ''}/>
                 </FormControl>
@@ -92,9 +92,9 @@ export default function StepCorporateInfo() {
             name="physicalAddress"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Physical Business Address</FormLabel>
+                <FormLabel>Address</FormLabel>
                 <FormControl>
-                  <Input placeholder="123 Business Ave, Workington, Harare" {...field} value={field.value || ''}/>
+                  <Input placeholder="Street, City" {...field} value={field.value || ''}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -107,9 +107,9 @@ export default function StepCorporateInfo() {
                 name="businessTelNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Business Telephone Number</FormLabel>
+                    <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+263 4 123 456" {...field} value={field.value || ''}/>
+                      <Input placeholder="+263..." {...field} value={field.value || ''}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -120,9 +120,9 @@ export default function StepCorporateInfo() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Official Email Address</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="contact@company.com" {...field} value={field.value || ''}/>
+                      <Input type="email" placeholder="mail@site.com" {...field} value={field.value || ''}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -81,7 +81,7 @@ export default function StepDocumentUpload() {
     if (!file) return;
     
     if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-        toast({ variant: 'destructive', title: 'Invalid File', description: 'Please upload an image or PDF file.' });
+        toast({ variant: 'destructive', title: 'Bad File', description: 'Use image or PDF.' });
         return;
     }
 
@@ -113,10 +113,10 @@ export default function StepDocumentUpload() {
       }
       setHasCameraPermission(true);
     } catch (error) {
-      console.error('Error accessing camera:', error);
+      console.error('Error:', error);
       setHasCameraPermission(false);
       setIsScanning(null);
-      toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access the camera.' });
+      toast({ variant: 'destructive', title: 'Error', description: 'No camera access.' });
     }
   };
 
@@ -134,7 +134,7 @@ export default function StepDocumentUpload() {
                 ...prev,
                 [isScanning]: { ...prev[isScanning], pages: [{ source: 'scan', dataUri, type: 'image' }] }
             }));
-            toast({ title: 'Page Captured', description: `Added to ${isScanning}.` });
+            toast({ title: 'Added', description: 'File added.' });
         }
         stopScan();
     }
@@ -153,22 +153,22 @@ export default function StepDocumentUpload() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ScanLine className="h-6 w-6 text-primary" />
-          Document Capture
+          Add Files
         </CardTitle>
-        <CardDescription>Capture required documents using your camera or upload existing files.</CardDescription>
+        <CardDescription>Use camera or upload.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
         
         <Alert className="bg-primary/5 border-primary/20">
             <Info className="h-4 w-4" />
-            <AlertTitle>Requirements for {clientType}</AlertTitle>
+            <AlertTitle>Need for {clientType}</AlertTitle>
             <AlertDescription>
                 <div className="max-h-48 overflow-auto mt-2">
                   <Table>
                       <TableHeader>
                           <TableRow>
-                              <TableHead>Document</TableHead>
-                              <TableHead>Required Format</TableHead>
+                              <TableHead>File</TableHead>
+                              <TableHead>Format</TableHead>
                           </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -212,7 +212,7 @@ export default function StepDocumentUpload() {
                             ) : (
                                 <div className="flex flex-col items-center gap-1">
                                     <File className="h-8 w-8 text-primary" />
-                                    <span className="text-[10px] font-bold">PDF FILE</span>
+                                    <span className="text-[10px] font-bold">PDF</span>
                                 </div>
                             )}
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -223,7 +223,7 @@ export default function StepDocumentUpload() {
                         </div>
                     ) : (
                     <div className="h-24 border-dashed border-2 rounded flex items-center justify-center text-muted-foreground text-[10px]">
-                        No pages added
+                        Empty
                     </div>
                     )}
                     
@@ -231,18 +231,18 @@ export default function StepDocumentUpload() {
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="secondary" size="sm" className="w-full mt-2 h-8 text-xs font-bold">
-                                <Eye className="mr-2 h-3 w-3"/>View Document
+                                <Eye className="mr-2 h-3 w-3"/>View
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
                             <DialogHeader>
-                                <DialogTitle>Document Preview: {documentType}</DialogTitle>
+                                <DialogTitle>Preview: {documentType}</DialogTitle>
                             </DialogHeader>
                             <div className="flex-1 min-h-0 bg-muted rounded-md overflow-hidden flex items-center justify-center">
                                 {pages[0].type === 'image' ? (
                                     <img src={pages[0].dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
                                 ) : (
-                                    <iframe src={pages[0].dataUri} className="w-full h-full" title="PDF Preview" />
+                                    <iframe src={pages[0].dataUri} className="w-full h-full" title="PDF" />
                                 )}
                             </div>
                         </DialogContent>
@@ -257,7 +257,7 @@ export default function StepDocumentUpload() {
        <Dialog open={!!isScanning} onOpenChange={(isOpen) => !isOpen && stopScan()}>
             <DialogContent className="max-w-xl">
                 <DialogHeader>
-                    <DialogTitle>Capture Document: {isScanning}</DialogTitle>
+                    <DialogTitle>Scan: {isScanning}</DialogTitle>
                 </DialogHeader>
                 <div className="relative">
                     <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay playsInline muted />
@@ -266,15 +266,15 @@ export default function StepDocumentUpload() {
                          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                             <Alert variant="destructive" className="m-4">
                                 <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Camera Access Required</AlertTitle>
-                                <AlertDescription>Please allow camera access in your browser settings.</AlertDescription>
+                                <AlertTitle>Need Camera</AlertTitle>
+                                <AlertDescription>Allow camera in browser.</AlertDescription>
                             </Alert>
                         </div>
                     )}
                 </div>
                 <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={stopScan}>Cancel</Button>
-                    <Button onClick={captureImage} disabled={!hasCameraPermission} className="font-bold">Capture Page</Button>
+                    <Button onClick={captureImage} disabled={!hasCameraPermission} className="font-bold">Take Photo</Button>
                 </div>
             </DialogContent>
         </Dialog>

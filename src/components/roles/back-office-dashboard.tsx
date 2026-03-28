@@ -92,13 +92,13 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
                         <Briefcase className="h-10 w-10 text-primary" />
-                        BACK OFFICE HUB
+                        Office Dashboard
                     </h2>
-                    <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Documentation Verification • BR ID Creation • Wallet Finalization</p>
+                    <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Manage files and final checks.</p>
                 </div>
                 <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="h-14 px-10 font-black shadow-2xl transition-all active:scale-95 text-lg rounded-xl border-2 border-secondary/50 shadow-secondary/20">
                     <ScanLine className="mr-2 h-6 w-6" />
-                    DIGITIZE PAPER APPLICATION
+                    SCAN PAPER
                 </Button>
             </div>
             
@@ -107,42 +107,42 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl overflow-hidden group hover:bg-white/10 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Identity Queue</CardTitle>
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Waiting</CardTitle>
                         <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><Fingerprint className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-white">{summaryStats.pendingReview}</div>
-                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">Awaiting BR ID creation</p>
+                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">Need ID creation</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl overflow-hidden group hover:bg-white/10 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Awaiting Audit</CardTitle>
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Checking</CardTitle>
                         <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform"><Briefcase className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-white">{summaryStats.pendingSupervisor}</div>
-                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">Pending Supervisor Audit</p>
+                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">With Supervisor</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-primary/10 border-primary/20 shadow-xl rounded-2xl overflow-hidden group hover:bg-primary/20 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Ready to Finalize</CardTitle>
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Finish</CardTitle>
                         <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground group-hover:scale-110 transition-transform shadow-lg"><Key className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-primary">{summaryStats.readyToFinalize}</div>
-                        <p className="text-[10px] text-primary/60 font-black uppercase mt-2 tracking-widest">Authorization codes issued</p>
+                        <p className="text-[10px] text-primary/60 font-black uppercase mt-2 tracking-widest">Ready to finish</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl overflow-hidden group hover:bg-white/10 transition-colors">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Archive Vault</CardTitle>
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Archives</CardTitle>
                         <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 group-hover:scale-110 transition-transform"><Archive className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-white">{summaryStats.archived}</div>
-                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">ELECTRONIC ACCOUNT ARCHIVE</p>
+                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">All finished records</p>
                     </CardContent>
                 </Card>
             </div>
@@ -156,13 +156,13 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                         </TabsTrigger>
                         <TabsTrigger value="archive" className="flex items-center gap-3 px-8 h-10 rounded-lg data-[state=active]:bg-foreground data-[state=active]:text-background font-black uppercase text-xs tracking-widest transition-all">
                             <Archive className="h-4 w-4" />
-                            ELECTRONIC ACCOUNT ARCHIVE ({archivedApplications.length})
+                            ARCHIVES ({archivedApplications.length})
                         </TabsTrigger>
                     </TabsList>
                     <div className="relative w-full sm:w-80">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
                         <Input
-                            placeholder="Search Client or ID..."
+                            placeholder="Search..."
                             className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary text-white placeholder:text-white/20 font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -173,18 +173,18 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 <TabsContent value="pipeline" className="animate-in fade-in duration-500">
                     <Card className="border-none shadow-2xl overflow-hidden bg-white/5 backdrop-blur-md rounded-2xl">
                         <CardHeader className="bg-white/5 py-6 px-8 border-b border-white/5">
-                            <CardTitle className="text-xl font-black uppercase tracking-tight">Active Work Pipeline</CardTitle>
-                            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Applications moving through Identity creation, Audit, and Finalization.</CardDescription>
+                            <CardTitle className="text-xl font-black uppercase tracking-tight">To Do</CardTitle>
+                            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Applications moving through check steps.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
                             {pipelineApplications.length > 0 ? (
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
-                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">APPLICATION ID</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLIENT IDENTITY</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">BR ID STATUS</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">WORKFLOW STAGE</TableHead>
+                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ID</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">BR ID</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">STAGE</TableHead>
                                             <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -200,7 +200,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                                     {app.details.brIdentity ? (
                                                         <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30 font-mono font-bold">{app.details.brIdentity}</Badge>
                                                     ) : (
-                                                        <span className="text-[10px] text-white/30 uppercase font-black tracking-widest italic">Awaiting technical ID</span>
+                                                        <span className="text-[10px] text-white/30 uppercase font-black tracking-widest italic">None</span>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
@@ -208,7 +208,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                                 </TableCell>
                                                 <TableCell className="text-right pr-8">
                                                     <Button variant="outline" size="sm" className="font-black uppercase tracking-widest h-9 border-white/10 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 px-6 rounded-lg shadow-lg" onClick={() => setSelectedApplication(app)}>
-                                                        {app.status === 'Approved by Supervisor' ? 'FINALIZE WALLET' : 'PROCESS CASE'}
+                                                        {app.status === 'Approved by Supervisor' ? 'FINISH' : 'PROCESS'}
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -218,7 +218,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                             ) : (
                                 <div className="flex items-center justify-center p-24 text-center">
                                     <Briefcase className="h-16 w-16 text-white/10 mb-4" />
-                                    <p className="text-white/40 font-black uppercase tracking-widest">Pipeline is currently empty.</p>
+                                    <p className="text-white/40 font-black uppercase tracking-widest">No work found.</p>
                                 </div>
                             )}
                         </CardContent>
@@ -230,19 +230,19 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                         <CardHeader className="bg-white/5 py-6 px-8 border-b border-white/5">
                             <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
                                 <Archive className="h-6 w-6 text-white/60" />
-                                ELECTRONIC ACCOUNT ARCHIVE
+                                ARCHIVES
                             </CardTitle>
-                            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Audit-ready finalized wallet records and digital legacy archives.</CardDescription>
+                            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Finished records.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
                             {archivedApplications.length > 0 ? (
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
-                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ARCHIVE REF</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLIENT IDENTITY</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">WALLET ACCOUNT #</TableHead>
-                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">SECURITY ACTION</TableHead>
+                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">REF</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">ACCOUNT #</TableHead>
+                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -254,7 +254,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                                 <TableCell className="text-right pr-8">
                                                     <Button variant="ghost" size="sm" className="h-9 px-5 rounded-lg font-black uppercase tracking-widest text-[10px] hover:bg-white/10" onClick={() => setSelectedApplication(app)}>
                                                         <FileSearch className="mr-2 h-4 w-4" />
-                                                        VIEW RECORD
+                                                        VIEW
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -264,7 +264,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                             ) : (
                                 <div className="flex flex-col items-center justify-center p-24 text-center">
                                     <Archive className="h-16 w-16 opacity-5 text-white mb-4" />
-                                    <p className="text-white/20 font-black uppercase tracking-widest italic">The electronic archive vault is currently sealed.</p>
+                                    <p className="text-white/20 font-black uppercase tracking-widest italic">No records found.</p>
                                 </div>
                             )}
                         </CardContent>

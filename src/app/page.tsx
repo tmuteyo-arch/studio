@@ -48,8 +48,8 @@ function AppContent() {
     if (!selectedRole) {
       toast({
         variant: 'destructive',
-        title: 'Please Choose',
-        description: 'Please select a workplace to enter.',
+        title: 'Choose workspace',
+        description: 'Please select a workspace to enter.',
       });
       return;
     }
@@ -63,8 +63,8 @@ function AppContent() {
       if (userToLogin.status === 'disabled') {
         toast({
           variant: 'destructive',
-          title: 'Access Denied',
-          description: 'This account has been disabled by the administrator.',
+          title: 'No Access',
+          description: 'This account has been disabled.',
         });
         return;
       }
@@ -74,7 +74,7 @@ function AppContent() {
       if (!isValidPassword) {
         toast({
           variant: 'destructive',
-          title: 'Invalid Credentials',
+          title: 'Wrong Password',
           description: 'The password you entered is incorrect.',
         });
         return;
@@ -92,14 +92,14 @@ function AppContent() {
 
       setLoggedInUser(userToLogin);
       toast({
-        title: `Welcome, ${userToLogin.name}!`,
-        description: `You are now in the ${userToLogin.role.replace('-', ' ')} section.`,
+        title: `Hi, ${userToLogin.name}!`,
+        description: `Welcome to the ${userToLogin.role.replace('-', ' ')} section.`,
       });
     } else {
        toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: `No active account found for ${email} in the selected workspace.`,
+        description: `Account not found.`,
       });
     }
   };
@@ -114,8 +114,8 @@ function AppContent() {
       setIsResetOpen(false);
       setResetEmail("");
       toast({
-        title: "Security Request Sent",
-        description: `A reset request has been logged with Admin. Verify your identity via Google Authenticator to proceed.`,
+        title: "Request Sent",
+        description: `A reset request has been sent to the Admin.`,
       });
     }, 2000);
   };
@@ -199,26 +199,26 @@ function AppContent() {
           <Logo className="h-20 w-20 drop-shadow-2xl" />
           <div className="space-y-1">
               <h1 className="text-4xl font-black tracking-tight text-white">InnBucks</h1>
-              <p className="text-white font-bold tracking-[0.2em] text-[10px] uppercase opacity-80">Sign Up Portal</p>
+              <p className="text-white font-bold tracking-[0.2em] text-[10px] uppercase opacity-80">Portal</p>
           </div>
         </div>
 
         <Card className="overflow-hidden shadow-2xl border-white/20 bg-white/10 backdrop-blur-xl text-white">
           <CardHeader className="bg-black/20 p-8 text-center border-b border-white/10">
               <CardTitle className="text-2xl font-bold tracking-tight uppercase">LOGIN</CardTitle>
-              <CardDescription className="text-white/60">Enter your details and pick your workspace.</CardDescription>
+              <CardDescription className="text-white/60">Enter details to enter.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <form onSubmit={handleLogin} className='space-y-5'>
               <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2" htmlFor="email">
-                    <Mail className="h-3 w-3" /> Email Address
+                    <Mail className="h-3 w-3" /> Email
                   </Label>
-                  <Input 
+                  <input 
                     id="email" 
                     type="email" 
                     placeholder="name@inbucks.app" 
-                    className='h-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#7c3aed] transition-all' 
+                    className='w-full h-12 rounded-md bg-white/10 border border-white/20 px-3 text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#7c3aed] outline-none transition-all' 
                     required 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -238,11 +238,11 @@ function AppContent() {
                       Forgot?
                     </Button>
                   </div>
-                  <Input 
+                  <input 
                     id="password" 
                     type="password" 
                     placeholder="••••••••"
-                    className='h-12 bg-white/10 border-white/20 text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#7c3aed] transition-all' 
+                    className='w-full h-12 rounded-md bg-white/10 border border-white/20 px-3 text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#7c3aed] outline-none transition-all' 
                     required 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -254,30 +254,30 @@ function AppContent() {
                   </Label>
                   <Select value={selectedRole} onValueChange={(v: Role) => setSelectedRole(v)}>
                     <SelectTrigger className="h-12 bg-white/10 border-white/20 text-white focus:ring-2 focus:ring-[#7c3aed] transition-all">
-                      <SelectValue placeholder="Pick your workspace..." />
+                      <SelectValue placeholder="Choose workspace..." />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1e1b4b] border-white/20 text-white">
-                      <SelectItem value="asl">Area Sales Leaders (ASL)</SelectItem>
-                      <SelectItem value="back-office">Back Office Clerks</SelectItem>
-                      <SelectItem value="supervisor">Back Office Supervisor</SelectItem>
-                      <SelectItem value="management">Management</SelectItem>
-                      <SelectItem value="compliance">Compliance & Risk</SelectItem>
-                      <SelectItem value="admin">System Administrator</SelectItem>
+                      <SelectItem value="asl">Sales Leader (ASL)</SelectItem>
+                      <SelectItem value="back-office">Office Clerk</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
+                      <SelectItem value="management">Manager</SelectItem>
+                      <SelectItem value="compliance">Risk & Compliance</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
               </div>
               
               <Button type="submit" className="w-full h-12 !mt-8 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold shadow-xl border-t border-white/20 transition-all active:scale-[0.98]">
-                <LogIn className="mr-2 h-5 w-5"/> Sign In Now
+                <LogIn className="mr-2 h-5 w-5"/> Sign In
               </Button>
             </form>
           </CardContent>
           <CardFooter className="bg-black/30 p-4 text-center text-[10px] text-white/40 justify-center uppercase tracking-widest border-t border-white/5">
-            <ShieldCheck className="mr-2 h-3 w-3 text-accent/50"/> Fully Secured Session
+            <ShieldCheck className="mr-2 h-3 w-3 text-accent/50"/> Secure Login
           </CardFooter>
         </Card>
         
-        <p className="mt-12 text-center text-white/20 text-[9px] uppercase tracking-[0.4em] font-medium">InnBucks MicroBank Limited &copy; 2026</p>
+        <p className="mt-12 text-center text-white/20 text-[9px] uppercase tracking-[0.4em] font-medium">InnBucks &copy; 2026</p>
       </motion.div>
 
       <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
@@ -285,10 +285,10 @@ function AppContent() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 uppercase tracking-tight">
               <ShieldAlert className="h-5 w-5 text-primary" />
-              Security Reset Request
+              Reset Request
             </DialogTitle>
             <DialogDescription className="text-white/60">
-              For security, reset requests are sent to the System Administrator. Verification via <strong>Google Authenticator</strong> is required.
+              Reset requests are sent to the Admin.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleResetPassword} className="space-y-4 py-4">
@@ -304,19 +304,13 @@ function AppContent() {
                 required
               />
             </div>
-            <div className="p-3 rounded-md bg-primary/10 border border-primary/20">
-              <p className="text-[10px] leading-relaxed text-primary uppercase font-bold flex items-center gap-2">
-                <ShieldCheck className="h-3 w-3" /> Mandatory MFA Protocol Active
-              </p>
-            </div>
             <DialogFooter>
               <Button 
                 type="submit" 
                 className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] font-bold"
                 disabled={isResetting}
               >
-                {isResetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {isResetting ? "Contacting Admin..." : "Send Secure Request"}
+                {isResetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Send Request"}
               </Button>
             </DialogFooter>
           </form>
@@ -334,23 +328,17 @@ function AppContent() {
                         <Logo className="h-8 w-8" />
                         <div>
                             <h1 className="text-xl font-bold text-white leading-tight">InnBucks</h1>
-                            <p className="text-[10px] uppercase tracking-tighter text-secondary font-bold">Sign Up Portal</p>
+                            <p className="text-[10px] uppercase tracking-tighter text-secondary font-bold">Portal</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="text-right hidden sm:block">
                             <p className="font-semibold text-white">{loggedInUser.name}</p>
                             <p className="text-[10px] text-white/50 uppercase font-bold">
-                                {loggedInUser.role === 'asl' ? 'Area Sales Leader' : 
-                                 loggedInUser.role === 'back-office' ? 'Back Office Clerk' :
-                                 loggedInUser.role === 'supervisor' ? 'Back Office Supervisor' :
-                                 loggedInUser.role === 'management' ? 'Management' :
-                                 loggedInUser.role === 'admin' ? 'System Administrator' :
-                                 loggedInUser.role === 'compliance' ? 'Compliance Officer' :
-                                 loggedInUser.role.replace('-', ' ')}
+                                {loggedInUser.role.replace('-', ' ')}
                             </p>
                         </div>
-                        <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-white" onClick={handleLogout}>Log Out</Button>
+                        <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-white" onClick={handleLogout}>Logout</Button>
                     </div>
                 </header>
                 <main className="animate-in fade-in slide-in-from-bottom-4 duration-500">{renderDashboard()}</main>

@@ -28,7 +28,7 @@ import { isToday, parseISO } from 'date-fns';
 
 const regionalChartConfig = {
   count: {
-    label: 'Applications',
+    label: 'Total',
     color: 'hsl(var(--primary))',
   },
 } satisfies ChartConfig;
@@ -79,32 +79,32 @@ export default function ManagementDashboard() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold tracking-tight">Management Dashboard</h2>
-                  <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Strategic oversight of ASL output and system availability.</p>
+                  <h2 className="text-3xl font-bold tracking-tight">Manager View</h2>
+                  <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Portal Overview.</p>
                 </div>
                 <div className="flex gap-2">
                     <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-bold px-3 py-1">
                         <Activity className="mr-2 h-3 w-3" />
-                        {summaryStats.createdToday} Originated Today
+                        {summaryStats.createdToday} New Today
                     </Badge>
                 </div>
             </div>
             
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
                 <Card className="shadow-sm border-primary/20 bg-primary/5">
-                    <CardHeader className="pb-2"><CardTitle className="text-[9px] font-black uppercase text-primary tracking-[0.2em]">Originated Today</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-[9px] font-black uppercase text-primary tracking-[0.2em]">New Today</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-black">{summaryStats.createdToday}</div></CardContent>
                 </Card>
                 <Card className="shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider">Active Portfolio</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider">Active</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalActive}</div></CardContent>
                 </Card>
                 <Card className="shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider">Awaiting Action</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider">Waiting</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalPending}</div></CardContent>
                 </Card>
                 <Card className="shadow-sm">
-                    <CardHeader className="pb-2"><CardTitle className="text-[9px] font-bold uppercase text-green-500 tracking-wider">Finalized</CardTitle></CardHeader>
+                    <CardHeader className="pb-2"><CardTitle className="text-[9px] font-bold uppercase text-green-500 tracking-wider">Done</CardTitle></CardHeader>
                     <CardContent><div className="text-2xl font-bold">{summaryStats.totalDone}</div></CardContent>
                 </Card>
                 <Card className="shadow-sm">
@@ -117,15 +117,15 @@ export default function ManagementDashboard() {
                 <TabsList className="bg-muted/50 p-1 mb-6">
                     <TabsTrigger value="monitoring" className="flex items-center gap-2">
                         <ShieldCheck className="h-4 w-4" />
-                        Personnel Monitoring
+                        Staff Logs
                     </TabsTrigger>
                     <TabsTrigger value="team" className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        ASL Performance
+                        Sales Stats
                     </TabsTrigger>
                     <TabsTrigger value="analytics" className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4" />
-                        Regional Trends
+                        Region Stats
                     </TabsTrigger>
                 </TabsList>
 
@@ -135,18 +135,18 @@ export default function ManagementDashboard() {
                             <CardHeader className="border-b border-white/5">
                                 <CardTitle className="flex items-center gap-2">
                                     <History className="h-5 w-5 text-primary" />
-                                    Security & Registry Activity Logs
+                                    Activity Logs
                                 </CardTitle>
-                                <CardDescription>Live telemetry of ASL interaction with the portal.</CardDescription>
+                                <CardDescription>Live list of logins and actions.</CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
                                 <div className="max-h-[400px] overflow-auto">
                                     <Table>
                                         <TableHeader>
                                             <TableRow className="bg-muted/30">
-                                                <TableHead className="text-[10px] uppercase font-bold">ASL User</TableHead>
-                                                <TableHead className="text-[10px] uppercase font-bold">Action Logged</TableHead>
-                                                <TableHead className="text-[10px] uppercase font-bold">Timestamp</TableHead>
+                                                <TableHead className="text-[10px] uppercase font-bold">User</TableHead>
+                                                <TableHead className="text-[10px] uppercase font-bold">Action</TableHead>
+                                                <TableHead className="text-[10px] uppercase font-bold">Time</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -178,9 +178,9 @@ export default function ManagementDashboard() {
                             <CardHeader>
                                 <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
                                     <UserCheck className="h-4 w-4 text-green-500" />
-                                    Active Now
+                                    Online Now
                                 </CardTitle>
-                                <CardDescription>ASLs currently authenticated in the portal.</CardDescription>
+                                <CardDescription>Users logged in.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
@@ -191,11 +191,11 @@ export default function ManagementDashboard() {
                                                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                                                     <span className="text-sm font-black uppercase">{atl.name}</span>
                                                 </div>
-                                                <span className="text-[10px] text-muted-foreground font-mono">IN: {atl.lastSeen}</span>
+                                                <span className="text-[10px] text-muted-foreground font-mono">{atl.lastSeen}</span>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="text-center py-12 text-muted-foreground italic text-xs">No active sessions.</div>
+                                        <div className="text-center py-12 text-muted-foreground italic text-xs">None.</div>
                                     )}
                                 </div>
                             </CardContent>
@@ -208,20 +208,20 @@ export default function ManagementDashboard() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-primary">
                                 <Award className="h-5 w-5" />
-                                ASL Performance Audit
+                                Sales Performance
                             </CardTitle>
-                            <CardDescription> Monitoring originated volume and registry success rates.</CardDescription>
+                            <CardDescription>Records by ASL.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/30">
-                                        <TableHead>ASL Name</TableHead>
-                                        <TableHead className="text-center">Total Originated</TableHead>
+                                        <TableHead>User</TableHead>
+                                        <TableHead className="text-center">Total</TableHead>
                                         <TableHead className="text-center text-green-600">Done</TableHead>
                                         <TableHead className="text-center text-destructive">Rejected</TableHead>
                                         <TableHead className="text-center text-amber-600">Active</TableHead>
-                                        <TableHead className="text-right">Success Rate</TableHead>
+                                        <TableHead className="text-right">Success</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -256,9 +256,9 @@ export default function ManagementDashboard() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <MapPin className="h-5 w-5 text-primary" />
-                                    Regional Distribution
+                                    Region Stats
                                 </CardTitle>
-                                <CardDescription>Application volume across Zimbabwe's provinces.</CardDescription>
+                                <CardDescription>Count by province.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <ChartContainer config={regionalChartConfig} className="h-[350px] w-full">
@@ -288,8 +288,8 @@ export default function ManagementDashboard() {
                         
                         <Card className="shadow-sm">
                             <CardHeader>
-                                <CardTitle>Market Ranking</CardTitle>
-                                <CardDescription>Top provinces by volume.</CardDescription>
+                                <CardTitle>Top Regions</CardTitle>
+                                <CardDescription>Ranking.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
