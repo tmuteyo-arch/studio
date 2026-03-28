@@ -340,13 +340,13 @@ export default function ApplicationReview({ application: initialApplication, onB
         if (isLead) {
             return (
                 <div className="flex gap-2">
-                    <Button onClick={handleClaimLead} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                        <UserCheck className="mr-2 h-4 w-4" /> Claim
+                    <Button onClick={handleClaimLead} className="bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md transition-all active:scale-95">
+                        <UserCheck className="mr-2 h-4 w-4" /> Claim Lead
                     </Button>
-                    <Button onClick={handleRejectLead} variant="destructive" className="font-bold">
-                        <X className="mr-2 h-4 w-4" /> Reject
+                    <Button onClick={handleRejectLead} variant="destructive" className="font-bold shadow-md transition-all active:scale-95">
+                        <X className="mr-2 h-4 w-4" /> Reject Lead
                     </Button>
-                    <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-green-600 hover:bg-green-700 text-white font-bold">
+                    <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-green-600 hover:bg-green-700 text-white font-bold shadow-md transition-all active:scale-95">
                         <Send className="mr-2 h-4 w-4" /> Forward to Back Office
                     </Button>
                 </div>
@@ -355,7 +355,7 @@ export default function ApplicationReview({ application: initialApplication, onB
 
         if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Claimed by ASL') {
             return (
-                <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black">
+                <Button onClick={() => handleStatusChange('Sent to Back Office')} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg px-8 transition-all active:scale-95">
                     <Send className="mr-2 h-4 w-4" /> Send to Back Office
                 </Button>
             );
@@ -363,23 +363,23 @@ export default function ApplicationReview({ application: initialApplication, onB
         return null;
       case 'back-office':
         if (application.status === 'Approved' || application.status === 'Approved by Supervisor') {
-            return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black"><Send className="mr-2 h-4 w-4" />Dispatch Approved Account</Button>;
+            return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg px-8 transition-all active:scale-95"><Send className="mr-2 h-4 w-4" /> Dispatch Approved Account</Button>;
         }
         if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL' || application.status === 'Returned to Back Office') {
             return (
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                     <Button 
                         variant="outline" 
-                        className="border-primary/20 hover:bg-primary/5 font-bold"
+                        className="border-amber-500 text-amber-600 hover:bg-amber-50 font-bold shadow-sm transition-all active:scale-95"
                         onClick={() => setIsReturning(true)}
                     >
                         <CornerUpLeft className="mr-2 h-4 w-4" /> Return to ASL
                     </Button>
                     <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold" 
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold shadow-md transition-all active:scale-95 px-6" 
                         onClick={handleForwardToSupervisor}
                     >
-                        <ShieldCheck className="mr-2 h-4 w-4" /> Send to Back Office Supervisor
+                        <ShieldCheck className="mr-2 h-4 w-4" /> Send to Supervisor
                     </Button>
                 </div>
             );
@@ -388,26 +388,26 @@ export default function ApplicationReview({ application: initialApplication, onB
       case 'supervisor':
         if (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor') {
             return (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                     <Button 
                         variant="outline" 
                         onClick={() => setIsReturningToBO(true)} 
-                        className="border-amber-500 text-amber-600 hover:bg-amber-50 font-bold"
+                        className="border-amber-500 text-amber-600 hover:bg-amber-50 font-bold shadow-sm transition-all active:scale-95"
                     >
                         <CornerUpLeft className="mr-2 h-4 w-4" /> Return to Back Office
                     </Button>
                     <Button 
                         variant="outline" 
                         onClick={() => handleStatusChange('Sent to Risk & Compliance')} 
-                        className="border-primary/20 text-primary hover:bg-primary/5 font-bold"
+                        className="border-primary/20 text-primary hover:bg-primary/5 font-bold shadow-sm transition-all active:scale-95"
                     >
-                        <ShieldAlert className="mr-2 h-4 w-4" /> Forward to Risk & Compliance
+                        <ShieldAlert className="mr-2 h-4 w-4" /> Escalate to Risk
                     </Button>
-                    <Button variant="destructive" className="font-bold" onClick={() => setIsRejecting(true)}>
+                    <Button variant="destructive" className="font-bold shadow-md transition-all active:scale-95" onClick={() => setIsRejecting(true)}>
                         <X className="mr-2 h-4 w-4" /> Reject
                     </Button>
-                    <Button className="bg-green-600 hover:bg-green-700 font-black" onClick={handleSupervisorApproval}>
-                        <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
+                    <Button className="bg-green-600 hover:bg-green-700 text-white font-black shadow-lg px-8 transition-all active:scale-95" onClick={handleSupervisorApproval}>
+                        <CheckCircle2 className="mr-2 h-4 w-4" /> APPROVE & ISSUE CODE
                     </Button>
                 </div>
             );
@@ -421,11 +421,11 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   return (
     <FormProvider {...form}>
-      <div>
-          <div className="mb-6 flex items-center justify-between">
-              <Button variant="outline" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" />Back to List</Button>
-              <div className="flex items-center gap-2">
-                  <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting}><Download className="mr-2 h-4 w-4" />{isPrinting ? 'Preparing PDF...' : 'Download Record'}</Button>
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <Button variant="ghost" onClick={onBack} className="hover:bg-muted text-muted-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back to Registry</Button>
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                  <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting} className="font-bold border-primary/20 hover:bg-primary/5"><Download className="mr-2 h-4 w-4" />{isPrinting ? 'Generating...' : 'Export Record'}</Button>
                   {renderActions()}
               </div>
           </div>
@@ -442,52 +442,67 @@ export default function ApplicationReview({ application: initialApplication, onB
             )}
           </div>
           
-        <Card className="border-primary/10 shadow-lg">
-          <CardHeader>
-            <div className="flex justify-between items-start">
+        <Card className="border-primary/10 shadow-2xl overflow-hidden backdrop-blur-sm bg-card/95">
+          <div className="bg-primary h-1.5 w-full" />
+          <CardHeader className="pb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                  <CardTitle className="text-2xl font-black uppercase tracking-tight">Record Audit: {application.id}</CardTitle>
-                  <CardDescription>Legal Name: <strong>{application.clientName}</strong>.</CardDescription>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="bg-muted text-[10px] font-mono tracking-tighter uppercase">{application.id}</Badge>
+                    <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">{application.clientType}</Badge>
+                  </div>
+                  <CardTitle className="text-3xl font-black uppercase tracking-tight text-foreground">Record Audit: {application.clientName}</CardTitle>
+                  <CardDescription className="flex items-center gap-2 mt-1">
+                    <MapPin className="h-3 w-3" /> Operating Region: <strong className="text-foreground">{application.region}</strong>
+                  </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <Badge className="font-bold uppercase tracking-widest">{application.status.replace('-', ' ')}</Badge>
-                {application.details.isDispatched && <Badge variant="success" className="font-black animate-in fade-in">ACCOUNT DISPATCHED</Badge>}
+                <Badge className="font-black px-4 py-1.5 uppercase tracking-widest text-xs shadow-sm bg-foreground text-background">
+                    {application.status.replace(/-/g, ' ')}
+                </Badge>
+                {application.details.isDispatched && (
+                    <Badge variant="success" className="font-black animate-bounce shadow-md border-green-200">
+                        <CheckCircle2 className="mr-1.5 h-3 w-3" /> ACCOUNT DISPATCHED
+                    </Badge>
+                )}
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-8 pb-8">
               {/* Back Office: Technical Creation (Clerk only) */}
               {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL' || application.status === 'Returned to Back Office') && (
-                  <div className="mb-8 p-6 bg-primary/5 rounded-xl border border-primary/20 animate-in slide-in-from-top-4">
+                  <div className="mb-8 p-6 bg-primary/5 rounded-2xl border border-primary/20 animate-in zoom-in-95 shadow-inner">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                          <h4 className="text-xs font-black uppercase text-primary tracking-widest flex items-center gap-2">
-                              <Fingerprint className="h-4 w-4" /> Step 1: Technical Registry Creation
+                          <h4 className="text-xs font-black uppercase text-primary tracking-widest flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm">
+                              <Fingerprint className="h-4 w-4" /> Registry Action: Technical ID Creation
                           </h4>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="bg-white border-primary/20 text-primary font-bold hover:bg-primary/5 transition-all shadow-sm"
+                            className="bg-white border-primary/20 text-primary font-black hover:bg-primary/5 transition-all shadow-md active:scale-95 h-10 px-6"
                             onClick={handleGeminiVerification}
                             disabled={isAiProcessing || application.documents.length < 2}
                           >
                             {isAiProcessing ? (
-                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
-                                <Sparkles className="mr-2 h-3 w-3 text-primary fill-primary/20" />
+                                <Sparkles className="mr-2 h-4 w-4 text-primary fill-primary/20" />
                             )}
-                            {isAiProcessing ? 'Gemini is Analyzing...' : 'HIE GEMINI: Smart Audit'}
+                            {isAiProcessing ? 'Gemini Analyzing...' : 'HIE GEMINI: SMART AUDIT'}
                           </Button>
                       </div>
                       <div className="max-w-md space-y-4">
                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold uppercase text-muted-foreground">Internal Technical ID (BR)</Label>
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">Internal Technical ID (BR)</Label>
                               <Input 
                                   placeholder="Type the BR identity code..." 
                                   value={brIdentity} 
                                   onChange={(e) => setBrIdentity(e.target.value)}
-                                  className="bg-background font-mono h-12"
+                                  className="bg-background font-mono h-12 text-lg focus:ring-primary border-primary/20 shadow-sm"
                               />
-                              <p className="text-[10px] text-muted-foreground italic">Mandatory: Create the identity in the registry before escalating for activation.</p>
+                              <p className="text-[10px] text-muted-foreground italic flex items-center gap-1.5 ml-1 mt-1.5">
+                                <AlertCircle className="h-3 w-3" /> Mandatory: Create identity in core banking before escalation.
+                              </p>
                           </div>
                       </div>
                   </div>
@@ -495,22 +510,24 @@ export default function ApplicationReview({ application: initialApplication, onB
 
               {/* Supervisor: Final Audit (Supervisor only) */}
               {user.role === 'supervisor' && (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor') && (
-                  <div className="mb-8 p-6 bg-green-500/5 rounded-xl border border-green-500/20 animate-in slide-in-from-top-4">
-                      <h4 className="text-xs font-black uppercase text-green-600 tracking-widest mb-4 flex items-center gap-2">
-                          <Key className="h-4 w-4" /> Step 2: Regulatory Audit & Authorization
+                  <div className="mb-8 p-6 bg-green-500/5 rounded-2xl border border-green-500/20 animate-in zoom-in-95 shadow-inner">
+                      <h4 className="text-xs font-black uppercase text-green-600 tracking-widest mb-6 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm w-fit">
+                          <Key className="h-4 w-4" /> Registry Action: Regulatory Audit & Authorization
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold uppercase text-muted-foreground">Linked Identity</Label>
-                              <div className="h-12 flex items-center px-4 bg-muted rounded border font-mono text-sm">{application.details.brIdentity}</div>
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">Linked Technical Identity</Label>
+                              <div className="h-12 flex items-center px-4 bg-muted/50 rounded-lg border-2 border-dashed border-muted-foreground/20 font-mono text-lg font-bold text-foreground/70">
+                                {application.details.brIdentity || 'NOT CREATED'}
+                              </div>
                           </div>
                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold uppercase text-green-600">Wallet Activation Code</Label>
+                              <Label className="text-[10px] font-black uppercase text-green-600 tracking-wider ml-1">Wallet Activation Code</Label>
                               <Input 
                                   placeholder="Enter authorization code..." 
                                   value={activationCode} 
                                   onChange={(e) => setActivationCode(e.target.value)}
-                                  className="bg-background font-mono h-12"
+                                  className="bg-background font-mono h-12 text-lg border-green-200 focus:ring-green-500 shadow-sm"
                               />
                           </div>
                       </div>
@@ -518,133 +535,145 @@ export default function ApplicationReview({ application: initialApplication, onB
               )}
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="bg-muted/50 p-1 mb-6">
-                      <TabsTrigger value="form-data"><FileEdit className="mr-2 h-4 w-4"/>Account Details</TabsTrigger>
-                      <TabsTrigger value="documents"><FileText className="mr-2 h-4 w-4"/>Account Documents</TabsTrigger>
-                      <TabsTrigger value="comments"><Wallet className="mr-2 h-4 w-4"/>BR AND WALLET ACCOUNTS</TabsTrigger>
+                  <TabsList className="bg-muted/50 p-1.5 mb-8 rounded-xl w-full sm:w-auto overflow-x-auto">
+                      <TabsTrigger value="form-data" className="px-6 rounded-lg data-[state=active]:shadow-md"><FileEdit className="mr-2 h-4 w-4"/>Account Profile</TabsTrigger>
+                      <TabsTrigger value="documents" className="px-6 rounded-lg data-[state=active]:shadow-md"><FileText className="mr-2 h-4 w-4"/>Electronic Files</TabsTrigger>
+                      <TabsTrigger value="comments" className="px-6 rounded-lg data-[state=active]:shadow-md font-black"><Wallet className="mr-2 h-4 w-4"/>REGISTRY & WALLETS</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="form-data" className="pt-2">
-                      <Card>
-                          <CardContent className="pt-6 space-y-8">
+                  <TabsContent value="form-data" className="pt-2 animate-in fade-in-50 duration-300">
+                      <Card className="border-none shadow-none bg-transparent">
+                          <CardContent className="p-0 space-y-8">
                               {/* High-level status summary for Account Details */}
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-muted/20 rounded-lg border border-primary/5">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-muted/20 rounded-2xl border border-primary/5">
                                   <DetailItem label="Technical Classification" value={application.clientType} />
                                   <DetailItem label="Operating Province" value={application.region} />
-                                  <DetailItem label="Registry Status" value={application.status} />
+                                  <DetailItem label="Registry Status" value={application.status.toUpperCase()} />
                               </div>
-                              <Separator />
+                              <Separator className="opacity-50" />
                               {/* Full record details */}
-                              <div className="space-y-6">
+                              <div className="space-y-10">
                                 {isPersonalOrIndividual ? <StepIndividualInfo /> : <StepCorporateInfo />}
-                                {needsMandate && <div className="mt-8"><StepSignatories /></div>}
+                                {needsMandate && (
+                                    <div className="mt-8 bg-muted/10 p-6 rounded-2xl border border-white/10">
+                                        <StepSignatories />
+                                    </div>
+                                )}
                               </div>
                           </CardContent>
                       </Card>
                   </TabsContent>
 
-                  <TabsContent value="documents" className="pt-2">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <Card>
-                            <CardHeader><CardTitle className="text-sm font-bold uppercase tracking-widest">Mandatory Checklist</CardTitle></CardHeader>
+                  <TabsContent value="documents" className="pt-2 animate-in fade-in-50 duration-300">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Card className="border-primary/5 bg-muted/5 rounded-2xl">
+                            <CardHeader className="pb-4"><CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Regulatory Checklist</CardTitle></CardHeader>
                             <CardContent>
-                                <ul className="space-y-3">
+                                <ul className="space-y-4">
                                     {documentRequirements.map((req) => { 
                                         const isUploaded = uploadedDocumentTypes.includes(req.document); 
                                         return (
-                                            <li key={req.document} className="flex items-start">
-                                                {isUploaded ? <CheckCircle2 className="h-5 w-5 text-green-500 mr-3 mt-0.5" /> : <AlertCircle className="h-5 w-5 text-amber-500 mr-3 mt-0.5" />}
-                                                <div className="text-sm font-medium leading-tight">{req.document}</div>
+                                            <li key={req.document} className="flex items-start p-3 rounded-lg hover:bg-white/5 transition-colors">
+                                                {isUploaded ? <CheckCircle2 className="h-5 w-5 text-green-500 mr-3 mt-0.5 shrink-0" /> : <AlertCircle className="h-5 w-5 text-amber-500 mr-3 mt-0.5 shrink-0" />}
+                                                <div className="text-sm font-bold leading-tight text-foreground/80">{req.document}</div>
                                             </li>
                                         ); 
                                     })}
                                 </ul>
                             </CardContent>
                         </Card>
-                        <Card>
-                            <CardHeader><CardTitle className="text-sm font-bold uppercase tracking-widest">Electronic Files</CardTitle></CardHeader>
+                        <Card className="border-primary/5 bg-muted/5 rounded-2xl">
+                            <CardHeader className="pb-4"><CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Captured Documents</CardTitle></CardHeader>
                             <CardContent>
                                 {application.documents.length > 0 ? (
                                     <ul className="space-y-3">
                                         {application.documents.map(doc => (
-                                            <li key={doc.type} className="flex items-center justify-between p-3 rounded-md border border-primary/10 bg-muted/20">
-                                                <div><p className="text-sm font-bold leading-none">{doc.type}</p><p className="text-[10px] text-muted-foreground mt-1">{doc.fileName}</p></div>
-                                                <Button variant="outline" size="sm" onClick={() => setPreviewDoc(doc)}><Eye className="mr-2 h-4 w-4" />View</Button>
+                                            <li key={doc.type} className="flex items-center justify-between p-4 rounded-xl border border-primary/10 bg-background/50 shadow-sm group hover:border-primary/30 transition-all">
+                                                <div>
+                                                    <p className="text-sm font-black leading-none text-foreground">{doc.type}</p>
+                                                    <p className="text-[10px] text-muted-foreground mt-1.5 uppercase font-mono tracking-tighter">{doc.fileName}</p>
+                                                </div>
+                                                <Button variant="outline" size="sm" className="h-9 px-4 rounded-lg font-bold border-primary/10 hover:bg-primary/5" onClick={() => setPreviewDoc(doc)}><Eye className="mr-2 h-4 w-4" />View</Button>
                                             </li>
                                         ))}
                                     </ul>
-                                ) : <div className="text-sm text-center py-12 text-muted-foreground">No documents uploaded.</div>}
+                                ) : <div className="text-sm text-center py-16 text-muted-foreground italic border-2 border-dashed rounded-2xl">No electronic files uploaded to this registry record.</div>}
                             </CardContent>
                         </Card>
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="comments" className="pt-2">
-                      <Card>
-                          <CardContent className="pt-6 space-y-6">
+                  <TabsContent value="comments" className="pt-2 animate-in fade-in-50 duration-300">
+                      <Card className="border-none bg-transparent shadow-none">
+                          <CardContent className="p-0 space-y-10">
                               {/* Accounts only appear when APPROVED and SENT BACK (Archived & Dispatched) */}
                               {(application.status === 'Archived' && application.details.isDispatched) ? (
-                                  <div className="p-6 bg-primary/10 rounded-xl border border-primary/30 shadow-sm animate-in zoom-in-95">
-                                      <div className="flex items-center gap-4 mb-6">
-                                          <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg">
-                                              <CheckCircle2 className="h-6 w-6" />
+                                  <div className="p-8 bg-primary/10 rounded-2xl border border-primary/30 shadow-lg animate-in zoom-in-95 relative overflow-hidden">
+                                      <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="h-32 w-32 -rotate-12" /></div>
+                                      <div className="flex items-center gap-5 mb-8">
+                                          <div className="h-14 w-14 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg border-4 border-white/20">
+                                              <CheckCircle2 className="h-7 w-7" />
                                           </div>
                                           <div>
-                                              <h4 className="text-lg font-black uppercase tracking-tight text-primary leading-none">Account Finalized</h4>
-                                              <p className="text-[10px] text-primary/70 font-bold uppercase tracking-widest mt-1">Processed & Dispatched from Back Office</p>
+                                              <h4 className="text-2xl font-black uppercase tracking-tight text-primary leading-none">Wallet Finalized</h4>
+                                              <p className="text-[10px] text-primary/70 font-black uppercase tracking-[0.2em] mt-2">Processed & Dispatched from Technical Center</p>
                                           </div>
                                       </div>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                          <Card className="bg-background border-primary/20 shadow-sm">
-                                              <CardContent className="p-4 flex items-center gap-4">
-                                                  <Wallet className="h-8 w-8 text-primary" />
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                          <Card className="bg-background border-primary/20 shadow-md rounded-xl overflow-hidden">
+                                              <CardContent className="p-6 flex items-center gap-5">
+                                                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Wallet className="h-6 w-6" /></div>
                                                   <div>
-                                                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Wallet Account #</p>
-                                                      <p className="text-xl font-mono font-black text-foreground">{application.details.accountNumber}</p>
+                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Wallet Account #</p>
+                                                      <p className="text-2xl font-mono font-black text-foreground tracking-tighter">{application.details.accountNumber}</p>
                                                   </div>
                                               </CardContent>
                                           </Card>
-                                          <Card className="bg-background border-primary/20 shadow-sm">
-                                              <CardContent className="p-4 flex items-center gap-4">
-                                                  <Fingerprint className="h-8 w-8 text-primary" />
+                                          <Card className="bg-background border-primary/20 shadow-md rounded-xl overflow-hidden">
+                                              <CardContent className="p-6 flex items-center gap-5">
+                                                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Fingerprint className="h-6 w-6" /></div>
                                                   <div>
-                                                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Technical Registry ID (BR)</p>
-                                                      <p className="text-xl font-mono font-black text-foreground">{application.details.brIdentity}</p>
+                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Registry Identity (BR)</p>
+                                                      <p className="text-2xl font-mono font-black text-foreground tracking-tighter">{application.details.brIdentity}</p>
                                                   </div>
                                               </CardContent>
                                           </Card>
                                       </div>
                                   </div>
                               ) : (
-                                  <div className="p-6 border-dashed border-2 rounded-xl flex flex-col items-center justify-center text-center py-12 bg-muted/5">
-                                      <ShieldAlert className="h-12 w-12 text-muted-foreground opacity-20 mb-4" />
-                                      <p className="text-sm font-bold uppercase tracking-tight text-muted-foreground">Accounts Pending Dispatch</p>
-                                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Technical credentials will reveal here upon Back Office finalization.</p>
+                                  <div className="p-12 border-dashed border-4 rounded-3xl flex flex-col items-center justify-center text-center bg-muted/5 group hover:bg-muted/10 transition-colors">
+                                      <ShieldAlert className="h-16 w-16 text-muted-foreground opacity-20 mb-6 group-hover:scale-110 transition-transform" />
+                                      <p className="text-lg font-black uppercase tracking-tight text-muted-foreground/60">Registry Pending Dispatch</p>
+                                      <p className="text-xs text-muted-foreground/40 uppercase tracking-[0.3em] mt-2 max-w-xs">Technical credentials will be revealed here once finalized by the clerk.</p>
                                   </div>
                               )}
 
-                              <div className="space-y-4 pt-6 border-t">
-                                  <h4 className="text-xs font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
-                                      <MessageSquare className="h-3 w-3" /> Internal Registry Notes
-                                  </h4>
-                                  <div className="space-y-4">
+                              <div className="space-y-6 pt-10 border-t border-white/5">
+                                  <div className="flex justify-between items-center">
+                                    <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] flex items-center gap-2">
+                                        <MessageSquare className="h-4 w-4 text-primary" /> Internal Audit Timeline
+                                    </h4>
+                                    <Badge variant="outline" className="text-[9px] font-bold uppercase opacity-50">{application.comments.length} Log Entries</Badge>
+                                  </div>
+                                  <div className="space-y-6">
                                       {application.comments.map((comment) => (
-                                          <div key={comment.id} className="flex items-start gap-3">
-                                              <Avatar className="h-8 w-8"><AvatarFallback className="text-[10px] font-bold">{comment.user.substring(0,2)}</AvatarFallback></Avatar>
-                                              <div className="flex-1 rounded-lg border bg-card p-4">
-                                                  <div className="flex justify-between items-center mb-1">
-                                                      <p className="font-bold text-sm uppercase">{comment.user}</p>
-                                                      <p className="text-[10px] text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p>
+                                          <div key={comment.id} className="flex items-start gap-4 animate-in slide-in-from-left-2">
+                                              <Avatar className="h-10 w-10 border-2 border-white/10 shadow-sm"><AvatarFallback className="text-[10px] font-black bg-primary/10 text-primary">{comment.user.substring(0,2)}</AvatarFallback></Avatar>
+                                              <div className="flex-1 rounded-2xl border border-white/5 bg-muted/10 p-5 shadow-sm">
+                                                  <div className="flex justify-between items-center mb-2">
+                                                      <p className="font-black text-xs uppercase tracking-wider text-foreground/80">{comment.user} <span className="text-[9px] font-bold text-muted-foreground ml-2 px-2 py-0.5 bg-muted rounded-full">{comment.role.toUpperCase()}</span></p>
+                                                      <p className="text-[10px] font-mono text-muted-foreground">{new Date(comment.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
                                                   </div>
-                                                  <p className="text-sm">{comment.content}</p>
+                                                  <p className="text-sm leading-relaxed text-foreground/70">{comment.content}</p>
                                               </div>
                                           </div>
                                       ))}
                                   </div>
                                   {application.status !== 'Archived' && (
-                                      <div className="space-y-3 pt-4 border-t">
-                                          <Textarea placeholder="Type internal registry note..." value={newComment} onChange={(e) => setNewComment(e.target.value)} className="min-h-[100px]" />
-                                          <Button onClick={handleAddComment} className="w-full font-bold">Post Note</Button>
+                                      <div className="space-y-4 pt-8 border-t border-white/5 bg-muted/5 p-6 rounded-2xl">
+                                          <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">New Audit Note</Label>
+                                          <Textarea placeholder="Type internal registry note or processing update..." value={newComment} onChange={(e) => setNewComment(e.target.value)} className="min-h-[120px] bg-background text-base resize-none focus:ring-primary rounded-xl" />
+                                          <Button onClick={handleAddComment} className="w-full font-black uppercase tracking-widest h-12 shadow-lg active:scale-95">Post Processing Log</Button>
                                       </div>
                                   )}
                               </div>
@@ -656,121 +685,150 @@ export default function ApplicationReview({ application: initialApplication, onB
         </Card>
 
         <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}>
-            <AlertDialogContent>
-                <AlertDialogHeader><AlertDialogTitle>Regulatory Decline</AlertDialogTitle><AlertDialogDescription>Select a compliance reason for declining this record.</AlertDialogDescription></AlertDialogHeader>
-                <div className="space-y-4 py-4">
+            <AlertDialogContent className="rounded-2xl border-destructive/20 shadow-2xl">
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-2 text-destructive">
+                        <ShieldAlert className="h-6 w-6" /> Regulatory Decline
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-base">Select a compliance reason for declining this record from the registry.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-6 py-6">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase">Decline Reason</Label>
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Reason Category</Label>
                         <Select onValueChange={setRejectionReason} value={rejectionReason}>
-                            <SelectTrigger><SelectValue placeholder="Select outcome..." /></SelectTrigger>
-                            <SelectContent>{rejectionReasons.map(reason => (<SelectItem key={reason} value={reason}>{reason}</SelectItem>))}</SelectContent>
+                            <SelectTrigger className="h-12 border-destructive/20 focus:ring-destructive"><SelectValue placeholder="Select outcome category..." /></SelectTrigger>
+                            <SelectContent className="rounded-xl">{rejectionReasons.map(reason => (<SelectItem key={reason} value={reason} className="font-bold py-3">{reason}</SelectItem>))}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase">Supporting Notes</Label>
-                        <Textarea placeholder="Detailed audit notes..." value={rejectionComment} onChange={(e) => setRejectionComment(e.target.value)} />
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Supporting Audit Notes</Label>
+                        <Textarea placeholder="Provide detailed audit notes for the rejection..." value={rejectionComment} onChange={(e) => setRejectionComment(e.target.value)} className="min-h-[150px] rounded-xl focus:ring-destructive" />
                     </div>
                 </div>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleRejection} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" disabled={!rejectionReason || !rejectionComment}>Confirm Decline</AlertDialogAction>
+                <AlertDialogFooter className="gap-3">
+                    <AlertDialogCancel className="h-12 rounded-xl font-bold">Cancel Audit</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleRejection} className="h-12 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-black px-8" disabled={!rejectionReason || !rejectionComment}>Confirm Regulatory Decline</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
 
         <AlertDialog open={isReturning} onOpenChange={setIsReturning}>
-            <AlertDialogContent>
+            <AlertDialogContent className="rounded-2xl border-amber-200 shadow-2xl">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Return to ASL</AlertDialogTitle>
-                    <AlertDialogDescription>Please provide a mandatory reason for returning this application for correction.</AlertDialogDescription>
+                    <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-2 text-amber-600">
+                        <CornerUpLeft className="h-6 w-6" /> Return to Area Leader
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-base">Provide a mandatory reason for returning this application for correction.</AlertDialogDescription>
                 </AlertDialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-4 py-6">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase">Return Comments</Label>
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Correction Instructions</Label>
                         <Textarea 
-                            placeholder="Type instructions for ASL..." 
+                            placeholder="Type specific instructions for the ASL to resolve..." 
                             value={returnComment} 
                             onChange={(e) => setReturnComment(e.target.value)} 
-                            className="min-h-[120px]"
+                            className="min-h-[150px] rounded-xl border-amber-200 focus:ring-amber-500 text-base"
                         />
                     </div>
                 </div>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => { setIsReturning(false); setReturnComment(''); }}>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="gap-3">
+                    <AlertDialogCancel onClick={() => { setIsReturning(false); setReturnComment(''); }} className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
                     <AlertDialogAction 
                         onClick={handleReturnToAsl} 
-                        className="bg-amber-600 text-white hover:bg-amber-700" 
+                        className="h-12 rounded-xl bg-amber-600 text-white hover:bg-amber-700 font-black px-8" 
                         disabled={!returnComment.trim()}
                     >
-                        Confirm Return
+                        Confirm Return to ASL
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
 
         <AlertDialog open={isReturningToBO} onOpenChange={setIsReturningToBO}>
-            <AlertDialogContent>
+            <AlertDialogContent className="rounded-2xl border-amber-200 shadow-2xl">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Return to Back Office</AlertDialogTitle>
-                    <AlertDialogDescription>Provide instructions for the clerical team to correct this record.</AlertDialogDescription>
+                    <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-2 text-amber-600">
+                        <CornerUpLeft className="h-6 w-6" /> Return to Clerical Team
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-base">Provide instructions for the clerk to correct this registry record.</AlertDialogDescription>
                 </AlertDialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-4 py-6">
                     <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase">Correction Instructions</Label>
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Technical Correction Notes</Label>
                         <Textarea 
-                            placeholder="Detail the corrections required..." 
+                            placeholder="Detail the technical corrections required by the clerk..." 
                             value={returnToBOComment} 
                             onChange={(e) => setReturnToBOComment(e.target.value)} 
-                            className="min-h-[120px]"
+                            className="min-h-[150px] rounded-xl border-amber-200 focus:ring-amber-500 text-base"
                         />
                     </div>
                 </div>
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => { setIsReturningToBO(false); setReturnToBOComment(''); }}>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="gap-3">
+                    <AlertDialogCancel onClick={() => { setIsReturningToBO(false); setReturnToBOComment(''); }} className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
                     <AlertDialogAction 
                         onClick={handleReturnToBO} 
-                        className="bg-amber-600 text-white hover:bg-amber-700" 
+                        className="h-12 rounded-xl bg-amber-600 text-white hover:bg-amber-700 font-black px-8" 
                         disabled={!returnToBOComment.trim()}
                     >
-                        Confirm Return
+                        Confirm Return to Clerk
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
 
         <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
-            <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
-                <DialogHeader><DialogTitle className="text-sm uppercase font-black tracking-widest">{previewDoc?.type}</DialogTitle></DialogHeader>
-                <div className="flex-1 bg-black rounded-md overflow-hidden relative flex items-center justify-center">
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+                <div className="bg-primary/5 p-6 border-b border-white/10 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><FileText className="h-5 w-5" /></div>
+                        <div>
+                            <DialogTitle className="text-xs uppercase font-black tracking-[0.2em] text-primary">{previewDoc?.type}</DialogTitle>
+                            <p className="text-[10px] font-mono text-muted-foreground uppercase">{previewDoc?.fileName}</p>
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setPreviewDoc(null)} className="rounded-full hover:bg-white/10"><X className="h-5 w-5" /></Button>
+                </div>
+                <div className="flex-1 bg-black/90 relative flex items-center justify-center overflow-hidden">
                     {previewDoc?.url && previewDoc.url !== '#' ? (
                         previewDoc.url.includes('application/pdf') || previewDoc.fileName.toLowerCase().endsWith('.pdf') ? (
-                            <iframe src={previewDoc.url} className="w-full h-full" />
-                        ) : <img src={previewDoc.url} alt="Document" className="max-w-full max-h-full object-contain" />
-                    ) : <div className="text-muted-foreground p-12 text-center italic">Document preview not available for mock data.</div>}
+                            <iframe src={previewDoc.url} className="w-full h-full border-none" />
+                        ) : <img src={previewDoc.url} alt="Document" className="max-w-full max-h-full object-contain animate-in zoom-in-95" />
+                    ) : (
+                        <div className="flex flex-col items-center gap-4 text-white/30 text-center max-w-xs animate-pulse">
+                            <ShieldQuestion className="h-16 w-16 opacity-20" />
+                            <p className="text-sm font-black uppercase tracking-widest leading-relaxed">Document data not available in development environment.</p>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>
 
         <Dialog open={isDispatching} onOpenChange={setIsDispatching}>
-            <DialogContent className="bg-card border-primary/20">
+            <DialogContent className="bg-card border-primary/20 rounded-2xl shadow-2xl max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 uppercase tracking-tight"><Send className="h-5 w-5 text-primary" /> Record Finalization</DialogTitle>
-                    <CardDescription>Authorization Code confirmed. Enter the final Wallet Account Number to dispatch to Sales.</CardDescription>
+                    <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-primary">
+                        <Send className="h-6 w-6" /> Record Finalization
+                    </DialogTitle>
+                    <CardDescription className="text-base mt-2">Activation code confirmed. Enter the final 10-digit Wallet Account Number to dispatch back to the Area Leader.</CardDescription>
                 </DialogHeader>
-                <div className="py-6 space-y-4">
+                <div className="py-8 space-y-6">
                     <div className="space-y-2">
-                        <Label className="text-xs font-black uppercase tracking-widest">Wallet Account Number</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Wallet Account Number</Label>
                         <Input 
                             placeholder="e.g. 1002345678"
                             value={dispatchAccountNumber}
                             onChange={(e) => setDispatchAccountNumber(e.target.value)}
-                            className="h-12 text-lg font-mono"
+                            className="h-14 text-2xl font-mono text-center tracking-[0.3em] font-black rounded-xl border-primary/30 focus:ring-primary shadow-inner"
                         />
                     </div>
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary leading-relaxed flex items-start gap-3">
+                        <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span>FINAL AUDIT COMPLETE: Dispatching this account will archive the record and issue the credentials to the ASL session.</span>
+                    </div>
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDispatching(false)}>Cancel</Button>
-                    <Button onClick={handleDispatchAccount} className="bg-primary text-primary-foreground font-black">Dispatch to ASL</Button>
+                <DialogFooter className="gap-3 sm:flex-col sm:gap-3">
+                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-black uppercase tracking-widest shadow-lg bg-primary text-primary-foreground hover:scale-[1.02] transition-transform">Complete Dispatch</Button>
+                    <Button variant="ghost" onClick={() => setIsDispatching(false)} className="w-full h-10 font-bold text-muted-foreground hover:bg-muted">Cancel Finalization</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

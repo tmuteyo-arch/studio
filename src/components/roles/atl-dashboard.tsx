@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X } from 'lucide-react';
+import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X, Sparkles } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User as UserProfile } from '@/lib/users';
@@ -118,119 +118,123 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
 
   return (
     <TooltipProvider>
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-10 space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4 border-b border-white/5 pb-8">
               <div>
-                  <h2 className="text-3xl font-black tracking-tight">ASL Dashboard</h2>
-                  <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Registry Management & Product Origination</p>
+                  <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
+                    <User className="h-10 w-10 text-primary" />
+                    ASL WORKSPACE
+                  </h2>
+                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Registry Management • Product Origination • Lead Processing</p>
               </div>
               <Button 
                 onClick={() => setIsNewAppMenuOpen(!isNewAppMenuOpen)}
                 variant={isNewAppMenuOpen ? "outline" : "default"}
-                className="h-12 px-8 font-black shadow-lg transition-all active:scale-[0.98] border-primary/20"
+                className={`h-14 px-10 font-black shadow-2xl transition-all active:scale-95 text-lg rounded-xl border-2 ${isNewAppMenuOpen ? "border-white/20" : "border-primary/50 shadow-primary/20"}`}
               >
-                {isNewAppMenuOpen ? <X className="mr-2 h-5 w-5" /> : <PlusCircle className="mr-2 h-5 w-5" />}
-                {isNewAppMenuOpen ? "Cancel Selection" : "New Application"}
+                {isNewAppMenuOpen ? <X className="mr-2 h-6 w-6" /> : <PlusCircle className="mr-2 h-6 w-6" />}
+                {isNewAppMenuOpen ? "CANCEL" : "START NEW APPLICATION"}
               </Button>
           </div>
           
           {isNewAppMenuOpen && (
-            <Card className="border-primary/10 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-                <CardHeader className="bg-primary/5 border-b border-primary/5 pb-4">
-                    <CardTitle className="text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
-                        Registry Origination Options
-                    </CardTitle>
-                    <CardDescription className="text-xs">Select a professional category to reveal technical account types.</CardDescription>
+            <Card className="border-primary/20 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 bg-white/5 backdrop-blur-2xl rounded-3xl">
+                <CardHeader className="bg-primary/10 border-b border-white/5 pb-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-sm font-black uppercase tracking-[0.3em] flex items-center gap-2 text-primary">
+                                <Sparkles className="h-4 w-4" /> REGISTRY ORIGINATION
+                            </CardTitle>
+                            <CardDescription className="text-xs text-white/60 font-medium uppercase mt-1 tracking-widest">Select a professional category to reveal technical account types.</CardDescription>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary">v2.0 ACTIVE</Badge>
+                    </div>
                 </CardHeader>
-                <CardContent className="pt-6">
-                    <div className="flex flex-wrap gap-4">
+                <CardContent className="pt-8 pb-10">
+                    <div className="flex flex-wrap gap-6 justify-center">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="h-14 px-6 border-primary/20 hover:bg-primary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
-                                    <User className="mr-3 h-5 w-5 text-primary" />
-                                    <div className="text-left">
-                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Technical</p>
-                                        <p>Personal Accounts</p>
+                                <Button variant="outline" className="h-20 w-full sm:w-72 border-primary/20 bg-white/5 hover:bg-white/10 hover:border-primary/50 font-bold shadow-xl transition-all active:scale-95 rounded-2xl px-6">
+                                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center mr-4">
+                                        <User className="h-5 w-5 text-primary" />
                                     </div>
-                                    <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                                    <div className="text-left flex-1">
+                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Technical Category</p>
+                                        <p className="text-lg text-white">PERSONAL</p>
+                                    </div>
+                                    <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-64">
-                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Select Product Type</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Individual Accounts')}>
-                                    1. Individual Accounts
+                            <DropdownMenuContent align="center" className="w-72 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl shadow-2xl">
+                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Select Personal Class</DropdownMenuLabel>
+                                <DropdownMenuSeparator className="bg-white/5" />
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-primary hover:text-primary-foreground m-1 transition-colors" onClick={() => handleStartApplication('Individual Accounts')}>
+                                    Individual Accounts
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Sole Trader')}>
-                                    2. Sole Trader
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-primary hover:text-primary-foreground m-1 transition-colors" onClick={() => handleStartApplication('Sole Trader')}>
+                                    Sole Trader
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="h-14 px-6 border-secondary/20 hover:bg-secondary/5 font-bold shadow-sm transition-all active:scale-[0.98]">
-                                    <Building2 className="mr-3 h-5 w-5 text-secondary" />
-                                    <div className="text-left">
-                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Technical</p>
-                                        <p>Corporate Accounts</p>
+                                <Button variant="outline" className="h-20 w-full sm:w-72 border-secondary/20 bg-white/5 hover:bg-white/10 hover:border-secondary/50 font-bold shadow-xl transition-all active:scale-95 rounded-2xl px-6">
+                                    <div className="h-10 w-10 rounded-full bg-secondary/20 flex items-center justify-center mr-4">
+                                        <Building2 className="h-5 w-5 text-secondary" />
                                     </div>
-                                    <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                                    <div className="text-left flex-1">
+                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Technical Category</p>
+                                        <p className="text-lg text-white">CORPORATE</p>
+                                    </div>
+                                    <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-72">
-                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Entity Classes</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
-                                    1. Private Limited (Pvt) Company
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Private Business Corporate (PBC)')}>
-                                    2. Private Business Corporate (PBC)
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Public Limited company')}>
-                                    3. Public Limited company
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Partnerships')}>
-                                    4. Partnerships
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Investment Group')}>
-                                    5. Investment Group
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Parastatal')}>
-                                    6. Parastatal
-                                </DropdownMenuItem>
+                            <DropdownMenuContent align="center" className="w-80 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl shadow-2xl">
+                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Select Entity Class</DropdownMenuLabel>
+                                <DropdownMenuSeparator className="bg-white/5" />
+                                <div className="max-h-[400px] overflow-y-auto">
+                                    <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-secondary hover:text-white m-1 transition-colors" onClick={() => handleStartApplication('Private Limited (Pvt) Company')}>
+                                        Private Limited (Pvt) Company
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-secondary hover:text-white m-1 transition-colors" onClick={() => handleStartApplication('Private Business Corporate (PBC)')}>
+                                        Private Business Corporate (PBC)
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-secondary hover:text-white m-1 transition-colors" onClick={() => handleStartApplication('Public Limited company')}>
+                                        Public Limited company
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-secondary hover:text-white m-1 transition-colors" onClick={() => handleStartApplication('Partnerships')}>
+                                        Partnerships
+                                    </DropdownMenuItem>
+                                </div>
                             </DropdownMenuContent>
                         </DropdownMenu>
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="h-14 px-6 border-accent/20 hover:bg-accent/5 font-bold shadow-sm transition-all active:scale-[0.98]">
-                                    <Landmark className="mr-3 h-5 w-5 text-accent" />
-                                    <div className="text-left">
-                                        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Technical</p>
-                                        <p>Institutions</p>
+                                <Button variant="outline" className="h-20 w-full sm:w-72 border-accent/20 bg-white/5 hover:bg-white/10 hover:border-accent/50 font-bold shadow-xl transition-all active:scale-95 rounded-2xl px-6">
+                                    <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center mr-4">
+                                        <Landmark className="h-5 w-5 text-accent" />
                                     </div>
-                                    <ChevronDown className="ml-4 h-4 w-4 opacity-50" />
+                                    <div className="text-left flex-1">
+                                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">Technical Category</p>
+                                        <p className="text-lg text-white">INSTITUTIONAL</p>
+                                    </div>
+                                    <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-64">
-                                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">Institutional Classes</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('NGO')}>
-                                    1. NGO
+                            <DropdownMenuContent align="center" className="w-72 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl shadow-2xl">
+                                <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Select Institutional Class</DropdownMenuLabel>
+                                <DropdownMenuSeparator className="bg-white/5" />
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('NGO')}>
+                                    NGO
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Church')}>
-                                    2. Church
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('Church')}>
+                                    Church
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('School')}>
-                                    3. School
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Society')}>
-                                    4. Society
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-3 font-semibold" onClick={() => handleStartApplication('Club/ Association')}>
-                                    5. Club/ Association
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('School')}>
+                                    School
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -241,60 +245,62 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
         </div>
 
         <Tabs defaultValue="my-apps" className="w-full">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-              <TabsList className="bg-muted/50 p-1">
-                  <TabsTrigger value="my-apps" className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-6">
+              <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5">
+                  <TabsTrigger value="my-apps" className="flex items-center gap-3 px-6 h-10 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-black uppercase text-xs tracking-widest transition-all">
                       <UserCheck className="h-4 w-4" />
-                      My Applications ({filteredApplications.length})
+                      MY APPLICATIONS ({filteredApplications.length})
                   </TabsTrigger>
-                  <TabsTrigger value="leads" className="flex items-center gap-2">
+                  <TabsTrigger value="leads" className="flex items-center gap-3 px-6 h-10 rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground font-black uppercase text-xs tracking-widest transition-all relative">
                       <Inbox className="h-4 w-4" />
-                      customer portal leads ({filteredLeads.length})
-                      {filteredLeads.length > 0 && <Badge variant="destructive" className="ml-1 h-2 w-2 p-0 rounded-full animate-pulse" />}
+                      CUSTOMER LEADS ({filteredLeads.length})
+                      {filteredLeads.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full animate-pulse border-2 border-background" />}
                   </TabsTrigger>
               </TabsList>
-              <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
                   <Input
-                      placeholder="Search Client..."
-                      className="pl-10"
+                      placeholder="Search Registry..."
+                      className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary text-white placeholder:text-white/20 font-medium"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                   />
               </div>
           </div>
 
-          <TabsContent value="my-apps">
-              <Card className="border-none shadow-md overflow-hidden">
-                  <CardHeader className="bg-muted/30">
-                      <CardTitle>Active Application Registry</CardTitle>
-                      <CardDescription>Real-time status tracking for originated records.</CardDescription>
+          <TabsContent value="my-apps" className="animate-in fade-in duration-500">
+              <Card className="border-none shadow-2xl overflow-hidden bg-white/5 backdrop-blur-md rounded-2xl">
+                  <CardHeader className="bg-white/5 py-6 px-8 border-b border-white/5">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-xl font-black uppercase tracking-tight">Active Application Registry</CardTitle>
+                        <Badge variant="outline" className="font-mono text-white/40 border-white/10 px-3">Live Feed</Badge>
+                      </div>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredApplications.length > 0 ? (
                           <Table>
                               <TableHeader>
-                                  <TableRow className="bg-muted/10">
-                                      <TableHead className="pl-6">Technical ID</TableHead>
-                                      <TableHead>Client Identity</TableHead>
-                                      <TableHead>Current Status</TableHead>
-                                      <TableHead className="text-right pr-6">Action</TableHead>
+                                  <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
+                                      <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">TECHNICAL ID</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLIENT IDENTITY</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">REGISTRY STATUS</TableHead>
+                                      <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
                                   {filteredApplications.map((app) => (
-                                      <TableRow key={app.id} className="hover:bg-muted/5 group">
-                                          <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
-                                          <TableCell>
-                                              <div className="font-medium">{app.clientName}</div>
-                                              <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">{app.clientType}</div>
+                                      <TableRow key={app.id} className="hover:bg-white/5 border-white/5 transition-colors group">
+                                          <TableCell className="font-mono text-xs pl-8 text-white/60 font-bold">{app.id}</TableCell>
+                                          <TableCell className="py-5">
+                                              <div className="font-black text-white text-md uppercase tracking-tight group-hover:text-primary transition-colors">{app.clientName}</div>
+                                              <div className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1.5">{app.clientType}</div>
                                           </TableCell>
                                           <TableCell>
-                                              <Badge variant={getStatusVariant(app.status)}>{translateStatus(app.status)}</Badge>
+                                              <Badge variant={getStatusVariant(app.status)} className="px-3 py-1 uppercase text-[10px] font-black tracking-wider shadow-sm">{translateStatus(app.status)}</Badge>
                                           </TableCell>
-                                          <TableCell className="text-right pr-6">
-                                              <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                                                  {(app.status === 'Returned to ATL' || app.status === 'Returned to ASL') ? 'Update Info' : 'View record'}
+                                          <TableCell className="text-right pr-8">
+                                              <Button variant="outline" size="sm" className="font-black uppercase tracking-widest h-9 border-white/10 hover:bg-white/10 hover:text-white transition-all active:scale-95 px-5 rounded-lg" onClick={() => setSelectedApplication(app)}>
+                                                  {(app.status === 'Returned to ATL' || app.status === 'Returned to ASL') ? 'FIX RECORD' : 'VIEW'}
                                               </Button>
                                           </TableCell>
                                       </TableRow>
@@ -302,55 +308,62 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                               </TableBody>
                           </Table>
                       ) : (
-                          <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                              <p>Registry is currently empty.</p>
+                          <div className="flex flex-col items-center justify-center p-24 text-center">
+                              <UserCheck className="h-16 w-16 text-white/10 mb-4" />
+                              <p className="text-white/40 font-black uppercase tracking-widest">Your registry is currently empty.</p>
                           </div>
                       )}
                   </CardContent>
               </Card>
           </TabsContent>
 
-          <TabsContent value="leads">
-              <Card className="border-primary/20 bg-primary/5 shadow-md overflow-hidden">
-                  <CardHeader className="bg-primary/10">
-                      <CardTitle className="flex items-center gap-2">
-                          <Inbox className="h-5 w-5 text-primary" />
-                          New Customer Sign Ups
-                      </CardTitle>
-                      <CardDescription className="text-primary/80">Self-service registrations from external portal.</CardDescription>
+          <TabsContent value="leads" className="animate-in fade-in duration-500">
+              <Card className="border-none bg-secondary/5 backdrop-blur-md shadow-2xl overflow-hidden rounded-2xl">
+                  <CardHeader className="bg-secondary/10 py-6 px-8 border-b border-white/5">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight text-white">
+                            <Inbox className="h-6 w-6 text-secondary" />
+                            NEW CUSTOMER SIGN UPS
+                        </CardTitle>
+                        <Badge variant="outline" className="font-mono border-secondary/30 text-secondary px-3 uppercase font-black">Portal Sync Active</Badge>
+                      </div>
                   </CardHeader>
                   <CardContent className="p-0">
                       {filteredLeads.length > 0 ? (
                           <Table>
                               <TableHeader>
-                                  <TableRow className="bg-primary/5">
-                                      <TableHead className="pl-6">Reference</TableHead>
-                                      <TableHead>Customer Name</TableHead>
-                                      <TableHead>Type</TableHead>
-                                      <TableHead>Current Status</TableHead>
-                                      <TableHead className="text-right pr-6">Actions</TableHead>
+                                  <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
+                                      <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">REFERENCE</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CUSTOMER NAME</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">TYPE</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">STATUS</TableHead>
+                                      <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTIONS</TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
                                   {filteredLeads.map((app) => (
-                                      <TableRow key={app.id} className="hover:bg-primary/10 group animate-in slide-in-from-left-2 duration-300">
-                                          <TableCell className="font-mono text-xs pl-6">{app.id}</TableCell>
-                                          <TableCell className="font-medium">{app.clientName}</TableCell>
-                                          <TableCell className="text-xs uppercase font-bold">{app.clientType}</TableCell>
-                                          <TableCell>
-                                              <Badge variant={getStatusVariant(app.status)}>{translateStatus(app.status)}</Badge>
+                                      <TableRow key={app.id} className="hover:bg-secondary/10 border-white/5 transition-colors group">
+                                          <TableCell className="font-mono text-xs pl-8 text-white/60 font-bold">{app.id}</TableCell>
+                                          <TableCell className="py-5">
+                                            <div className="font-black text-white uppercase tracking-tight group-hover:text-secondary transition-colors">{app.clientName}</div>
                                           </TableCell>
-                                          <TableCell className="text-right pr-6">
-                                              <Button variant="default" size="sm" onClick={() => setSelectedApplication(app)}>Process Lead</Button>
+                                          <TableCell>
+                                            <Badge variant="outline" className="text-[10px] uppercase font-black tracking-tighter border-white/10 text-white/60">{app.clientType}</Badge>
+                                          </TableCell>
+                                          <TableCell>
+                                              <Badge variant={getStatusVariant(app.status)} className="font-black uppercase text-[10px] tracking-widest px-3 py-1">{translateStatus(app.status)}</Badge>
+                                          </TableCell>
+                                          <TableCell className="text-right pr-8">
+                                              <Button variant="default" size="sm" className="font-black uppercase tracking-widest h-9 bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-all active:scale-95 px-6 rounded-lg shadow-lg" onClick={() => setSelectedApplication(app)}>PROCESS LEAD</Button>
                                           </TableCell>
                                       </TableRow>
                                   ))}
                               </TableBody>
                           </Table>
                       ) : (
-                          <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                              <Inbox className="h-12 w-12 mb-2 opacity-20" />
-                              <p>No customer portal leads currently available.</p>
+                          <div className="flex flex-col items-center justify-center p-24 text-center">
+                              <Inbox className="h-16 w-16 text-secondary/20 mb-4 animate-pulse" />
+                              <p className="text-white/40 font-black uppercase tracking-widest">No customer portal leads available.</p>
                           </div>
                       )}
                   </CardContent>

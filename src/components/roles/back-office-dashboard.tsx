@@ -20,6 +20,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Archived':
         return 'success';
     case 'Approved':
+    case 'Approved by Supervisor':
         return 'success';
     case 'Pending Supervisor':
     case 'Sent to Supervisor':
@@ -30,6 +31,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Rejected':
     case 'Returned to ATL':
     case 'Returned to ASL':
+    case 'Returned to Back Office':
       return 'destructive';
     case 'Submitted':
       return 'outline';
@@ -50,15 +52,15 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [isDigitizing, setIsDigitizing] = React.useState<boolean>(false);
 
     const summaryStats = React.useMemo(() => ({
-        pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL' || a.status === 'Returned to ASL' || a.status === 'Sent to Back Office').length,
+        pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL' || a.status === 'Returned to ASL' || a.status === 'Sent to Back Office' || a.status === 'Returned to Back Office').length,
         pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor' || a.status === 'Sent to Supervisor').length,
-        readyToFinalize: applications.filter(a => a.status === 'Approved' && !a.details.isDispatched).length,
+        readyToFinalize: applications.filter(a => a.status === 'Approved by Supervisor' && !a.details.isDispatched).length,
         archived: applications.filter(a => a.status === 'Archived').length,
     }), [applications]);
 
     const pipelineApplications = React.useMemo(() => {
         return applications.filter(app => 
-            ['Submitted', 'Returned to ATL', 'Returned to ASL', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Approved', 'Signed', 'Rejected', 'Sent to Back Office'].includes(app.status) &&
+            ['Submitted', 'Returned to ATL', 'Returned to ASL', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Approved', 'Approved by Supervisor', 'Signed', 'Rejected', 'Sent to Back Office', 'Returned to Back Office'].includes(app.status) &&
             (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [applications, searchTerm]);
@@ -85,125 +87,128 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-start">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4 border-b border-white/5 pb-8">
                 <div>
-                    <h2 className="text-3xl font-bold">Back Office Workspace</h2>
-                    <p className="text-muted-foreground">Verify documentation, create BR Identities, and finalize wallets.</p>
+                    <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
+                        <Briefcase className="h-10 w-10 text-primary" />
+                        BACK OFFICE HUB
+                    </h2>
+                    <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Documentation Verification • BR ID Creation • Wallet Finalization</p>
                 </div>
-                <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="font-bold">
-                    <ScanLine className="mr-2 h-4 w-4" />
-                    Digitize Paper Application
+                <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="h-14 px-10 font-black shadow-2xl transition-all active:scale-95 text-lg rounded-xl border-2 border-secondary/50 shadow-secondary/20">
+                    <ScanLine className="mr-2 h-6 w-6" />
+                    DIGITIZE PAPER APPLICATION
                 </Button>
             </div>
             
             <DailyActivityTracker applications={applications} />
             
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="bg-card">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Identity Creation</CardTitle>
-                        <Fingerprint className="h-4 w-4 text-muted-foreground" />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl overflow-hidden group hover:bg-white/10 transition-colors">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Identity Queue</CardTitle>
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><Fingerprint className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.pendingReview}</div>
-                        <p className="text-xs text-muted-foreground">Awaiting BR ID creation</p>
+                        <div className="text-4xl font-black text-white">{summaryStats.pendingReview}</div>
+                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">Awaiting BR ID creation</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-card">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Awaiting Audit</CardTitle>
-                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl overflow-hidden group hover:bg-white/10 transition-colors">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Awaiting Audit</CardTitle>
+                        <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform"><Briefcase className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.pendingSupervisor}</div>
-                        <p className="text-xs text-muted-foreground">Pending Supervisor sign-off</p>
+                        <div className="text-4xl font-black text-white">{summaryStats.pendingSupervisor}</div>
+                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">Pending Supervisor Audit</p>
                     </CardContent>
                 </Card>
-                <Card className="border-primary/20 bg-primary/5">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-primary uppercase tracking-tighter">Ready to Finalize</CardTitle>
-                        <Key className="h-4 w-4 text-primary" />
+                <Card className="bg-primary/10 border-primary/20 shadow-xl rounded-2xl overflow-hidden group hover:bg-primary/20 transition-all">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Ready to Finalize</CardTitle>
+                        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground group-hover:scale-110 transition-transform shadow-lg"><Key className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-primary">{summaryStats.readyToFinalize}</div>
-                        <p className="text-xs text-primary/70">Activation codes issued</p>
+                        <div className="text-4xl font-black text-primary">{summaryStats.readyToFinalize}</div>
+                        <p className="text-[10px] text-primary/60 font-black uppercase mt-2 tracking-widest">Authorization codes issued</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-card">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium uppercase">Electronic Account Archive</CardTitle>
-                        <Archive className="h-4 w-4 text-muted-foreground" />
+                <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl overflow-hidden group hover:bg-white/10 transition-colors">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Archive Vault</CardTitle>
+                        <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 group-hover:scale-110 transition-transform"><Archive className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.archived}</div>
-                        <p className="text-xs text-muted-foreground">Total finalized records</p>
+                        <div className="text-4xl font-black text-white">{summaryStats.archived}</div>
+                        <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">ELECTRONIC ACCOUNT ARCHIVE</p>
                     </CardContent>
                 </Card>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                    <TabsList>
-                        <TabsTrigger value="pipeline" className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-6">
+                    <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5">
+                        <TabsTrigger value="pipeline" className="flex items-center gap-3 px-8 h-10 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-black uppercase text-xs tracking-widest transition-all">
                             <Briefcase className="h-4 w-4" />
-                            ACCOUNTS
+                            ACCOUNTS ({pipelineApplications.length})
                         </TabsTrigger>
-                        <TabsTrigger value="archive" className="flex items-center gap-2">
+                        <TabsTrigger value="archive" className="flex items-center gap-3 px-8 h-10 rounded-lg data-[state=active]:bg-foreground data-[state=active]:text-background font-black uppercase text-xs tracking-widest transition-all">
                             <Archive className="h-4 w-4" />
-                            ELECTRONIC ACCOUNT ARCHIVE
+                            ELECTRONIC ACCOUNT ARCHIVE ({archivedApplications.length})
                         </TabsTrigger>
                     </TabsList>
-                    <div className="relative w-full sm:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <div className="relative w-full sm:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
                         <Input
-                            placeholder="Search ID or Client..."
-                            className="pl-10"
+                            placeholder="Search Client or ID..."
+                            className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl focus:ring-primary text-white placeholder:text-white/20 font-medium"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
 
-                <TabsContent value="pipeline">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>ACCOUNTS</CardTitle>
-                            <CardDescription>Applications moving through Identity creation, Audit, and Finalization.</CardDescription>
+                <TabsContent value="pipeline" className="animate-in fade-in duration-500">
+                    <Card className="border-none shadow-2xl overflow-hidden bg-white/5 backdrop-blur-md rounded-2xl">
+                        <CardHeader className="bg-white/5 py-6 px-8 border-b border-white/5">
+                            <CardTitle className="text-xl font-black uppercase tracking-tight">Active Work Pipeline</CardTitle>
+                            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Applications moving through Identity creation, Audit, and Finalization.</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-0">
                             {pipelineApplications.length > 0 ? (
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Application ID</TableHead>
-                                            <TableHead>Client Name</TableHead>
-                                            <TableHead>BR ID Status</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
+                                        <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
+                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">APPLICATION ID</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLIENT IDENTITY</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">BR ID STATUS</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">WORKFLOW STAGE</TableHead>
+                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {pipelineApplications.map((app) => (
-                                            <TableRow key={app.id}>
-                                                <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                                <TableCell>
-                                                    <div className="font-medium">{app.clientName}</div>
-                                                    <div className="text-[10px] text-muted-foreground">{app.clientType}</div>
+                                            <TableRow key={app.id} className="hover:bg-white/5 border-white/5 transition-colors group">
+                                                <TableCell className="font-mono text-xs pl-8 text-white/60 font-bold">{app.id}</TableCell>
+                                                <TableCell className="py-5">
+                                                    <div className="font-black text-white text-md uppercase tracking-tight group-hover:text-primary transition-colors">{app.clientName}</div>
+                                                    <div className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1.5">{app.clientType}</div>
                                                 </TableCell>
                                                 <TableCell>
                                                     {app.details.brIdentity ? (
-                                                        <Badge variant="outline" className="bg-blue-50 text-blue-700">{app.details.brIdentity}</Badge>
+                                                        <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/30 font-mono font-bold">{app.details.brIdentity}</Badge>
                                                     ) : (
-                                                        <span className="text-[10px] text-muted-foreground italic">Pending Identity</span>
+                                                        <span className="text-[10px] text-white/30 uppercase font-black tracking-widest italic">Awaiting technical ID</span>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant={getStatusVariant(app.status)}>{app.status}</Badge>
+                                                    <Badge variant={getStatusVariant(app.status)} className="px-3 py-1 uppercase text-[10px] font-black tracking-wider shadow-sm">{app.status}</Badge>
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>
-                                                        {app.status === 'Approved' ? 'Finalize Wallet' : 'Process Case'}
+                                                <TableCell className="text-right pr-8">
+                                                    <Button variant="outline" size="sm" className="font-black uppercase tracking-widest h-9 border-white/10 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 px-6 rounded-lg shadow-lg" onClick={() => setSelectedApplication(app)}>
+                                                        {app.status === 'Approved by Supervisor' ? 'FINALIZE WALLET' : 'PROCESS CASE'}
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -211,44 +216,45 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                     </TableBody>
                                 </Table>
                             ) : (
-                                <div className="flex items-center justify-center p-12 text-center text-muted-foreground italic">
-                                    No active account applications found.
+                                <div className="flex items-center justify-center p-24 text-center">
+                                    <Briefcase className="h-16 w-16 text-white/10 mb-4" />
+                                    <p className="text-white/40 font-black uppercase tracking-widest">Pipeline is currently empty.</p>
                                 </div>
                             )}
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="archive">
-                    <Card className="border-primary/10 shadow-lg">
-                        <CardHeader className="bg-primary/5">
-                            <CardTitle className="flex items-center gap-2">
-                                <Archive className="h-5 w-5 text-primary" />
+                <TabsContent value="archive" className="animate-in fade-in duration-500">
+                    <Card className="border-none shadow-2xl overflow-hidden bg-white/5 backdrop-blur-md rounded-2xl">
+                        <CardHeader className="bg-white/5 py-6 px-8 border-b border-white/5">
+                            <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                                <Archive className="h-6 w-6 text-white/60" />
                                 ELECTRONIC ACCOUNT ARCHIVE
                             </CardTitle>
-                            <CardDescription>Finalized wallet records and legacy archives.</CardDescription>
+                            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Audit-ready finalized wallet records and digital legacy archives.</CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-0">
                             {archivedApplications.length > 0 ? (
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Archive ID</TableHead>
-                                            <TableHead>Client Name</TableHead>
-                                            <TableHead>Account #</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
+                                        <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
+                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ARCHIVE REF</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">CLIENT IDENTITY</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">WALLET ACCOUNT #</TableHead>
+                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">SECURITY ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {archivedApplications.map((app) => (
-                                            <TableRow key={app.id} className="hover:bg-muted/20">
-                                                <TableCell className="font-mono text-xs">{app.id}</TableCell>
-                                                <TableCell className="font-bold">{app.clientName}</TableCell>
-                                                <TableCell className="font-mono text-xs">{app.details.accountNumber}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>
+                                            <TableRow key={app.id} className="hover:bg-white/10 border-white/5 transition-colors">
+                                                <TableCell className="font-mono text-xs pl-8 text-white/40">{app.id}</TableCell>
+                                                <TableCell className="py-5 font-black text-white/80 uppercase tracking-tight">{app.clientName}</TableCell>
+                                                <TableCell className="font-mono text-md text-primary font-black tracking-tighter">{app.details.accountNumber}</TableCell>
+                                                <TableCell className="text-right pr-8">
+                                                    <Button variant="ghost" size="sm" className="h-9 px-5 rounded-lg font-black uppercase tracking-widest text-[10px] hover:bg-white/10" onClick={() => setSelectedApplication(app)}>
                                                         <FileSearch className="mr-2 h-4 w-4" />
-                                                        View Record
+                                                        VIEW RECORD
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -256,9 +262,9 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                     </TableBody>
                                 </Table>
                             ) : (
-                                <div className="flex flex-col items-center justify-center p-20 text-center text-muted-foreground">
-                                    <Archive className="h-12 w-12 opacity-10 mb-4" />
-                                    <p>The archive vault is currently empty.</p>
+                                <div className="flex flex-col items-center justify-center p-24 text-center">
+                                    <Archive className="h-16 w-16 opacity-5 text-white mb-4" />
+                                    <p className="text-white/20 font-black uppercase tracking-widest italic">The electronic archive vault is currently sealed.</p>
                                 </div>
                             )}
                         </CardContent>
