@@ -378,7 +378,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                 <div className="flex gap-2">
                     <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Decline</Button>
                     <Button className="bg-green-600 hover:bg-green-700" onClick={handleSupervisorApproval}>
-                        <Check className="mr-2 h-4 w-4" /> Audit OK & Issue Code
+                        <Check className="mr-2 h-4 w-4" /> APPROVE AND ISSUE CODE
                     </Button>
                 </div>
             );
