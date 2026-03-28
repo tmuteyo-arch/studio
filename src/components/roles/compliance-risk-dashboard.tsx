@@ -26,10 +26,10 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
 
-  // Compliance filter logic: Only applications escalated to 'Pending Compliance'
+  // Compliance filter logic: Only applications escalated to 'Pending Compliance' or 'Sent to Risk & Compliance'
   const pendingQueue = React.useMemo(() => {
     return applications.filter(app => 
-      app.status === 'Pending Compliance' &&
+      (app.status === 'Pending Compliance' || app.status === 'Sent to Risk & Compliance') &&
       (app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || app.id.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [applications, searchTerm]);
@@ -37,15 +37,15 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
   // Rejection History: Only applications that have been rejected
   const rejectionHistory = React.useMemo(() => {
     return applications.filter(app => 
-      app.status === 'Rejected' &&
+      (app.status === 'Rejected' || app.status === 'Rejected by Supervisor') &&
       (app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || app.id.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [applications, searchTerm]);
 
   const stats = React.useMemo(() => {
     return {
-      pendingAudit: applications.filter(a => a.status === 'Pending Compliance').length,
-      totalRejections: applications.filter(a => a.status === 'Rejected').length,
+      pendingAudit: applications.filter(a => a.status === 'Pending Compliance' || a.status === 'Sent to Risk & Compliance').length,
+      totalRejections: applications.filter(a => a.status === 'Rejected' || a.status === 'Rejected by Supervisor').length,
     };
   }, [applications]);
 
@@ -188,7 +188,7 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
                 </TableHeader>
                 <TableBody>
                   {rejectionHistory.map((app) => {
-                    const rejectionLog = app.history.find(h => h.action === 'Rejected');
+                    const rejectionLog = app.history.find(h => h.action === 'Rejected' || h.action === 'Rejected by Supervisor');
                     return (
                       <TableRow key={app.id} className="border-white/5 hover:bg-white/5">
                         <TableCell className="pl-6 py-4">

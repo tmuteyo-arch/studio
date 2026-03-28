@@ -18,7 +18,11 @@ export type ApplicationStatus =
   | 'Claimed by ASL'
   | 'Rejected by ASL'
   | 'Sent to Supervisor'
-  | 'Returned to ASL';
+  | 'Returned to ASL'
+  | 'Returned to Back Office'
+  | 'Sent to Risk & Compliance'
+  | 'Approved by Supervisor'
+  | 'Rejected by Supervisor';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
 

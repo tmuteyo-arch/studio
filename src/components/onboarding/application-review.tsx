@@ -73,6 +73,9 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const [isReturning, setIsReturning] = React.useState(false);
   const [returnComment, setReturnComment] = React.useState('');
+
+  const [isReturningToBO, setIsReturningToBO] = React.useState(false);
+  const [returnToBOComment, setReturnToBOComment] = React.useState('');
   
   const [previewDoc, setPreviewDoc] = React.useState<AppDocument | null>(null);
 
@@ -129,7 +132,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Application for ${application.clientName} has been updated.`,
     });
 
-     if (['Archived', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Returned to ATL', 'Returned to ASL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL'].includes(status)) {
+     if (['Archived', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Returned to ATL', 'Returned to ASL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL', 'Returned to Back Office', 'Sent to Risk & Compliance', 'Approved by Supervisor', 'Rejected by Supervisor'].includes(status)) {
         setTimeout(() => onBack(), 500);
     }
   };
@@ -178,6 +181,15 @@ export default function ApplicationReview({ application: initialApplication, onB
     setIsReturning(false);
   };
 
+  const handleReturnToBO = () => {
+    if (!returnToBOComment.trim()) {
+        toast({ variant: 'destructive', title: 'Comment Required', description: 'Please provide instructions for the Back Office team.' });
+        return;
+    }
+    handleStatusChange('Returned to Back Office', returnToBOComment);
+    setIsReturningToBO(false);
+  };
+
   const handleSupervisorApproval = () => {
     if (!activationCode) {
         toast({ variant: 'destructive', title: 'Action Required', description: 'Please enter the Activation Code.' });
@@ -185,7 +197,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     }
     const notes = `Supervisor audit successful. Activation Code issued.`;
     handleUpdateApplication({ 
-        status: 'Approved', 
+        status: 'Approved by Supervisor', 
         details: { ...application.details, activationCode },
         history: [...application.history, { action: 'Audit Approved', user: user.name, timestamp: new Date().toISOString(), notes }] 
     });
@@ -223,7 +235,8 @@ export default function ApplicationReview({ application: initialApplication, onB
         toast({ variant: 'destructive', title: 'Rejection Error', description: 'Provide a reason and supporting comment.' });
         return;
     }
-    handleStatusChange('Rejected', `Reason: ${rejectionReason} - ${rejectionComment}`);
+    const status = user.role === 'supervisor' ? 'Rejected by Supervisor' : 'Rejected';
+    handleStatusChange(status, `Reason: ${rejectionReason} - ${rejectionComment}`);
     setIsRejecting(false);
   };
 
@@ -349,10 +362,10 @@ export default function ApplicationReview({ application: initialApplication, onB
         }
         return null;
       case 'back-office':
-        if (application.status === 'Approved') {
+        if (application.status === 'Approved' || application.status === 'Approved by Supervisor') {
             return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black"><Send className="mr-2 h-4 w-4" />Dispatch Approved Account</Button>;
         }
-        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') {
+        if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL' || application.status === 'Returned to Back Office') {
             return (
                 <div className="flex gap-2">
                     <Button 
@@ -375,10 +388,26 @@ export default function ApplicationReview({ application: initialApplication, onB
       case 'supervisor':
         if (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor') {
             return (
-                <div className="flex gap-2">
-                    <Button variant="destructive" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" />Decline</Button>
-                    <Button className="bg-green-600 hover:bg-green-700" onClick={handleSupervisorApproval}>
-                        <Check className="mr-2 h-4 w-4" /> APPROVE AND ISSUE CODE
+                <div className="flex flex-wrap gap-2">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setIsReturningToBO(true)} 
+                        className="border-amber-500 text-amber-600 hover:bg-amber-50 font-bold"
+                    >
+                        <CornerUpLeft className="mr-2 h-4 w-4" /> Return to Back Office
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        onClick={() => handleStatusChange('Sent to Risk & Compliance')} 
+                        className="border-primary/20 text-primary hover:bg-primary/5 font-bold"
+                    >
+                        <ShieldAlert className="mr-2 h-4 w-4" /> Forward to Risk & Compliance
+                    </Button>
+                    <Button variant="destructive" className="font-bold" onClick={() => setIsRejecting(true)}>
+                        <X className="mr-2 h-4 w-4" /> Reject
+                    </Button>
+                    <Button className="bg-green-600 hover:bg-green-700 font-black" onClick={handleSupervisorApproval}>
+                        <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
                     </Button>
                 </div>
             );
@@ -428,7 +457,7 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardHeader>
           <CardContent>
               {/* Back Office: Technical Creation (Clerk only) */}
-              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL') && (
+              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL' || application.status === 'Returned to Back Office') && (
                   <div className="mb-8 p-6 bg-primary/5 rounded-xl border border-primary/20 animate-in slide-in-from-top-4">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                           <h4 className="text-xs font-black uppercase text-primary tracking-widest flex items-center gap-2">
@@ -672,6 +701,36 @@ export default function ApplicationReview({ application: initialApplication, onB
                         onClick={handleReturnToAsl} 
                         className="bg-amber-600 text-white hover:bg-amber-700" 
                         disabled={!returnComment.trim()}
+                    >
+                        Confirm Return
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={isReturningToBO} onOpenChange={setIsReturningToBO}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Return to Back Office</AlertDialogTitle>
+                    <AlertDialogDescription>Provide instructions for the clerical team to correct this record.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase">Correction Instructions</Label>
+                        <Textarea 
+                            placeholder="Detail the corrections required..." 
+                            value={returnToBOComment} 
+                            onChange={(e) => setReturnToBOComment(e.target.value)} 
+                            className="min-h-[120px]"
+                        />
+                    </div>
+                </div>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => { setIsReturningToBO(false); setReturnToBOComment(''); }}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                        onClick={handleReturnToBO} 
+                        className="bg-amber-600 text-white hover:bg-amber-700" 
+                        disabled={!returnToBOComment.trim()}
                     >
                         Confirm Return
                     </AlertDialogAction>
