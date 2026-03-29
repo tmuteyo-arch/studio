@@ -12,7 +12,7 @@ export default function StepIndividualInfo() {
   return (
     <div>
       <CardHeader>
-        <CardTitle>Person Info</CardTitle>
+        <CardTitle>Individual Info</CardTitle>
         <CardDescription>Enter details.</CardDescription>
       </CardHeader>
       <div className="px-6 space-y-4">

@@ -171,7 +171,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                 <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Choose Type</DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-white/5" />
                                 <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-primary hover:text-primary-foreground m-1 transition-colors" onClick={() => handleStartApplication('Individual Accounts')}>
-                                    Person
+                                    Individual
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-primary hover:text-primary-foreground m-1 transition-colors" onClick={() => handleStartApplication('Sole Trader')}>
                                     Sole Trader
