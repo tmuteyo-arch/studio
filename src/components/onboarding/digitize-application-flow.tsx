@@ -6,7 +6,7 @@ import { useAtom } from 'jotai';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, FileUp, Camera, Upload, Trash2, File, ScanLine, Info, CheckCircle2, AlertCircle, Eye, Download } from 'lucide-react';
+import { ArrowLeft, Loader2, FileUp, Camera, Upload, Trash2, File, ScanLine, Info, CheckCircle2, AlertCircle, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
+import { jsPDF } from 'jspdf';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -97,6 +98,14 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     setPages(prev => prev.filter((_, i) => i !== pageIndex));
   };
 
+  const movePage = (from: number, to: number) => {
+    if (to < 0 || to >= pages.length) return;
+    const newPages = [...pages];
+    const item = newPages.splice(from, 1)[0];
+    newPages.splice(to, 0, item);
+    setPages(newPages);
+  };
+
   const startScan = async () => {
     setIsScanning(true);
     if (hasCameraPermission === false) {
@@ -156,7 +165,22 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     setIsScanning(false);
   };
 
-  const onSubmit = () => {
+  const generateMergedPdf = async (typePages: string[]): Promise<string> => {
+    const pdf = new jsPDF();
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    for (let i = 0; i < typePages.length; i++) {
+      if (i > 0) pdf.addPage();
+      const page = typePages[i];
+      if (page.startsWith('data:image')) {
+        pdf.addImage(page, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      }
+    }
+    return pdf.output('datauristring');
+  };
+
+  const onSubmit = async () => {
     if (!clientName.trim() || !clientType || pages.length === 0) {
       toast({
         variant: 'destructive',
@@ -167,6 +191,25 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     }
 
     setIsSubmitting(true);
+    
+    // Group pages by document type and merge into PDFs
+    const groupedPages = pages.reduce((acc, page) => {
+        if (!acc[page.documentType]) acc[page.documentType] = [];
+        acc[page.documentType].push(page.dataUri);
+        return acc;
+    }, {} as Record<string, string[]>);
+
+    const mergedDocuments = await Promise.all(
+        Object.entries(groupedPages).map(async ([type, typePages]) => {
+            const mergedUrl = await generateMergedPdf(typePages);
+            return {
+                type,
+                fileName: `${type.toLowerCase().replace(/\s/g, '_')}.pdf`,
+                url: mergedUrl,
+                pages: typePages
+            };
+        })
+    );
     
     const newApplication = {
       id: `APP-ARCHIVED-${Date.now()}`,
@@ -184,14 +227,13 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
         address: 'N/A',
         dateOfBirth: '',
         contactNumber: 'N/A',
-        email: 'N/A'
+        email: 'N/A',
+        capturedDocuments: mergedDocuments,
+        agreedToTerms: true,
+        signature: user.name
       },
       signatories: [],
-      documents: pages.map((page, index) => ({
-        type: page.documentType,
-        fileName: page.file?.name || `scan_${index + 1}.jpg`,
-        url: page.dataUri,
-      })),
+      documents: mergedDocuments,
       history: [
         { action: 'Digitalized Application', user: user.name, timestamp: new Date().toISOString(), notes: `Digitalized Application from paper record. Account Type: ${clientType}` },
       ],
@@ -238,7 +280,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                 <CardHeader>
                 <CardTitle>Digitize Paper Application</CardTitle>
                 <CardDescription>
-                    Create a new digital archive for a paper-based application. Select account type, provide a name, and scan/upload all documents.
+                    Create a new digital archive. Select account type, provide a name, and capture multiple pages for each document.
                 </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -268,51 +310,62 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                     </div>
                 </div>
 
-                <div className="p-4 border rounded-lg space-y-4">
+                <div className="p-4 border rounded-lg space-y-4 bg-muted/5">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         Captured Pages
                         <Badge variant="secondary" className="ml-2">{pages.length}</Badge>
                     </h3>
                     {pages.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                         {pages.map((page, index) => (
-                            <div key={index} className="relative group border rounded-md p-1 h-32 flex flex-col justify-center bg-muted/30">
+                            <div key={index} className="relative group border rounded-xl overflow-hidden h-40 bg-background shadow-sm">
                             {page.type === 'image' ? (
-                                <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-cover rounded-md" />
+                                <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-cover" />
                             ) : (
-                                <div className="flex flex-col items-center justify-center bg-muted rounded-md p-2 h-full">
-                                    <File className="h-8 w-8 text-muted-foreground" />
-                                    <p className="text-[10px] text-muted-foreground mt-2 w-full text-center truncate" title={page.file?.name}>{page.file?.name || 'document.pdf'}</p>
+                                <div className="flex flex-col items-center justify-center bg-muted h-full">
+                                    <File className="h-10 w-10 text-muted-foreground" />
+                                    <p className="text-[8px] font-black uppercase text-center px-2 truncate w-full mt-2">{page.file?.name || 'document.pdf'}</p>
                                 </div>
                             )}
-                            <div className="absolute top-1 left-1">
-                                <Badge variant="secondary" className="text-[8px] px-1 py-0">{page.documentType}</Badge>
+                            <div className="absolute top-1 left-1 flex flex-col gap-1">
+                                <Badge variant="secondary" className="text-[8px] px-1.5 py-0.5 uppercase font-black">{page.documentType}</Badge>
+                                <Badge className="text-[8px] px-1.5 py-0.5 bg-black/60 text-white border-none">#{index + 1}</Badge>
                             </div>
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
-                                <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setPreviewPage(page)}>
-                                    <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePage(index)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-1">
+                                    <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => movePage(index, index - 1)} disabled={index === 0}>
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => movePage(index, index + 1)} disabled={index === pages.length - 1}>
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div className="flex gap-1">
+                                    <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setPreviewPage(page)}>
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePage(index)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
                             </div>
                         ))}
                         </div>
                     ) : (
-                        <div className="text-center text-muted-foreground py-12 border-dashed border-2 rounded-lg bg-muted/10">
-                            <ScanLine className="mx-auto h-12 w-12 opacity-20" />
-                            <p className="mt-2">No pages added yet.</p>
-                            <p className="text-xs">Start by scanning or uploading pages below.</p>
+                        <div className="text-center text-muted-foreground py-16 border-dashed border-2 rounded-xl bg-muted/10">
+                            <ScanLine className="mx-auto h-12 w-12 opacity-10" />
+                            <p className="mt-4 font-bold uppercase text-xs tracking-widest opacity-40">No pages captured</p>
+                            <p className="text-[10px] mt-1 italic">Use the section below to add pages.</p>
                         </div>
                     )}
 
-                    <div className="space-y-4 bg-muted/20 p-4 rounded-md border border-primary/10">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div className="space-y-4 bg-muted/20 p-6 rounded-xl border border-primary/10 shadow-inner">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
                             <div className="space-y-2">
-                                <Label htmlFor="doc-type">Current Document Type</Label>
+                                <Label htmlFor="doc-type" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Document Type</Label>
                                 <Select value={documentType} onValueChange={setDocumentType} disabled={isValidating}>
-                                    <SelectTrigger id="doc-type">
+                                    <SelectTrigger id="doc-type" className="h-12 bg-background border-primary/20">
                                         <SelectValue placeholder="Select type..." />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -324,12 +377,12 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                 </Select>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1" onClick={startScan} disabled={!clientType || isValidating}>
-                                    <Camera className="mr-2 h-4 w-4"/>Scan Page
+                                <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={startScan} disabled={!clientType || isValidating}>
+                                    <Camera className="mr-2 h-4 w-4 text-primary"/>Add Scan
                                 </Button>
-                                <Button asChild variant="outline" className="flex-1" disabled={!clientType || isValidating}>
+                                <Button asChild variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" disabled={!clientType || isValidating}>
                                     <label className="cursor-pointer flex items-center justify-center">
-                                        <Upload className="mr-2 h-4 w-4"/>Upload File
+                                        <Upload className="mr-2 h-4 w-4 text-primary"/>Add File
                                         <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                                     </label>
                                 </Button>
@@ -338,42 +391,48 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                     </div>
                 </div>
                 </CardContent>
-                <CardFooter className="border-t px-6 py-4 justify-end">
-                <Button onClick={onSubmit} disabled={isSubmitting || isValidating || !clientName.trim() || !clientType || pages.length === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8">
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {isSubmitting ? 'Archiving...' : 'Save Archived Application'}
+                <CardFooter className="border-t px-6 py-6 justify-end bg-muted/5">
+                <Button onClick={onSubmit} disabled={isSubmitting || isValidating || !clientName.trim() || !clientType || pages.length === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black px-10 h-14 rounded-xl shadow-xl active:scale-95 transition-all">
+                    {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                    {isSubmitting ? 'SAVING...' : 'ARCHIVE APPLICATION'}
                 </Button>
                 </CardFooter>
             </Card>
         </div>
 
         <div className="space-y-6">
-            <Card className="h-full flex flex-col">
-                <CardHeader className="pb-3 border-b">
-                    <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Info className="h-4 w-4 text-primary" />
-                        Requirements Checklist
+            <Card className="h-full flex flex-col shadow-lg border-primary/5">
+                <CardHeader className="pb-4 border-b">
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary">
+                        <Info className="h-4 w-4" />
+                        Checklist
                     </CardTitle>
-                    <CardDescription className="text-xs">
-                        {clientType ? `Mandatory docs for ${clientType}` : 'Select an account type to view requirements'}
+                    <CardDescription className="text-[10px] font-bold uppercase tracking-widest mt-1">
+                        {clientType ? `Needed for ${clientType}` : 'Select type to view'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 p-0">
-                    <ScrollArea className="h-[500px]">
+                    <ScrollArea className="h-[600px]">
                         <div className="p-4 space-y-3">
                             {clientType ? (
                                 requirements.map((req) => {
                                     const met = isRequirementMet(req.document);
+                                    const pageCount = pages.filter(p => p.documentType === req.document).length;
                                     return (
                                         <div 
                                             key={req.document} 
-                                            className={`p-3 rounded-md border transition-all cursor-pointer ${met ? 'bg-green-500/10 border-green-500/20' : 'bg-card hover:border-primary/50'}`}
+                                            className={`p-4 rounded-xl border transition-all cursor-pointer shadow-sm ${met ? 'bg-green-500/5 border-green-500/20' : 'bg-card hover:border-primary/50'}`}
                                             onClick={() => !isValidating && setDocumentType(req.document)}
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex-1">
-                                                    <p className={`text-sm font-bold ${met ? 'text-green-600' : ''}`}>{req.document}</p>
-                                                    <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{req.comment}</p>
+                                                    <p className={`text-sm font-black uppercase tracking-tight ${met ? 'text-green-600' : 'text-foreground/80'}`}>{req.document}</p>
+                                                    <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight font-medium">{req.comment}</p>
+                                                    {met && (
+                                                        <Badge variant="success" className="mt-2 text-[8px] font-black uppercase tracking-tighter">
+                                                            {pageCount} {pageCount === 1 ? 'PAGE' : 'PAGES'} CAPTURED
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                                 {met ? (
                                                     <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
@@ -385,8 +444,9 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                     );
                                 })
                             ) : (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <p className="text-xs">Account type not selected.</p>
+                                <div className="text-center py-24 text-muted-foreground opacity-20">
+                                    <ScanLine className="h-12 w-12 mx-auto mb-2" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">Select Type</p>
                                 </div>
                             )}
                         </div>
@@ -399,9 +459,9 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       <Dialog open={isScanning} onOpenChange={(isOpen) => !isOpen && stopScan()}>
         <DialogContent className="max-w-xl bg-background border-primary/20">
           <DialogHeader>
-            <DialogTitle>Scan: {documentType}</DialogTitle>
+            <DialogTitle>Scan Page: {documentType}</DialogTitle>
           </DialogHeader>
-          <div className="relative overflow-hidden rounded-lg border-2 border-primary/20 shadow-2xl">
+          <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 shadow-2xl">
             <video ref={videoRef} className="w-full aspect-video bg-black" autoPlay playsInline muted />
             <canvas ref={canvasRef} className="hidden" />
             <div className="absolute inset-0 pointer-events-none border-[40px] border-black/40 flex items-center justify-center">
@@ -417,21 +477,25 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
             )}
           </div>
           <div className="flex justify-between items-center gap-2">
-            <Badge variant="secondary" className="font-mono">{documentType}</Badge>
+            <Badge variant="secondary" className="font-black uppercase text-[10px] tracking-widest">{documentType}</Badge>
             <div className="flex gap-2">
-                <Button variant="outline" onClick={stopScan}>Cancel</Button>
-                <Button onClick={captureImage} disabled={!hasCameraPermission} className="bg-primary text-primary-foreground font-bold">Capture Page</Button>
+                <Button variant="outline" onClick={stopScan} className="font-bold">Cancel</Button>
+                <Button onClick={captureImage} disabled={!hasCameraPermission} className="bg-primary text-primary-foreground font-black px-8">Take Photo</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!previewPage} onOpenChange={(open) => !open && setPreviewPage(null)}>
-        <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-            <DialogHeader>
-                <DialogTitle>Document Preview: {previewPage?.documentType}</DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 bg-muted rounded-md overflow-hidden relative flex items-center justify-center min-h-0">
+        <DialogContent className="max-w-4xl h-[80vh] flex flex-col rounded-2xl overflow-hidden border-none p-0">
+            <div className="bg-muted/50 p-6 border-b flex justify-between items-center">
+                <div>
+                    <DialogTitle className="text-xs font-black uppercase tracking-widest text-primary">Preview: {previewPage?.documentType}</DialogTitle>
+                    <p className="text-[10px] text-muted-foreground font-mono mt-1">{previewPage?.file?.name || 'Scan Capture'}</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setPreviewPage(null)} className="rounded-full"><Trash2 className="h-4 w-4" /></Button>
+            </div>
+            <div className="flex-1 bg-black relative flex items-center justify-center min-h-0">
                 {previewPage?.type === 'image' ? (
                     <img src={previewPage.dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
                 ) : (
@@ -440,10 +504,10 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                         type="application/pdf"
                         className="w-full h-full"
                     >
-                        <div className="flex flex-col items-center justify-center p-6 text-center">
-                            <File className="h-16 w-16 text-muted-foreground mb-4" />
-                            <p className="font-semibold">PDF Preview Not Available</p>
-                            <Button asChild variant="outline" className="mt-4">
+                        <div className="flex flex-col items-center justify-center p-6 text-center text-white/40">
+                            <File className="h-16 w-16 mb-4 opacity-20" />
+                            <p className="font-black uppercase tracking-widest text-xs">PDF Preview Not Available</p>
+                            <Button asChild variant="outline" className="mt-6 border-white/10 hover:bg-white/5">
                                 <a href={previewPage?.dataUri} download="document.pdf"><Download className="mr-2 h-4 w-4" />Download to View</a>
                             </Button>
                         </div>

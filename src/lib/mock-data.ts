@@ -32,6 +32,7 @@ export type Document = {
   type: string;
   fileName: string;
   url: string;
+  pages?: string[]; // Array of data URIs for multi-page support
 }
 
 export type HistoryLog = {

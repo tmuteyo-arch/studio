@@ -75,7 +75,8 @@ export const OnboardingFormSchema = z.object({
   capturedDocuments: z.array(z.object({
     type: z.string(),
     fileName: z.string(),
-    url: z.string()
+    url: z.string(),
+    pages: z.array(z.string()).optional() // Stores individual image data URIs for multi-page docs
   })).optional().default([]),
   
   // Internal Registry IDs (Hidden from ASL until finalized)

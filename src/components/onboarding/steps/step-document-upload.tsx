@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle } from 'lucide-react';
+import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -14,17 +15,11 @@ import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
-
-type PageState = {
-  source: 'scan' | 'upload';
-  dataUri: string;
-  file?: File;
-  type: 'image' | 'pdf';
-};
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 type DocumentState = {
   documentType: string;
-  pages: PageState[];
+  pages: string[]; // array of data URIs
 };
 
 export default function StepDocumentUpload() {
@@ -32,6 +27,7 @@ export default function StepDocumentUpload() {
   const form = useFormContext<OnboardingFormData>();
   const [documents, setDocuments] = React.useState<Record<string, DocumentState>>({});
   const [isValidating, setIsValidating] = React.useState<string | null>(null);
+  const [isMerging, setIsMerging] = React.useState<boolean>(false);
   
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -48,34 +44,63 @@ export default function StepDocumentUpload() {
 
     documentRequirements.forEach(req => {
       const existing = existingCaptured.find(d => d.type === req.document);
+      // Support existing multi-page or fallback to single url
       initialDocs[req.document] = { 
         documentType: req.document, 
-        pages: existing ? [{
-            source: 'upload',
-            dataUri: existing.url,
-            type: existing.url.includes('application/pdf') || existing.fileName?.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
-        }] : [] 
+        pages: existing?.pages || (existing ? [existing.url] : []) 
       };
     });
     setDocuments(initialDocs);
   }, [documentRequirements, form]);
 
+  const generateMergedPdf = async (pages: string[]): Promise<string> => {
+    if (pages.length === 0) return '';
+    // If it's already a single PDF, return it as is
+    if (pages.length === 1 && pages[0].startsWith('data:application/pdf')) return pages[0];
+    
+    const pdf = new jsPDF();
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    for (let i = 0; i < pages.length; i++) {
+      if (i > 0) pdf.addPage();
+      const page = pages[i];
+      if (page.startsWith('data:image')) {
+        pdf.addImage(page, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      }
+    }
+    return pdf.output('datauristring');
+  };
+
   // Sync documents state to form value for submission
   React.useEffect(() => {
     if (Object.keys(documents).length === 0) return;
 
-    const capturedDocs = Object.values(documents)
-      .filter(doc => doc.pages.length > 0)
-      .map(doc => ({
-        type: doc.documentType,
-        fileName: doc.pages[0].file?.name || `${doc.documentType.toLowerCase().replace(/\s/g, '_')}_1.${doc.pages[0].type === 'pdf' ? 'pdf' : 'jpg'}`,
-        url: doc.pages[0].dataUri
-      }));
-    
-    const currentVal = form.getValues('capturedDocuments') || [];
-    if (JSON.stringify(currentVal) !== JSON.stringify(capturedDocs)) {
-        form.setValue('capturedDocuments', capturedDocs, { shouldValidate: true });
-    }
+    const syncToForm = async () => {
+        setIsMerging(true);
+        const capturedDocs = await Promise.all(
+            Object.values(documents)
+                .filter(doc => doc.pages.length > 0)
+                .map(async (doc) => {
+                    const mergedUrl = await generateMergedPdf(doc.pages);
+                    return {
+                        type: doc.documentType,
+                        fileName: `${doc.documentType.toLowerCase().replace(/\s/g, '_')}.pdf`,
+                        url: mergedUrl,
+                        pages: doc.pages
+                    };
+                })
+        );
+        
+        const currentVal = form.getValues('capturedDocuments') || [];
+        if (JSON.stringify(currentVal) !== JSON.stringify(capturedDocs)) {
+            form.setValue('capturedDocuments', capturedDocs, { shouldValidate: true });
+        }
+        setIsMerging(false);
+    };
+
+    const timer = setTimeout(syncToForm, 500); // Debounce merging
+    return () => clearTimeout(timer);
   }, [documents, form]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
@@ -90,9 +115,9 @@ export default function StepDocumentUpload() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const dataUri = event.target?.result as string;
-      const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+      const isImage = file.type.startsWith('image/');
 
-      if (fileType === 'image') {
+      if (isImage) {
         setIsValidating(documentType);
         const result = await validateImageQualityHeuristic(dataUri);
         setIsValidating(null);
@@ -109,16 +134,34 @@ export default function StepDocumentUpload() {
 
       setDocuments(prev => ({
         ...prev,
-        [documentType]: { ...prev[documentType], pages: [{ source: 'upload', dataUri, file, type: fileType }] }
+        [documentType]: { 
+            ...prev[documentType], 
+            pages: [...prev[documentType].pages, dataUri] 
+        }
       }));
+      toast({ title: 'Page Added', description: 'New page added to document.' });
     };
     reader.readAsDataURL(file);
   };
   
-  const removePageFromDocument = (documentType: string) => {
+  const removePage = (documentType: string, pageIndex: number) => {
     setDocuments(prev => ({
         ...prev,
-        [documentType]: { ...prev[documentType], pages: [] }
+        [documentType]: { 
+            ...prev[documentType], 
+            pages: prev[documentType].pages.filter((_, i) => i !== pageIndex) 
+        }
+    }));
+  };
+
+  const movePage = (documentType: string, from: number, to: number) => {
+    const pages = [...documents[documentType].pages];
+    if (to < 0 || to >= pages.length) return;
+    const item = pages.splice(from, 1)[0];
+    pages.splice(to, 0, item);
+    setDocuments(prev => ({
+        ...prev,
+        [documentType]: { ...prev[documentType], pages }
     }));
   };
 
@@ -167,9 +210,12 @@ export default function StepDocumentUpload() {
             
             setDocuments(prev => ({
                 ...prev,
-                [docType]: { ...prev[docType], pages: [{ source: 'scan', dataUri, type: 'image' }] }
+                [docType]: { 
+                    ...prev[docType], 
+                    pages: [...prev[docType].pages, dataUri] 
+                }
             }));
-            toast({ title: 'Added', description: 'Document added.' });
+            toast({ title: 'Page Added', description: 'Photo added as new page.' });
         }
     }
   };
@@ -189,13 +235,13 @@ export default function StepDocumentUpload() {
           <ScanLine className="h-6 w-6 text-primary" />
           Add Documents
         </CardTitle>
-        <CardDescription>Use camera or upload.</CardDescription>
+        <CardDescription>Capture multiple pages per document using camera or upload.</CardDescription>
       </CardHeader>
       <div className="space-y-6 px-6">
         
         <Alert className="bg-primary/5 border-primary/20">
             <Info className="h-4 w-4" />
-            <AlertTitle>Need for {clientType}</AlertTitle>
+            <AlertTitle>Required for {clientType}</AlertTitle>
             <AlertDescription>
                 <div className="max-h-48 overflow-auto mt-2">
                   <Table>
@@ -218,77 +264,110 @@ export default function StepDocumentUpload() {
             </AlertDescription>
         </Alert>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-6">
           {Object.values(documents).map(({documentType, pages}) => {
             const loading = isValidating === documentType;
             return (
-                <div key={documentType} className="p-4 border rounded-lg hover:border-primary/50 transition-colors bg-card shadow-sm relative overflow-hidden">
+                <div key={documentType} className="p-6 border rounded-xl hover:border-primary/50 transition-colors bg-card shadow-sm relative overflow-hidden">
                     {loading && (
                       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2">
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Checking Quality...</span>
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <span className="text-xs font-black uppercase tracking-widest text-primary">Checking Quality...</span>
                       </div>
                     )}
-                    <div className='flex justify-between items-center mb-3'>
-                        <h3 className="text-sm font-bold truncate max-w-[150px]" title={documentType}>{documentType}</h3>
-                        <Badge variant={pages.length > 0 ? 'success' : 'outline'} className="text-[10px]">{pages.length} Pages</Badge>
+                    <div className='flex justify-between items-center mb-4'>
+                        <div>
+                            <h3 className="text-md font-bold truncate max-w-[250px]" title={documentType}>{documentType}</h3>
+                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1">Multi-Page Support Active</p>
+                        </div>
+                        <Badge variant={pages.length > 0 ? 'success' : 'outline'} className="px-3 py-1 font-black">
+                            {pages.length} {pages.length === 1 ? 'PAGE' : 'PAGES'}
+                        </Badge>
                     </div>
                 
-                    <div className="space-y-2 mb-3">
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="flex-1" onClick={() => startScan(documentType)} disabled={loading}><Camera className="mr-2 h-3 w-3"/>Scan</Button>
-                            <Button asChild variant="outline" size="sm" className="flex-1" disabled={loading}>
-                                <label className="cursor-pointer">
-                                    <Upload className="mr-2 h-3 w-3"/>Upload
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                        <div className="flex-1">
+                            {pages.length > 0 ? (
+                                <ScrollArea className="w-full whitespace-nowrap rounded-lg border bg-muted/20 p-4">
+                                    <div className="flex w-max space-x-4">
+                                        {pages.map((page, index) => (
+                                            <div key={index} className="relative w-32 h-44 rounded-md border bg-background overflow-hidden group shadow-sm">
+                                                {page.startsWith('data:application/pdf') ? (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/50">
+                                                        <File className="h-10 w-10 text-primary" />
+                                                        <span className="text-[8px] font-black">PDF PAGE</span>
+                                                    </div>
+                                                ) : (
+                                                    <img src={page} alt={`Page ${index+1}`} className="w-full h-full object-cover" />
+                                                )}
+                                                <div className="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded font-bold">
+                                                    #{index + 1}
+                                                </div>
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
+                                                    <div className="flex gap-1">
+                                                        <Button variant="secondary" size="icon" className="h-6 w-6" onClick={() => movePage(documentType, index, index - 1)} disabled={index === 0}>
+                                                            <ChevronLeft className="h-3 w-3" />
+                                                        </Button>
+                                                        <Button variant="secondary" size="icon" className="h-6 w-6" onClick={() => movePage(documentType, index, index + 1)} disabled={index === pages.length - 1}>
+                                                            <ChevronRight className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
+                                                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removePage(documentType, index)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div className="w-32 h-44 rounded-md border-2 border-dashed flex flex-col items-center justify-center bg-muted/10 text-muted-foreground gap-2">
+                                            <Plus className="h-6 w-6 opacity-20" />
+                                            <span className="text-[8px] font-black uppercase tracking-widest opacity-40">Add Page</span>
+                                        </div>
+                                    </div>
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
+                            ) : (
+                                <div className="h-44 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground bg-muted/5 gap-3">
+                                    <File className="h-10 w-10 opacity-10" />
+                                    <p className="text-xs font-bold uppercase tracking-widest opacity-40">No pages added yet</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="w-full sm:w-48 space-y-2">
+                            <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => startScan(documentType)} disabled={loading}>
+                                <Camera className="mr-2 h-4 w-4 text-primary"/>Scan Page
+                            </Button>
+                            <Button asChild variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" disabled={loading}>
+                                <label className="cursor-pointer flex items-center justify-center">
+                                    <Upload className="mr-2 h-4 w-4 text-primary"/>Upload Page
                                     <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
                                 </label>
                             </Button>
-                        </div>
-                    </div>
-
-                    {pages.length > 0 ? (
-                        <div className="relative group border rounded h-24 bg-muted flex items-center justify-center overflow-hidden">
-                            {pages[0].type === 'image' ? (
-                                <img src={pages[0].dataUri} alt="doc" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="flex flex-col items-center gap-1">
-                                    <File className="h-8 w-8 text-primary" />
-                                    <span className="text-[10px] font-bold">PDF</span>
-                                </div>
+                            {pages.length > 0 && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="secondary" className="w-full h-10 font-bold uppercase text-[10px] tracking-widest">
+                                            <Eye className="mr-2 h-3 w-3"/>Preview Doc
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
+                                        <DialogHeader>
+                                            <DialogTitle>Document Preview: {documentType}</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="flex-1 min-h-0 bg-black rounded-md overflow-hidden flex items-center justify-center relative">
+                                            {isMerging && (
+                                                <div className="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center text-white gap-4">
+                                                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                                                    <p className="text-xs font-black uppercase tracking-widest">Merging Pages...</p>
+                                                </div>
+                                            )}
+                                            {/* We generate a quick preview of the merged PDF */}
+                                            <iframe src={form.getValues('capturedDocuments').find(d => d.type === documentType)?.url} className="w-full h-full" title="PDF Preview" />
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
                             )}
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePageFromDocument(documentType)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
                         </div>
-                    ) : (
-                    <div className="h-24 border-dashed border-2 rounded flex items-center justify-center text-muted-foreground text-[10px]">
-                        Empty
                     </div>
-                    )}
-                    
-                    {pages.length > 0 && (
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="secondary" size="sm" className="w-full mt-2 h-8 text-xs font-bold">
-                                <Eye className="mr-2 h-3 w-3"/>View
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
-                            <DialogHeader>
-                                <DialogTitle>Preview: {documentType}</DialogTitle>
-                            </DialogHeader>
-                            <div className="flex-1 min-h-0 bg-muted rounded-md overflow-hidden flex items-center justify-center">
-                                {pages[0].type === 'image' ? (
-                                    <img src={pages[0].dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
-                                ) : (
-                                    <iframe src={pages[0].dataUri} className="w-full h-full" title="PDF" />
-                                )}
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                    )}
                 </div>
             );
           })}
@@ -296,26 +375,29 @@ export default function StepDocumentUpload() {
       </div>
 
        <Dialog open={!!isScanning} onOpenChange={(isOpen) => !isOpen && stopScan()}>
-            <DialogContent className="max-w-xl">
+            <DialogContent className="max-w-xl bg-background border-primary/20">
                 <DialogHeader>
-                    <DialogTitle>Scan: {isScanning}</DialogTitle>
+                    <DialogTitle>Scan Page: {isScanning}</DialogTitle>
                 </DialogHeader>
-                <div className="relative">
-                    <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay playsInline muted />
+                <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 shadow-2xl">
+                    <video ref={videoRef} className="w-full aspect-video bg-black" autoPlay playsInline muted />
                     <canvas ref={canvasRef} className="hidden" />
+                    <div className="absolute inset-0 pointer-events-none border-[40px] border-black/40 flex items-center justify-center">
+                        <div className="w-full h-full border-2 border-primary/50 border-dashed animate-pulse"></div>
+                    </div>
                     {hasCameraPermission === false && (
                          <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                            <Alert variant="destructive" className="m-4">
+                            <Alert variant="destructive" className="m-4 max-w-xs">
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertTitle>Need Camera</AlertTitle>
-                                <AlertDescription>Allow camera in browser.</AlertDescription>
+                                <AlertDescription>Please allow camera access in your browser.</AlertDescription>
                             </Alert>
                         </div>
                     )}
                 </div>
                 <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={stopScan}>Cancel</Button>
-                    <Button onClick={captureImage} disabled={!hasCameraPermission} className="font-bold">Take Photo</Button>
+                    <Button variant="outline" onClick={stopScan} className="font-bold">Cancel</Button>
+                    <Button onClick={captureImage} disabled={!hasCameraPermission} className="bg-primary text-primary-foreground font-black px-8">Take Photo</Button>
                 </div>
             </DialogContent>
         </Dialog>
