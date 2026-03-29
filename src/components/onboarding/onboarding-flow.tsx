@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { useAtom } from 'jotai';
 
 import { OnboardingFormData, OnboardingFormSchema, Step } from '@/lib/types';
-import { applicationsAtom, activityLogsAtom } from '@/lib/mock-data';
+import { applicationsAtom, activityLogsAtom, Application } from '@/lib/mock-data';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressTracker } from './progress-tracker';
@@ -18,7 +18,7 @@ import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/review-step';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertTriangle, Save } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +55,7 @@ interface OnboardingFlowProps {
   onCancel: () => void;
   user: User;
   preselectedType?: string | null;
+  existingApplication?: Application | null;
 }
 
 type DuplicateInfo = {
@@ -62,7 +63,7 @@ type DuplicateInfo = {
   message: string;
 }
 
-export default function OnboardingFlow({ onCancel, user, preselectedType }: OnboardingFlowProps) {
+export default function OnboardingFlow({ onCancel, user, preselectedType, existingApplication }: OnboardingFlowProps) {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [applications, setApplications] = useAtom(applicationsAtom);
   const [, setActivityLogs] = useAtom(activityLogsAtom);
@@ -74,7 +75,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
     mode: 'onChange',
-    defaultValues: {
+    defaultValues: existingApplication ? existingApplication.details : {
       clientType: preselectedType || '',
       region: '',
       individualSurname: '',
@@ -152,7 +153,11 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     await new Promise(res => setTimeout(res, 600)); 
     setIsCheckingDuplicates(false);
 
-    const duplicate = applications.find(app => app.clientName.toLowerCase() === nameToCheck.toLowerCase());
+    // Don't flag as duplicate if it's the same record we are currently editing
+    const duplicate = applications.find(app => 
+      app.clientName.toLowerCase() === nameToCheck.toLowerCase() && 
+      app.id !== existingApplication?.id
+    );
 
     if (duplicate) {
         setDuplicateInfo({ 
@@ -195,30 +200,77 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
       setCurrentStepIndex((step) => step - 1);
     }
   };
+
+  const handleSaveDraft = () => {
+    const data = form.getValues();
+    const appId = existingApplication?.id || `APP-DRAFT-${Date.now()}`;
+    
+    const draftApp: Application = {
+      id: appId,
+      clientName: data.organisationLegalName || `${data.individualFirstName || ''} ${data.individualSurname || ''}`.trim() || 'Untitled Draft',
+      clientType: data.clientType,
+      region: data.region || 'Unknown',
+      status: 'Draft',
+      submittedDate: existingApplication?.submittedDate || format(new Date(), 'yyyy-MM-dd'),
+      lastUpdated: new Date().toISOString(),
+      submittedBy: user.name,
+      fcbStatus: existingApplication?.fcbStatus || 'Inclusive',
+      details: data,
+      signatories: data.signatories || [],
+      documents: data.capturedDocuments || [],
+      history: existingApplication ? existingApplication.history : [
+        { action: 'Draft Saved', user: user.name, timestamp: new Date().toISOString() },
+      ],
+      comments: existingApplication?.comments || [],
+    };
+
+    setApplications((prev) => {
+      const exists = prev.find(a => a.id === appId);
+      if (exists) {
+        return prev.map(a => a.id === appId ? draftApp : a);
+      }
+      return [draftApp, ...prev];
+    });
+
+    toast({
+      title: "Draft Saved",
+      description: "You can continue this later from your dashboard.",
+    });
+    
+    onCancel();
+  };
   
   const onSubmit = (data: OnboardingFormData) => {
     setIsSubmitting(true);
+    const appId = existingApplication?.id || `APP-${Date.now()}`;
 
-    const newApplication = {
-      id: `APP-${Date.now()}`,
+    const newApplication: Application = {
+      id: appId,
       clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
       clientType: data.clientType,
       region: data.region,
       status: 'Submitted',
-      submittedDate: format(new Date(), 'yyyy-MM-dd'),
+      submittedDate: existingApplication?.submittedDate || format(new Date(), 'yyyy-MM-dd'),
       lastUpdated: new Date().toISOString(),
       submittedBy: user.name,
-      fcbStatus: 'Inclusive',
+      fcbStatus: existingApplication?.fcbStatus || 'Inclusive',
       details: data,
       signatories: data.signatories || [],
       documents: data.capturedDocuments || [],
       history: [
+        ...(existingApplication?.history || []),
         { action: 'Request Sent', user: user.name, timestamp: new Date().toISOString() },
       ],
-      comments: [],
+      comments: existingApplication?.comments || [],
     };
     
-    setApplications((prev) => [newApplication, ...prev]);
+    setApplications((prev) => {
+      const exists = prev.find(a => a.id === appId);
+      if (exists) {
+        return prev.map(a => a.id === appId ? newApplication : a);
+      }
+      return [newApplication, ...prev];
+    });
 
     const logEntry = {
       id: `log-${Date.now()}`,
@@ -268,16 +320,23 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
                      {currentStepIndex > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
                     {currentStepIndex === 0 ? 'Cancel' : 'Back'}
                   </Button>
-                  {currentStepIndex < steps.length - 1 && (
-                     <Button type="button" onClick={next} disabled={isCheckingDuplicates}>
-                      {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Next'}
+                  
+                  <div className="flex gap-2">
+                    <Button variant="secondary" type="button" onClick={handleSaveDraft} className="font-bold border-primary/20">
+                      <Save className="mr-2 h-4 w-4" /> Save Draft
                     </Button>
-                  )}
-                  {currentStepIndex === steps.length - 1 && (
-                     <Button type="submit" disabled={isSubmitting}>
-                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Finish'}
-                     </Button>
-                  )}
+                    
+                    {currentStepIndex < steps.length - 1 && (
+                      <Button type="button" onClick={next} disabled={isCheckingDuplicates} className="font-bold">
+                        {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Next'}
+                      </Button>
+                    )}
+                    {currentStepIndex === steps.length - 1 && (
+                      <Button type="submit" disabled={isSubmitting} className="font-black px-8">
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Finish'}
+                      </Button>
+                    )}
+                  </div>
                 </CardFooter>
               </Card>
             </form>

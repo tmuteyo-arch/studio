@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X, Sparkles } from 'lucide-react';
+import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X, Sparkles, FileEdit } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User as UserProfile } from '@/lib/users';
@@ -40,6 +40,8 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Returned to ASL':
     case 'Rejected by ASL':
       return 'destructive';
+    case 'Draft':
+      return 'outline';
     case 'Submitted':
       return 'outline';
     default:
@@ -62,6 +64,7 @@ const translateStatus = (status: ApplicationStatus) => {
         case 'Claimed by ASL': return 'Taken';
         case 'Rejected by ASL': return 'Rejected';
         case 'Approved by Compliance': return 'Cleared';
+        case 'Draft': return 'Draft';
         default: return status;
     }
 }
@@ -73,13 +76,14 @@ interface AtlDashboardProps {
 export default function AtlDashboard({ user }: AtlDashboardProps) {
   const [isCreatingApplication, setIsCreatingApplication] = React.useState(false);
   const [preselectedType, setPreselectedType] = React.useState<string | null>(null);
+  const [draftToEdit, setDraftToEdit] = React.useState<Application | null>(null);
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
   const [applications] = useAtom(applicationsAtom);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isNewAppMenuOpen, setIsNewAppMenuOpen] = React.useState(false);
 
   const myApplications = applications
-    .filter(app => app.submittedBy === user.name && ['Submitted', 'Returned to ATL', 'Returned to ASL', 'Signed', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Archived', 'Sent to Back Office', 'Claimed by ASL', 'Approved by Compliance'].includes(app.status))
+    .filter(app => app.submittedBy === user.name && ['Draft', 'Submitted', 'Returned to ATL', 'Returned to ASL', 'Signed', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Archived', 'Sent to Back Office', 'Claimed by ASL', 'Approved by Compliance'].includes(app.status))
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     
   const customerLeads = applications
@@ -97,9 +101,15 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
   });
 
   const handleStartApplication = (type: string) => {
+    setDraftToEdit(null);
     setPreselectedType(type);
     setIsCreatingApplication(true);
     setIsNewAppMenuOpen(false);
+  };
+
+  const handleContinueDraft = (app: Application) => {
+    setDraftToEdit(app);
+    setIsCreatingApplication(true);
   };
 
   const applicationForReview = selectedApplication 
@@ -107,7 +117,12 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
       : null;
 
   if (isCreatingApplication) {
-    return <OnboardingFlow user={user} onCancel={() => { setIsCreatingApplication(false); setPreselectedType(null); }} preselectedType={preselectedType} />;
+    return <OnboardingFlow 
+              user={user} 
+              onCancel={() => { setIsCreatingApplication(false); setPreselectedType(null); setDraftToEdit(null); }} 
+              preselectedType={preselectedType} 
+              existingApplication={draftToEdit}
+            />;
   }
 
   if (applicationForReview) {
@@ -300,8 +315,15 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                               <Badge variant={getStatusVariant(app.status)} className="px-3 py-1 uppercase text-[10px] font-black tracking-wider shadow-sm">{translateStatus(app.status)}</Badge>
                                           </TableCell>
                                           <TableCell className="text-right pr-8">
-                                              <Button variant="outline" size="sm" className="font-black uppercase tracking-widest h-9 border-white/10 hover:bg-white/10 hover:text-white transition-all active:scale-95 px-5 rounded-lg" onClick={() => setSelectedApplication(app)}>
-                                                  {(app.status === 'Returned to ATL' || app.status === 'Returned to ASL') ? 'FIX' : 'VIEW'}
+                                              <Button 
+                                                variant={app.status === 'Draft' ? "default" : "outline"} 
+                                                size="sm" 
+                                                className="font-black uppercase tracking-widest h-9 transition-all active:scale-95 px-5 rounded-lg border-white/10" 
+                                                onClick={() => app.status === 'Draft' ? handleContinueDraft(app) : setSelectedApplication(app)}
+                                              >
+                                                  {app.status === 'Draft' ? (
+                                                    <><FileEdit className="mr-2 h-4 w-4" /> CONTINUE</>
+                                                  ) : (app.status === 'Returned to ATL' || app.status === 'Returned to ASL' ? 'FIX' : 'VIEW')}
                                               </Button>
                                           </TableCell>
                                       </TableRow>

@@ -5,6 +5,7 @@ import { atomWithStorage } from 'jotai/utils';
 import type { OnboardingFormData, Signatory } from './types';
 
 export type ApplicationStatus =
+  | 'Draft'
   | 'Submitted'
   | 'In Review'
   | 'Pending Supervisor'
