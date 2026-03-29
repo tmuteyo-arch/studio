@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2 } from 'lucide-react';
+import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { validateImageQuality } from '@/ai/flows/validate-image-quality';
+import { validateImageQualityHeuristic } from '@/lib/image-validation';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -94,21 +94,17 @@ export default function StepDocumentUpload() {
 
       if (fileType === 'image') {
         setIsValidating(documentType);
-        try {
-          const result = await validateImageQuality({ imageDataUri: dataUri });
-          if (!result.isValid) {
-            toast({
-              variant: 'destructive',
-              title: 'Quality Check Failed',
-              description: 'Image not clear. Please retake photo.',
-            });
-            setIsValidating(null);
-            return;
-          }
-        } catch (error) {
-          console.error('Validation error:', error);
-        }
+        const result = await validateImageQualityHeuristic(dataUri);
         setIsValidating(null);
+
+        if (!result.isValid) {
+          toast({
+            variant: 'destructive',
+            title: 'Quality Check Failed',
+            description: 'Image not clear. Please retake photo.',
+          });
+          return;
+        }
       }
 
       setDocuments(prev => ({
@@ -157,22 +153,18 @@ export default function StepDocumentUpload() {
             stopScan();
             setIsValidating(docType);
             
-            try {
-              const result = await validateImageQuality({ imageDataUri: dataUri });
-              if (!result.isValid) {
-                toast({
-                  variant: 'destructive',
-                  title: 'Quality Check Failed',
-                  description: 'Image not clear. Please retake photo.',
-                });
-                setIsValidating(null);
-                return;
-              }
-            } catch (error) {
-              console.error('Validation error:', error);
+            const result = await validateImageQualityHeuristic(dataUri);
+            setIsValidating(null);
+            
+            if (!result.isValid) {
+              toast({
+                variant: 'destructive',
+                title: 'Quality Check Failed',
+                description: 'Image not clear. Please retake photo.',
+              });
+              return;
             }
             
-            setIsValidating(null);
             setDocuments(prev => ({
                 ...prev,
                 [docType]: { ...prev[docType], pages: [{ source: 'scan', dataUri, type: 'image' }] }

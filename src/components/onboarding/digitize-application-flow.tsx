@@ -18,7 +18,7 @@ import { accountTypes } from '@/lib/types';
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { validateImageQuality } from '@/ai/flows/validate-image-quality';
+import { validateImageQualityHeuristic } from '@/lib/image-validation';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -70,21 +70,17 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
 
       if (fileType === 'image') {
         setIsValidating(true);
-        try {
-          const result = await validateImageQuality({ imageDataUri: dataUri });
-          if (!result.isValid) {
-            toast({
-              variant: 'destructive',
-              title: 'Quality Check Failed',
-              description: 'Image not clear. Please retake photo.',
-            });
-            setIsValidating(false);
-            return;
-          }
-        } catch (error) {
-          console.error('Validation error:', error);
-        }
+        const result = await validateImageQualityHeuristic(dataUri);
         setIsValidating(false);
+
+        if (!result.isValid) {
+          toast({
+            variant: 'destructive',
+            title: 'Quality Check Failed',
+            description: 'Image not clear. Please retake photo.',
+          });
+          return;
+        }
       }
 
       addPage({ source: 'upload', dataUri, file, type: fileType, documentType });
@@ -135,23 +131,18 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
         
         stopScan();
         setIsValidating(true);
+        const result = await validateImageQualityHeuristic(dataUri);
+        setIsValidating(false);
         
-        try {
-          const result = await validateImageQuality({ imageDataUri: dataUri });
-          if (!result.isValid) {
-            toast({
-              variant: 'destructive',
-              title: 'Quality Check Failed',
-              description: 'Image not clear. Please retake photo.',
-            });
-            setIsValidating(false);
-            return;
-          }
-        } catch (error) {
-          console.error('Validation error:', error);
+        if (!result.isValid) {
+          toast({
+            variant: 'destructive',
+            title: 'Quality Check Failed',
+            description: 'Image not clear. Please retake photo.',
+          });
+          return;
         }
         
-        setIsValidating(false);
         addPage({ source: 'scan', dataUri, type: 'image', documentType });
       }
     }
