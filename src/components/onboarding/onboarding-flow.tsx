@@ -121,7 +121,6 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     }
     
     if (isSoleTrader) {
-      // Sole trader uses individual info AND needs mandate
       const soleTraderSteps = ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'];
       return allSteps.filter(step => soleTraderSteps.includes(step.id));
     }
@@ -221,7 +220,6 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     
     setApplications((prev) => [newApplication, ...prev]);
 
-    // Log Account Created Event
     const logEntry = {
       id: `log-${Date.now()}`,
       userId: user.id,
@@ -242,6 +240,14 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
     }, 1000);
   };
 
+  const onInvalid = () => {
+    toast({
+      variant: 'destructive',
+      title: 'Missing Details',
+      description: 'Please check the review page for errors before finishing.',
+    });
+  };
+
   const CurrentStepComponent = StepComponents[currentStep.id];
 
   return (
@@ -250,7 +256,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
         <ProgressTracker steps={steps} currentStepIndex={currentStepIndex} />
         <div className="flex-1 p-4 md:p-8">
             <form
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={form.handleSubmit(onSubmit, onInvalid)}
               className="h-full"
             >
               <Card className="h-full flex flex-col shadow-lg border-primary/10">
@@ -268,7 +274,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType }: Onbo
                     </Button>
                   )}
                   {currentStepIndex === steps.length - 1 && (
-                     <Button type="submit" disabled={!form.formState.isValid || isSubmitting}>
+                     <Button type="submit" disabled={isSubmitting}>
                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Finish'}
                      </Button>
                   )}
