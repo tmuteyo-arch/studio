@@ -38,7 +38,7 @@ const allSteps: Step[] = [
   { id: 'individual-info', name: 'Personal', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber'] },
   { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
   { id: 'signatories', name: 'Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
-  { id: 'document-upload', name: 'Files', fields: ['capturedDocuments'] },
+  { id: 'document-upload', name: 'Documents', fields: ['capturedDocuments'] },
   { id: 'review-submit', name: 'Review', fields: ['signature', 'agreedToTerms'] },
 ];
 

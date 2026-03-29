@@ -169,7 +169,7 @@ export default function StepDocumentUpload() {
                 ...prev,
                 [docType]: { ...prev[docType], pages: [{ source: 'scan', dataUri, type: 'image' }] }
             }));
-            toast({ title: 'Added', description: 'File added.' });
+            toast({ title: 'Added', description: 'Document added.' });
         }
     }
   };
@@ -187,7 +187,7 @@ export default function StepDocumentUpload() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ScanLine className="h-6 w-6 text-primary" />
-          Add Files
+          Add Documents
         </CardTitle>
         <CardDescription>Use camera or upload.</CardDescription>
       </CardHeader>
@@ -201,7 +201,7 @@ export default function StepDocumentUpload() {
                   <Table>
                       <TableHeader>
                           <TableRow>
-                              <TableHead>File</TableHead>
+                              <TableHead>Document</TableHead>
                               <TableHead>Format</TableHead>
                           </TableRow>
                       </TableHeader>

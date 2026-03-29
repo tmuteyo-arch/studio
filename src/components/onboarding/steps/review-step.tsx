@@ -151,7 +151,7 @@ export default function ReviewStep() {
                     ))}
                 </div>
             ) : (
-                <p className="text-sm text-destructive font-bold">No documents uploaded! Please go back and add files.</p>
+                <p className="text-sm text-destructive font-bold">No documents uploaded! Please go back and add documents.</p>
             )}
         </div>
 

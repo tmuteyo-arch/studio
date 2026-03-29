@@ -285,8 +285,8 @@ export default function ApplicationReview({ application: initialApplication, onB
     if (application.documents.length < 2) {
         toast({
             variant: 'destructive',
-            title: 'Files Needed',
-            description: 'AI check needs at least two files.'
+            title: 'Documents Needed',
+            description: 'AI check needs at least two documents.'
         });
         return;
     }
@@ -325,7 +325,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         toast({
             variant: 'destructive',
             title: 'AI Error',
-            description: 'AI failed to check files.'
+            description: 'AI failed to check documents.'
         });
     } finally {
         setIsAiProcessing(false);
@@ -551,7 +551,7 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="bg-muted/50 p-1.5 mb-8 rounded-xl w-full sm:w-auto overflow-x-auto">
                       <TabsTrigger value="form-data" className="px-6 rounded-lg data-[state=active]:shadow-md"><FileEdit className="mr-2 h-4 w-4"/>Profile</TabsTrigger>
-                      <TabsTrigger value="documents" className="px-6 rounded-lg data-[state=active]:shadow-md"><FileText className="mr-2 h-4 w-4"/>Files</TabsTrigger>
+                      <TabsTrigger value="documents" className="px-6 rounded-lg data-[state=active]:shadow-md"><FileText className="mr-2 h-4 w-4"/>Documents</TabsTrigger>
                       <TabsTrigger value="comments" className="px-6 rounded-lg data-[state=active]:shadow-md font-black"><Wallet className="mr-2 h-4 w-4"/>WALLET INFO</TabsTrigger>
                   </TabsList>
                   
@@ -597,7 +597,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                             </CardContent>
                         </Card>
                         <Card className="border-primary/5 bg-muted/5 rounded-2xl">
-                            <CardHeader className="pb-4"><CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Uploaded Files</CardTitle></CardHeader>
+                            <CardHeader className="pb-4"><CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Uploaded Documents</CardTitle></CardHeader>
                             <CardContent>
                                 {application.documents.length > 0 ? (
                                     <ul className="space-y-3">
@@ -611,7 +611,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                                             </li>
                                         ))}
                                     </ul>
-                                ) : <div className="text-sm text-center py-16 text-muted-foreground italic border-2 border-dashed rounded-2xl">No files uploaded.</div>}
+                                ) : <div className="text-sm text-center py-16 text-muted-foreground italic border-2 border-dashed rounded-2xl">No documents uploaded.</div>}
                             </CardContent>
                         </Card>
                     </div>
@@ -810,7 +810,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                     ) : (
                         <div className="flex flex-col items-center gap-4 text-white/30 text-center max-w-xs animate-pulse">
                             <ShieldQuestion className="h-16 w-16 opacity-20" />
-                            <p className="text-sm font-black uppercase tracking-widest leading-relaxed">File data missing.</p>
+                            <p className="text-sm font-black uppercase tracking-widest leading-relaxed">Document data missing.</p>
                         </div>
                     )}
                 </div>

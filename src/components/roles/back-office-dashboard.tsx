@@ -94,7 +94,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                         <Briefcase className="h-10 w-10 text-primary" />
                         Office Dashboard
                     </h2>
-                    <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Manage files and final checks.</p>
+                    <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Manage documents and final checks.</p>
                 </div>
                 <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="h-14 px-10 font-black shadow-2xl transition-all active:scale-95 text-lg rounded-xl border-2 border-secondary/50 shadow-secondary/20">
                     <ScanLine className="mr-2 h-6 w-6" />
@@ -191,7 +191,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                     <TableBody>
                                         {pipelineApplications.map((app) => (
                                             <TableRow key={app.id} className="hover:bg-white/5 border-white/5 transition-colors group">
-                                                <TableCell className="font-mono text-xs pl-8 text-white/60 font-bold">{app.id}</TableCell>
+                                                <TableCell className="font-mono text-xs pl-8 text-white/60 font-bold group-hover:text-white transition-colors">{app.id}</TableCell>
                                                 <TableCell className="py-5">
                                                     <div className="font-black text-white text-md uppercase tracking-tight group-hover:text-primary transition-colors">{app.clientName}</div>
                                                     <div className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-1.5">{app.clientType}</div>
