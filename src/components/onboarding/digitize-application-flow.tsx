@@ -18,6 +18,7 @@ import { accountTypes } from '@/lib/types';
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { validateImageQuality } from '@/ai/flows/validate-image-quality';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -41,6 +42,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   const [documentType, setDocumentType] = React.useState('Other Document');
   const [pages, setPages] = React.useState<PageState[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isValidating, setIsValidating] = React.useState(false);
   const [previewPage, setPreviewPage] = React.useState<PageState | null>(null);
 
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
@@ -62,9 +64,29 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const dataUri = event.target?.result as string;
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+
+      if (fileType === 'image') {
+        setIsValidating(true);
+        try {
+          const result = await validateImageQuality({ imageDataUri: dataUri });
+          if (!result.isValid) {
+            toast({
+              variant: 'destructive',
+              title: 'Quality Check Failed',
+              description: 'Image not clear. Please retake photo.',
+            });
+            setIsValidating(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Validation error:', error);
+        }
+        setIsValidating(false);
+      }
+
       addPage({ source: 'upload', dataUri, file, type: fileType, documentType });
     };
     reader.readAsDataURL(file);
@@ -100,7 +122,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     }
   };
 
-  const captureImage = () => {
+  const captureImage = async () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -110,9 +132,28 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       if (context) {
         context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
         const dataUri = canvas.toDataURL('image/jpeg');
+        
+        stopScan();
+        setIsValidating(true);
+        
+        try {
+          const result = await validateImageQuality({ imageDataUri: dataUri });
+          if (!result.isValid) {
+            toast({
+              variant: 'destructive',
+              title: 'Quality Check Failed',
+              description: 'Image not clear. Please retake photo.',
+            });
+            setIsValidating(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Validation error:', error);
+        }
+        
+        setIsValidating(false);
         addPage({ source: 'scan', dataUri, type: 'image', documentType });
       }
-      stopScan();
     }
   };
 
@@ -186,14 +227,23 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   return (
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       <div className="mb-6">
-          <Button variant="outline" type="button" onClick={onCancel}>
+          <Button variant="outline" type="button" onClick={onCancel} disabled={isValidating}>
              <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Button>
         </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-            <Card>
+            <Card className="relative overflow-hidden">
+                {isValidating && (
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 text-center">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    <div className="space-y-1">
+                      <p className="text-xl font-black uppercase tracking-tight">Checking Quality</p>
+                      <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">Please wait while we verify the image...</p>
+                    </div>
+                  </div>
+                )}
                 <CardHeader>
                 <CardTitle>Digitize Paper Application</CardTitle>
                 <CardDescription>
@@ -204,7 +254,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="client-type">Account Type</Label>
-                        <Select value={clientType} onValueChange={setClientType}>
+                        <Select value={clientType} onValueChange={setClientType} disabled={isValidating}>
                             <SelectTrigger id="client-type">
                                 <SelectValue placeholder="Select account type..." />
                             </SelectTrigger>
@@ -222,6 +272,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                         placeholder="Enter name on application"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
+                        disabled={isValidating}
                         />
                     </div>
                 </div>
@@ -269,7 +320,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                             <div className="space-y-2">
                                 <Label htmlFor="doc-type">Current Document Type</Label>
-                                <Select value={documentType} onValueChange={setDocumentType}>
+                                <Select value={documentType} onValueChange={setDocumentType} disabled={isValidating}>
                                     <SelectTrigger id="doc-type">
                                         <SelectValue placeholder="Select type..." />
                                     </SelectTrigger>
@@ -282,10 +333,10 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                 </Select>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1" onClick={startScan} disabled={!clientType}>
+                                <Button variant="outline" className="flex-1" onClick={startScan} disabled={!clientType || isValidating}>
                                     <Camera className="mr-2 h-4 w-4"/>Scan Page
                                 </Button>
-                                <Button asChild variant="outline" className="flex-1" disabled={!clientType}>
+                                <Button asChild variant="outline" className="flex-1" disabled={!clientType || isValidating}>
                                     <label className="cursor-pointer flex items-center justify-center">
                                         <Upload className="mr-2 h-4 w-4"/>Upload File
                                         <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
@@ -297,7 +348,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                 </div>
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4 justify-end">
-                <Button onClick={onSubmit} disabled={isSubmitting || !clientName.trim() || !clientType || pages.length === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8">
+                <Button onClick={onSubmit} disabled={isSubmitting || isValidating || !clientName.trim() || !clientType || pages.length === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8">
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {isSubmitting ? 'Archiving...' : 'Save Archived Application'}
                 </Button>
@@ -326,7 +377,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                         <div 
                                             key={req.document} 
                                             className={`p-3 rounded-md border transition-all cursor-pointer ${met ? 'bg-green-500/10 border-green-500/20' : 'bg-card hover:border-primary/50'}`}
-                                            onClick={() => setDocumentType(req.document)}
+                                            onClick={() => !isValidating && setDocumentType(req.document)}
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex-1">

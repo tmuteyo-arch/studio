@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Info, Eye, Camera, Trash2, Upload, File, ScanLine } from 'lucide-react';
+import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { validateImageQuality } from '@/ai/flows/validate-image-quality';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -30,6 +31,7 @@ export default function StepDocumentUpload() {
   const { toast } = useToast();
   const form = useFormContext<OnboardingFormData>();
   const [documents, setDocuments] = React.useState<Record<string, DocumentState>>({});
+  const [isValidating, setIsValidating] = React.useState<string | null>(null);
   
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -76,7 +78,7 @@ export default function StepDocumentUpload() {
     }
   }, [documents, form]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -86,9 +88,29 @@ export default function StepDocumentUpload() {
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const dataUri = event.target?.result as string;
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+
+      if (fileType === 'image') {
+        setIsValidating(documentType);
+        try {
+          const result = await validateImageQuality({ imageDataUri: dataUri });
+          if (!result.isValid) {
+            toast({
+              variant: 'destructive',
+              title: 'Quality Check Failed',
+              description: 'Image not clear. Please retake photo.',
+            });
+            setIsValidating(null);
+            return;
+          }
+        } catch (error) {
+          console.error('Validation error:', error);
+        }
+        setIsValidating(null);
+      }
+
       setDocuments(prev => ({
         ...prev,
         [documentType]: { ...prev[documentType], pages: [{ source: 'upload', dataUri, file, type: fileType }] }
@@ -120,7 +142,7 @@ export default function StepDocumentUpload() {
     }
   };
 
-  const captureImage = () => {
+  const captureImage = async () => {
     if (videoRef.current && canvasRef.current && isScanning) {
         const video = videoRef.current;
         const canvas = canvasRef.current;
@@ -130,13 +152,33 @@ export default function StepDocumentUpload() {
         if (context) {
             context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
             const dataUri = canvas.toDataURL('image/jpeg');
+            const docType = isScanning;
+            
+            stopScan();
+            setIsValidating(docType);
+            
+            try {
+              const result = await validateImageQuality({ imageDataUri: dataUri });
+              if (!result.isValid) {
+                toast({
+                  variant: 'destructive',
+                  title: 'Quality Check Failed',
+                  description: 'Image not clear. Please retake photo.',
+                });
+                setIsValidating(null);
+                return;
+              }
+            } catch (error) {
+              console.error('Validation error:', error);
+            }
+            
+            setIsValidating(null);
             setDocuments(prev => ({
                 ...prev,
-                [isScanning]: { ...prev[isScanning], pages: [{ source: 'scan', dataUri, type: 'image' }] }
+                [docType]: { ...prev[docType], pages: [{ source: 'scan', dataUri, type: 'image' }] }
             }));
             toast({ title: 'Added', description: 'File added.' });
         }
-        stopScan();
     }
   };
 
@@ -186,8 +228,15 @@ export default function StepDocumentUpload() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.values(documents).map(({documentType, pages}) => {
+            const loading = isValidating === documentType;
             return (
-                <div key={documentType} className="p-4 border rounded-lg hover:border-primary/50 transition-colors bg-card shadow-sm">
+                <div key={documentType} className="p-4 border rounded-lg hover:border-primary/50 transition-colors bg-card shadow-sm relative overflow-hidden">
+                    {loading && (
+                      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary">Checking Quality...</span>
+                      </div>
+                    )}
                     <div className='flex justify-between items-center mb-3'>
                         <h3 className="text-sm font-bold truncate max-w-[150px]" title={documentType}>{documentType}</h3>
                         <Badge variant={pages.length > 0 ? 'success' : 'outline'} className="text-[10px]">{pages.length} Pages</Badge>
@@ -195,8 +244,8 @@ export default function StepDocumentUpload() {
                 
                     <div className="space-y-2 mb-3">
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="flex-1" onClick={() => startScan(documentType)}><Camera className="mr-2 h-3 w-3"/>Scan</Button>
-                            <Button asChild variant="outline" size="sm" className="flex-1">
+                            <Button variant="outline" size="sm" className="flex-1" onClick={() => startScan(documentType)} disabled={loading}><Camera className="mr-2 h-3 w-3"/>Scan</Button>
+                            <Button asChild variant="outline" size="sm" className="flex-1" disabled={loading}>
                                 <label className="cursor-pointer">
                                     <Upload className="mr-2 h-3 w-3"/>Upload
                                     <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
