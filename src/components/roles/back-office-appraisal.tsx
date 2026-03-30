@@ -9,6 +9,7 @@ import { User } from '@/lib/users';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 interface BackOfficeAppraisalProps {
   applications: Application[];
