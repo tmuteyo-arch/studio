@@ -31,6 +31,9 @@ export const businessTypes = [
   'Other',
 ] as const;
 
+export const genderOptions = ['Male', 'Female', 'Other'] as const;
+export const maritalStatusOptions = ['Single', 'Married', 'Divorced', 'Widowed', 'Other'] as const;
+
 const SignatorySchema = z.object({
   surname: z.string().min(1, "Surname is required."),
   firstName: z.string().min(1, "First name is required."),
@@ -52,6 +55,9 @@ export const OnboardingFormSchema = z.object({
   individualIdNumber: z.string().optional(),
   individualAddress: z.string().optional(),
   individualMobileNumber: z.string().optional(),
+  nationality: z.string().optional(),
+  gender: z.string().optional(),
+  maritalStatus: z.string().optional(),
 
   // Corporate Info (Entity classes)
   organisationLegalName: z.string().optional(),
@@ -154,6 +160,9 @@ export const OnboardingFormSchema = z.object({
       if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is mandatory.' });
       if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is mandatory.' });
       if (!data.individualIdNumber) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualIdNumber'], message: 'Registry ID / National ID is mandatory.' });
+      if (!data.nationality) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['nationality'], message: 'Nationality is mandatory.' });
+      if (!data.gender) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['gender'], message: 'Gender is mandatory.' });
+      if (!data.maritalStatus) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['maritalStatus'], message: 'Marital status is mandatory.' });
     }
 });
 

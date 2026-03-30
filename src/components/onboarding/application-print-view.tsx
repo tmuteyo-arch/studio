@@ -61,6 +61,9 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
                 <>
                     <DetailItem label="Full Name" value={`${application.details.individualFirstName} ${application.details.individualSurname}`} />
                     <DetailItem label="ID Number" value={application.details.individualIdNumber} />
+                    <DetailItem label="Nationality" value={application.details.nationality} />
+                    <DetailItem label="Gender" value={application.details.gender} />
+                    <DetailItem label="Marital Status" value={application.details.maritalStatus} />
                     <DetailItem label="Address" value={application.details.individualAddress} />
                     <DetailItem label="Mobile" value={application.details.individualMobileNumber} />
                     <DetailItem label="Date of Birth" value={application.details.individualDateOfBirth} />

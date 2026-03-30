@@ -80,6 +80,9 @@ export default function ReviewStep() {
               <DetailItem label="Full Name" value={`${data.individualFirstName} ${data.individualSurname}`} />
               <DetailItem label="Date of Birth" value={data.individualDateOfBirth ? format(new Date(data.individualDateOfBirth), 'MMMM d, yyyy') : '-'} />
               <DetailItem label="ID Number" value={data.individualIdNumber} />
+              <DetailItem label="Nationality" value={data.nationality} />
+              <DetailItem label="Gender" value={data.gender} />
+              <DetailItem label="Marital Status" value={data.maritalStatus} />
               <DetailItem label="Address" value={data.individualAddress} />
               <DetailItem label="Mobile Number" value={data.individualMobileNumber} />
             </div>
