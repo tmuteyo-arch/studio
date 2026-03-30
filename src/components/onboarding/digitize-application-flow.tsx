@@ -19,7 +19,6 @@ import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
-import { jsPDF } from 'jspdf';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -49,6 +48,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isScanning, setIsScanning] = React.useState<boolean>(false);
 
   const requirements = React.useMemo(() => {
@@ -85,6 +85,8 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       }
 
       addPage({ source: 'upload', dataUri, file, type: fileType, documentType });
+      // Clear input so same file can be selected again if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsDataURL(file);
   };
@@ -108,17 +110,14 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
 
   const startScan = async () => {
     setIsScanning(true);
-    if (hasCameraPermission === false) {
-      toast({ variant: 'destructive', title: 'Camera Access Denied', description: 'Please enable camera permissions.' });
-      setIsScanning(false);
-      return;
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
       setHasCameraPermission(true);
+      setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+      }, 300);
     } catch (error) {
       console.error('Error accessing camera:', error);
       setHasCameraPermission(false);
@@ -166,6 +165,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   };
 
   const generateMergedPdf = async (typePages: string[]): Promise<string> => {
+    const { jsPDF } = await import('jspdf');
     const pdf = new jsPDF();
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -185,7 +185,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       toast({
         variant: 'destructive',
         title: 'Incomplete Information',
-        description: 'Please provide a client name, account type, and upload at least one document page.',
+        description: 'Please provide a client name, account type, and capture at least one document page.',
       });
       return;
     }
@@ -219,15 +219,15 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       submittedDate: format(new Date(), 'yyyy-MM-dd'),
       lastUpdated: new Date().toISOString(),
       submittedBy: user.name,
+      region: 'N/A',
       fcbStatus: 'Inclusive',
       details: {
         clientType: clientType,
+        region: 'N/A',
         organisationLegalName: clientName,
         individualFirstName: clientName,
-        address: 'N/A',
-        dateOfBirth: '',
-        contactNumber: 'N/A',
-        email: 'N/A',
+        physicalAddress: 'N/A',
+        individualAddress: 'N/A',
         capturedDocuments: mergedDocuments,
         agreedToTerms: true,
         signature: user.name
@@ -259,6 +259,16 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
 
   return (
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
+      
+      {/* Hidden standard file input */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*,application/pdf" 
+        className="hidden" 
+      />
+
       <div className="mb-6">
           <Button variant="outline" type="button" onClick={onCancel} disabled={isValidating}>
              <ArrowLeft className="mr-2 h-4 w-4" />
@@ -380,11 +390,8 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                 <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={startScan} disabled={!clientType || isValidating}>
                                     <Camera className="mr-2 h-4 w-4 text-primary"/>Add Scan
                                 </Button>
-                                <Button asChild variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" disabled={!clientType || isValidating}>
-                                    <label className="cursor-pointer flex items-center justify-center">
-                                        <Upload className="mr-2 h-4 w-4 text-primary"/>Add File
-                                        <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
-                                    </label>
+                                <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => fileInputRef.current?.click()} disabled={!clientType || isValidating}>
+                                    <Upload className="mr-2 h-4 w-4 text-primary"/>Add File
                                 </Button>
                             </div>
                         </div>
@@ -497,7 +504,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
             </div>
             <div className="flex-1 bg-black relative flex items-center justify-center min-h-0">
                 {previewPage?.type === 'image' ? (
-                    <img src={previewPage.dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
+                    <img src={page.dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
                 ) : (
                     <object
                         data={previewPage?.dataUri}

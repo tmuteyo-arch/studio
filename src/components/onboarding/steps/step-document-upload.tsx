@@ -31,15 +31,18 @@ export default function StepDocumentUpload() {
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
   const [isScanning, setIsScanning] = React.useState<string | null>(null);
+  const [activeUploadType, setActiveUploadType] = React.useState<string | null>(null);
 
   const clientType = form.watch('clientType');
   const documentRequirements = React.useMemo(() => getDocumentRequirements(clientType), [clientType]);
 
-  // Initialize state from form values
+  // Initialize state from form values only when requirements change
   React.useEffect(() => {
-    const initialDocs: Record<string, DocumentState> = {};
     const existingCaptured = form.getValues('capturedDocuments') || [];
+    const initialDocs: Record<string, DocumentState> = {};
 
     documentRequirements.forEach(req => {
       const existing = existingCaptured.find(d => d.type === req.document);
@@ -49,7 +52,7 @@ export default function StepDocumentUpload() {
       };
     });
     setDocuments(initialDocs);
-  }, [documentRequirements, form]);
+  }, [documentRequirements]);
 
   const generateMergedPdf = async (pages: string[]): Promise<string> => {
     if (pages.length === 0) return '';
@@ -71,7 +74,7 @@ export default function StepDocumentUpload() {
     return pdf.output('datauristring');
   };
 
-  // Sync documents state to form value for submission
+  // Sync local documents state to main form
   React.useEffect(() => {
     if (Object.keys(documents).length === 0) return;
 
@@ -93,21 +96,29 @@ export default function StepDocumentUpload() {
         
         const currentVal = form.getValues('capturedDocuments') || [];
         if (JSON.stringify(currentVal) !== JSON.stringify(capturedDocs)) {
-            form.setValue('capturedDocuments', capturedDocs, { shouldValidate: true });
+            form.setValue('capturedDocuments', capturedDocs, { shouldValidate: true, shouldDirty: true });
         }
         setIsMerging(false);
     };
 
-    const timer = setTimeout(syncToForm, 500); // Debounce merging
+    const timer = setTimeout(syncToForm, 800);
     return () => clearTimeout(timer);
-  }, [documents, form]);
+  }, [documents]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
+  const handleUploadClick = (docType: string) => {
+    setActiveUploadType(docType);
+    setTimeout(() => {
+        fileInputRef.current?.click();
+    }, 0);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    const documentType = activeUploadType;
+    if (!file || !documentType) return;
     
     if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-        toast({ variant: 'destructive', title: 'Bad File', description: 'Use image or PDF.' });
+        toast({ variant: 'destructive', title: 'Invalid File', description: 'Please use an image or PDF.' });
         return;
     }
 
@@ -138,7 +149,11 @@ export default function StepDocumentUpload() {
             pages: [...prev[documentType].pages, dataUri] 
         }
       }));
-      toast({ title: 'Page Added', description: 'New page added to document.' });
+      toast({ title: 'Page Added', description: 'The page was added successfully.' });
+      
+      // Reset input state
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setActiveUploadType(null);
     };
     reader.readAsDataURL(file);
   };
@@ -168,15 +183,18 @@ export default function StepDocumentUpload() {
     setIsScanning(docType);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
       setHasCameraPermission(true);
+      // Wait for React to render Dialog content before assigning stream to ref
+      setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+      }, 300);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Camera Access Error:', error);
       setHasCameraPermission(false);
       setIsScanning(null);
-      toast({ variant: 'destructive', title: 'Error', description: 'No camera access.' });
+      toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access the camera.' });
     }
   };
 
@@ -214,7 +232,7 @@ export default function StepDocumentUpload() {
                     pages: [...prev[docType].pages, dataUri] 
                 }
             }));
-            toast({ title: 'Page Added', description: 'Photo added as new page.' });
+            toast({ title: 'Page Added', description: 'Photo captured successfully.' });
         }
     }
   };
@@ -228,7 +246,7 @@ export default function StepDocumentUpload() {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ScanLine className="h-6 w-6 text-primary" />
@@ -236,8 +254,17 @@ export default function StepDocumentUpload() {
         </CardTitle>
         <CardDescription>Capture multiple pages per document using camera or upload.</CardDescription>
       </CardHeader>
-      <div className="space-y-6 px-6">
-        
+      
+      {/* Hidden file input for reliability */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden"
+        onChange={handleFileChange} 
+        accept="image/*,application/pdf"
+      />
+
+      <div className="space-y-6 px-6 pb-6">
         <Alert className="bg-primary/5 border-primary/20">
             <Info className="h-4 w-4" />
             <AlertTitle>Required for {clientType}</AlertTitle>
@@ -335,11 +362,8 @@ export default function StepDocumentUpload() {
                             <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => startScan(documentType)} disabled={loading}>
                                 <Camera className="mr-2 h-4 w-4 text-primary"/>Scan Page
                             </Button>
-                            <Button asChild variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" disabled={loading}>
-                                <label className="cursor-pointer flex items-center justify-center">
-                                    <Upload className="mr-2 h-4 w-4 text-primary"/>Upload Page
-                                    <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleFileChange(e, documentType)} />
-                                </label>
+                            <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => handleUploadClick(documentType)} disabled={loading}>
+                                <Upload className="mr-2 h-4 w-4 text-primary"/>Upload Page
                             </Button>
                             {pages.length > 0 && (
                                 <Dialog>
@@ -388,7 +412,7 @@ export default function StepDocumentUpload() {
                             <Alert variant="destructive" className="m-4 max-w-xs">
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertTitle>Need Camera</AlertTitle>
-                                <AlertDescription>Please allow camera access in your browser.</AlertDescription>
+                                <AlertDescription>Please allow camera access in your browser settings.</AlertDescription>
                             </Alert>
                         </div>
                     )}
