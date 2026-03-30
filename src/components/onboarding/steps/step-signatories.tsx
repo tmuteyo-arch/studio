@@ -16,7 +16,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-lg font-semibold text-foreground mt-6 mb-4 border-b pb-2">{children}</h3>
 );
 
-const SignatureField = ({ control, name }: { control: any; name: string }) => {
+const SignatureField = ({ control, name, disabled }: { control: any; name: string; disabled?: boolean }) => {
   const sigPadRef = React.useRef<SignatureCanvas | null>(null);
   const { watch, setValue } = useFormContext();
   const signatureValue = watch(name);
@@ -56,25 +56,35 @@ const SignatureField = ({ control, name }: { control: any; name: string }) => {
                   <div className="border rounded-md p-2 bg-white shadow-sm">
                     <img src={field.value} alt="Signature" className="h-16 w-auto" />
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={() => setValue(name, '', { shouldValidate: true })}>
-                    <RotateCcw className="mr-2 h-4 w-4" /> Re-sign
-                  </Button>
+                  {!disabled && (
+                    <Button type="button" variant="outline" size="sm" onClick={() => setValue(name, '', { shouldValidate: true })}>
+                      <RotateCcw className="mr-2 h-4 w-4" /> Re-sign
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                    <div className="w-full h-40 border rounded-md bg-white overflow-hidden">
-                        {mounted && (
-                          <SignatureCanvas
-                              ref={sigPadRef}
-                              penColor="black"
-                              canvasProps={{ className: 'w-full h-full' }}
-                              onEnd={handleEndStroke}
-                          />
-                        )}
-                    </div>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="self-start text-muted-foreground">
-                        <Eraser className="mr-2 h-4 w-4" /> Clear Canvas
-                    </Button>
+                    {disabled ? (
+                        <div className="w-full h-40 border rounded-md bg-muted/10 flex items-center justify-center italic text-muted-foreground">
+                            No signature provided.
+                        </div>
+                    ) : (
+                        <>
+                            <div className="w-full h-40 border rounded-md bg-white overflow-hidden">
+                                {mounted && (
+                                <SignatureCanvas
+                                    ref={sigPadRef}
+                                    penColor="black"
+                                    canvasProps={{ className: 'w-full h-full' }}
+                                    onEnd={handleEndStroke}
+                                />
+                                )}
+                            </div>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="self-start text-muted-foreground">
+                                <Eraser className="mr-2 h-4 w-4" /> Clear Canvas
+                            </Button>
+                        </>
+                    )}
                 </div>
               )}
             </div>
@@ -87,7 +97,7 @@ const SignatureField = ({ control, name }: { control: any; name: string }) => {
 };
 
 
-export default function StepSignatories() {
+export default function StepSignatories({ disabled }: { disabled?: boolean }) {
   const form = useFormContext<OnboardingFormData>();
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -126,7 +136,7 @@ export default function StepSignatories() {
                     <div className='flex flex-wrap items-center gap-2'>
                         <span className='text-sm text-muted-foreground'>Resolution passed at the board of Directors/Management held on:</span>
                         <FormControl>
-                            <Input type="date" {...field} className="w-auto" value={field.value || ''} />
+                            <Input type="date" {...field} className="w-auto" value={field.value || ''} disabled={disabled} />
                         </FormControl>
                     </div>
                     <FormMessage />
@@ -145,48 +155,50 @@ export default function StepSignatories() {
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex justify-between w-full items-center pr-4">
                   <span className="font-semibold">Signatory {index + 1}: {form.watch(`signatories.${index}.firstName`)} {form.watch(`signatories.${index}.surname`)}</span>
-                   <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      remove(index);
-                    }}
-                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                   {!disabled && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                        e.stopPropagation();
+                        remove(index);
+                        }}
+                    >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                   )}
                 </div>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-4 p-1">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField control={form.control} name={`signatories.${index}.surname`} render={({ field }) => (
-                            <FormItem><FormLabel>Surname</FormLabel><FormControl><Input placeholder="e.g. Doe" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Surname</FormLabel><FormControl><Input placeholder="e.g. Doe" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name={`signatories.${index}.firstName`} render={({ field }) => (
-                            <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="e.g. John" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="e.g. John" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
                         )}/>
                          <FormField control={form.control} name={`signatories.${index}.otherName`} render={({ field }) => (
-                            <FormItem><FormLabel>Other Names</FormLabel><FormControl><Input placeholder="Optional" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Other Names</FormLabel><FormControl><Input placeholder="Optional" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
                         )}/>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField control={form.control} name={`signatories.${index}.nationalIdNo`} render={({ field }) => (
-                            <FormItem><FormLabel>National ID/Passport No.</FormLabel><FormControl><Input placeholder="Enter ID number" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>National ID/Passport No.</FormLabel><FormControl><Input placeholder="Enter ID number" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name={`signatories.${index}.designation`} render={({ field }) => (
-                            <FormItem><FormLabel>Designation/Job Title</FormLabel><FormControl><Input placeholder="e.g. Director, Secretary" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>Designation/Job Title</FormLabel><FormControl><Input placeholder="e.g. Director, Secretary" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
                         )}/>
                     </div>
-                    <SignatureField control={form.control} name={`signatories.${index}.signature`} />
+                    <SignatureField control={form.control} name={`signatories.${index}.signature`} disabled={disabled} />
                 </div>
               </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
 
-        {fields.length < 6 && (
+        {!disabled && fields.length < 6 && (
             <Button type="button" variant="outline" className="w-full border-dashed" onClick={addNewSignatory}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Authorized Signatory
@@ -199,7 +211,7 @@ export default function StepSignatories() {
                 <FormItem className="mt-6">
                 <FormLabel>Signing Instructions</FormLabel>
                 <FormControl>
-                    <Textarea placeholder="e.g., Any two signatories to sign jointly." {...field} value={field.value || ''} />
+                    <Textarea placeholder="e.g., Any two signatories to sign jointly." {...field} value={field.value || ''} disabled={disabled} />
                 </FormControl>
                 <FormDescription>Define how signatures should be combined for valid transactions.</FormDescription>
                 <FormMessage />

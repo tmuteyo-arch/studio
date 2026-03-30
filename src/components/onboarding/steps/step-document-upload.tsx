@@ -21,7 +21,7 @@ type DocumentState = {
   pages: string[]; // array of data URIs
 };
 
-export default function StepDocumentUpload() {
+export default function StepDocumentUpload({ disabled }: { disabled?: boolean }) {
   const { toast } = useToast();
   const form = useFormContext<OnboardingFormData>();
   const [documents, setDocuments] = React.useState<Record<string, DocumentState>>({});
@@ -58,7 +58,6 @@ export default function StepDocumentUpload() {
     if (pages.length === 0) return '';
     if (pages.length === 1 && pages[0].startsWith('data:application/pdf')) return pages[0];
     
-    // Dynamic import for SSR safety
     const { jsPDF } = await import('jspdf');
     const pdf = new jsPDF();
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -106,6 +105,7 @@ export default function StepDocumentUpload() {
   }, [documents]);
 
   const handleUploadClick = (docType: string) => {
+    if (disabled) return;
     setActiveUploadType(docType);
     setTimeout(() => {
         fileInputRef.current?.click();
@@ -151,7 +151,6 @@ export default function StepDocumentUpload() {
       }));
       toast({ title: 'Page Added', description: 'The page was added successfully.' });
       
-      // Reset input state
       if (fileInputRef.current) fileInputRef.current.value = '';
       setActiveUploadType(null);
     };
@@ -159,6 +158,7 @@ export default function StepDocumentUpload() {
   };
   
   const removePage = (documentType: string, pageIndex: number) => {
+    if (disabled) return;
     setDocuments(prev => ({
         ...prev,
         [documentType]: { 
@@ -169,6 +169,7 @@ export default function StepDocumentUpload() {
   };
 
   const movePage = (documentType: string, from: number, to: number) => {
+    if (disabled) return;
     const pages = [...documents[documentType].pages];
     if (to < 0 || to >= pages.length) return;
     const item = pages.splice(from, 1)[0];
@@ -180,11 +181,11 @@ export default function StepDocumentUpload() {
   };
 
   const startScan = async (docType: string) => {
+    if (disabled) return;
     setIsScanning(docType);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       setHasCameraPermission(true);
-      // Wait for React to render Dialog content before assigning stream to ref
       setTimeout(() => {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -250,19 +251,20 @@ export default function StepDocumentUpload() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ScanLine className="h-6 w-6 text-primary" />
-          Add Documents
+          Documents
         </CardTitle>
-        <CardDescription>Capture multiple pages per document using camera or upload.</CardDescription>
+        <CardDescription>{disabled ? 'View application documents.' : 'Capture multiple pages per document using camera or upload.'}</CardDescription>
       </CardHeader>
       
-      {/* Hidden file input for reliability */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        className="hidden"
-        onChange={handleFileChange} 
-        accept="image/*,application/pdf"
-      />
+      {!disabled && (
+        <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden"
+            onChange={handleFileChange} 
+            accept="image/*,application/pdf"
+        />
+      )}
 
       <div className="space-y-6 px-6 pb-6">
         <Alert className="bg-primary/5 border-primary/20">
@@ -304,7 +306,7 @@ export default function StepDocumentUpload() {
                     <div className='flex justify-between items-center mb-4'>
                         <div>
                             <h3 className="text-md font-bold truncate max-w-[250px]" title={documentType}>{documentType}</h3>
-                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1">Multi-Page Support Active</p>
+                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1.5">{disabled ? 'Archive Read-Only' : 'Multi-Page Support Active'}</p>
                         </div>
                         <Badge variant={pages.length > 0 ? 'success' : 'outline'} className="px-3 py-1 font-black">
                             {pages.length} {pages.length === 1 ? 'PAGE' : 'PAGES'}
@@ -329,25 +331,29 @@ export default function StepDocumentUpload() {
                                                 <div className="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded font-bold">
                                                     #{index + 1}
                                                 </div>
-                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
-                                                    <div className="flex gap-1">
-                                                        <Button variant="secondary" size="icon" className="h-6 w-6" onClick={() => movePage(documentType, index, index - 1)} disabled={index === 0}>
-                                                            <ChevronLeft className="h-3 w-3" />
-                                                        </Button>
-                                                        <Button variant="secondary" size="icon" className="h-6 w-6" onClick={() => movePage(documentType, index, index + 1)} disabled={index === pages.length - 1}>
-                                                            <ChevronRight className="h-3 w-3" />
+                                                {!disabled && (
+                                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
+                                                        <div className="flex gap-1">
+                                                            <Button variant="secondary" size="icon" className="h-6 w-6" onClick={() => movePage(documentType, index, index - 1)} disabled={index === 0}>
+                                                                <ChevronLeft className="h-3 w-3" />
+                                                            </Button>
+                                                            <Button variant="secondary" size="icon" className="h-6 w-6" onClick={() => movePage(documentType, index, index + 1)} disabled={index === pages.length - 1}>
+                                                                <ChevronRight className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                        <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removePage(documentType, index)}>
+                                                            <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </div>
-                                                    <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removePage(documentType, index)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                                )}
                                             </div>
                                         ))}
-                                        <div className="w-32 h-44 rounded-md border-2 border-dashed flex flex-col items-center justify-center bg-muted/10 text-muted-foreground gap-2">
-                                            <Plus className="h-6 w-6 opacity-20" />
-                                            <span className="text-[8px] font-black uppercase tracking-widest opacity-40">Add Page</span>
-                                        </div>
+                                        {!disabled && (
+                                            <div className="w-32 h-44 rounded-md border-2 border-dashed flex flex-col items-center justify-center bg-muted/10 text-muted-foreground gap-2">
+                                                <Plus className="h-6 w-6 opacity-20" />
+                                                <span className="text-[8px] font-black uppercase tracking-widest opacity-40">Add Page</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <ScrollBar orientation="horizontal" />
                                 </ScrollArea>
@@ -359,12 +365,16 @@ export default function StepDocumentUpload() {
                             )}
                         </div>
                         <div className="w-full sm:w-48 space-y-2">
-                            <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => startScan(documentType)} disabled={loading}>
-                                <Camera className="mr-2 h-4 w-4 text-primary"/>Scan Page
-                            </Button>
-                            <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => handleUploadClick(documentType)} disabled={loading}>
-                                <Upload className="mr-2 h-4 w-4 text-primary"/>Upload Page
-                            </Button>
+                            {!disabled && (
+                                <>
+                                    <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => startScan(documentType)} disabled={loading}>
+                                        <Camera className="mr-2 h-4 w-4 text-primary"/>Scan Page
+                                    </Button>
+                                    <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => handleUploadClick(documentType)} disabled={loading}>
+                                        <Upload className="mr-2 h-4 w-4 text-primary"/>Upload Page
+                                    </Button>
+                                </>
+                            )}
                             {pages.length > 0 && (
                                 <Dialog>
                                     <DialogTrigger asChild>

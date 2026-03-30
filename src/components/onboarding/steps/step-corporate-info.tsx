@@ -7,7 +7,7 @@ import { OnboardingFormData, businessTypes } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function StepCorporateInfo() {
+export default function StepCorporateInfo({ disabled }: { disabled?: boolean }) {
   const form = useFormContext<OnboardingFormData>();
 
   return (
@@ -26,7 +26,7 @@ export default function StepCorporateInfo() {
             <FormItem>
               <FormLabel>Legal Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. Acme Ltd" {...field} value={field.value || ''}/>
+                <Input placeholder="e.g. Acme Ltd" {...field} value={field.value || ''} disabled={disabled}/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -39,7 +39,7 @@ export default function StepCorporateInfo() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Industry</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose industry..." />
@@ -66,7 +66,7 @@ export default function StepCorporateInfo() {
               <FormItem>
                 <FormLabel>ID Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. 12345" {...field} value={field.value || ''}/>
+                  <Input placeholder="e.g. 12345" {...field} value={field.value || ''} disabled={disabled}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -79,7 +79,7 @@ export default function StepCorporateInfo() {
                 <FormItem>
                 <FormLabel>Start Date</FormLabel>
                 <FormControl>
-                    <Input type="date" {...field} value={field.value || ''}/>
+                    <Input type="date" {...field} value={field.value || ''} disabled={disabled}/>
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -94,7 +94,7 @@ export default function StepCorporateInfo() {
               <FormItem>
                 <FormLabel>Address</FormLabel>
                 <FormControl>
-                  <Input placeholder="Street, City" {...field} value={field.value || ''}/>
+                  <Input placeholder="Street, City" {...field} value={field.value || ''} disabled={disabled}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -109,7 +109,7 @@ export default function StepCorporateInfo() {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+263..." {...field} value={field.value || ''}/>
+                      <Input placeholder="+263..." {...field} value={field.value || ''} disabled={disabled}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -122,7 +122,7 @@ export default function StepCorporateInfo() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="mail@site.com" {...field} value={field.value || ''}/>
+                      <Input type="email" placeholder="mail@site.com" {...field} value={field.value || ''} disabled={disabled}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

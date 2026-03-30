@@ -31,6 +31,7 @@ import AccountResolutionPrintView from './account-resolution-print-view';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
 import { extractAndValidateData } from '@/ai/flows/extract-and-validate-data';
+import StepDocumentUpload from './steps/step-document-upload';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -81,6 +82,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
   const [isAiProcessing, setIsAiProcessing] = React.useState(false);
+
+  // Logic: Read-only check. Records are read-only unless draft or returned for fix.
+  const isReadOnly = !['Draft', 'Returned to ATL', 'Returned to ASL', 'Claimed by ASL'].includes(application.status);
 
   // Logic: Sole Trader is same as Individual technical details but needs mandate
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
@@ -562,10 +566,10 @@ export default function ApplicationReview({ application: initialApplication, onB
                               </div>
                               <Separator className="opacity-50" />
                               <div className="space-y-10">
-                                {isPersonalOrIndividual ? <StepIndividualInfo /> : <StepCorporateInfo />}
+                                {isPersonalOrIndividual ? <StepIndividualInfo disabled={isReadOnly} /> : <StepCorporateInfo disabled={isReadOnly} />}
                                 {needsMandate && (
                                     <div className="mt-8 bg-muted/10 p-6 rounded-2xl border border-white/10">
-                                        <StepSignatories />
+                                        <StepSignatories disabled={isReadOnly} />
                                     </div>
                                 )}
                               </div>
@@ -574,41 +578,8 @@ export default function ApplicationReview({ application: initialApplication, onB
                   </TabsContent>
 
                   <TabsContent value="documents" className="pt-2 animate-in fade-in-50 duration-300">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <Card className="border-primary/5 bg-muted/5 rounded-2xl">
-                            <CardHeader className="pb-4"><CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Checklist</CardTitle></CardHeader>
-                            <CardContent>
-                                <ul className="space-y-4">
-                                    {documentRequirements.map((req) => { 
-                                        const isUploaded = uploadedDocumentTypes.includes(req.document); 
-                                        return (
-                                            <li key={req.document} className="flex items-start p-3 rounded-lg hover:bg-white/5 transition-colors">
-                                                {isUploaded ? <CheckCircle2 className="h-5 w-5 text-green-500 mr-3 mt-0.5 shrink-0" /> : <AlertCircle className="h-5 w-5 text-amber-500 mr-3 mt-0.5 shrink-0" />}
-                                                <div className="text-sm font-bold leading-tight text-foreground/80">{req.document}</div>
-                                            </li>
-                                        ); 
-                                    })}
-                                </ul>
-                            </CardContent>
-                        </Card>
-                        <Card className="border-primary/5 bg-muted/5 rounded-2xl">
-                            <CardHeader className="pb-4"><CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"><FileText className="h-4 w-4 text-primary" /> Uploaded Documents</CardTitle></CardHeader>
-                            <CardContent>
-                                {application.documents.length > 0 ? (
-                                    <ul className="space-y-3">
-                                        {application.documents.map(doc => (
-                                            <li key={doc.type} className="flex items-center justify-between p-4 rounded-xl border border-primary/10 bg-background/50 shadow-sm group hover:border-primary/30 transition-all">
-                                                <div>
-                                                    <p className="text-sm font-black leading-none text-foreground">{doc.type}</p>
-                                                    <p className="text-[10px] text-muted-foreground mt-1.5 uppercase font-mono tracking-tighter">{doc.fileName}</p>
-                                                </div>
-                                                <Button variant="outline" size="sm" className="h-9 px-4 rounded-lg font-bold border-primary/10 hover:bg-primary/5" onClick={() => setPreviewDoc(doc)}><Eye className="mr-2 h-4 w-4" />View</Button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : <div className="text-sm text-center py-16 text-muted-foreground italic border-2 border-dashed rounded-2xl">No documents uploaded.</div>}
-                            </CardContent>
-                        </Card>
+                    <div className="grid grid-cols-1 gap-8">
+                        <StepDocumentUpload disabled={isReadOnly} />
                     </div>
                   </TabsContent>
                   
