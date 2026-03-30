@@ -6,7 +6,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe, Trash2 } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe, Trash2, Info } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -158,18 +158,7 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const handleForwardToSupervisor = () => {
-    if (!brIdentity) {
-        toast({ variant: 'destructive', title: 'Code Needed', description: 'Please provide the BR ID.' });
-        return;
-    }
-    const notes = `BR ID: ${brIdentity}. Sent for check.`;
-    handleUpdateApplication({ 
-        status: 'Sent to Supervisor', 
-        details: { ...application.details, brIdentity },
-        history: [...application.history, { action: 'ID Created', user: user.name, timestamp: new Date().toISOString(), notes }] 
-    });
-    toast({ title: "Sent", description: "Sent to Supervisor." });
-    setTimeout(() => onBack(), 500);
+    handleStatusChange('Sent to Supervisor', 'Checked by Back Office Clerk.');
   };
 
   const handleReturnToAsl = () => {
@@ -195,10 +184,14 @@ export default function ApplicationReview({ application: initialApplication, onB
         toast({ variant: 'destructive', title: 'Code Needed', description: 'Please enter the code.' });
         return;
     }
-    const notes = `Audit OK. Code issued.`;
+    if (!brIdentity) {
+        toast({ variant: 'destructive', title: 'Client ID Needed', description: 'Please enter the BR Client ID.' });
+        return;
+    }
+    const notes = `Audit OK. BR Client ID: ${brIdentity}. Code issued.`;
     handleUpdateApplication({ 
         status: 'Approved by Supervisor', 
-        details: { ...application.details, activationCode },
+        details: { ...application.details, activationCode, brIdentity },
         history: [...application.history, { action: 'Audit OK', user: user.name, timestamp: new Date().toISOString(), notes }] 
     });
     toast({ title: "Approved", description: "Audit complete." });
@@ -418,7 +411,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                         <X className="mr-2 h-4 w-4" /> Reject
                     </Button>
                     <Button className="bg-green-600 hover:bg-green-700 text-white font-black shadow-lg px-8 transition-all active:scale-95" onClick={handleSupervisorApproval}>
-                        <CheckCircle2 className="mr-2 h-4 w-4" /> APPROVE & ISSUE CODE
+                        <CheckCircle2 className="mr-2 h-4 w-4" /> APPROVE & FINISH
                     </Button>
                 </div>
             );
@@ -500,12 +493,12 @@ export default function ApplicationReview({ application: initialApplication, onB
             </div>
           </CardHeader>
           <CardContent className="px-8 pb-8">
-              {/* Back Office Action Section */}
-              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL' || application.status === 'Returned to Back Office') && (
+              {/* Supervisor Identity Check Section */}
+              {user.role === 'supervisor' && (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor' || application.status === 'Approved by Compliance') && (
                   <div className="mb-8 p-6 bg-primary/5 rounded-2xl border border-primary/20 animate-in zoom-in-95 shadow-inner">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                           <h4 className="text-xs font-black uppercase text-primary tracking-widest flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm">
-                              <Fingerprint className="h-4 w-4" /> Action: Create ID
+                              <Fingerprint className="h-4 w-4" /> Supervisor Action: ID Registry
                           </h4>
                           <Button 
                             variant="outline" 
@@ -518,18 +511,27 @@ export default function ApplicationReview({ application: initialApplication, onB
                             {isAiProcessing ? 'Checking...' : 'AI Check'}
                           </Button>
                       </div>
-                      <div className="max-w-md space-y-4">
+                      <div className="max-w-md space-y-6">
                           <div className="space-y-2">
-                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">Internal ID (BR)</Label>
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">BR Client ID</Label>
                               <Input 
-                                  placeholder="Type the BR ID code..." 
+                                  placeholder="Enter the BR ID code..." 
                                   value={brIdentity} 
                                   onChange={(e) => setBrIdentity(e.target.value)}
                                   className="bg-background font-mono h-12 text-lg focus:ring-primary border-primary/20 shadow-sm"
                               />
                               <p className="text-[10px] text-muted-foreground italic flex items-center gap-1.5 ml-1 mt-1.5">
-                                <AlertCircle className="h-3 w-3" /> Mandatory: Create ID before sending.
+                                <Info className="h-3 w-3" /> This ID is mandatory for the core registry.
                               </p>
+                          </div>
+                          <div className="space-y-2">
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">Activation Code</Label>
+                              <Input 
+                                  placeholder="Type the security code..." 
+                                  value={activationCode} 
+                                  onChange={(e) => setActivationCode(e.target.value)}
+                                  className="bg-background font-mono h-12 text-lg focus:ring-primary border-primary/20 shadow-sm"
+                              />
                           </div>
                       </div>
                   </div>
@@ -614,7 +616,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                                               <CardContent className="p-6 flex items-center gap-5">
                                                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Fingerprint className="h-6 w-6" /></div>
                                                   <div>
-                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">BR ID</p>
+                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">BR Client ID</p>
                                                       <p className="text-2xl font-mono font-black text-foreground tracking-tighter">{application.details.brIdentity}</p>
                                                   </div>
                                               </CardContent>
