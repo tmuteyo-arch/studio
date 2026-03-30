@@ -10,7 +10,7 @@ import { PlusCircle, Trash2, RotateCcw, Eraser } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
 import SignatureCanvas from 'react-signature-canvas';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <h3 className="text-lg font-semibold text-foreground mt-6 mb-4 border-b pb-2">{children}</h3>
@@ -20,6 +20,11 @@ const SignatureField = ({ control, name }: { control: any; name: string }) => {
   const sigPadRef = React.useRef<SignatureCanvas | null>(null);
   const { watch, setValue } = useFormContext();
   const signatureValue = watch(name);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleClear = () => {
     sigPadRef.current?.clear();
@@ -57,13 +62,15 @@ const SignatureField = ({ control, name }: { control: any; name: string }) => {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                    <div className="w-full h-40 border rounded-md bg-white">
-                        <SignatureCanvas
-                            ref={sigPadRef}
-                            penColor="black"
-                            canvasProps={{ className: 'w-full h-full' }}
-                            onEnd={handleEndStroke}
-                        />
+                    <div className="w-full h-40 border rounded-md bg-white overflow-hidden">
+                        {mounted && (
+                          <SignatureCanvas
+                              ref={sigPadRef}
+                              penColor="black"
+                              canvasProps={{ className: 'w-full h-full' }}
+                              onEnd={handleEndStroke}
+                          />
+                        )}
                     </div>
                     <Button type="button" variant="ghost" size="sm" onClick={handleClear} className="self-start text-muted-foreground">
                         <Eraser className="mr-2 h-4 w-4" /> Clear Canvas

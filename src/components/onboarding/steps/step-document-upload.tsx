@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { jsPDF } from 'jspdf';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -44,7 +43,6 @@ export default function StepDocumentUpload() {
 
     documentRequirements.forEach(req => {
       const existing = existingCaptured.find(d => d.type === req.document);
-      // Support existing multi-page or fallback to single url
       initialDocs[req.document] = { 
         documentType: req.document, 
         pages: existing?.pages || (existing ? [existing.url] : []) 
@@ -55,9 +53,10 @@ export default function StepDocumentUpload() {
 
   const generateMergedPdf = async (pages: string[]): Promise<string> => {
     if (pages.length === 0) return '';
-    // If it's already a single PDF, return it as is
     if (pages.length === 1 && pages[0].startsWith('data:application/pdf')) return pages[0];
     
+    // Dynamic import for SSR safety
+    const { jsPDF } = await import('jspdf');
     const pdf = new jsPDF();
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -360,7 +359,6 @@ export default function StepDocumentUpload() {
                                                     <p className="text-xs font-black uppercase tracking-widest">Merging Pages...</p>
                                                 </div>
                                             )}
-                                            {/* We generate a quick preview of the merged PDF */}
                                             <iframe src={form.getValues('capturedDocuments').find(d => d.type === documentType)?.url} className="w-full h-full" title="PDF Preview" />
                                         </div>
                                     </DialogContent>

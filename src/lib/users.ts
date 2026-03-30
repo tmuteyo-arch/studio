@@ -1,7 +1,7 @@
 'use client';
 
 import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
+import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 
 export type Role = 'asl' | 'back-office' | 'supervisor' | 'management' | 'admin' | 'compliance';
 
@@ -52,4 +52,12 @@ export const initialUsers: User[] = [
   }
 ];
 
-export const usersAtom = atomWithStorage<User[]>('innbucks_system_users_v1', initialUsers);
+const safeStorage = createJSONStorage<any>(() => 
+  typeof window !== 'undefined' ? window.localStorage : {
+    getItem: () => null,
+    setItem: () => null,
+    removeItem: () => null,
+  }
+);
+
+export const usersAtom = atomWithStorage<User[]>('innbucks_system_users_v1', initialUsers, safeStorage);

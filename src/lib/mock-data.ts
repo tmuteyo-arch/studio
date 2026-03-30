@@ -1,7 +1,7 @@
 'use client';
 
 import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
+import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import type { OnboardingFormData, Signatory } from './types';
 
 export type ApplicationStatus =
@@ -153,9 +153,17 @@ const initialApplications: Application[] = [
     }
 ];
 
-export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v2', initialApplications);
+const safeStorage = createJSONStorage<any>(() => 
+  typeof window !== 'undefined' ? window.localStorage : {
+    getItem: () => null,
+    setItem: () => null,
+    removeItem: () => null,
+  }
+);
+
+export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v2', initialApplications, safeStorage);
 export const activeUserAtom = atom<any>(null);
 export const activityLogsAtom = atomWithStorage<UserActivityLog[]>('innbucks_activity_logs_v1', [
   { id: 'log-1', userId: 'asl-1', userName: 'CHIDO', action: 'Login', timestamp: new Date(Date.now() - 3600000).toISOString() },
   { id: 'log-2', userId: 'asl-1', userName: 'CHIDO', action: 'Account Created', timestamp: new Date(Date.now() - 1800000).toISOString() },
-]);
+], safeStorage);

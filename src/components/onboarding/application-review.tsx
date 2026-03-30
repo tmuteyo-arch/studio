@@ -1,8 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import { useAtom } from 'jotai';
 import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document as AppDocument } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
@@ -26,12 +24,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { rejectionReasons } from '@/lib/types';
 import CorporateChecklist from './corporate-checklist';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription as AlertDescriptionComponent, AlertTitle as AlertTitleComponent } from '../ui/alert';
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepSignatories from './steps/step-signatories';
 import StepIndividualInfo from './steps/step-individual-info';
 import AccountResolutionPrintView from './account-resolution-print-view';
-import SignatureCanvas from 'react-signature-canvas';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
 import { extractAndValidateData } from '@/ai/flows/extract-and-validate-data';
@@ -120,7 +116,6 @@ export default function ApplicationReview({ application: initialApplication, onB
         history: [...application.history, newHistoryLog] 
     };
 
-    // If forwarding a lead, ensure ASL is assigned as owner so they can track it in "My Applications"
     if (isForwarding && application.submittedBy === 'Customer') {
         updateData.submittedBy = user.name;
     }
@@ -252,7 +247,9 @@ export default function ApplicationReview({ application: initialApplication, onB
     if (!summaryElement) return;
     setIsPrinting(true);
     
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Dynamic imports for SSR safety
+    const { jsPDF } = await import('jspdf');
+    const html2canvas = (await import('html2canvas')).default;
 
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -558,14 +555,12 @@ export default function ApplicationReview({ application: initialApplication, onB
                   <TabsContent value="form-data" className="pt-2 animate-in fade-in-50 duration-300">
                       <Card className="border-none shadow-none bg-transparent">
                           <CardContent className="p-0 space-y-8">
-                              {/* High-level status summary for Account Details */}
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-muted/20 rounded-2xl border border-primary/5">
                                   <DetailItem label="Account Type" value={application.clientType} />
                                   <DetailItem label="Region" value={application.region} />
                                   <DetailItem label="Status" value={application.status.toUpperCase()} />
                               </div>
                               <Separator className="opacity-50" />
-                              {/* Full record details */}
                               <div className="space-y-10">
                                 {isPersonalOrIndividual ? <StepIndividualInfo /> : <StepCorporateInfo />}
                                 {needsMandate && (
@@ -620,7 +615,6 @@ export default function ApplicationReview({ application: initialApplication, onB
                   <TabsContent value="comments" className="pt-2 animate-in fade-in-50 duration-300">
                       <Card className="border-none bg-transparent shadow-none">
                           <CardContent className="p-0 space-y-10">
-                              {/* Accounts only appear when APPROVED and SENT BACK (Archived & Dispatched) */}
                               {(application.status === 'Archived' && application.details.isDispatched) ? (
                                   <div className="p-8 bg-primary/10 rounded-2xl border border-primary/30 shadow-lg animate-in zoom-in-95 relative overflow-hidden">
                                       <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="h-32 w-32 -rotate-12" /></div>

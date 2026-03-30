@@ -6,10 +6,15 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
 export function initializeFirebase(): {
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
 } {
+  // SSR Safety check
+  if (typeof window === 'undefined') {
+    return { firebaseApp: null, firestore: null, auth: null };
+  }
+
   const firebaseApp =
     getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   const auth = getAuth(firebaseApp);
