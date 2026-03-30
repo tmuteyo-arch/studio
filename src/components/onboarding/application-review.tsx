@@ -6,7 +6,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -73,6 +73,8 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const [isReturningToBO, setIsReturningToBO] = React.useState(false);
   const [returnToBOComment, setReturnToBOComment] = React.useState('');
+
+  const [isDeletingConfirmOpen, setIsDeletingConfirmOpen] = React.useState(false);
   
   const [previewDoc, setPreviewDoc] = React.useState<AppDocument | null>(null);
 
@@ -243,6 +245,16 @@ export default function ApplicationReview({ application: initialApplication, onB
     const newCommentObject: Comment = { id: `c${Date.now()}`, user: user.name, role: user.role as any, timestamp: new Date().toISOString(), content: newComment.trim() };
     handleUpdateApplication({ comments: [...application.comments, newCommentObject] });
     setNewComment('');
+  };
+
+  const handleDelete = () => {
+    setApplications(prev => prev.filter(app => app.id !== application.id));
+    toast({
+        title: "Deleted",
+        description: `${application.clientName} has been removed.`,
+    });
+    setIsDeletingConfirmOpen(false);
+    onBack();
   };
 
   const handleDownloadPdf = async () => {
@@ -431,6 +443,7 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
   
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
+  const canDelete = user.role === 'asl' || user.role === 'back-office';
 
   return (
     <FormProvider {...form}>
@@ -438,6 +451,11 @@ export default function ApplicationReview({ application: initialApplication, onB
           <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <Button variant="ghost" onClick={onBack} className="hover:bg-muted text-muted-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
               <div className="flex items-center gap-3 w-full md:w-auto">
+                  {canDelete && (
+                      <Button variant="destructive" onClick={() => setIsDeletingConfirmOpen(true)} className="font-bold shadow-md transition-all active:scale-95">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </Button>
+                  )}
                   <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting} className="font-bold border-primary/20 hover:bg-primary/5"><Download className="mr-2 h-4 w-4" />{isPrinting ? 'Saving...' : 'Export'}</Button>
                   {renderActions()}
               </div>
@@ -736,6 +754,23 @@ export default function ApplicationReview({ application: initialApplication, onB
                     >
                         Send to Office
                     </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={isDeletingConfirmOpen} onOpenChange={setIsDeletingConfirmOpen}>
+            <AlertDialogContent className="rounded-2xl border-destructive/20 shadow-2xl">
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-2 text-destructive">
+                        <Trash2 className="h-6 w-6" /> Delete Application
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-base">
+                        Are you sure you want to permanently delete the application for <strong>{application.clientName}</strong>? This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-3">
+                    <AlertDialogCancel className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="h-12 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-black px-8">Delete Permanently</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
