@@ -6,17 +6,25 @@ import { Input } from '@/components/ui/input';
 import { OnboardingFormData, genderOptions, maritalStatusOptions } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Globe } from 'lucide-react';
 
 export default function StepIndividualInfo({ disabled }: { disabled?: boolean }) {
   const form = useFormContext<OnboardingFormData>();
+  const clientType = form.watch('clientType');
+  const nationality = form.watch('nationality') || '';
+
+  const isForeign = clientType === 'Individual Accounts' && 
+    nationality.trim() !== '' && 
+    !['zimbabwe', 'zimbabwean'].includes(nationality.toLowerCase().trim());
 
   return (
-    <div>
+    <div className="animate-in fade-in duration-500">
       <CardHeader>
         <CardTitle>Individual Info</CardTitle>
         <CardDescription>Enter details.</CardDescription>
       </CardHeader>
-      <div className="px-6 space-y-4">
+      <div className="px-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField control={form.control} name="individualFirstName" render={({ field }) => (
                 <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="e.g. John" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
@@ -37,7 +45,13 @@ export default function StepIndividualInfo({ disabled }: { disabled?: boolean })
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField control={form.control} name="nationality" render={({ field }) => (
-                <FormItem><FormLabel>Nationality</FormLabel><FormControl><Input placeholder="e.g. Zimbabwean" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Nationality</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Zimbabwean" {...field} value={field.value || ''} disabled={disabled} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
             )}/>
             <FormField control={form.control} name="gender" render={({ field }) => (
                 <FormItem>
@@ -60,6 +74,33 @@ export default function StepIndividualInfo({ disabled }: { disabled?: boolean })
                 </FormItem>
             )}/>
         </div>
+
+        {/* Foreign Applicant Conditional Section */}
+        {isForeign && (
+          <div className="space-y-6 pt-4 animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-2 text-primary">
+              <Globe className="h-4 w-4" />
+              <h4 className="text-xs font-black uppercase tracking-widest">Foreign Applicant Details</h4>
+            </div>
+            <Separator className="opacity-50" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="passportNumber" render={({ field }) => (
+                  <FormItem><FormLabel>Passport Number</FormLabel><FormControl><Input placeholder="Enter passport number" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="countryOfOrigin" render={({ field }) => (
+                  <FormItem><FormLabel>Country of Origin</FormLabel><FormControl><Input placeholder="e.g. South Africa" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
+              )}/>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="visaPermitNumber" render={({ field }) => (
+                  <FormItem><FormLabel>Visa / Permit Number</FormLabel><FormControl><Input placeholder="Enter number" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="permitExpiryDate" render={({ field }) => (
+                  <FormItem><FormLabel>Permit Expiry Date</FormLabel><FormControl><Input type="date" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>
+              )}/>
+            </div>
+          </div>
+        )}
 
         <FormField control={form.control} name="individualAddress" render={({ field }) => (
             <FormItem><FormLabel>Address</FormLabel><FormControl><Input placeholder="Street, City" {...field} value={field.value || ''} disabled={disabled} /></FormControl><FormMessage /></FormItem>

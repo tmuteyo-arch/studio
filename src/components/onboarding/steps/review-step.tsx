@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PartyPopper, FileText, Eye, CheckCircle2 } from 'lucide-react';
+import { PartyPopper, FileText, Eye, CheckCircle2, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,6 +48,10 @@ export default function ReviewStep() {
   
   const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(data.clientType);
+  const isForeign = data.clientType === 'Individual Accounts' && 
+    data.nationality && 
+    !['zimbabwe', 'zimbabwean'].includes(data.nationality.toLowerCase().trim());
+    
   const needsMandate = data.clientType !== 'Individual Accounts' && data.clientType !== 'Minors';
   const capturedDocs = data.capturedDocuments || [];
 
@@ -86,6 +90,21 @@ export default function ReviewStep() {
               <DetailItem label="Address" value={data.individualAddress} />
               <DetailItem label="Mobile Number" value={data.individualMobileNumber} />
             </div>
+
+            {isForeign && (
+              <div className="mt-4 pt-4 border-t border-dashed">
+                <div className="flex items-center gap-2 text-primary mb-3">
+                  <Globe className="h-4 w-4" />
+                  <h4 className="text-sm font-bold uppercase">Foreign Applicant Details</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <DetailItem label="Passport Number" value={data.passportNumber} />
+                  <DetailItem label="Country of Origin" value={data.countryOfOrigin} />
+                  <DetailItem label="Visa/Permit Number" value={data.visaPermitNumber} />
+                  <DetailItem label="Permit Expiry" value={data.permitExpiryDate ? format(new Date(data.permitExpiryDate), 'MMMM d, yyyy') : '-'} />
+                </div>
+              </div>
+            )}
           </div>
         )}
 

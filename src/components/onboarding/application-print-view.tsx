@@ -21,7 +21,11 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
 
 
 const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintViewProps>(({ application }, ref) => {
-  const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(application.clientType);
+  const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
+  const isCorporate = !isPersonalOrIndividual;
+  const isForeign = application.clientType === 'Individual Accounts' && 
+    application.details.nationality && 
+    !['zimbabwe', 'zimbabwean'].includes(application.details.nationality.toLowerCase().trim());
   
   return (
     <div ref={ref} className="bg-white text-black p-8" style={{ width: '210mm', minHeight: '297mm'}}>
@@ -55,7 +59,7 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
                     <DetailItem label="Inc. Date" value={application.details.dateOfIncorporation} />
                     <DetailItem label="Address" value={application.details.physicalAddress} />
                     <DetailItem label="Business Phone" value={application.details.businessTelNumber} />
-                    <DetailItem label="Email" value={application.details.email} />
+                    <DetailItem label="Business Email" value={application.details.email} />
                 </>
             ) : (
                 <>
@@ -70,6 +74,18 @@ const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintVi
                 </>
             )}
           </div>
+
+          {isForeign && (
+            <div className="mt-4 p-4 border border-gray-200 rounded">
+              <h3 className="text-sm font-bold uppercase mb-2">Foreign Applicant Data</h3>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                <DetailItem label="Passport Number" value={application.details.passportNumber} />
+                <DetailItem label="Country of Origin" value={application.details.countryOfOrigin} />
+                <DetailItem label="Visa/Permit Number" value={application.details.visaPermitNumber} />
+                <DetailItem label="Permit Expiry" value={application.details.permitExpiryDate} />
+              </div>
+            </div>
+          )}
         </section>
 
         {isCorporate && application.signatories && application.signatories.length > 0 && (

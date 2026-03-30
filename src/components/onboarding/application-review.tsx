@@ -6,7 +6,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -83,16 +83,15 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [isDispatching, setIsDispatching] = React.useState(false);
   const [isAiProcessing, setIsAiProcessing] = React.useState(false);
 
-  // Logic: Read-only check. Records are read-only unless draft or returned for fix.
   const isReadOnly = !['Draft', 'Returned to ATL', 'Returned to ASL', 'Claimed by ASL'].includes(application.status);
 
-  // Logic: Sole Trader is same as Individual technical details but needs mandate
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
+  const isForeign = application.clientType === 'Individual Accounts' && 
+    application.details.nationality && 
+    !['zimbabwe', 'zimbabwean'].includes(application.details.nationality.toLowerCase().trim());
+
   const isCorporate = !isPersonalOrIndividual;
   const needsMandate = application.clientType !== 'Individual Accounts' && application.clientType !== 'Minors';
-  
-  const uploadedDocumentTypes = application.documents.map(d => d.type);
-  const documentRequirements = getDocumentRequirements(application.clientType);
   
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
 
@@ -251,7 +250,6 @@ export default function ApplicationReview({ application: initialApplication, onB
     if (!summaryElement) return;
     setIsPrinting(true);
     
-    // Dynamic imports for SSR safety
     const { jsPDF } = await import('jspdf');
     const html2canvas = (await import('html2canvas')).default;
 
@@ -484,7 +482,7 @@ export default function ApplicationReview({ application: initialApplication, onB
             </div>
           </CardHeader>
           <CardContent className="px-8 pb-8">
-              {/* Back Office: Technical Creation (Clerk only) */}
+              {/* Back Office Action Section */}
               {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL' || application.status === 'Returned to Back Office') && (
                   <div className="mb-8 p-6 bg-primary/5 rounded-2xl border border-primary/20 animate-in zoom-in-95 shadow-inner">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -498,11 +496,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                             onClick={handleGeminiVerification}
                             disabled={isAiProcessing || application.documents.length < 2}
                           >
-                            {isAiProcessing ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Sparkles className="mr-2 h-4 w-4 text-primary fill-primary/20" />
-                            )}
+                            {isAiProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-primary fill-primary/20" />}
                             {isAiProcessing ? 'Checking...' : 'AI Check'}
                           </Button>
                       </div>
@@ -518,32 +512,6 @@ export default function ApplicationReview({ application: initialApplication, onB
                               <p className="text-[10px] text-muted-foreground italic flex items-center gap-1.5 ml-1 mt-1.5">
                                 <AlertCircle className="h-3 w-3" /> Mandatory: Create ID before sending.
                               </p>
-                          </div>
-                      </div>
-                  </div>
-              )}
-
-              {/* Supervisor: Final Audit (Supervisor only) */}
-              {user.role === 'supervisor' && (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor' || application.status === 'Approved by Compliance') && (
-                  <div className="mb-8 p-6 bg-green-500/5 rounded-2xl border border-green-500/20 animate-in zoom-in-95 shadow-inner">
-                      <h4 className="text-xs font-black uppercase text-green-600 tracking-widest mb-6 flex items-center gap-2 bg-white px-3 py-1.5 rounded-full shadow-sm w-fit">
-                          <Key className="h-4 w-4" /> Action: Check & Approve
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                          <div className="space-y-2">
-                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">BR ID</Label>
-                              <div className="h-12 flex items-center px-4 bg-muted/50 rounded-lg border-2 border-dashed border-muted-foreground/20 font-mono text-lg font-bold text-foreground/70">
-                                {application.details.brIdentity || 'NONE'}
-                              </div>
-                          </div>
-                          <div className="space-y-2">
-                              <Label className="text-[10px] font-black uppercase text-green-600 tracking-wider ml-1">Activation Code</Label>
-                              <Input 
-                                  placeholder="Enter code..." 
-                                  value={activationCode} 
-                                  onChange={(e) => setActivationCode(e.target.value)}
-                                  className="bg-background font-mono h-12 text-lg border-green-200 focus:ring-green-500 shadow-sm"
-                              />
                           </div>
                       </div>
                   </div>
@@ -567,6 +535,22 @@ export default function ApplicationReview({ application: initialApplication, onB
                               <Separator className="opacity-50" />
                               <div className="space-y-10">
                                 {isPersonalOrIndividual ? <StepIndividualInfo disabled={isReadOnly} /> : <StepCorporateInfo disabled={isReadOnly} />}
+                                
+                                {isForeign && (
+                                  <div className="mt-8 p-6 bg-primary/5 rounded-2xl border border-primary/10">
+                                    <div className="flex items-center gap-2 text-primary mb-6">
+                                      <Globe className="h-5 w-5" />
+                                      <h4 className="text-sm font-black uppercase tracking-widest">Foreign Registry Data</h4>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                      <DetailItem label="Passport Number" value={application.details.passportNumber} />
+                                      <DetailItem label="Country of Origin" value={application.details.countryOfOrigin} />
+                                      <DetailItem label="Visa/Permit Number" value={application.details.visaPermitNumber} />
+                                      <DetailItem label="Permit Expiry" value={application.details.permitExpiryDate} />
+                                    </div>
+                                  </div>
+                                )}
+
                                 {needsMandate && (
                                     <div className="mt-8 bg-muted/10 p-6 rounded-2xl border border-white/10">
                                         <StepSignatories disabled={isReadOnly} />
@@ -663,6 +647,7 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardContent>
         </Card>
 
+        {/* Action Dialogs */}
         <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}>
             <AlertDialogContent className="rounded-2xl border-destructive/20 shadow-2xl">
                 <AlertDialogHeader>
@@ -770,7 +755,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                 <div className="flex-1 bg-black/90 relative flex items-center justify-center overflow-hidden">
                     {previewDoc?.url && previewDoc.url !== '#' ? (
                         previewDoc.url.includes('application/pdf') || previewDoc.fileName.toLowerCase().endsWith('.pdf') ? (
-                            <iframe src={previewDoc.url} className="w-full h-full border-none" />
+                            <iframe src={previewDoc.url} className="w-full h-full border-none" title="Doc" />
                         ) : <img src={previewDoc.url} alt="Document" className="max-w-full max-h-full object-contain animate-in zoom-in-95" />
                     ) : (
                         <div className="flex flex-col items-center gap-4 text-white/30 text-center max-w-xs animate-pulse">

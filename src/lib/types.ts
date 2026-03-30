@@ -48,7 +48,7 @@ export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   region: z.string().min(1, { message: 'Please select an operating region.' }),
   
-  // Individual/Sole Trader Info (Technical identities)
+  // Individual/Sole Trader Info
   individualSurname: z.string().optional(),
   individualFirstName: z.string().optional(),
   individualDateOfBirth: z.string().optional(),
@@ -59,7 +59,13 @@ export const OnboardingFormSchema = z.object({
   gender: z.string().optional(),
   maritalStatus: z.string().optional(),
 
-  // Corporate Info (Entity classes)
+  // Foreign Applicant Fields (Individual only)
+  passportNumber: z.string().optional(),
+  countryOfOrigin: z.string().optional(),
+  visaPermitNumber: z.string().optional(),
+  permitExpiryDate: z.string().optional(),
+
+  // Corporate Info
   organisationLegalName: z.string().optional(),
   natureOfBusiness: z.string().optional(),
   physicalAddress: z.string().optional(),
@@ -77,26 +83,22 @@ export const OnboardingFormSchema = z.object({
   document1Type: z.string().optional(),
   document2Type: z.string().optional(),
   
-  // Base64 document data
   capturedDocuments: z.array(z.object({
     type: z.string(),
     fileName: z.string(),
     url: z.string(),
-    pages: z.array(z.string()).optional() // Stores individual image data URIs for multi-page docs
+    pages: z.array(z.string()).optional()
   })).optional().default([]),
   
-  // Internal Registry IDs (Hidden from ASL until finalized)
   fcbStatus: z.string().optional(),
   brIdentity: z.string().optional(),
   activationCode: z.string().optional(),
   
-  // Workflow Finalization Signatures
   supervisorSignature: z.string().optional(),
   supervisorSignatureTimestamp: z.string().optional(),
   executiveSignature: z.string().optional(),
   executiveSignatureTimestamp: z.string().optional(),
 
-  // Dispatched Account Information
   accountNumber: z.string().optional(),
   accountOpeningDate: z.string().optional(),
   isDispatched: z.boolean().optional().default(false),
@@ -106,7 +108,6 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    // Technical Logic
     const isPersonal = ['Individual Accounts', 'Minors'].includes(data.clientType);
     const isSoleTrader = data.clientType === 'Sole Trader';
     
@@ -128,7 +129,6 @@ export const OnboardingFormSchema = z.object({
       'Trust'
     ].includes(data.clientType);
 
-    // Signatories requirement for legal entities and Sole Trader
     if (data.clientType && !isPersonal) {
       if (!data.signatories || data.signatories.length === 0) {
         ctx.addIssue({
@@ -155,7 +155,6 @@ export const OnboardingFormSchema = z.object({
         });
       }
     } else if (isPersonal || isSoleTrader) {
-      // Individual and Sole Trader follow the same mandatory fields for applicant details
       if (!data.individualFirstName) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualFirstName'], message: 'First name is mandatory.' });
       if (!data.individualSurname) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualSurname'], message: 'Surname is mandatory.' });
       if (!data.individualDateOfBirth) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['individualDateOfBirth'], message: 'Date of birth is mandatory.' });
@@ -163,6 +162,17 @@ export const OnboardingFormSchema = z.object({
       if (!data.nationality) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['nationality'], message: 'Nationality is mandatory.' });
       if (!data.gender) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['gender'], message: 'Gender is mandatory.' });
       if (!data.maritalStatus) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['maritalStatus'], message: 'Marital status is mandatory.' });
+
+      // Foreign fields logic for Individual only
+      if (data.clientType === 'Individual Accounts' && data.nationality) {
+        const isForeign = !['zimbabwe', 'zimbabwean'].includes(data.nationality.toLowerCase().trim());
+        if (isForeign) {
+          if (!data.passportNumber) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['passportNumber'], message: 'Passport number is mandatory for foreign applicants.' });
+          if (!data.countryOfOrigin) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['countryOfOrigin'], message: 'Country of origin is mandatory.' });
+          if (!data.visaPermitNumber) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['visaPermitNumber'], message: 'Visa or Permit number is mandatory.' });
+          if (!data.permitExpiryDate) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['permitExpiryDate'], message: 'Permit expiry date is mandatory.' });
+        }
+      }
     }
 });
 
