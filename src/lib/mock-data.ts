@@ -26,7 +26,7 @@ export type ApplicationStatus =
   | 'Rejected by Supervisor'
   | 'Approved by Compliance';
   
-export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse';
+export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse' | 'AML' | 'Green' | 'Fair';
 
 export type Document = {
   type: string;

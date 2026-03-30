@@ -2,11 +2,11 @@
 
 import * as React from 'react';
 import { useAtom } from 'jotai';
-import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document as AppDocument } from '@/lib/mock-data';
+import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document as AppDocument, FcbStatus } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe, Trash2, Info } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe, Trash2, Info, FileSearch } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -50,6 +50,8 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
     );
 };
 
+const fcbStatusOptions: FcbStatus[] = ['Adverse', 'Good', 'PEP', 'AML', 'Green', 'Prior Adverse', 'Fair'];
+
 export default function ApplicationReview({ application: initialApplication, onBack, user }: ApplicationReviewProps) {
   const { toast } = useToast();
   const [applications, setApplications] = useAtom(applicationsAtom);
@@ -77,6 +79,11 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [isDeletingConfirmOpen, setIsDeletingConfirmOpen] = React.useState(false);
   
   const [previewDoc, setPreviewDoc] = React.useState<AppDocument | null>(null);
+
+  // Compliance State for Back Office
+  const [selectedFcbStatus, setSelectedFcbStatus] = React.useState<FcbStatus>(application.fcbStatus);
+  const [fcbReport, setFcbReport] = React.useState<AppDocument | null>(application.documents.find(d => d.type === 'FCB Report') || null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Workflow States
   const [brIdentity, setBrIdentity] = React.useState(application.details.brIdentity || '');
@@ -158,7 +165,45 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const handleForwardToSupervisor = () => {
-    handleStatusChange('Sent to Supervisor', 'Checked by Back Office Clerk.');
+    if (!fcbReport) {
+        toast({ variant: 'destructive', title: 'FCB Report Required', description: 'Please attach the FCB Report before forwarding.' });
+        return;
+    }
+
+    const currentDocs = application.documents.filter(d => d.type !== 'FCB Report');
+    const updatedDocs = [...currentDocs, fcbReport];
+
+    handleUpdateApplication({
+        status: 'Sent to Supervisor',
+        fcbStatus: selectedFcbStatus,
+        documents: updatedDocs,
+        history: [...application.history, { 
+            action: 'Sent to Supervisor', 
+            user: user.name, 
+            timestamp: new Date().toISOString(),
+            notes: `FCB Status: ${selectedFcbStatus}. Report attached.`
+        }]
+    });
+
+    toast({ title: "Forwarded", description: "Application sent to Supervisor." });
+    setTimeout(() => onBack(), 500);
+  };
+
+  const handleFcbFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const url = event.target?.result as string;
+        setFcbReport({
+            type: 'FCB Report',
+            fileName: file.name,
+            url: url
+        });
+        toast({ title: "Report Attached", description: `${file.name} is ready.` });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleReturnToAsl = () => {
@@ -493,6 +538,65 @@ export default function ApplicationReview({ application: initialApplication, onB
             </div>
           </CardHeader>
           <CardContent className="px-8 pb-8">
+              {/* Back Office Compliance Section */}
+              {user.role === 'back-office' && (application.status === 'Submitted' || application.status === 'Sent to Back Office' || application.status === 'Returned to Back Office' || application.status === 'Claimed by ASL') && (
+                  <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95 shadow-inner">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                          <h4 className="text-xs font-black uppercase text-secondary tracking-widest flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full shadow-sm">
+                              <ShieldCheck className="h-4 w-4" /> Compliance Check: FCB Report
+                          </h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">FCB Status</Label>
+                              <Select value={selectedFcbStatus} onValueChange={(v: FcbStatus) => setSelectedFcbStatus(v)}>
+                                  <SelectTrigger className="h-12 bg-background border-white/10 focus:ring-secondary text-lg font-bold">
+                                      <SelectValue placeholder="Set FCB Status..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      {fcbStatusOptions.map(status => (
+                                          <SelectItem key={status} value={status} className="font-bold py-3">{status}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                              <p className="text-[10px] text-muted-foreground italic flex items-center gap-1.5 ml-1 mt-1.5">
+                                <Info className="h-3 w-3" /> Select the risk status from the FCB bureau.
+                              </p>
+                          </div>
+                          <div className="space-y-4">
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">FCB Report Attachment</Label>
+                              <div className="flex gap-2">
+                                  <input type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
+                                  <Button 
+                                      variant="outline" 
+                                      className="flex-1 h-12 font-black uppercase tracking-widest border-white/10 hover:bg-secondary/10"
+                                      onClick={() => fileInputRef.current?.click()}
+                                  >
+                                      <Upload className="mr-2 h-4 w-4 text-secondary" /> {fcbReport ? 'Replace Report' : 'Attach Report'}
+                                  </Button>
+                                  {fcbReport && (
+                                      <Button 
+                                          variant="ghost" 
+                                          size="icon" 
+                                          className="h-12 w-12 border border-white/5"
+                                          onClick={() => setPreviewDoc(fcbReport)}
+                                      >
+                                          <Eye className="h-5 w-5" />
+                                      </Button>
+                                  )}
+                              </div>
+                              {fcbReport && (
+                                  <div className="flex items-center gap-2 px-3 py-2 bg-secondary/10 border border-secondary/20 rounded-lg animate-in fade-in slide-in-from-top-1">
+                                      <FileSearch className="h-4 w-4 text-secondary" />
+                                      <span className="text-xs font-mono font-bold text-secondary truncate max-w-[200px]">{fcbReport.fileName}</span>
+                                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500 ml-auto" />
+                                  </div>
+                              )}
+                          </div>
+                      </div>
+                  </div>
+              )}
+
               {/* Supervisor Identity Check Section */}
               {user.role === 'supervisor' && (application.status === 'Pending Supervisor' || application.status === 'Sent to Supervisor' || application.status === 'Approved by Compliance') && (
                   <div className="mb-8 p-6 bg-primary/5 rounded-2xl border border-primary/20 animate-in zoom-in-95 shadow-inner">
