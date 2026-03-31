@@ -9,11 +9,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    allowedDevOrigins: [
-      '6000-firebase-innbucks-app-21-1773991564513.cluster-lu4mup47g5gm4rtyvhzpwbfadi.cloudworkstations.dev',
-      'localhost:9002',
-      '0.0.0.0:9002'
-    ],
     serverActions: {
       bodySizeLimit: '10mb',
     },
