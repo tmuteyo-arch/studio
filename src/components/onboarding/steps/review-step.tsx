@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PartyPopper, FileText, Eye, CheckCircle2, Globe } from 'lucide-react';
+import { PartyPopper, FileText, Eye, CheckCircle2, Globe, Hash } from 'lucide-react';
 import { format } from 'date-fns';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -76,11 +76,22 @@ export default function ReviewStep() {
       </CardHeader>
       <div className="space-y-6 px-6">
         
+        <div className="rounded-md border p-4 bg-muted/10">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <Hash className="h-4 w-4 text-primary" />
+                Product Settings
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <DetailItem label="Account Type" value={data.clientType} />
+                <DetailItem label="Region" value={data.region} />
+                <DetailItem label="TIN Number" value={data.tinNumber} />
+            </div>
+        </div>
+
         {isPersonalOrIndividual && (
           <div className="rounded-md border p-4 space-y-4">
             <h3 className="font-semibold">Applicant Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DetailItem label="Account Type" value={data.clientType} />
               <DetailItem label="Full Name" value={`${data.individualFirstName} ${data.individualSurname}`} />
               <DetailItem label="Date of Birth" value={data.individualDateOfBirth ? format(new Date(data.individualDateOfBirth), 'MMMM d, yyyy') : '-'} />
               <DetailItem label="ID Number" value={data.individualIdNumber} />
@@ -112,7 +123,6 @@ export default function ReviewStep() {
             <div className="rounded-md border p-4 space-y-4">
                 <h3 className="font-semibold">Entity Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <DetailItem label="Account Type" value={data.clientType} />
                     <DetailItem label="Legal Name" value={data.organisationLegalName} />
                     <DetailItem label="Business Type" value={data.natureOfBusiness} />
                     <DetailItem label="Cert. Number" value={data.certificateOfIncorporationNumber} />

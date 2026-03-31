@@ -6,8 +6,9 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { zimRegions, OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, CheckCircle2 } from 'lucide-react';
+import { MapPin, CheckCircle2, Hash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 export default function StepAccountType() {
   const form = useFormContext<OnboardingFormData>();
@@ -20,7 +21,7 @@ export default function StepAccountType() {
           Settings
         </CardTitle>
         <CardDescription>
-          Choose the region.
+          Provide the operating region and TIN number.
         </CardDescription>
       </CardHeader>
       
@@ -36,41 +37,73 @@ export default function StepAccountType() {
           </Badge>
         </div>
 
-        {/* Operating Region Selection */}
-        <div className="space-y-4 max-w-md">
-          <div className="space-y-1.5">
-            <FormLabel className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5 text-primary" />
-              Region
-            </FormLabel>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Pick the province.
-            </p>
-          </div>
-          
-          <FormField
-            control={form.control}
-            name="region"
-            render={({ field }) => (
-              <FormItem>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="h-12 bg-background border-primary/20">
-                      <SelectValue placeholder="Choose province..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="max-h-[300px]">
-                    {zimRegions.map((r) => (
-                      <SelectItem key={r} value={r} className="py-3 font-semibold">
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Operating Region Selection */}
+            <div className="space-y-4">
+                <div className="space-y-1.5">
+                    <FormLabel className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-primary" />
+                    Region
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    Pick the province.
+                    </p>
+                </div>
+                
+                <FormField
+                    control={form.control}
+                    name="region"
+                    render={({ field }) => (
+                    <FormItem>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger className="h-12 bg-background border-primary/20">
+                            <SelectValue placeholder="Choose province..." />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="max-h-[300px]">
+                            {zimRegions.map((r) => (
+                            <SelectItem key={r} value={r} className="py-3 font-semibold">
+                                {r}
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+
+            {/* TIN Number Input */}
+            <div className="space-y-4">
+                <div className="space-y-1.5">
+                    <FormLabel className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <Hash className="h-3.5 w-3.5 text-primary" />
+                    TIN Number
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    Taxpayer Identification Number.
+                    </p>
+                </div>
+                
+                <FormField
+                    control={form.control}
+                    name="tinNumber"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormControl>
+                            <Input 
+                                placeholder="Enter TIN Number..." 
+                                className="h-12 bg-background border-primary/20 font-mono font-bold" 
+                                {...field} 
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
         </div>
       </div>
     </div>

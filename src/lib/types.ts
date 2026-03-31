@@ -47,6 +47,7 @@ export type Signatory = z.infer<typeof SignatorySchema>;
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   region: z.string().min(1, { message: 'Please select an operating region.' }),
+  tinNumber: z.string().optional().default(''),
   
   // Individual/Sole Trader Info
   individualSurname: z.string().optional(),
@@ -108,6 +109,15 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
+    // TIN Number is required for all
+    if (!data.tinNumber || data.tinNumber.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['tinNumber'],
+        message: 'TIN Number is mandatory for all account types.',
+      });
+    }
+
     const isPersonal = ['Individual Accounts', 'Minors'].includes(data.clientType);
     const isSoleTrader = data.clientType === 'Sole Trader';
     

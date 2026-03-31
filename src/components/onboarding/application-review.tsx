@@ -6,7 +6,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe, Trash2, Info, FileSearch } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, History, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe, Trash2, Info, FileSearch, Hash } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -651,9 +651,10 @@ export default function ApplicationReview({ application: initialApplication, onB
                   <TabsContent value="form-data" className="pt-2 animate-in fade-in-50 duration-300">
                       <Card className="border-none shadow-none bg-transparent">
                           <CardContent className="p-0 space-y-8">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-muted/20 rounded-2xl border border-primary/5">
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 bg-muted/20 rounded-2xl border border-primary/5">
                                   <DetailItem label="Account Type" value={application.clientType} />
                                   <DetailItem label="Region" value={application.region} />
+                                  <DetailItem label="TIN Number" value={application.details.tinNumber} />
                                   <DetailItem label="Status" value={application.status.toUpperCase()} />
                               </div>
                               <Separator className="opacity-50" />

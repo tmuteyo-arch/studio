@@ -4,6 +4,12 @@ export type DocumentRequirement = {
     comment: string;
 };
 
+const adlaDeclaration: DocumentRequirement = {
+    document: 'ADLA Declaration',
+    details: 'Authorised Dealer with Limited Authority compliance form.',
+    comment: 'Mandatory regulatory declaration.'
+};
+
 const personalAccountRequirements: DocumentRequirement[] = [
     {
         document: 'Valid Identity Document',
@@ -20,6 +26,7 @@ const personalAccountRequirements: DocumentRequirement[] = [
         details: 'Recent color photographs.',
         comment: 'Recent photos required.'
     },
+    adlaDeclaration
 ];
 
 const soleTraderRequirements: DocumentRequirement[] = [
@@ -48,6 +55,7 @@ const soleTraderRequirements: DocumentRequirement[] = [
         details: 'Recent color photographs of the proprietor.',
         comment: 'Required for client record.'
     },
+    adlaDeclaration
 ];
 
 const corporateAccountRequirements: DocumentRequirement[] = [
@@ -106,11 +114,7 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         details: 'Standard InnBucks Agency Contract.',
         comment: 'Mandatory for all agent accounts.'
     },
-    {
-        document: 'ADLA Declaration',
-        details: 'Authorised Dealer with Limited Authority compliance form.',
-        comment: 'Mandatory regulatory declaration.'
-    }
+    adlaDeclaration
 ];
 
 const pbcAccountRequirements: DocumentRequirement[] = [
@@ -124,7 +128,7 @@ const pbcAccountRequirements: DocumentRequirement[] = [
     { document: 'Certified National Identification', details: 'For all signatories and directors.', comment: 'Verified against originals.' },
     { document: 'CR28', details: 'Certified copy of registration.', comment: 'Mandatory PBC document.' },
     { document: 'Agency Agreement', details: 'Standard InnBucks Agency Contract.', comment: 'Mandatory.' },
-    { document: 'ADLA Declaration', details: 'ADLA Compliance form.', comment: 'Mandatory.' }
+    adlaDeclaration
 ];
 
 const institutionRequirements: DocumentRequirement[] = [
@@ -153,6 +157,7 @@ const institutionRequirements: DocumentRequirement[] = [
         details: 'Recent color photographs of all signatories.',
         comment: 'Submit recent photos.',
     },
+    adlaDeclaration
 ];
 
 const requirementsMap: Record<string, DocumentRequirement[]> = {
