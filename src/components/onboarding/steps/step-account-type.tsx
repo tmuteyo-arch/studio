@@ -6,7 +6,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { zimRegions, OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, CheckCircle2, Hash, Briefcase } from 'lucide-react';
+import { MapPin, CheckCircle2, Hash, Briefcase, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -15,6 +15,14 @@ import { Label } from '@/components/ui/label';
 export default function StepAccountType() {
   const form = useFormContext<OnboardingFormData>();
   const clientType = form.watch('clientType');
+  const isSoleTrader = clientType === 'Sole Trader';
+
+  // Force Agency for Sole Trader
+  React.useEffect(() => {
+    if (isSoleTrader) {
+      form.setValue('relationshipType', 'Agency');
+    }
+  }, [isSoleTrader, form]);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -46,39 +54,57 @@ export default function StepAccountType() {
                 Relationship Type
                 </FormLabel>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                Choose the intended relationship with InnBucks.
+                {isSoleTrader 
+                  ? "Sole Traders are registered as Agency partners by default." 
+                  : "Choose the intended relationship with InnBucks."
+                }
                 </p>
             </div>
             
-            <FormField
-                control={form.control}
-                name="relationshipType"
-                render={({ field }) => (
-                <FormItem className="space-y-3">
-                    <FormControl>
-                    <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col sm:flex-row gap-4"
-                    >
-                        <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-xl hover:bg-muted/50 cursor-pointer transition-all flex-1">
-                            <FormControl>
-                                <RadioGroupItem value="Agency" />
-                            </FormControl>
-                            <Label className="font-bold cursor-pointer">Agency Agreement</Label>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-xl hover:bg-muted/50 cursor-pointer transition-all flex-1">
-                            <FormControl>
-                                <RadioGroupItem value="Merchant" />
-                            </FormControl>
-                            <Label className="font-bold cursor-pointer">Merchant Services</Label>
-                        </FormItem>
-                    </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
+            {isSoleTrader ? (
+              <div className="p-4 rounded-xl border-2 border-primary/20 bg-primary/5 flex items-center justify-between animate-in zoom-in-95">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground">Agency Agreement Only</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest text-primary/60">Standard Onboarding</p>
+                  </div>
+                </div>
+                <Badge className="bg-primary text-primary-foreground font-black">MANDATORY</Badge>
+              </div>
+            ) : (
+              <FormField
+                  control={form.control}
+                  name="relationshipType"
+                  render={({ field }) => (
+                  <FormItem className="space-y-3">
+                      <FormControl>
+                      <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col sm:flex-row gap-4"
+                      >
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-xl hover:bg-muted/50 cursor-pointer transition-all flex-1">
+                              <FormControl>
+                                  <RadioGroupItem value="Agency" />
+                              </FormControl>
+                              <Label className="font-bold cursor-pointer">Agency Agreement</Label>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-xl hover:bg-muted/50 cursor-pointer transition-all flex-1">
+                              <FormControl>
+                                  <RadioGroupItem value="Merchant" />
+                              </FormControl>
+                              <Label className="font-bold cursor-pointer">Merchant Services</Label>
+                          </FormItem>
+                      </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                  </FormItem>
+                  )}
+              />
+            )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
