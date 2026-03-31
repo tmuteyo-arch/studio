@@ -31,14 +31,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepSignatories from './steps/step-signatories';
+import StepAgreements from './steps/step-agreements';
 
 
 const allSteps: Step[] = [
-  { id: 'account-type', name: 'Product', fields: ['clientType', 'region', 'tinNumber'] },
+  { id: 'account-type', name: 'Product', fields: ['clientType', 'relationshipType', 'region', 'tinNumber'] },
   { id: 'individual-info', name: 'Personal', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber', 'nationality', 'gender', 'maritalStatus'] },
   { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
   { id: 'signatories', name: 'Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
   { id: 'document-upload', name: 'Documents', fields: ['capturedDocuments'] },
+  { id: 'agreements', name: 'Agreements', fields: ['agreement1Accepted', 'agreement1Signature', 'agreement2Accepted', 'agreement2Signature'] },
   { id: 'review-submit', name: 'Review', fields: ['signature', 'agreedToTerms'] },
 ];
 
@@ -48,6 +50,7 @@ const StepComponents: Record<string, React.ElementType> = {
   'corporate-info': StepCorporateInfo,
   'signatories': StepSignatories,
   'document-upload': StepDocumentUpload,
+  'agreements': StepAgreements,
   'review-submit': StepReview,
 };
 
@@ -77,6 +80,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     mode: 'onChange',
     defaultValues: existingApplication ? existingApplication.details : {
       clientType: preselectedType || '',
+      relationshipType: 'Agency',
       region: '',
       tinNumber: '',
       individualSurname: '',
@@ -105,6 +109,8 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       capturedDocuments: [],
       signature: '',
       agreedToTerms: false,
+      agreement1Accepted: false,
+      agreement2Accepted: false,
     },
   });
   
@@ -126,12 +132,13 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     }
     
     if (isSoleTrader) {
-      const soleTraderSteps = ['account-type', 'individual-info', 'signatories', 'document-upload', 'review-submit'];
+      const soleTraderSteps = ['account-type', 'individual-info', 'signatories', 'document-upload', 'agreements', 'review-submit'];
       return allSteps.filter(step => soleTraderSteps.includes(step.id));
     }
     
     if (isCorporate || isInstitution) {
-      return allSteps.filter(step => step.id !== 'individual-info');
+      const corporateSteps = ['account-type', 'corporate-info', 'signatories', 'document-upload', 'agreements', 'review-submit'];
+      return allSteps.filter(step => corporateSteps.includes(step.id));
     }
     
     return [allSteps.find(s => s.id === 'account-type')!];

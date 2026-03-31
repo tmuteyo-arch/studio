@@ -46,6 +46,7 @@ export type Signatory = z.infer<typeof SignatorySchema>;
 
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
+  relationshipType: z.enum(['Agency', 'Merchant']).default('Agency'),
   region: z.string().min(1, { message: 'Please select an operating region.' }),
   tinNumber: z.string().optional().default(''),
   
@@ -79,6 +80,12 @@ export const OnboardingFormSchema = z.object({
   resolutionDate: z.string().optional(),
   signingInstruction: z.string().optional(),
   signatories: z.array(SignatorySchema).default([]),
+
+  // Agreements State
+  agreement1Accepted: z.boolean().default(false),
+  agreement1Signature: z.string().optional(),
+  agreement2Accepted: z.boolean().default(false),
+  agreement2Signature: z.string().optional(),
 
   // Document Registry
   document1Type: z.string().optional(),
@@ -145,6 +152,24 @@ export const OnboardingFormSchema = z.object({
             code: z.ZodIssueCode.custom,
             path: ['signatories'],
             message: 'At least one authorized signatory is mandatory for this account type.',
+        });
+      }
+    }
+
+    // Agreements validation for Corporate/SoleTrader
+    if (isCorporate || isSoleTrader) {
+      if (!data.agreement1Accepted || !data.agreement1Signature) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['agreement1Accepted'],
+          message: 'You must sign the first agreement.',
+        });
+      }
+      if (!data.agreement2Accepted || !data.agreement2Signature) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['agreement2Accepted'],
+          message: 'You must sign the second agreement.',
         });
       }
     }
