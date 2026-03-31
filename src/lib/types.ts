@@ -162,15 +162,19 @@ export const OnboardingFormSchema = z.object({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['agreement1Accepted'],
-          message: 'You must sign the first agreement.',
+          message: 'You must sign the agreement.',
         });
       }
-      if (!data.agreement2Accepted || !data.agreement2Signature) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['agreement2Accepted'],
-          message: 'You must sign the second agreement.',
-        });
+      
+      // ONLY if Merchant, require the second one (NDA)
+      if (data.relationshipType === 'Merchant') {
+        if (!data.agreement2Accepted || !data.agreement2Signature) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['agreement2Accepted'],
+            message: 'You must sign the NDA.',
+          });
+        }
       }
     }
 

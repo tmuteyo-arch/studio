@@ -4,12 +4,6 @@ export type DocumentRequirement = {
     comment: string;
 };
 
-const adlaDeclaration: DocumentRequirement = {
-    document: 'ADLA Declaration',
-    details: 'Authorised Dealer with Limited Authority compliance form.',
-    comment: 'Mandatory regulatory declaration.'
-};
-
 const personalAccountRequirements: DocumentRequirement[] = [
     {
         document: 'Valid Identity Document',
@@ -25,8 +19,7 @@ const personalAccountRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent color photographs.',
         comment: 'Recent photos required.'
-    },
-    adlaDeclaration
+    }
 ];
 
 const soleTraderRequirements: DocumentRequirement[] = [
@@ -54,8 +47,7 @@ const soleTraderRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent color photographs of the proprietor.',
         comment: 'Required for client record.'
-    },
-    adlaDeclaration
+    }
 ];
 
 const corporateAccountRequirements: DocumentRequirement[] = [
@@ -108,13 +100,7 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent photos for all directors and signatories.',
         comment: 'Required for client records.',
-    },
-    {
-        document: 'Agency Agreement',
-        details: 'Standard InnBucks Agency Contract.',
-        comment: 'Mandatory for all agent accounts.'
-    },
-    adlaDeclaration
+    }
 ];
 
 const pbcAccountRequirements: DocumentRequirement[] = [
@@ -126,9 +112,7 @@ const pbcAccountRequirements: DocumentRequirement[] = [
     { document: 'Certified Tax Clearance', details: 'Current valid ZIMRA clearance.', comment: 'Must be current.' },
     { document: 'Stamped Bank Statement', details: 'Last 3 months from current bankers.', comment: 'Official stamp required.' },
     { document: 'Certified National Identification', details: 'For all signatories and directors.', comment: 'Verified against originals.' },
-    { document: 'CR28', details: 'Certified copy of registration.', comment: 'Mandatory PBC document.' },
-    { document: 'Agency Agreement', details: 'Standard InnBucks Agency Contract.', comment: 'Mandatory.' },
-    adlaDeclaration
+    { document: 'CR28', details: 'Certified copy of registration.', comment: 'Mandatory PBC document.' }
 ];
 
 const institutionRequirements: DocumentRequirement[] = [
@@ -156,8 +140,7 @@ const institutionRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent color photographs of all signatories.',
         comment: 'Submit recent photos.',
-    },
-    adlaDeclaration
+    }
 ];
 
 const requirementsMap: Record<string, DocumentRequirement[]> = {

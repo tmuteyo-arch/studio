@@ -12,7 +12,6 @@ import { FileSignature, Eraser, RotateCcw, CheckCircle2, ShieldAlert } from 'luc
 import SignatureCanvas from 'react-signature-canvas';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import TermsAndConditions from '../terms-and-conditions';
 
 const AgreementText = ({ type }: { type: 'agency' | 'adla' | 'merchant' | 'nda' }) => {
     switch (type) {
@@ -213,13 +212,6 @@ export default function StepAgreements({ disabled }: { disabled?: boolean }) {
                             type="agency" 
                             acceptedField="agreement1Accepted" 
                             signatureField="agreement1Signature"
-                            disabled={disabled}
-                        />
-                        <AgreementSection 
-                            title="ADLA Declaration" 
-                            type="adla" 
-                            acceptedField="agreement2Accepted" 
-                            signatureField="agreement2Signature"
                             disabled={disabled}
                         />
                     </>

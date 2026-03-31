@@ -167,15 +167,17 @@ export default function ReviewStep() {
                         </div>
                         {data.agreement1Signature && <Badge variant="success" className="font-black">SIGNED</Badge>}
                     </div>
-                    <div className="flex items-center justify-between p-4 border rounded-xl bg-background">
-                        <div>
-                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">
-                                {data.relationshipType === 'Agency' ? 'ADLA Declaration' : 'NDA'}
-                            </p>
-                            <p className="text-sm font-bold">{data.agreement2Accepted ? 'ACCEPTED' : 'PENDING'}</p>
+                    {data.relationshipType === 'Merchant' && (
+                        <div className="flex items-center justify-between p-4 border rounded-xl bg-background">
+                            <div>
+                                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">
+                                    Non-Disclosure Agreement (NDA)
+                                </p>
+                                <p className="text-sm font-bold">{data.agreement2Accepted ? 'ACCEPTED' : 'PENDING'}</p>
+                            </div>
+                            {data.agreement2Signature && <Badge variant="success" className="font-black">SIGNED</Badge>}
                         </div>
-                        {data.agreement2Signature && <Badge variant="success" className="font-black">SIGNED</Badge>}
-                    </div>
+                    )}
                 </div>
             </div>
         )}
