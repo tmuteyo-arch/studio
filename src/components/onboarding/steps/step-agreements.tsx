@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileSignature, Eraser, RotateCcw, CheckCircle2, ShieldAlert } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import TermsAndConditions from '../terms-and-conditions';
 
 const AgreementText = ({ type }: { type: 'agency' | 'adla' | 'merchant' | 'nda' }) => {
