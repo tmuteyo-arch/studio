@@ -28,10 +28,11 @@ import StepCorporateInfo from './steps/step-corporate-info';
 import StepSignatories from './steps/step-signatories';
 import StepIndividualInfo from './steps/step-individual-info';
 import AccountResolutionPrintView from './account-resolution-print-view';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
 import { extractAndValidateData } from '@/ai/flows/extract-and-validate-data';
 import StepDocumentUpload from './steps/step-document-upload';
+import SignatureCanvas from 'react-signature-canvas';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -51,6 +52,58 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
 };
 
 const fcbStatusOptions: FcbStatus[] = ['Adverse', 'Good', 'PEP', 'AML', 'Green', 'Prior Adverse', 'Fair'];
+
+const InternalSignatureDialog = ({ 
+    isOpen, 
+    onClose, 
+    onSign, 
+    title, 
+    description 
+}: { 
+    isOpen: boolean, 
+    onClose: () => void, 
+    onSign: (signature: string) => void, 
+    title: string, 
+    description: string 
+}) => {
+    const sigPadRef = React.useRef<SignatureCanvas | null>(null);
+    const handleClear = () => sigPadRef.current?.clear();
+    const handleConfirm = () => {
+        if (sigPadRef.current && !sigPadRef.current.isEmpty()) {
+            onSign(sigPadRef.current.toDataURL());
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="max-w-md bg-card border-primary/20 rounded-2xl shadow-2xl">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-primary">
+                        <FileSignature className="h-6 w-6" /> {title}
+                    </DialogTitle>
+                    <DialogDescription className="text-muted-foreground mt-2">{description}</DialogDescription>
+                </DialogHeader>
+                <div className="py-6 space-y-4">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Draw Digital Signature</Label>
+                    <div className="w-full h-40 border-2 border-primary/10 rounded-xl bg-white overflow-hidden shadow-inner">
+                        <SignatureCanvas 
+                            ref={sigPadRef} 
+                            penColor="black" 
+                            canvasProps={{ className: 'w-full h-full' }} 
+                        />
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={handleClear} className="text-muted-foreground hover:text-primary">
+                        <Eraser className="mr-2 h-4 w-4" /> Clear Canvas
+                    </Button>
+                </div>
+                <DialogFooter className="gap-3 sm:flex-col">
+                    <Button onClick={handleConfirm} className="w-full h-12 text-lg font-black uppercase tracking-widest shadow-lg bg-primary text-primary-foreground">CONFIRM & SIGN</Button>
+                    <Button variant="ghost" onClick={onClose} className="w-full font-bold">Cancel</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
 export default function ApplicationReview({ application: initialApplication, onBack, user }: ApplicationReviewProps) {
   const { toast } = useToast();
@@ -91,6 +144,10 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
   const [isAiProcessing, setIsAiProcessing] = React.useState(false);
+
+  // Tiered Approval Signature States
+  const [isSupervisorSigning, setIsSupervisorSigning] = React.useState(false);
+  const [isExecutiveSigning, setIsExecutiveSigning] = React.useState(false);
 
   const isReadOnly = !['Draft', 'Returned to ATL', 'Returned to ASL', 'Claimed by ASL'].includes(application.status);
 
@@ -170,7 +227,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         return;
     }
 
-    const currentDocs = application.documents.filter(d => d.type !== 'FCB Report');
+    const currentDocs = application.documents.filter(d => d.type === 'FCB Report');
     const updatedDocs = [...currentDocs, fcbReport];
 
     handleUpdateApplication({
@@ -224,7 +281,8 @@ export default function ApplicationReview({ application: initialApplication, onB
     setIsReturningToBO(false);
   };
 
-  const handleSupervisorApproval = () => {
+  // Tiered Approval Logic: Supervisor First sign
+  const handleSupervisorApproval = (signature: string) => {
     if (!activationCode) {
         toast({ variant: 'destructive', title: 'Code Needed', description: 'Please enter the code.' });
         return;
@@ -233,38 +291,39 @@ export default function ApplicationReview({ application: initialApplication, onB
         toast({ variant: 'destructive', title: 'Client ID Needed', description: 'Please enter the BR Client ID.' });
         return;
     }
-    const notes = `Audit OK. BR Client ID: ${brIdentity}. Forwarded for Executive sign-off.`;
+    const timestamp = new Date().toISOString();
+    const notes = `Audit OK. Supervisor signed as First Approver. BR Client ID: ${brIdentity}. Forwarded for Executive sign-off.`;
     handleUpdateApplication({ 
         status: 'Pending Executive Signature', 
-        details: { ...application.details, activationCode, brIdentity },
-        history: [...application.history, { action: 'Supervisor Approved', user: user.name, timestamp: new Date().toISOString(), notes }] 
+        details: { 
+            ...application.details, 
+            activationCode, 
+            brIdentity,
+            supervisorSignature: signature,
+            supervisorSignatureTimestamp: timestamp
+        },
+        history: [...application.history, { action: 'Supervisor Signed & Forwarded', user: user.name, timestamp, notes }] 
     });
-    toast({ title: "First Approval Complete", description: "Record sent to Management." });
+    toast({ title: "First Sign-off Complete", description: "Agreement record sent to Management." });
+    setIsSupervisorSigning(false);
     setTimeout(() => onBack(), 500);
   };
 
-  const handleDispatchAccount = () => {
-    if (!dispatchAccountNumber) {
-        toast({ variant: 'destructive', title: 'Number Needed', description: 'Enter the account number.' });
-        return;
-    }
-
-    const newDetails = { 
-        ...application.details, 
-        accountNumber: dispatchAccountNumber, 
-        accountOpeningDate: new Date().toISOString(),
-        isDispatched: true 
-    };
-    const newHistoryLog: HistoryLog = { 
-        action: 'Dispatched', 
-        user: user.name, 
-        timestamp: new Date().toISOString(),
-        notes: `Account [${dispatchAccountNumber}] and ID [${application.details.brIdentity}] sent.`
-    };
-
-    handleUpdateApplication({ status: 'Archived', details: newDetails, history: [...application.history, newHistoryLog] });
-    toast({ title: "Sent", description: `Account ${dispatchAccountNumber} is sent.` });
-    setIsDispatching(false);
+  // Tiered Approval Logic: Management Final sign
+  const handleExecutiveApproval = (signature: string) => {
+    const timestamp = new Date().toISOString();
+    const notes = `Executive Final Sign-off complete. Application archived.`;
+    handleUpdateApplication({ 
+        status: 'Archived', 
+        details: { 
+            ...application.details, 
+            executiveSignature: signature,
+            executiveSignatureTimestamp: timestamp
+        },
+        history: [...application.history, { action: 'Final Management Sign-off', user: user.name, timestamp, notes }] 
+    });
+    toast({ title: "Process Complete", description: "Management signature applied. Record archived." });
+    setIsExecutiveSigning(false);
     setTimeout(() => onBack(), 500);
   };
 
@@ -455,8 +514,17 @@ export default function ApplicationReview({ application: initialApplication, onB
                     <Button variant="destructive" className="font-bold shadow-md transition-all active:scale-95" onClick={() => setIsRejecting(true)}>
                         <X className="mr-2 h-4 w-4" /> Reject
                     </Button>
-                    <Button className="bg-green-600 hover:bg-green-700 text-white font-black shadow-lg px-8 transition-all active:scale-95" onClick={handleSupervisorApproval}>
-                        <CheckCircle2 className="mr-2 h-4 w-4" /> FORWARD TO MANAGEMENT
+                    <Button 
+                        className="bg-green-600 hover:bg-green-700 text-white font-black shadow-lg px-8 transition-all active:scale-95" 
+                        onClick={() => {
+                            if (!activationCode || !brIdentity) {
+                                toast({ variant: 'destructive', title: 'Data Missing', description: 'Please enter BR ID and Code before signing.' });
+                                return;
+                            }
+                            setIsSupervisorSigning(true);
+                        }}
+                    >
+                        <FileSignature className="mr-2 h-4 w-4" /> AUDIT & FORWARD TO MGMT
                     </Button>
                 </div>
             );
@@ -469,7 +537,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                     <Button variant="destructive" className="font-bold shadow-md transition-all active:scale-95" onClick={() => setIsRejecting(true)}>
                         <X className="mr-2 h-4 w-4" /> Decline
                     </Button>
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg px-8 transition-all active:scale-95" onClick={() => handleStatusChange('Archived', 'Executive Sign-off Complete.')}>
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg px-8 transition-all active:scale-95" onClick={() => setIsExecutiveSigning(true)}>
                         <FileSignature className="mr-2 h-4 w-4" /> FINAL APPROVE & SIGN
                     </Button>
                 </div>
@@ -952,6 +1020,23 @@ export default function ApplicationReview({ application: initialApplication, onB
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        {/* Tiered Signature Dialogs */}
+        <InternalSignatureDialog 
+            isOpen={isSupervisorSigning}
+            onClose={() => setIsSupervisorSigning(false)}
+            onSign={handleSupervisorApproval}
+            title="First Sign-off (Supervisor)"
+            description="As the Supervisor, you are auditing the agreements and providing the first level of internal approval."
+        />
+
+        <InternalSignatureDialog 
+            isOpen={isExecutiveSigning}
+            onClose={() => setIsExecutiveSigning(false)}
+            onSign={handleExecutiveApproval}
+            title="Final Management Sign-off"
+            description="You are providing the final Bank approval for this agency relationship. Archival will be automatic."
+        />
       </div>
     </FormProvider>
   );
