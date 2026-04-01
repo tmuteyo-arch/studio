@@ -67,14 +67,26 @@ export const OnboardingFormSchema = z.object({
   visaPermitNumber: z.string().optional(),
   permitExpiryDate: z.string().optional(),
 
-  // Corporate Info
+  // Corporate Info - Standardized
   organisationLegalName: z.string().optional(),
-  natureOfBusiness: z.string().optional(),
+  certificateOfIncorporationNumber: z.string().optional(),
+  countryOfIncorporation: z.string().optional(),
+  dateOfIncorporationRegistration: z.string().optional(),
+  tradeName: z.string().optional(),
+  authorisedCapital: z.string().optional(),
+  bpTaxPayerNumber: z.string().optional(),
+  // tinNumber is already defined above
+  postalAddress: z.string().optional(),
   physicalAddress: z.string().optional(),
   businessTelNumber: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
-  dateOfIncorporation: z.string().optional().default(''),
-  certificateOfIncorporationNumber: z.string().optional().default(''),
+  webAddress: z.string().optional(),
+  natureOfBusinessActivities: z.string().optional(),
+  sourceOfWealth: z.string().optional(),
+  typeOfBusiness: z.string().optional(),
+  
+  hasExistingAccounts: z.boolean().default(false),
+  existingAccountsDetails: z.string().optional(),
 
   // Mandate and Signatories
   resolutionDate: z.string().optional(),
@@ -183,14 +195,21 @@ export const OnboardingFormSchema = z.object({
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['organisationLegalName'],
-            message: 'Legal name is mandatory for corporate classes.',
+            message: 'Organisation’s Legal Name is mandatory.',
         });
       }
       if (!data.physicalAddress) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['physicalAddress'],
-            message: 'Verified operating address is mandatory.',
+            message: 'Physical Address is mandatory.',
+        });
+      }
+      if (!data.natureOfBusinessActivities) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['natureOfBusinessActivities'],
+            message: 'Nature of Business Activities is mandatory.',
         });
       }
     } else if (isPersonal || isSoleTrader) {

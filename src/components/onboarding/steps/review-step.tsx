@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PartyPopper, FileText, Eye, CheckCircle2, Globe, Hash, ShieldCheck } from 'lucide-react';
+import { PartyPopper, FileText, Eye, CheckCircle2, Globe, Hash, ShieldCheck, Building2, MapPin, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,9 +27,9 @@ const DetailItem = ({ label, value }: { label: string; value: string | number | 
     }
 
     return (
-        <div>
-            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <p className="font-semibold">{displayValue}</p>
+        <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</p>
+            <p className="font-bold text-foreground text-sm leading-tight">{displayValue}</p>
         </div>
     );
 };
@@ -124,16 +124,57 @@ export default function ReviewStep() {
         )}
 
         {(!isPersonalOrIndividual && !isSoleTrader) && (
-            <div className="rounded-xl border p-6 space-y-6">
-                <h3 className="font-black uppercase tracking-widest text-xs text-primary">Entity Details</h3>
+            <div className="rounded-xl border p-6 space-y-8">
+                <h3 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Business Information
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <DetailItem label="Legal Name" value={data.organisationLegalName} />
-                    <DetailItem label="Business Type" value={data.natureOfBusiness} />
-                    <DetailItem label="Cert. Number" value={data.certificateOfIncorporationNumber} />
-                    <DetailItem label="Date of Inc." value={data.dateOfIncorporation ? format(new Date(data.dateOfIncorporation), 'MMMM d, yyyy') : '-'} />
-                    <DetailItem label="Physical Address" value={data.physicalAddress} />
-                    <DetailItem label="Business Phone" value={data.businessTelNumber} />
-                    <DetailItem label="Business Email" value={data.email} />
+                    <div className="lg:col-span-2">
+                        <DetailItem label="Organisation’s Legal Name" value={data.organisationLegalName} />
+                    </div>
+                    <DetailItem label="Cert. of Incorporation #" value={data.certificateOfIncorporationNumber} />
+                    <DetailItem label="Country of Incorporation" value={data.countryOfIncorporation} />
+                    <DetailItem label="Date of Inc. / Reg." value={data.dateOfIncorporationRegistration} />
+                    <DetailItem label="Trade Name" value={data.tradeName} />
+                    <DetailItem label="Authorised Capital" value={data.authorisedCapital} />
+                    <DetailItem label="BP / Tax Payer’s #" value={data.bpTaxPayerNumber} />
+                    <DetailItem label="TIN Number" value={data.tinNumber} />
+                </div>
+
+                <Separator className="opacity-50" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="lg:col-span-2">
+                        <DetailItem label="Postal Address" value={data.postalAddress} />
+                    </div>
+                    <div className="lg:col-span-2">
+                        <DetailItem label="Physical Address" value={data.physicalAddress} />
+                    </div>
+                    <DetailItem label="Business Tel Number" value={data.businessTelNumber} />
+                    <DetailItem label="Email" value={data.email} />
+                    <div className="lg:col-span-2">
+                        <DetailItem label="Web Address" value={data.webAddress} />
+                    </div>
+                </div>
+
+                <Separator className="opacity-50" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="lg:col-span-2">
+                        <DetailItem label="Nature of Business Activities" value={data.natureOfBusinessActivities} />
+                    </div>
+                    <DetailItem label="Source of Wealth" value={data.sourceOfWealth} />
+                    <DetailItem label="Type of Business" value={data.typeOfBusiness} />
+                </div>
+
+                <div className="p-4 rounded-xl bg-muted/30 border border-border">
+                    <DetailItem label="Has Other Existing Account(s) with InnBucks?" value={data.hasExistingAccounts} />
+                    {data.hasExistingAccounts && (
+                        <div className="mt-2 pt-2 border-t border-white/5">
+                            <DetailItem label="Specify Details" value={data.existingAccountsDetails} />
+                        </div>
+                    )}
                 </div>
             </div>
         )}
