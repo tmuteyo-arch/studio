@@ -19,6 +19,11 @@ const personalAccountRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent color photographs.',
         comment: 'Recent photos required.'
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Mandatory compliance declaration.',
+        comment: 'Must be signed and dated.'
     }
 ];
 
@@ -47,6 +52,11 @@ const soleTraderRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent color photographs of the proprietor.',
         comment: 'Required for client record.'
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Mandatory compliance declaration.',
+        comment: 'Must be signed and dated.'
     }
 ];
 
@@ -100,6 +110,26 @@ const corporateAccountRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent photos for all directors and signatories.',
         comment: 'Required for client records.',
+    },
+    {
+        document: 'Lease Agreement',
+        details: 'Current lease or rental agreement for operating premises.',
+        comment: 'Mandatory proof of operating address.',
+    },
+    {
+        document: 'Business License',
+        details: 'Trading or Shop license.',
+        comment: 'Current and valid license required.',
+    },
+    {
+        document: 'Bank Statement',
+        details: 'Latest 3 months statements.',
+        comment: 'Must be stamped by the issuing bank.',
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Mandatory compliance declaration.',
+        comment: 'Must be signed and dated.'
     }
 ];
 
@@ -112,7 +142,22 @@ const pbcAccountRequirements: DocumentRequirement[] = [
     { document: 'Certified Tax Clearance', details: 'Current valid ZIMRA clearance.', comment: 'Must be current.' },
     { document: 'Stamped Bank Statement', details: 'Last 3 months from current bankers.', comment: 'Official stamp required.' },
     { document: 'Certified National Identification', details: 'For all signatories and directors.', comment: 'Verified against originals.' },
-    { document: 'CR28', details: 'Certified copy of registration.', comment: 'Mandatory PBC document.' }
+    { document: 'CR28', details: 'Certified copy of registration.', comment: 'Mandatory PBC document.' },
+    {
+        document: 'Lease Agreement',
+        details: 'Current lease or rental agreement for operating premises.',
+        comment: 'Mandatory proof of operating address.',
+    },
+    {
+        document: 'Business License',
+        details: 'Trading or Shop license.',
+        comment: 'Current and valid license required.',
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Mandatory compliance declaration.',
+        comment: 'Must be signed and dated.'
+    }
 ];
 
 const institutionRequirements: DocumentRequirement[] = [
@@ -140,6 +185,11 @@ const institutionRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent color photographs of all signatories.',
         comment: 'Submit recent photos.',
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Mandatory compliance declaration.',
+        comment: 'Must be signed and dated.'
     }
 ];
 

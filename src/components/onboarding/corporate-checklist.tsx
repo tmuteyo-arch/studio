@@ -21,8 +21,8 @@ const DottedLine = () => <span className="border-b border-dotted border-gray-500
 
 const CorporateChecklist = React.forwardRef<HTMLDivElement, CorporateChecklistProps>(({ application, supervisor }, ref) => {
     
-    const approvalEntry = application.history.find(h => h.action === 'Approved');
-    const supervisorName = supervisor || 'N/A';
+    const approvalEntry = application.history.find(h => h.action === 'Approved' || h.action === 'Supervisor Approved');
+    const supervisorName = supervisor || (approvalEntry ? approvalEntry.user : 'N/A');
     const approvalDate = approvalEntry ? new Date(approvalEntry.timestamp).toLocaleDateString() : 'N/A';
 
     const hasDoc = (docType: string) => application.documents.some(d => d.type === docType);
@@ -64,24 +64,25 @@ const CorporateChecklist = React.forwardRef<HTMLDivElement, CorporateChecklistPr
                                 <CheckboxItem label="Constitution (where applicable)" checked={hasDoc('Constitution')} />
                                 <CheckboxItem label="Partnership Agreement/declaration" checked={hasDoc('Partnership Agreement')} />
                                 <CheckboxItem label="Trust Deed" checked={hasDoc('Trust Deed')} />
-                                <CheckboxItem label="Tax Clearance Certificate (Current/Valid)" checked={hasDoc('Tax Clearance Certificate')} />
+                                <CheckboxItem label="Tax Clearance Certificate (Current/Valid)" checked={hasDoc('Tax Clearance Certificate') || hasDoc('ZIMRA Tax Clearance Certificate') || hasDoc('Certified Tax Clearance')} />
                                 <CheckboxItem label="CR 2/CR11- Confirmation of shareholding structure on Company letterhead." checked={hasDoc('CR2') || hasDoc('CR11')} />
-                                <CheckboxItem label="CR 6 Notice of Registered office, and postal address" checked={hasDoc('CR6')} />
-                                <CheckboxItem label="CR14 Register of directors, and officers" checked={hasDoc('CR14')} />
-                                <CheckboxItem label="Original & Copy of operating address (Lease or rental agreement, Shop license)" checked={hasDoc('Trading License')} />
-                                <CheckboxItem label="For Directors (Proof of identities, Proof of residence)" checked={hasDoc('National ID Card') && hasDoc('Proof of Residence')} />
-                                <CheckboxItem label="Resolution to open bank account with Innbucks Microbank" checked={hasDoc('Board Resolution')} />
-                                <CheckboxItem label="Bank Statements from Current Bankers- Current 3 months" checked={hasDoc('Bank Statement')} />
+                                <CheckboxItem label="CR 6 Notice of Registered office, and postal address" checked={hasDoc('CR6') || hasDoc('CR5 / CR6 Forms')} />
+                                <CheckboxItem label="CR14 Register of directors, and officers" checked={hasDoc('CR14') || hasDoc('CR14 Form')} />
+                                <CheckboxItem label="Lease Agreement (Operating address)" checked={hasDoc('Lease Agreement')} />
+                                <CheckboxItem label="Business License (Trading/Shop license)" checked={hasDoc('Business License') || hasDoc('Operating and Business Licence')} />
+                                <CheckboxItem label="For Directors (Proof of identities, Proof of residence)" checked={hasDoc('Valid Identity Documents') || (hasDoc('National ID Card') && hasDoc('Proof of Residence'))} />
+                                <CheckboxItem label="Resolution to open bank account with Innbucks Microbank" checked={hasDoc('Board Resolution') || hasDoc('Board Resolution Letter')} />
+                                <CheckboxItem label="Bank Statements from Current Bankers- Current 3 months" checked={hasDoc('Bank Statement') || hasDoc('Stamped Bank Statement')} />
 
                                 <p className="font-bold text-sm mt-4 mb-2">1.2 Confirm correct completion of the following mandatory forms.</p>
                                 <CheckboxItem label="Account opening form" checked={true} />
-                                <CheckboxItem label="Signature card" checked={true} />
-                                <CheckboxItem label="Agency Agreement" checked={false} />
-                                <CheckboxItem label="Non-Disclosure Agreement (NDA)" checked={false} />
-                                <CheckboxItem label="Merchant Agreement Form" checked={false} />
-                                <CheckboxItem label="ADLA declaration" checked={false} />
+                                <CheckboxItem label="Signature card" checked={application.signatories.length > 0} />
+                                <CheckboxItem label="Agency Agreement" checked={!!application.details.agreement1Accepted} />
+                                <CheckboxItem label="Non-Disclosure Agreement (NDA)" checked={!!application.details.agreement2Accepted} />
+                                <CheckboxItem label="Merchant Agreement Form" checked={application.details.relationshipType === 'Merchant' && !!application.details.agreement1Accepted} />
+                                <CheckboxItem label="ADLA declaration" checked={hasDoc('ADLA Declaration')} />
 
-                                <p className="font-bold text-sm mt-4 mb-2">1.3 Confirm correct completion of the following mandatory forms.</p>
+                                <p className="font-bold text-sm mt-4 mb-2">1.3 Digital Banking Setup</p>
                                 <CheckboxItem label="Internet banking (IT Department)." checked={false} />
                             </td>
                             <td className="p-2" style={{ border: '1px solid black' }}></td>
