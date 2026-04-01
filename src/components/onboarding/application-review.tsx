@@ -281,6 +281,44 @@ export default function ApplicationReview({ application: initialApplication, onB
     setIsReturningToBO(false);
   };
 
+  const handleDispatchAccount = () => {
+    if (dispatchAccountNumber.length !== 10) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Account Number',
+            description: 'Please enter a 10-digit account number.'
+        });
+        return;
+    }
+
+    const timestamp = new Date().toISOString();
+    handleUpdateApplication({
+        status: 'Archived',
+        details: {
+            ...application.details,
+            accountNumber: dispatchAccountNumber,
+            isDispatched: true,
+            accountOpeningDate: timestamp
+        },
+        history: [
+            ...application.history,
+            { 
+                action: 'Account Dispatched', 
+                user: user.name, 
+                timestamp,
+                notes: `Account Number: ${dispatchAccountNumber} issued and finalized.`
+            }
+        ]
+    });
+
+    toast({
+        title: "Account Finalized",
+        description: `Account ${dispatchAccountNumber} has been successfully dispatched.`
+    });
+    setIsDispatching(false);
+    setTimeout(() => onBack(), 500);
+  };
+
   // Tiered Approval Logic: Supervisor First sign
   const handleSupervisorApproval = (signature: string) => {
     if (!activationCode) {
