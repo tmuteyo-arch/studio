@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useAtom } from 'jotai';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { format, parseISO } from 'date-fns';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { User } from '@/lib/users';
 import { 
@@ -12,13 +12,17 @@ import {
   UserSearch,
   History,
   CheckCircle2,
-  XCircle
+  XCircle,
+  CalendarDays,
+  BarChart3,
+  TrendingUp
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import ApplicationReview from '../onboarding/application-review';
 
 export default function ComplianceRiskDashboard({ user }: { user: User }) {
@@ -42,10 +46,31 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
     );
   }, [applications, searchTerm]);
 
+  // Monthly Summary Logic
+  const monthlyStats = React.useMemo(() => {
+    const summary: Record<string, number> = {};
+    
+    applications.forEach(app => {
+      try {
+        const monthKey = format(parseISO(app.submittedDate), 'MMMM yyyy');
+        summary[monthKey] = (summary[monthKey] || 0) + 1;
+      } catch (e) {
+        // Fallback for invalid dates if any
+        summary['Unknown Period'] = (summary['Unknown Period'] || 0) + 1;
+      }
+    });
+
+    return Object.entries(summary).sort((a, b) => {
+      // Sort by date descending
+      return new Date(b[0]).getTime() - new Date(a[0]).getTime();
+    });
+  }, [applications]);
+
   const stats = React.useMemo(() => {
     return {
       pendingAudit: applications.filter(a => a.status === 'Pending Compliance' || a.status === 'Sent to Risk & Compliance').length,
       totalRejections: applications.filter(a => a.status === 'Rejected' || a.status === 'Rejected by Supervisor').length,
+      totalAccounts: applications.length
     };
   }, [applications]);
 
@@ -87,6 +112,13 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
             <p className="text-[10px] text-white/40 mt-1 uppercase">Declined</p>
           </CardContent>
         </Card>
+        <Card className="bg-white/5 border-white/10">
+          <CardHeader className="pb-2"><CardTitle className="text-[10px] uppercase text-muted-foreground font-bold">Total Network</CardTitle></CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{stats.totalAccounts}</div>
+            <p className="text-[10px] text-white/40 mt-1 uppercase">Records Stored</p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="queue" className="w-full">
@@ -99,6 +131,10 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" /> 
             History
+          </TabsTrigger>
+          <TabsTrigger value="summary" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" /> 
+            Monthly Summary
           </TabsTrigger>
         </TabsList>
 
@@ -181,7 +217,7 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
                 <TableHeader>
                   <TableRow className="bg-black/20 border-white/5">
                     <TableHead className="pl-6 text-[10px] font-bold uppercase text-white/50">Detail</TableHead>
-                    <TableHead className="text-[10px) font-bold uppercase text-white/50">Risk</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase text-white/50">Risk</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase text-white/50">Date</TableHead>
                     <TableHead className="pr-6 text-right text-[10px] font-bold uppercase text-white/50">Status</TableHead>
                   </TableRow>
@@ -222,6 +258,78 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="summary">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2 border-none bg-white/5 backdrop-blur-md">
+              <CardHeader className="border-b border-white/10 pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-lg">
+                    <CalendarDays className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-black uppercase tracking-tight">Monthly Volume Summary</CardTitle>
+                    <CardDescription className="text-xs font-bold uppercase tracking-widest text-white/40 mt-1">Total account applications created by calendar month.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
+                      <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-white/40">Month & Year</TableHead>
+                      <TableHead className="text-right pr-8 text-[10px] font-black uppercase tracking-widest text-white/40">Total Accounts Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {monthlyStats.length > 0 ? monthlyStats.map(([month, count]) => (
+                      <TableRow key={month} className="border-white/5 hover:bg-white/5 transition-colors group">
+                        <TableCell className="pl-8 py-6">
+                          <div className="flex items-center gap-3">
+                            <div className="h-2 w-2 rounded-full bg-primary/40 group-hover:bg-primary transition-colors" />
+                            <span className="font-black text-white text-lg uppercase tracking-tight">{month}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right pr-8">
+                          <Badge className="bg-primary text-primary-foreground font-black text-lg px-4 py-1.5 shadow-xl hover:scale-105 transition-transform">
+                            {count}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={2} className="h-48 text-center text-white/20 italic">
+                          No historical data available.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none bg-primary/5 border-primary/10 h-fit">
+              <CardHeader>
+                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-primary">
+                  <TrendingUp className="h-4 w-4" />
+                  Compliance Insight
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 shadow-inner">
+                  <p className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em] mb-2">Network Status</p>
+                  <p className="text-sm leading-relaxed text-white/70">
+                    This summary provides a cumulative view of all agent applications submitted through the network. Data is updated in real-time as Sales Leaders (ASL) originate new requests.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Total Lifetime Volume</p>
+                  <div className="text-4xl font-black text-white tracking-tighter">{stats.totalAccounts}</div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
