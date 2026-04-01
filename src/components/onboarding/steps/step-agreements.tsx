@@ -348,6 +348,9 @@ const AgreementSection = ({
 export default function StepAgreements({ disabled }: { disabled?: boolean }) {
     const { watch } = useFormContext<OnboardingFormData>();
     const relationshipType = watch('relationshipType');
+    const clientType = watch('clientType');
+
+    const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association', 'Trust'].includes(clientType);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -359,17 +362,19 @@ export default function StepAgreements({ disabled }: { disabled?: boolean }) {
             </CardHeader>
 
             <div className="px-6 pb-6">
-                <AgreementSection 
-                    title={relationshipType === 'Agency' ? 'Agency Agreement' : 'Merchant Services Agreement'} 
-                    type={relationshipType === 'Agency' ? 'agency' : 'merchant'} 
-                    methodField="agreement1Method"
-                    acceptedField="agreement1Accepted" 
-                    signatureField="agreement1Signature"
-                    pagesField="agreement1Pages"
-                    disabled={disabled}
-                />
+                {!isInstitution && (
+                    <AgreementSection 
+                        title={relationshipType === 'Agency' ? 'Agency Agreement' : 'Merchant Services Agreement'} 
+                        type={relationshipType === 'Agency' ? 'agency' : 'merchant'} 
+                        methodField="agreement1Method"
+                        acceptedField="agreement1Accepted" 
+                        signatureField="agreement1Signature"
+                        pagesField="agreement1Pages"
+                        disabled={disabled}
+                    />
+                )}
 
-                {relationshipType === 'Merchant' && (
+                {relationshipType === 'Merchant' && !isInstitution && (
                     <AgreementSection 
                         title="Non-Disclosure Agreement (NDA)" 
                         type="nda" 

@@ -180,7 +180,7 @@ export const OnboardingFormSchema = z.object({
 
     // Agreements validation for Corporate/SoleTrader
     if (isCorporate || isSoleTrader) {
-      // Agreement 1
+      // Agreement 1 (Agency/Merchant)
       if (data.agreement1Method === 'digital') {
         if (!data.agreement1Accepted || !data.agreement1Signature) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement1Accepted'], message: 'Sign the agreement digitally.' });
@@ -212,6 +212,20 @@ export const OnboardingFormSchema = z.object({
           if (!data.agreement2Pages || data.agreement2Pages.length === 0) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement2Pages'], message: 'Upload/Scan NDA pages.' });
           }
+        }
+      }
+    }
+
+    // Validation for Other/Institution types
+    if (isInstitution) {
+      // Only validate ADLA Agreement
+      if (data.adlaMethod === 'digital') {
+        if (!data.adlaAccepted || !data.adlaSignature) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['adlaAccepted'], message: 'Sign the ADLA digitally.' });
+        }
+      } else {
+        if (!data.adlaPages || data.adlaPages.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['adlaPages'], message: 'Upload/Scan ADLA pages.' });
         }
       }
     }

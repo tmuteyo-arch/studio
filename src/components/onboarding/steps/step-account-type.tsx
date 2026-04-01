@@ -17,6 +17,7 @@ export default function StepAccountType() {
   const clientType = form.watch('clientType');
   const isSoleTrader = clientType === 'Sole Trader';
   const isPersonal = ['Individual Accounts', 'Minors'].includes(clientType);
+  const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association', 'Trust'].includes(clientType);
 
   // Force Agency for Sole Trader
   React.useEffect(() => {
@@ -48,7 +49,7 @@ export default function StepAccountType() {
           </Badge>
         </div>
 
-        {!isPersonal && (
+        {!isPersonal && !isInstitution && (
           <div className="space-y-6">
               <div className="space-y-1.5">
                   <FormLabel className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
