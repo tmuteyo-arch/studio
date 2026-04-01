@@ -23,6 +23,7 @@ const DetailItem = ({ label, value }: { label: string; value: string | undefined
 const ApplicationPrintView = React.forwardRef<HTMLDivElement, ApplicationPrintViewProps>(({ application }, ref) => {
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
   const isCorporate = !isPersonalOrIndividual;
+  const needsMandate = application.clientType !== 'Individual Accounts' && application.clientType !== 'Minors';
   
   return (
     <div ref={ref} className="bg-white text-black p-8" style={{ width: '210mm', minHeight: '297mm'}}>
