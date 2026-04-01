@@ -40,7 +40,7 @@ const allSteps: Step[] = [
   { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
   { id: 'signatories', name: 'Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
   { id: 'document-upload', name: 'Documents', fields: ['capturedDocuments'] },
-  { id: 'agreements', name: 'Agreements', fields: ['agreement1Accepted', 'agreement1Signature', 'agreement2Accepted', 'agreement2Signature'] },
+  { id: 'agreements', name: 'Agreements', fields: ['agreement1Accepted', 'agreement1Signature', 'agreement1Pages', 'agreement2Accepted', 'agreement2Signature', 'agreement2Pages', 'adlaAccepted', 'adlaSignature', 'adlaPages'] },
   { id: 'review-submit', name: 'Review', fields: ['signature', 'agreedToTerms'] },
 ];
 
@@ -109,8 +109,15 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       capturedDocuments: [],
       signature: '',
       agreedToTerms: false,
+      agreement1Method: 'digital',
       agreement1Accepted: false,
+      agreement1Pages: [],
+      agreement2Method: 'digital',
       agreement2Accepted: false,
+      agreement2Pages: [],
+      adlaMethod: 'digital',
+      adlaAccepted: false,
+      adlaPages: [],
     },
   });
   

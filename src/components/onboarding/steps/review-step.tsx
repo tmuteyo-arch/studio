@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PartyPopper, FileText, Eye, CheckCircle2, Globe, Hash, ShieldCheck, Building2, MapPin, Briefcase } from 'lucide-react';
+import { PartyPopper, FileText, Eye, CheckCircle2, Globe, Hash, ShieldCheck, Building2, MapPin, Briefcase, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -55,7 +55,6 @@ export default function ReviewStep() {
     !['zimbabwe', 'zimbabwean'].includes(data.nationality.toLowerCase().trim());
     
   const needsMandate = !isPersonalOrIndividual;
-  const needsAgreements = ['Sole Trader', 'Private Limited (Pvt) Company', 'Private Business Corporate (PBC)', 'Public Limited company', 'Partnerships', 'Investment Group', 'Parastatal'].includes(data.clientType);
   const capturedDocs = data.capturedDocuments || [];
 
 
@@ -70,6 +69,20 @@ export default function ReviewStep() {
       </div>
     );
   }
+
+  const renderAgreementStatus = (title: string, method: 'digital' | 'physical', isSigned: boolean, pagesCount: number) => (
+    <div className="flex items-center justify-between p-4 border rounded-xl bg-background shadow-sm">
+        <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{title}</p>
+            <p className="text-xs font-bold text-primary uppercase">{method} PROCESSING</p>
+        </div>
+        {method === 'digital' ? (
+            isSigned ? <Badge variant="success" className="font-black">SIGNED</Badge> : <Badge variant="destructive">MISSING</Badge>
+        ) : (
+            pagesCount > 0 ? <Badge variant="success" className="font-black">{pagesCount} PAGES CAPTURED</Badge> : <Badge variant="destructive">NO PAGES</Badge>
+        )}
+    </div>
+  );
 
   return (
     <div className="pb-10">
@@ -194,32 +207,30 @@ export default function ReviewStep() {
              </div>
         )}
 
-        {needsAgreements && (
+        {(isCorporate || isSoleTrader) && (
             <div className="rounded-xl border p-6 space-y-6 bg-primary/5">
                 <h3 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4" />
-                    Legal Sign-off Status
+                    Agreement Audit Status
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center justify-between p-4 border rounded-xl bg-background">
-                        <div>
-                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">
-                                {data.relationshipType === 'Agency' ? 'Agency Agreement' : 'Merchant Agreement'}
-                            </p>
-                            <p className="text-sm font-bold">{data.agreement1Accepted ? 'ACCEPTED' : 'PENDING'}</p>
-                        </div>
-                        {data.agreement1Signature && <Badge variant="success" className="font-black">SIGNED</Badge>}
-                    </div>
-                    {data.relationshipType === 'Merchant' && (
-                        <div className="flex items-center justify-between p-4 border rounded-xl bg-background">
-                            <div>
-                                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">
-                                    Non-Disclosure Agreement (NDA)
-                                </p>
-                                <p className="text-sm font-bold">{data.agreement2Accepted ? 'ACCEPTED' : 'PENDING'}</p>
-                            </div>
-                            {data.agreement2Signature && <Badge variant="success" className="font-black">SIGNED</Badge>}
-                        </div>
+                    {renderAgreementStatus(
+                        data.relationshipType === 'Agency' ? 'Agency Agreement' : 'Merchant Agreement',
+                        data.agreement1Method,
+                        !!data.agreement1Signature,
+                        data.agreement1Pages?.length || 0
+                    )}
+                    {data.relationshipType === 'Merchant' && renderAgreementStatus(
+                        'Non-Disclosure Agreement (NDA)',
+                        data.agreement2Method,
+                        !!data.agreement2Signature,
+                        data.agreement2Pages?.length || 0
+                    )}
+                    {renderAgreementStatus(
+                        'ADLA Declaration',
+                        data.adlaMethod,
+                        !!data.adlaSignature,
+                        data.adlaPages?.length || 0
                     )}
                 </div>
             </div>

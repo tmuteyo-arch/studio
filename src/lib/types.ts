@@ -94,10 +94,20 @@ export const OnboardingFormSchema = z.object({
   signatories: z.array(SignatorySchema).default([]),
 
   // Agreements State
+  agreement1Method: z.enum(['digital', 'physical']).default('digital'),
   agreement1Accepted: z.boolean().default(false),
   agreement1Signature: z.string().optional(),
+  agreement1Pages: z.array(z.string()).default([]),
+
+  agreement2Method: z.enum(['digital', 'physical']).default('digital'),
   agreement2Accepted: z.boolean().default(false),
   agreement2Signature: z.string().optional(),
+  agreement2Pages: z.array(z.string()).default([]),
+
+  adlaMethod: z.enum(['digital', 'physical']).default('digital'),
+  adlaAccepted: z.boolean().default(false),
+  adlaSignature: z.string().optional(),
+  adlaPages: z.array(z.string()).default([]),
 
   // Document Registry
   document1Type: z.string().optional(),
@@ -170,22 +180,38 @@ export const OnboardingFormSchema = z.object({
 
     // Agreements validation for Corporate/SoleTrader
     if (isCorporate || isSoleTrader) {
-      if (!data.agreement1Accepted || !data.agreement1Signature) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['agreement1Accepted'],
-          message: 'You must sign the agreement.',
-        });
+      // Agreement 1
+      if (data.agreement1Method === 'digital') {
+        if (!data.agreement1Accepted || !data.agreement1Signature) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement1Accepted'], message: 'Sign the agreement digitally.' });
+        }
+      } else {
+        if (!data.agreement1Pages || data.agreement1Pages.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement1Pages'], message: 'Upload/Scan physical agreement pages.' });
+        }
+      }
+
+      // ADLA
+      if (data.adlaMethod === 'digital') {
+        if (!data.adlaAccepted || !data.adlaSignature) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['adlaAccepted'], message: 'Sign the ADLA digitally.' });
+        }
+      } else {
+        if (!data.adlaPages || data.adlaPages.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['adlaPages'], message: 'Upload/Scan ADLA pages.' });
+        }
       }
       
-      // ONLY if Merchant, require the second one (NDA)
+      // NDA (Merchant only)
       if (data.relationshipType === 'Merchant') {
-        if (!data.agreement2Accepted || !data.agreement2Signature) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['agreement2Accepted'],
-            message: 'You must sign the NDA.',
-          });
+        if (data.agreement2Method === 'digital') {
+          if (!data.agreement2Accepted || !data.agreement2Signature) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement2Accepted'], message: 'Sign the NDA digitally.' });
+          }
+        } else {
+          if (!data.agreement2Pages || data.agreement2Pages.length === 0) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement2Pages'], message: 'Upload/Scan NDA pages.' });
+          }
         }
       }
     }
