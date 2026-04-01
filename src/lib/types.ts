@@ -216,19 +216,7 @@ export const OnboardingFormSchema = z.object({
       }
     }
 
-    // Validation for Other/Institution types
-    if (isInstitution) {
-      // Only validate ADLA Agreement
-      if (data.adlaMethod === 'digital') {
-        if (!data.adlaAccepted || !data.adlaSignature) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['adlaAccepted'], message: 'Sign the ADLA digitally.' });
-        }
-      } else {
-        if (!data.adlaPages || data.adlaPages.length === 0) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['adlaPages'], message: 'Upload/Scan ADLA pages.' });
-        }
-      }
-    }
+    // Note: Institutional accounts (Other category) no longer require agreements or ADLA.
 
     if (isCorporate || isInstitution) {
       if (!data.organisationLegalName) {

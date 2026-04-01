@@ -143,9 +143,15 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       return allSteps.filter(step => soleTraderSteps.includes(step.id));
     }
     
-    if (isCorporate || isInstitution) {
+    if (isCorporate) {
       const corporateSteps = ['account-type', 'corporate-info', 'signatories', 'document-upload', 'agreements', 'review-submit'];
       return allSteps.filter(step => corporateSteps.includes(step.id));
+    }
+
+    if (isInstitution) {
+      // Institutions (Other category) skip agreements entirely as ADLA, Agency, and Merchant agreements are no longer required.
+      const institutionSteps = ['account-type', 'corporate-info', 'signatories', 'document-upload', 'review-submit'];
+      return allSteps.filter(step => institutionSteps.includes(step.id));
     }
     
     return [allSteps.find(s => s.id === 'account-type')!];

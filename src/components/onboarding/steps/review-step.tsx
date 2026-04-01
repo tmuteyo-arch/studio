@@ -49,6 +49,7 @@ export default function ReviewStep() {
   const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors'].includes(data.clientType);
   const isSoleTrader = data.clientType === 'Sole Trader';
+  const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association', 'Trust'].includes(data.clientType);
   
   const isForeign = data.clientType === 'Individual Accounts' && 
     data.nationality && 
@@ -99,7 +100,7 @@ export default function ReviewStep() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <DetailItem label="Account Type" value={data.clientType} />
-                {!isPersonalOrIndividual && <DetailItem label="Relationship" value={data.relationshipType} />}
+                {!isPersonalOrIndividual && !isInstitution && <DetailItem label="Relationship" value={data.relationshipType} />}
                 <DetailItem label="Region" value={data.region} />
                 <DetailItem label="TIN Number" value={data.tinNumber} />
             </div>
@@ -207,7 +208,7 @@ export default function ReviewStep() {
              </div>
         )}
 
-        {(isCorporate || isSoleTrader) && (
+        {(isSoleTrader || (!isPersonalOrIndividual && !isSoleTrader && !isInstitution)) && (
             <div className="rounded-xl border p-6 space-y-6 bg-primary/5">
                 <h3 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4" />

@@ -352,6 +352,8 @@ export default function StepAgreements({ disabled }: { disabled?: boolean }) {
 
     const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association', 'Trust'].includes(clientType);
 
+    if (isInstitution) return null;
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
             <CardHeader className="px-6 pb-8">
@@ -386,15 +388,17 @@ export default function StepAgreements({ disabled }: { disabled?: boolean }) {
                     />
                 )}
 
-                <AgreementSection 
-                    title="ADLA Declaration" 
-                    type="adla" 
-                    methodField="adlaMethod"
-                    acceptedField="adlaAccepted" 
-                    signatureField="adlaSignature"
-                    pagesField="adlaPages"
-                    disabled={disabled}
-                />
+                {!isInstitution && (
+                    <AgreementSection 
+                        title="ADLA Declaration" 
+                        type="adla" 
+                        methodField="adlaMethod"
+                        acceptedField="adlaAccepted" 
+                        signatureField="adlaSignature"
+                        pagesField="adlaPages"
+                        disabled={disabled}
+                    />
+                )}
             </div>
         </div>
     );

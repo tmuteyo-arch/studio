@@ -185,11 +185,6 @@ const trustRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos (Trustees)',
         details: 'Recent photos for all Trustees.',
         comment: 'Mandatory.',
-    },
-    {
-        document: 'ADLA Declaration',
-        details: 'Mandatory compliance declaration.',
-        comment: 'Must be signed and dated.'
     }
 ];
 
@@ -218,11 +213,6 @@ const institutionRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent color photographs of all signatories.',
         comment: 'Submit recent photos.',
-    },
-    {
-        document: 'ADLA Declaration',
-        details: 'Mandatory compliance declaration.',
-        comment: 'Must be signed and dated.'
     }
 ];
 
