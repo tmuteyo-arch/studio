@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { AlertCircle, AreaChart, CheckCircle2, ClipboardList, Inbox, Search, Users, FileDown, ShieldCheck, UserCheck, Archive, FileSearch, Key, Fingerprint, ShieldAlert } from 'lucide-react';
+import { AlertCircle, AreaChart, CheckCircle2, ClipboardList, Inbox, Search, Users, FileDown, ShieldCheck, UserCheck, Archive, FileSearch, Key, Fingerprint, ShieldAlert, Clock } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { User, usersAtom } from '@/lib/users';
 import { Input } from '../ui/input';
@@ -34,6 +34,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Sent to Supervisor':
     case 'Pending Compliance':
     case 'Approved by Compliance':
+    case 'Pending Executive Signature':
       return 'secondary';
     case 'Rejected':
     case 'Rejected by Supervisor':
@@ -58,16 +59,15 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
         app.status === 'Sent to Supervisor' || 
         app.status === 'Approved by Compliance'
     );
+    
+    const pendingExecutive = applications.filter(app => app.status === 'Pending Executive Signature');
     const archivedVault = applications.filter(app => app.status === 'Archived');
     
     const teamApplications = applications
         .filter(app => user.team?.includes(app.submittedBy) && app.status !== 'Archived');
     
-    const teamPending = teamApplications
-        .filter(app => ['Submitted', 'In Review', 'Returned to ATL'].includes(app.status));
-        
     const completedToday = teamApplications
-        .filter(app => (app.status === 'Signed' || app.status === 'Approved' || app.status === 'Approved by Supervisor') && differenceInDays(new Date(), new Date(app.lastUpdated)) === 0).length;
+        .filter(app => (app.status === 'Signed' || app.status === 'Approved' || app.status === 'Approved by Supervisor' || app.status === 'Pending Executive Signature') && differenceInDays(new Date(), new Date(app.lastUpdated)) === 0).length;
 
     const filteredApprovalQueue = myApprovalQueue.filter(app => app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
     const filteredVault = archivedVault.filter(app => app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -103,12 +103,12 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
             </Card>
             <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl group hover:bg-white/10 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Total IDs</CardTitle>
-                    <Fingerprint className="h-8 w-8 text-white/20 group-hover:scale-110 transition-transform" />
+                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">At Management</CardTitle>
+                    <Clock className="h-8 w-8 text-white/20 group-hover:scale-110 transition-transform" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-4xl font-black text-white">{applications.filter(a => a.details.brIdentity).length}</div>
-                    <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">BR IDs</p>
+                    <div className="text-4xl font-black text-white">{pendingExecutive.length}</div>
+                    <p className="text-[10px] text-white/30 font-bold uppercase mt-2 tracking-widest">Awaiting Sign-off</p>
                 </CardContent>
             </Card>
              <Card className="bg-white/5 border-white/10 shadow-xl rounded-2xl group hover:bg-white/10 transition-colors">
@@ -150,7 +150,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                   <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                       <div>
                         <CardTitle className="text-2xl font-black uppercase tracking-tight">Queue</CardTitle>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Issue codes for verified IDs.</p>
+                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Audit verified records for Management.</p>
                       </div>
                       <div className="relative w-full sm:w-80">
                           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
@@ -181,11 +181,11 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
                                         <TableCell>
                                             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 font-mono font-bold px-3 py-1">{app.details.brIdentity}</Badge>
                                         </TableCell>
-                                        <TableCell className="text-white/60 font-bold">{app.history.find(h => h.action.includes('Identity'))?.user || 'SYSTEM'}</TableCell>
+                                        <TableCell className="text-white/60 font-bold">{app.history.find(h => h.action.includes('Identity') || h.action.includes('FCB'))?.user || 'SYSTEM'}</TableCell>
                                         <TableCell className="text-white/40 text-xs font-mono">{new Date(app.lastUpdated).toLocaleDateString()}</TableCell>
                                         <TableCell className="text-right pr-8">
                                             <Button className="bg-primary text-primary-foreground font-black uppercase tracking-widest h-10 shadow-lg active:scale-95 px-6 rounded-lg" size="sm" onClick={() => setSelectedApplication(app)}>
-                                                <Key className="mr-2 h-4 w-4" /> Check & Approve
+                                                <Key className="mr-2 h-4 w-4" /> Audit & Sign-off
                                             </Button>
                                         </TableCell>
                                     </TableRow>

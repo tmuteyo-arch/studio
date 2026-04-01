@@ -24,7 +24,8 @@ export type ApplicationStatus =
   | 'Sent to Risk & Compliance'
   | 'Approved by Supervisor'
   | 'Rejected by Supervisor'
-  | 'Approved by Compliance';
+  | 'Approved by Compliance'
+  | 'Pending Executive Signature';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse' | 'AML' | 'Green' | 'Fair';
 

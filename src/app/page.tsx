@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 const AtlDashboard = React.lazy(() => import('@/components/roles/atl-dashboard'));
 const BackOfficeDashboard = React.lazy(() => import('@/components/roles/back-office-dashboard'));
 const SupervisorDashboard = React.lazy(() => import('@/components/roles/supervisor-dashboard'));
-const ManagementDashboard = React.lazy(() => import('@/components/roles/management-dashboard'));
+const RetailExecutiveDashboard = React.lazy(() => import('@/components/roles/retail-executive-dashboard'));
 const AdminDashboard = React.lazy(() => import('@/components/roles/admin-dashboard'));
 const ComplianceRiskDashboard = React.lazy(() => import('@/components/roles/compliance-risk-dashboard'));
 
@@ -174,7 +174,7 @@ function AppContent() {
             case 'supervisor':
               return <SupervisorDashboard user={loggedInUser} />;
             case 'management':
-              return <ManagementDashboard />;
+              return <RetailExecutiveDashboard user={loggedInUser} />;
             case 'admin':
               return <AdminDashboard user={loggedInUser} />;
             case 'compliance':

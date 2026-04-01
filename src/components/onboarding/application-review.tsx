@@ -139,7 +139,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         description: `Update for ${application.clientName} is done.`,
     });
 
-     if (['Archived', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Returned to ATL', 'Returned to ASL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL', 'Returned to Back Office', 'Sent to Risk & Compliance', 'Approved by Supervisor', 'Rejected by Supervisor', 'Approved by Compliance'].includes(status)) {
+     if (['Archived', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Pending Compliance', 'Returned to ATL', 'Returned to ASL', 'Approved', 'Sent to Back Office', 'Claimed by ASL', 'Rejected by ASL', 'Returned to Back Office', 'Sent to Risk & Compliance', 'Approved by Supervisor', 'Rejected by Supervisor', 'Approved by Compliance', 'Pending Executive Signature'].includes(status)) {
         setTimeout(() => onBack(), 500);
     }
   };
@@ -233,13 +233,13 @@ export default function ApplicationReview({ application: initialApplication, onB
         toast({ variant: 'destructive', title: 'Client ID Needed', description: 'Please enter the BR Client ID.' });
         return;
     }
-    const notes = `Audit OK. BR Client ID: ${brIdentity}. Code issued.`;
+    const notes = `Audit OK. BR Client ID: ${brIdentity}. Forwarded for Executive sign-off.`;
     handleUpdateApplication({ 
-        status: 'Approved by Supervisor', 
+        status: 'Pending Executive Signature', 
         details: { ...application.details, activationCode, brIdentity },
-        history: [...application.history, { action: 'Audit OK', user: user.name, timestamp: new Date().toISOString(), notes }] 
+        history: [...application.history, { action: 'Supervisor Approved', user: user.name, timestamp: new Date().toISOString(), notes }] 
     });
-    toast({ title: "Approved", description: "Audit complete." });
+    toast({ title: "First Approval Complete", description: "Record sent to Management." });
     setTimeout(() => onBack(), 500);
   };
 
@@ -456,7 +456,21 @@ export default function ApplicationReview({ application: initialApplication, onB
                         <X className="mr-2 h-4 w-4" /> Reject
                     </Button>
                     <Button className="bg-green-600 hover:bg-green-700 text-white font-black shadow-lg px-8 transition-all active:scale-95" onClick={handleSupervisorApproval}>
-                        <CheckCircle2 className="mr-2 h-4 w-4" /> APPROVE & FINISH
+                        <CheckCircle2 className="mr-2 h-4 w-4" /> FORWARD TO MANAGEMENT
+                    </Button>
+                </div>
+            );
+        }
+        return null;
+      case 'management':
+        if (application.status === 'Pending Executive Signature') {
+            return (
+                <div className="flex gap-3">
+                    <Button variant="destructive" className="font-bold shadow-md transition-all active:scale-95" onClick={() => setIsRejecting(true)}>
+                        <X className="mr-2 h-4 w-4" /> Decline
+                    </Button>
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg px-8 transition-all active:scale-95" onClick={() => handleStatusChange('Archived', 'Executive Sign-off Complete.')}>
+                        <FileSignature className="mr-2 h-4 w-4" /> FINAL APPROVE & SIGN
                     </Button>
                 </div>
             );
