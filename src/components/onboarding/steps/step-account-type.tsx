@@ -16,6 +16,7 @@ export default function StepAccountType() {
   const form = useFormContext<OnboardingFormData>();
   const clientType = form.watch('clientType');
   const isSoleTrader = clientType === 'Sole Trader';
+  const isPersonal = ['Individual Accounts', 'Minors'].includes(clientType);
 
   // Force Agency for Sole Trader
   React.useEffect(() => {
@@ -28,7 +29,7 @@ export default function StepAccountType() {
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <CardHeader className="px-6 pb-2">
         <CardTitle className="text-xl font-bold uppercase tracking-tight">
-          Product Settings
+          Account Type Settings
         </CardTitle>
         <CardDescription>
           Provide the relationship type and operating details.
@@ -39,73 +40,75 @@ export default function StepAccountType() {
         {/* Selected Context Display */}
         <div className="p-6 rounded-xl bg-muted/30 border border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Entity Type</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Selected Class</p>
             <h3 className="text-xl font-black text-foreground uppercase">{clientType || 'None'}</h3>
           </div>
           <Badge variant="success" className="h-8 px-4 flex items-center gap-2 uppercase tracking-wider text-[10px] font-bold">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Selection Locked
+            <CheckCircle2 className="h-3.5 w-3.5" /> Class Locked
           </Badge>
         </div>
 
-        <div className="space-y-6">
-            <div className="space-y-1.5">
-                <FormLabel className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                <Briefcase className="h-3.5 w-3.5 text-primary" />
-                Relationship Type
-                </FormLabel>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                {isSoleTrader 
-                  ? "Sole Traders are registered as Agency partners by default." 
-                  : "Choose the intended relationship with InnBucks."
-                }
-                </p>
-            </div>
-            
-            {isSoleTrader ? (
-              <div className="p-4 rounded-xl border-2 border-primary/20 bg-primary/5 flex items-center justify-between animate-in zoom-in-95">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <ShieldCheck className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-foreground">Agency Agreement Only</p>
-                    <p className="text-[10px] uppercase font-black tracking-widest text-primary/60">Standard Onboarding</p>
-                  </div>
-                </div>
-                <Badge className="bg-primary text-primary-foreground font-black">MANDATORY</Badge>
+        {!isPersonal && (
+          <div className="space-y-6">
+              <div className="space-y-1.5">
+                  <FormLabel className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                  <Briefcase className="h-3.5 w-3.5 text-primary" />
+                  Relationship Type
+                  </FormLabel>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  {isSoleTrader 
+                    ? "Sole Traders are registered as Agency partners by default." 
+                    : "Choose the intended relationship with InnBucks."
+                  }
+                  </p>
               </div>
-            ) : (
-              <FormField
-                  control={form.control}
-                  name="relationshipType"
-                  render={({ field }) => (
-                  <FormItem className="space-y-3">
-                      <FormControl>
-                      <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex flex-col sm:flex-row gap-4"
-                      >
-                          <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-xl hover:bg-muted/50 cursor-pointer transition-all flex-1">
-                              <FormControl>
-                                  <RadioGroupItem value="Agency" />
-                              </FormControl>
-                              <Label className="font-bold cursor-pointer">Agency Agreement</Label>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-xl hover:bg-muted/50 cursor-pointer transition-all flex-1">
-                              <FormControl>
-                                  <RadioGroupItem value="Merchant" />
-                              </FormControl>
-                              <Label className="font-bold cursor-pointer">Merchant Services</Label>
-                          </FormItem>
-                      </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                  </FormItem>
-                  )}
-              />
-            )}
-        </div>
+              
+              {isSoleTrader ? (
+                <div className="p-4 rounded-xl border-2 border-primary/20 bg-primary/5 flex items-center justify-between animate-in zoom-in-95">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground">Agency Agreement Only</p>
+                      <p className="text-[10px] uppercase font-black tracking-widest text-primary/60">Standard Onboarding</p>
+                    </div>
+                  </div>
+                  <Badge className="bg-primary text-primary-foreground font-black">MANDATORY</Badge>
+                </div>
+              ) : (
+                <FormField
+                    control={form.control}
+                    name="relationshipType"
+                    render={({ field }) => (
+                    <FormItem className="space-y-3">
+                        <FormControl>
+                        <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col sm:flex-row gap-4"
+                        >
+                            <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-xl hover:bg-muted/50 cursor-pointer transition-all flex-1">
+                                <FormControl>
+                                    <RadioGroupItem value="Agency" />
+                                </FormControl>
+                                <Label className="font-bold cursor-pointer">Agency Agreement</Label>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0 p-4 border rounded-xl hover:bg-muted/50 cursor-pointer transition-all flex-1">
+                                <FormControl>
+                                    <RadioGroupItem value="Merchant" />
+                                </FormControl>
+                                <Label className="font-bold cursor-pointer">Merchant Services</Label>
+                            </FormItem>
+                        </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
             {/* Operating Region Selection */}

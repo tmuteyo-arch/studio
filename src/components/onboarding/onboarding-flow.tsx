@@ -35,7 +35,7 @@ import StepAgreements from './steps/step-agreements';
 
 
 const allSteps: Step[] = [
-  { id: 'account-type', name: 'Product', fields: ['clientType', 'relationshipType', 'region', 'tinNumber'] },
+  { id: 'account-type', name: 'Account Type', fields: ['clientType', 'relationshipType', 'region', 'tinNumber'] },
   { id: 'individual-info', name: 'Personal', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber', 'nationality', 'gender', 'maritalStatus'] },
   { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
   { id: 'signatories', name: 'Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },

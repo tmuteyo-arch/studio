@@ -47,12 +47,14 @@ export default function ReviewStep() {
   }, [formState.isSubmitting]);
   
   const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
-  const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(data.clientType);
+  const isPersonalOrIndividual = ['Individual Accounts', 'Minors'].includes(data.clientType);
+  const isSoleTrader = data.clientType === 'Sole Trader';
+  
   const isForeign = data.clientType === 'Individual Accounts' && 
     data.nationality && 
     !['zimbabwe', 'zimbabwean'].includes(data.nationality.toLowerCase().trim());
     
-  const needsMandate = data.clientType !== 'Individual Accounts' && data.clientType !== 'Minors';
+  const needsMandate = !isPersonalOrIndividual;
   const needsAgreements = ['Sole Trader', 'Private Limited (Pvt) Company', 'Private Business Corporate (PBC)', 'Public Limited company', 'Partnerships', 'Investment Group', 'Parastatal'].includes(data.clientType);
   const capturedDocs = data.capturedDocuments || [];
 
@@ -80,17 +82,17 @@ export default function ReviewStep() {
         <div className="rounded-xl border p-6 bg-muted/10">
             <h3 className="font-black uppercase tracking-widest text-xs mb-6 flex items-center gap-2 text-primary">
                 <Hash className="h-4 w-4" />
-                Product Settings
+                Account Type Settings
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <DetailItem label="Account Type" value={data.clientType} />
-                <DetailItem label="Relationship" value={data.relationshipType} />
+                {!isPersonalOrIndividual && <DetailItem label="Relationship" value={data.relationshipType} />}
                 <DetailItem label="Region" value={data.region} />
                 <DetailItem label="TIN Number" value={data.tinNumber} />
             </div>
         </div>
 
-        {isPersonalOrIndividual && (
+        {(isPersonalOrIndividual || isSoleTrader) && (
           <div className="rounded-xl border p-6 space-y-6">
             <h3 className="font-black uppercase tracking-widest text-xs text-primary">Applicant Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -121,7 +123,7 @@ export default function ReviewStep() {
           </div>
         )}
 
-        {!isPersonalOrIndividual && (
+        {(!isPersonalOrIndividual && !isSoleTrader) && (
             <div className="rounded-xl border p-6 space-y-6">
                 <h3 className="font-black uppercase tracking-widest text-xs text-primary">Entity Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
