@@ -243,13 +243,16 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                             <DropdownMenuContent align="center" className="w-72 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl shadow-2xl">
                                 <DropdownMenuLabel className="text-[9px] uppercase tracking-[0.3em] text-white/40 font-black px-4 py-3">Choose Type</DropdownMenuLabel>
                                 <DropdownMenuSeparator className="bg-white/5" />
-                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('NGO')}>
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('Trust')}>
+                                    Trust
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('NGO')}>
                                     NGO
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('Church')}>
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('Church')}>
                                     Church
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('School')}>
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('School')}>
                                     School
                                 </DropdownMenuItem>
                             </DropdownMenuContent>

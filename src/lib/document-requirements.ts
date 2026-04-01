@@ -160,6 +160,39 @@ const pbcAccountRequirements: DocumentRequirement[] = [
     }
 ];
 
+const trustRequirements: DocumentRequirement[] = [
+    {
+        document: 'Board Resolution',
+        details: 'Formal resolution authorizing account opening.',
+        comment: 'Mandatory.',
+    },
+    {
+        document: 'Trust Deed',
+        details: 'Certified copy of the Trust Deed.',
+        comment: 'Mandatory.',
+    },
+    {
+        document: 'Certified IDs (Trustees)',
+        details: 'Certified copies of IDs for all Trustees.',
+        comment: 'Mandatory.',
+    },
+    {
+        document: 'Proof of Residence (Trustees)',
+        details: 'Utility bills (ZESA/TelOne/Water) or HR letter on official letterhead.',
+        comment: 'Must be within 3 months.',
+    },
+    {
+        document: 'Passport Size Photos (Trustees)',
+        details: 'Recent photos for all Trustees.',
+        comment: 'Mandatory.',
+    },
+    {
+        document: 'ADLA Declaration',
+        details: 'Mandatory compliance declaration.',
+        comment: 'Must be signed and dated.'
+    }
+];
+
 const institutionRequirements: DocumentRequirement[] = [
     {
         document: 'Constitution / Founding Documents',
@@ -203,7 +236,7 @@ const requirementsMap: Record<string, DocumentRequirement[]> = {
     'Partnerships': corporateAccountRequirements,
     'Investment Group': corporateAccountRequirements,
     'Parastatal': corporateAccountRequirements,
-    'Trust': institutionRequirements,
+    'Trust': trustRequirements,
     'NGO': institutionRequirements,
     'Church': institutionRequirements,
     'School': institutionRequirements,
