@@ -807,8 +807,60 @@ export default function ApplicationReview({ application: initialApplication, onB
                   </TabsContent>
 
                   <TabsContent value="documents" className="pt-2 animate-in fade-in-50 duration-300">
-                    <div className="grid grid-cols-1 gap-8">
-                        <StepDocumentUpload disabled={isReadOnly} />
+                    <div className="space-y-10">
+                        {/* High-detail Gallery for ASL/Clerks to view all uploaded files */}
+                        <Card className="border-none shadow-none bg-transparent">
+                            <CardHeader className="px-0">
+                                <CardTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                                    <Archive className="h-5 w-5 text-primary" />
+                                    Document Repository
+                                </CardTitle>
+                                <CardDescription className="text-xs font-bold uppercase tracking-widest">
+                                    Review all submitted identification and corporate records.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="px-0">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {application.documents.map((doc, i) => (
+                                        <Card key={i} className="bg-muted/10 border-white/5 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
+                                            <CardContent className="p-4 flex flex-col h-full">
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                                        <FileText className="h-5 w-5" />
+                                                    </div>
+                                                    <Badge variant="outline" className="text-[8px] font-black uppercase border-white/10">{doc.type}</Badge>
+                                                </div>
+                                                <div className="space-y-1 mb-6 flex-1">
+                                                    <p className="text-sm font-black uppercase text-foreground leading-tight truncate" title={doc.type}>{doc.type}</p>
+                                                    <p className="text-[10px] font-mono text-muted-foreground truncate uppercase">{doc.fileName}</p>
+                                                </div>
+                                                <Button 
+                                                    className="w-full h-10 font-black uppercase tracking-widest text-[10px] border-primary/20 hover:bg-primary hover:text-primary-foreground transition-all"
+                                                    variant="outline"
+                                                    onClick={() => setPreviewDoc(doc)}
+                                                >
+                                                    <Eye className="mr-2 h-3.5 w-3.5" />
+                                                    Preview File
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                                {application.documents.length === 0 && (
+                                    <div className="p-20 text-center border-2 border-dashed rounded-3xl opacity-20 bg-muted/5">
+                                        <Archive className="h-12 w-12 mx-auto mb-4" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest">No documents found in registry.</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Management tools only visible in edit mode */}
+                        {!isReadOnly && (
+                            <div className="pt-10 border-t border-white/5">
+                                <StepDocumentUpload disabled={isReadOnly} />
+                            </div>
+                        )}
                     </div>
                   </TabsContent>
                   
