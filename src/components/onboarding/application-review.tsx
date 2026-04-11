@@ -417,7 +417,9 @@ export default function ApplicationReview({ application: initialApplication, onB
         isFirstPage = false;
     };
     
+    // Mandate Page First for non-individuals
     if (resolutionRef.current && needsMandate) await addCanvasToPdf(resolutionRef.current);
+    
     if (isCorporate && checklistRef.current) await addCanvasToPdf(checklistRef.current);
     if (isCorporate && agencyAgreementRef.current) await addCanvasToPdf(agencyAgreementRef.current);
     if (isCorporate && adlaRef.current) await addCanvasToPdf(adlaRef.current);
