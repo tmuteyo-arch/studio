@@ -78,14 +78,13 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
           toast({
             variant: 'destructive',
             title: 'Quality Check Failed',
-            description: 'Image not clear. Please retake photo.',
+            description: result.reason || 'Image not clear. Please retake photo.',
           });
           return;
         }
       }
 
       addPage({ source: 'upload', dataUri, file, type: fileType, documentType });
-      // Clear input so same file can be selected again if needed
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsDataURL(file);
@@ -146,7 +145,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
           toast({
             variant: 'destructive',
             title: 'Quality Check Failed',
-            description: 'Image not clear. Please retake photo.',
+            description: result.reason || 'Image not clear. Please retake photo.',
           });
           return;
         }
@@ -192,7 +191,6 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
 
     setIsSubmitting(true);
     
-    // Group pages by document type and merge into PDFs
     const groupedPages = pages.reduce((acc, page) => {
         if (!acc[page.documentType]) acc[page.documentType] = [];
         acc[page.documentType].push(page.dataUri);
@@ -260,7 +258,6 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   return (
     <div className="p-4 sm:p-8 max-w-5xl mx-auto">
       
-      {/* Hidden standard file input */}
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -504,7 +501,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
             </div>
             <div className="flex-1 bg-black relative flex items-center justify-center min-h-0">
                 {previewPage?.type === 'image' ? (
-                    <img src={page.dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
+                    <img src={previewPage.dataUri} alt="Preview" className="max-w-full max-h-full object-contain" />
                 ) : (
                     <object
                         data={previewPage?.dataUri}
