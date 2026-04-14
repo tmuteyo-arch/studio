@@ -247,10 +247,17 @@ export default function ReviewStep() {
                     {capturedDocs.map((doc, i) => (
                         <div key={i} className="flex items-center justify-between p-4 border rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors group">
                             <div className="flex items-center gap-3">
-                                <FileText className="h-5 w-5 text-primary" />
+                                <div className="relative">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                    {doc.pageCount && doc.pageCount > 1 && (
+                                        <Badge className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[8px] bg-primary text-primary-foreground font-black border-white border-2">{doc.pageCount}</Badge>
+                                    )}
+                                </div>
                                 <div className="max-w-[150px]">
                                     <p className="text-sm font-bold truncate uppercase tracking-tight">{doc.type}</p>
-                                    <p className="text-[10px] text-muted-foreground truncate font-mono uppercase">{doc.fileName}</p>
+                                    <p className="text-[10px] text-muted-foreground truncate font-mono uppercase">
+                                        {doc.pageCount ? `${doc.pageCount} Pages` : doc.fileName}
+                                    </p>
                                 </div>
                             </div>
                             <Dialog>
@@ -261,7 +268,7 @@ export default function ReviewStep() {
                                     <DialogHeader className="p-6 bg-background border-b"><DialogTitle className="font-black uppercase tracking-tight">{doc.type}</DialogTitle></DialogHeader>
                                     <div className="flex-1 bg-muted rounded-b-2xl overflow-hidden flex items-center justify-center h-full">
                                         {doc.url.includes('application/pdf') || doc.fileName.toLowerCase().endsWith('.pdf') ? (
-                                            <iframe src={doc.url} className="w-full h-full border-none" />
+                                            <iframe src={doc.url} className="w-full h-full border-none" title="PDF Preview" />
                                         ) : (
                                             <img src={doc.url} alt="Document" className="max-w-full max-h-full object-contain" />
                                         )}

@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
 import { generateAccountId } from '@/lib/utils';
+import { mergeToPdf, countPdfPages } from '@/lib/pdf-utils';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -27,6 +28,7 @@ type PageState = {
   file?: File;
   type: 'image' | 'pdf';
   documentType: string;
+  pageCount: number;
 };
 
 interface DigitizeApplicationFlowProps {
@@ -69,6 +71,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     reader.onload = async (event) => {
       const dataUri = event.target?.result as string;
       const fileType = file.type.startsWith('image/') ? 'image' : 'pdf';
+      let pageCount = 1;
 
       if (fileType === 'image') {
         setIsValidating(true);
@@ -83,9 +86,13 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
           });
           return;
         }
+      } else {
+        setIsValidating(true);
+        pageCount = await countPdfPages(dataUri);
+        setIsValidating(false);
       }
 
-      addPage({ source: 'upload', dataUri, file, type: fileType, documentType });
+      addPage({ source: 'upload', dataUri, file, type: fileType, documentType, pageCount });
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsDataURL(file);
@@ -93,7 +100,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
 
   const addPage = (page: PageState) => {
     setPages(prev => [...prev, page]);
-    toast({ title: 'Page Added', description: `Added a new page for ${clientName || 'this application'}.` });
+    toast({ title: 'Added', description: `Detected ${page.pageCount} page(s) for ${documentType}.` });
   };
 
   const removePage = (pageIndex: number) => {
@@ -151,7 +158,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
           return;
         }
         
-        addPage({ source: 'scan', dataUri, type: 'image', documentType });
+        addPage({ source: 'scan', dataUri, type: 'image', documentType, pageCount: 1 });
       }
     }
   };
@@ -162,22 +169,6 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       videoRef.current.srcObject = null;
     }
     setIsScanning(false);
-  };
-
-  const generateMergedPdf = async (typePages: string[]): Promise<string> => {
-    const { jsPDF } = await import('jspdf');
-    const pdf = new jsPDF();
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-
-    for (let i = 0; i < typePages.length; i++) {
-      if (i > 0) pdf.addPage();
-      const page = typePages[i];
-      if (page.startsWith('data:image')) {
-        pdf.addImage(page, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-      }
-    }
-    return pdf.output('datauristring');
   };
 
   const onSubmit = async () => {
@@ -200,12 +191,13 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
 
     const mergedDocuments = await Promise.all(
         Object.entries(groupedPages).map(async ([type, typePages]) => {
-            const mergedUrl = await generateMergedPdf(typePages);
+            const result = await mergeToPdf(typePages);
             return {
                 type,
                 fileName: `${type.toLowerCase().replace(/\s/g, '_')}.pdf`,
-                url: mergedUrl,
-                pages: typePages
+                url: result.url,
+                pages: typePages,
+                pageCount: result.count
             };
         })
     );
@@ -280,8 +272,8 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 text-center">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                     <div className="space-y-1">
-                      <p className="text-xl font-black uppercase tracking-tight">Checking Quality</p>
-                      <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">Please wait while we verify the image...</p>
+                      <p className="text-xl font-black uppercase tracking-tight">Processing File</p>
+                      <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">Checking quality & detecting pages...</p>
                     </div>
                   </div>
                 )}
@@ -321,7 +313,9 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                 <div className="p-4 border rounded-lg space-y-4 bg-muted/5">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                         Captured Pages
-                        <Badge variant="secondary" className="ml-2">{pages.length}</Badge>
+                        <Badge variant="secondary" className="ml-2">
+                            {pages.reduce((acc, p) => acc + p.pageCount, 0)} Total
+                        </Badge>
                     </h3>
                     {pages.length > 0 ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
@@ -330,9 +324,10 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                             {page.type === 'image' ? (
                                 <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-cover" />
                             ) : (
-                                <div className="flex flex-col items-center justify-center bg-muted h-full">
-                                    <File className="h-10 w-10 text-muted-foreground" />
+                                <div className="flex flex-col items-center justify-center bg-muted h-full gap-2">
+                                    <File className="h-10 w-10 text-primary" />
                                     <p className="text-[8px] font-black uppercase text-center px-2 truncate w-full mt-2">{page.file?.name || 'document.pdf'}</p>
+                                    <Badge variant="outline" className="text-[8px] h-4">{page.pageCount} Pgs</Badge>
                                 </div>
                             )}
                             <div className="absolute top-1 left-1 flex flex-col gap-1">
@@ -422,7 +417,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                             {clientType ? (
                                 requirements.map((req) => {
                                     const met = isRequirementMet(req.document);
-                                    const pageCount = pages.filter(p => p.documentType === req.document).length;
+                                    const pageCount = pages.filter(p => p.documentType === req.document).reduce((a, b) => a + b.pageCount, 0);
                                     return (
                                         <div 
                                             key={req.document} 
@@ -435,7 +430,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                                     <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight font-medium">{req.comment}</p>
                                                     {met && (
                                                         <Badge variant="success" className="mt-2 text-[8px] font-black uppercase tracking-tighter">
-                                                            {pageCount} {pageCount === 1 ? 'PAGE' : 'PAGES'} CAPTURED
+                                                            {pageCount} {pageCount === 1 ? 'PAGE' : 'PAGES'} DETECTED
                                                         </Badge>
                                                     )}
                                                 </div>

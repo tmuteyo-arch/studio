@@ -866,14 +866,21 @@ export default function ApplicationReview({ application: initialApplication, onB
                                         <Card key={i} className="bg-muted/10 border-white/5 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
                                             <CardContent className="p-4 flex flex-col h-full">
                                                 <div className="flex items-start justify-between mb-4">
-                                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                                        <FileText className="h-5 w-5" />
+                                                    <div className="relative">
+                                                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                                                            <FileText className="h-5 w-5" />
+                                                        </div>
+                                                        {doc.pageCount && doc.pageCount > 1 && (
+                                                            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[9px] bg-primary text-primary-foreground font-black border-background border-2 shadow-sm">{doc.pageCount}</Badge>
+                                                        )}
                                                     </div>
                                                     <Badge variant="outline" className="text-[8px] font-black uppercase border-white/10">{doc.type}</Badge>
                                                 </div>
                                                 <div className="space-y-1 mb-6 flex-1">
                                                     <p className="text-sm font-black uppercase text-foreground leading-tight truncate" title={doc.type}>{doc.type}</p>
-                                                    <p className="text-[10px] font-mono text-muted-foreground truncate uppercase">{doc.fileName}</p>
+                                                    <p className="text-[10px] font-mono text-muted-foreground truncate uppercase">
+                                                        {doc.pageCount ? `${doc.pageCount} Pages` : doc.fileName}
+                                                    </p>
                                                 </div>
                                                 <Button 
                                                     className="w-full h-10 font-black uppercase tracking-widest text-[10px] border-primary/20 hover:bg-primary hover:text-primary-foreground transition-all"

@@ -15,10 +15,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { mergeToPdf, countPdfPages } from '@/lib/pdf-utils';
 
 type DocumentState = {
   documentType: string;
   pages: string[]; // array of data URIs
+  pageCounts: number[]; // track individual page counts for display
 };
 
 export default function StepDocumentUpload({ disabled }: { disabled?: boolean }) {
@@ -39,7 +41,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   const clientType = form.watch('clientType');
   const documentRequirements = React.useMemo(() => getDocumentRequirements(clientType), [clientType]);
 
-  // Initialize state from form values only when requirements change
+  // Initialize state from form values
   React.useEffect(() => {
     const existingCaptured = form.getValues('capturedDocuments') || [];
     const initialDocs: Record<string, DocumentState> = {};
@@ -48,32 +50,14 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       const existing = existingCaptured.find(d => d.type === req.document);
       initialDocs[req.document] = { 
         documentType: req.document, 
-        pages: existing?.pages || (existing ? [existing.url] : []) 
+        pages: existing?.pages || (existing ? [existing.url] : []),
+        pageCounts: existing?.pages?.map(p => p.startsWith('data:application/pdf') ? (existing.pageCount || 1) : 1) || []
       };
     });
     setDocuments(initialDocs);
   }, [documentRequirements]);
 
-  const generateMergedPdf = async (pages: string[]): Promise<string> => {
-    if (pages.length === 0) return '';
-    if (pages.length === 1 && pages[0].startsWith('data:application/pdf')) return pages[0];
-    
-    const { jsPDF } = await import('jspdf');
-    const pdf = new jsPDF();
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-
-    for (let i = 0; i < pages.length; i++) {
-      if (i > 0) pdf.addPage();
-      const page = pages[i];
-      if (page.startsWith('data:image')) {
-        pdf.addImage(page, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-      }
-    }
-    return pdf.output('datauristring');
-  };
-
-  // Sync local documents state to main form
+  // Sync local documents state to main form with accurate page counting
   React.useEffect(() => {
     if (Object.keys(documents).length === 0) return;
 
@@ -83,12 +67,13 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
             Object.values(documents)
                 .filter(doc => doc.pages.length > 0)
                 .map(async (doc) => {
-                    const mergedUrl = await generateMergedPdf(doc.pages);
+                    const result = await mergeToPdf(doc.pages);
                     return {
                         type: doc.documentType,
                         fileName: `${doc.documentType.toLowerCase().replace(/\s/g, '_')}.pdf`,
-                        url: mergedUrl,
-                        pages: doc.pages
+                        url: result.url,
+                        pages: doc.pages,
+                        pageCount: result.count
                     };
                 })
         );
@@ -126,6 +111,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     reader.onload = async (event) => {
       const dataUri = event.target?.result as string;
       const isImage = file.type.startsWith('image/');
+      let pageCount = 1;
 
       if (isImage) {
         setIsValidating(documentType);
@@ -136,20 +122,26 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
           toast({
             variant: 'destructive',
             title: 'Quality Check Failed',
-            description: 'Image not clear. Please retake photo.',
+            description: result.reason || 'Image not clear. Please retake photo.',
           });
           return;
         }
+      } else {
+        // PDF Auto-detection
+        setIsValidating(documentType);
+        pageCount = await countPdfPages(dataUri);
+        setIsValidating(null);
       }
 
       setDocuments(prev => ({
         ...prev,
         [documentType]: { 
             ...prev[documentType], 
-            pages: [...prev[documentType].pages, dataUri] 
+            pages: [...prev[documentType].pages, dataUri],
+            pageCounts: [...prev[documentType].pageCounts, pageCount]
         }
       }));
-      toast({ title: 'Page Added', description: 'The page was added successfully.' });
+      toast({ title: 'Added', description: `Page(s) added successfully (${pageCount} total).` });
       
       if (fileInputRef.current) fileInputRef.current.value = '';
       setActiveUploadType(null);
@@ -163,7 +155,8 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
         ...prev,
         [documentType]: { 
             ...prev[documentType], 
-            pages: prev[documentType].pages.filter((_, i) => i !== pageIndex) 
+            pages: prev[documentType].pages.filter((_, i) => i !== pageIndex),
+            pageCounts: prev[documentType].pageCounts.filter((_, i) => i !== pageIndex)
         }
     }));
   };
@@ -171,12 +164,18 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   const movePage = (documentType: string, from: number, to: number) => {
     if (disabled) return;
     const pages = [...documents[documentType].pages];
+    const counts = [...documents[documentType].pageCounts];
     if (to < 0 || to >= pages.length) return;
-    const item = pages.splice(from, 1)[0];
-    pages.splice(to, 0, item);
+    
+    const pageItem = pages.splice(from, 1)[0];
+    pages.splice(to, 0, pageItem);
+    
+    const countItem = counts.splice(from, 1)[0];
+    counts.splice(to, 0, countItem);
+
     setDocuments(prev => ({
         ...prev,
-        [documentType]: { ...prev[documentType], pages }
+        [documentType]: { ...prev[documentType], pages, pageCounts: counts }
     }));
   };
 
@@ -230,10 +229,11 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                 ...prev,
                 [docType]: { 
                     ...prev[docType], 
-                    pages: [...prev[docType].pages, dataUri] 
+                    pages: [...prev[docType].pages, dataUri],
+                    pageCounts: [...prev[docType].pageCounts, 1]
                 }
             }));
-            toast({ title: 'Page Added', description: 'Photo captured successfully.' });
+            toast({ title: 'Capture OK', description: 'Photo added to document.' });
         }
     }
   };
@@ -293,14 +293,15 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
         </Alert>
 
         <div className="grid grid-cols-1 gap-6">
-          {Object.values(documents).map(({documentType, pages}) => {
+          {Object.values(documents).map(({documentType, pages, pageCounts}) => {
             const loading = isValidating === documentType;
+            const totalPages = pageCounts.reduce((a, b) => a + b, 0);
             return (
                 <div key={documentType} className="p-6 border rounded-xl hover:border-primary/50 transition-colors bg-card shadow-sm relative overflow-hidden">
                     {loading && (
                       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <span className="text-xs font-black uppercase tracking-widest text-primary">Checking Quality...</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-primary">Detecting Pages...</span>
                       </div>
                     )}
                     <div className='flex justify-between items-center mb-4'>
@@ -308,8 +309,8 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                             <h3 className="text-md font-bold truncate max-w-[250px]" title={documentType}>{documentType}</h3>
                             <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1.5">{disabled ? 'Archive Read-Only' : 'Multi-Page Support Active'}</p>
                         </div>
-                        <Badge variant={pages.length > 0 ? 'success' : 'outline'} className="px-3 py-1 font-black">
-                            {pages.length} {pages.length === 1 ? 'PAGE' : 'PAGES'}
+                        <Badge variant={totalPages > 0 ? 'success' : 'outline'} className="px-3 py-1 font-black">
+                            {totalPages} {totalPages === 1 ? 'PAGE' : 'PAGES'} DETECTED
                         </Badge>
                     </div>
                 
@@ -323,7 +324,8 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                                                 {page.startsWith('data:application/pdf') ? (
                                                     <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/50">
                                                         <File className="h-10 w-10 text-primary" />
-                                                        <span className="text-[8px] font-black">PDF PAGE</span>
+                                                        <span className="text-[8px] font-black uppercase">PDF Entry</span>
+                                                        <Badge variant="secondary" className="text-[8px] px-1 h-4">{pageCounts[index]} Pgs</Badge>
                                                     </div>
                                                 ) : (
                                                     <img src={page} alt={`Page ${index+1}`} className="w-full h-full object-cover" />
@@ -390,7 +392,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                                             {isMerging && (
                                                 <div className="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center text-white gap-4">
                                                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                                    <p className="text-xs font-black uppercase tracking-widest">Merging Pages...</p>
+                                                    <p className="text-xs font-black uppercase tracking-widest">Generating PDF Preview...</p>
                                                 </div>
                                             )}
                                             <iframe src={form.getValues('capturedDocuments').find(d => d.type === documentType)?.url} className="w-full h-full" title="PDF Preview" />

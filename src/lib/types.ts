@@ -118,7 +118,8 @@ export const OnboardingFormSchema = z.object({
     type: z.string(),
     fileName: z.string(),
     url: z.string(),
-    pages: z.array(z.string()).optional()
+    pages: z.array(z.string()).optional(),
+    pageCount: z.number().optional()
   })).optional().default([]),
   
   fcbStatus: z.string().optional(),
