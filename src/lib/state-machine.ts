@@ -36,8 +36,8 @@ export function getStateLabel(status: ApplicationStatus): string {
     case 'Under Review': return 'Under Review';
     case 'Approved': return 'Approved';
     case 'Rejected': return 'Rejected';
-    case 'Dispatched': return 'Dispatched';
-    case 'Locked': return 'Locked';
+    case 'Dispatched': return 'Account Dispatched';
+    case 'Locked': return 'Record Locked';
     default: return status;
   }
 }

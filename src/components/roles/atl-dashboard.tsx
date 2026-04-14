@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X, Sparkles, FileEdit } from 'lucide-react';
+import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X, Sparkles, FileEdit, Eye } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User as UserProfile } from '@/lib/users';
@@ -224,16 +224,15 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                               <Badge variant={getStatusVariant(app.status)} className="px-3 py-1 uppercase text-[10px] font-black">{getStateLabel(app.status)}</Badge>
                                           </TableCell>
                                           <TableCell className="text-right pr-8">
-                                              <Button 
-                                                variant={['Draft', 'Pending Documents', 'In Progress'].includes(app.status) ? "default" : "outline"} 
-                                                size="sm" 
-                                                className="font-black uppercase tracking-widest px-5 rounded-lg" 
-                                                onClick={() => app.status === 'Draft' ? handleContinueDraft(app) : setSelectedApplication(app)}
-                                              >
-                                                  {['Draft', 'Pending Documents', 'In Progress'].includes(app.status) ? (
-                                                    <><FileEdit className="mr-2 h-4 w-4" /> CONTINUE</>
-                                                  ) : 'VIEW'}
-                                              </Button>
+                                              {['Draft', 'Pending Documents', 'In Progress'].includes(app.status) ? (
+                                                <Button variant="default" size="sm" className="font-black uppercase tracking-widest px-5 rounded-lg" onClick={() => handleContinueDraft(app)}>
+                                                  <><FileEdit className="mr-2 h-4 w-4" /> CONTINUE</>
+                                                </Button>
+                                              ) : (
+                                                <Button variant="outline" size="sm" className="font-black uppercase tracking-widest px-5 rounded-lg" onClick={() => setSelectedApplication(app)}>
+                                                  <><Eye className="mr-2 h-4 w-4" /> VIEW</>
+                                                </Button>
+                                              )}
                                           </TableCell>
                                       </TableRow>
                                   ))}
