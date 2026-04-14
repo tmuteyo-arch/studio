@@ -137,7 +137,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
     const isPersonal = ['Individual Accounts', 'Minors'].includes(clientType);
     const isSoleTrader = clientType === 'Sole Trader';
-    const isInstitution = ['NGO', 'Church', 'School', 'Societies', 'Club/ Association', 'Trust'].includes(clientType);
+    const isInstitution = ['NGO', 'Church', 'School', 'Societies', 'Club/ Association', 'Trust', 'Government / Local Authority'].includes(clientType);
     const isCorporate = !isPersonal && !isSoleTrader && !isInstitution;
 
     if (isPersonal) {

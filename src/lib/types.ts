@@ -199,7 +199,8 @@ export const OnboardingFormSchema = z.object({
       'School', 
       'Societies', 
       'Club/ Association',
-      'Trust'
+      'Trust',
+      'Government / Local Authority'
     ].includes(data.clientType);
 
     if (data.clientType && !isPersonal) {
@@ -319,6 +320,7 @@ export const accountTypes = [
   'School',
   'Societies',
   'Club/ Association',
+  'Government / Local Authority',
 ];
 
 export const rejectionReasons = [

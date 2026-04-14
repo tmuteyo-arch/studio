@@ -19,7 +19,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -151,6 +150,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                             <DropdownMenuContent align="center" className="w-72 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl">
                                 <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Individual Accounts')}>Individual</DropdownMenuItem>
                                 <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Sole Trader')}>Sole Trader</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Minors')}>Minor Account</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
 
@@ -172,6 +172,30 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                 <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Partnerships')}>Partnership</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="h-20 w-full sm:w-72 border-accent/20 bg-white/5 font-bold shadow-xl rounded-2xl px-6">
+                                    <Landmark className="h-5 w-5 text-accent mr-4" />
+                                    <div className="text-left flex-1">
+                                        <p className="text-[10px] uppercase text-white/40 font-black mb-1">Class</p>
+                                        <p className="text-lg text-white">OTHER</p>
+                                    </div>
+                                    <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="center" className="w-80 bg-background/95 backdrop-blur-xl border-white/10 p-2 rounded-2xl max-h-[400px] overflow-y-auto">
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('NGO')}>NGO / Non-Profit</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Church')}>Church / Religious</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('School')}>Educational Institution</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Societies')}>Societies</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Club/ Association')}>Club / Association</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Trust')}>Trust</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Government / Local Authority')}>Government / Local Authority</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Investment Group')}>Investment Group</DropdownMenuItem>
+                                <DropdownMenuItem className="py-4 px-4 font-bold" onClick={() => handleStartApplication('Parastatal')}>Parastatal</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </CardContent>
             </Card>
@@ -187,7 +211,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-3 px-6 h-10 font-black uppercase text-xs tracking-widest relative">
                       <Inbox className="h-4 w-4" />
-                      SUBMISSIONS ({filteredSubmissions.length})
+                      CUSTOMER PORTAL ACCOUNTS ({filteredSubmissions.length})
                   </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-80">
