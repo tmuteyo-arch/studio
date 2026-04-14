@@ -11,6 +11,7 @@ import { applicationsAtom, activityLogsAtom, Application } from '@/lib/mock-data
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressTracker } from './progress-tracker';
+import { generateAccountId } from '@/lib/utils';
 
 import StepAccountType from './steps/step-account-type';
 import StepIndividualInfo from './steps/step-individual-info';
@@ -225,7 +226,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
   const handleSaveDraft = () => {
     const data = form.getValues();
-    const appId = existingApplication?.id || `APP-DRAFT-${Date.now()}`;
+    const appId = existingApplication?.id || generateAccountId();
     
     const draftApp: Application = {
       id: appId,
@@ -264,7 +265,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   
   const onSubmit = (data: OnboardingFormData) => {
     setIsSubmitting(true);
-    const appId = existingApplication?.id || `APP-${Date.now()}`;
+    const appId = existingApplication?.id || generateAccountId();
 
     const newApplication: Application = {
       id: appId,

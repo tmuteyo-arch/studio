@@ -19,6 +19,7 @@ import { getDocumentRequirements } from '@/lib/document-requirements';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
+import { generateAccountId } from '@/lib/utils';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -210,7 +211,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
     );
     
     const newApplication = {
-      id: `APP-ARCHIVED-${Date.now()}`,
+      id: generateAccountId(),
       clientName: clientName.trim(),
       clientType: clientType,
       status: 'Archived',

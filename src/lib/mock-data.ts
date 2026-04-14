@@ -78,7 +78,7 @@ export type Application = {
 
 const initialApplications: Application[] = [
     {
-    id: 'APP-001',
+    id: 'CUS-X9J2K',
     clientName: 'A.J Madondo investments',
     clientType: 'Private Limited (Pvt) Company',
     status: 'Pending Supervisor',
@@ -123,7 +123,7 @@ const initialApplications: Application[] = [
     comments: [],
     },
     {
-    id: 'APP-002',
+    id: 'CUS-B4L7M',
     clientName: 'Beloved T Garadzimba',
     clientType: 'Individual Accounts',
     status: 'Submitted',
