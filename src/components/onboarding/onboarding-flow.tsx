@@ -40,7 +40,7 @@ const allSteps: Step[] = [
   { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
   { id: 'signatories', name: 'Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
   { id: 'document-upload', name: 'Documents', fields: ['capturedDocuments'] },
-  { id: 'agreements', name: 'Agreements', fields: ['agreement1Accepted', 'agreement1Signature', 'agreement1Pages', 'agreement2Accepted', 'agreement2Signature', 'agreement2Pages', 'adlaAccepted', 'adlaSignature', 'adlaPages'] },
+  { id: 'agreements', name: 'InnBucks Agreement', fields: ['agreement1Accepted', 'agreement1Signature', 'agreement1Pages', 'agreement2Accepted', 'agreement2Signature', 'agreement2Pages', 'adlaAccepted', 'adlaSignature', 'adlaPages'] },
   { id: 'review-submit', name: 'Review', fields: ['signature', 'agreedToTerms'] },
 ];
 
@@ -149,7 +149,6 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     }
 
     if (isInstitution) {
-      // Institutions (Other category) skip agreements entirely as ADLA, Agency, and Merchant agreements are no longer required.
       const institutionSteps = ['account-type', 'corporate-info', 'signatories', 'document-upload', 'review-submit'];
       return allSteps.filter(step => institutionSteps.includes(step.id));
     }
@@ -177,7 +176,6 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     await new Promise(res => setTimeout(res, 600)); 
     setIsCheckingDuplicates(false);
 
-    // Don't flag as duplicate if it's the same record we are currently editing
     const duplicate = applications.find(app => 
       app.clientName.toLowerCase() === nameToCheck.toLowerCase() && 
       app.id !== existingApplication?.id

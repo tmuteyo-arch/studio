@@ -292,7 +292,7 @@ export default function StepAgreements({ disabled }: { disabled?: boolean }) {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
             <CardHeader className="px-6 pb-8">
-                <CardTitle className="text-2xl font-black uppercase tracking-tight text-primary">Legal Agreements</CardTitle>
+                <CardTitle className="text-2xl font-black uppercase tracking-tight text-primary">InnBucks Agreement</CardTitle>
                 <CardDescription className="text-xs uppercase font-bold tracking-[0.2em] text-muted-foreground mt-1">
                     Upload your existing signed contracts and complete the digital sign-off acknowledgement.
                 </CardDescription>

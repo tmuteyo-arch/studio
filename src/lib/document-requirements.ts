@@ -19,11 +19,6 @@ const personalAccountRequirements: DocumentRequirement[] = [
         document: 'Passport Size Photos',
         details: 'Recent color photographs.',
         comment: 'Recent photos required.'
-    },
-    {
-        document: 'ADLA Declaration',
-        details: 'Mandatory compliance declaration.',
-        comment: 'Must be signed and dated.'
     }
 ];
 

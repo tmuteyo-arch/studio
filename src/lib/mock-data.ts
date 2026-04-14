@@ -149,7 +149,7 @@ const initialApplications: Application[] = [
     },
     signatories: [],
     documents: [],
-    history: [{ action: 'Self-Submitted by Customer', user: 'Customer', timestamp: '2024-05-21T08:00:00Z' }],
+    history: [{ action: 'Customer Portal Submission', user: 'Customer', timestamp: '2024-05-21T08:00:00Z' }],
     comments: [],
     }
 ];

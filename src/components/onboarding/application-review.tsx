@@ -205,7 +205,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     handleUpdateApplication({ 
         status: 'Claimed by ASL', 
         submittedBy: user.name,
-        history: [...application.history, { action: 'Lead Claimed', user: user.name, timestamp: new Date().toISOString() }] 
+        history: [...application.history, { action: 'Submission Claimed', user: user.name, timestamp: new Date().toISOString() }] 
     });
     toast({ title: "Taken", description: `You now own ${application.clientName}.` });
     setTimeout(() => onBack(), 500);
@@ -215,7 +215,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     handleUpdateApplication({ 
         status: 'Rejected by ASL', 
         submittedBy: 'Customer', // Return to public pool
-        history: [...application.history, { action: 'Lead Rejected', user: user.name, timestamp: new Date().toISOString() }] 
+        history: [...application.history, { action: 'Submission Rejected', user: user.name, timestamp: new Date().toISOString() }] 
     });
     toast({ title: "Rejected", description: "Record sent back to pool." });
     setTimeout(() => onBack(), 500);
@@ -483,9 +483,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   const renderActions = () => {
     switch (user.role) {
       case 'asl':
-        const isLead = application.submittedBy === 'Customer';
+        const isSubmission = application.submittedBy === 'Customer';
         
-        if (isLead) {
+        if (isSubmission) {
             return (
                 <div className="flex gap-2">
                     <Button onClick={handleClaimLead} className="bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md transition-all active:scale-95">
@@ -604,6 +604,20 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
   const canDelete = user.role === 'asl' || user.role === 'back-office';
+
+  const renderAgreementAuditStatus = (title: string, method: 'digital' | 'physical', isSigned: boolean, pagesCount: number) => (
+    <div className="flex items-center justify-between p-4 border rounded-xl bg-background shadow-sm">
+        <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{title}</p>
+            <p className="text-xs font-bold text-primary uppercase">{method} PROCESSING</p>
+        </div>
+        {method === 'digital' ? (
+            isSigned ? <Badge variant="success" className="font-black">SIGNED</Badge> : <Badge variant="destructive">MISSING</Badge>
+        ) : (
+            pagesCount > 0 ? <Badge variant="success" className="font-black">{pagesCount} PAGES CAPTURED</Badge> : <Badge variant="destructive">NO PAGES</Badge>
+        )}
+    </div>
+  );
 
   return (
     <FormProvider {...form}>
@@ -801,6 +815,29 @@ export default function ApplicationReview({ application: initialApplication, onB
                                 {needsMandate && (
                                     <div className="mt-8 bg-muted/10 p-6 rounded-2xl border border-white/10">
                                         <StepSignatories disabled={isReadOnly} />
+                                    </div>
+                                )}
+
+                                {isCorporate && (
+                                    <div className="rounded-xl border p-6 space-y-6 bg-primary/5">
+                                        <h3 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2">
+                                            <ShieldCheck className="h-4 w-4" />
+                                            InnBucks Agreement Audit Status
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {renderAgreementAuditStatus(
+                                                application.details.relationshipType === 'Agency' ? 'Agency Agreement' : 'Merchant Agreement',
+                                                application.details.agreement1Method,
+                                                !!application.details.agreement1Signature,
+                                                application.details.agreement1Pages?.length || 0
+                                            )}
+                                            {application.details.relationshipType === 'Merchant' && renderAgreementAuditStatus(
+                                                'Non-Disclosure Agreement (NDA)',
+                                                application.details.agreement2Method,
+                                                !!application.details.agreement2Signature,
+                                                application.details.agreement2Pages?.length || 0
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                               </div>

@@ -185,7 +185,7 @@ export const OnboardingFormSchema = z.object({
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement1Pages'], message: 'Upload/Scan the agreement pages.' });
       }
       if (!data.agreement1Accepted || !data.agreement1Signature || data.agreement1Signature.length < 3) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement1Accepted'], message: 'Complete the acknowledgement sign-off.' });
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['agreement1Accepted'], message: 'Complete the InnBucks Agreement acknowledgement sign-off.' });
       }
       
       // NDA (Merchant only)

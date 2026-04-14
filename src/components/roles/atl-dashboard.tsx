@@ -86,7 +86,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
     .filter(app => app.submittedBy === user.name && ['Draft', 'Submitted', 'Returned to ATL', 'Returned to ASL', 'Signed', 'Rejected', 'Pending Supervisor', 'Sent to Supervisor', 'Archived', 'Sent to Back Office', 'Claimed by ASL', 'Approved by Compliance'].includes(app.status))
     .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     
-  const customerLeads = applications
+  const customerSubmissions = applications
     .filter(app => app.submittedBy === 'Customer' && ['Submitted', 'Rejected by ASL'].includes(app.status))
     .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime());
 
@@ -95,7 +95,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
            app.clientName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  const filteredLeads = customerLeads.filter(app => {
+  const filteredSubmissions = customerSubmissions.filter(app => {
     return app.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
            app.clientName.toLowerCase().includes(searchTerm.toLowerCase());
   });
@@ -143,7 +143,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                     <User className="h-10 w-10 text-primary" />
                     Sales Dashboard
                   </h2>
-                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Manage your records and leads.</p>
+                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Manage your records and customer portal accounts.</p>
               </div>
               <Button 
                 onClick={() => setIsNewAppMenuOpen(!isNewAppMenuOpen)}
@@ -272,8 +272,8 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   </TabsTrigger>
                   <TabsTrigger value="leads" className="flex items-center gap-3 px-6 h-10 rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground font-black uppercase text-xs tracking-widest transition-all relative">
                       <Inbox className="h-4 w-4" />
-                      LEADS ({filteredLeads.length})
-                      {filteredLeads.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full animate-pulse border-2 border-background" />}
+                      CUSTOMER PORTAL ACCOUNTS ({filteredSubmissions.length})
+                      {filteredSubmissions.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full animate-pulse border-2 border-background" />}
                   </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-80">
@@ -349,13 +349,13 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       <div className="flex justify-between items-center">
                         <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight text-white">
                             <Inbox className="h-6 w-6 text-secondary" />
-                            NEW LEADS
+                            CUSTOMER SUBMISSIONS
                         </CardTitle>
                         <Badge variant="outline" className="font-mono border-secondary/30 text-secondary px-3 uppercase font-black">Sync Active</Badge>
                       </div>
                   </CardHeader>
                   <CardContent className="p-0">
-                      {filteredLeads.length > 0 ? (
+                      {filteredSubmissions.length > 0 ? (
                           <Table>
                               <TableHeader>
                                   <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
@@ -367,7 +367,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
-                                  {filteredLeads.map((app) => (
+                                  {filteredSubmissions.map((app) => (
                                       <TableRow key={app.id} className="hover:bg-secondary/10 border-white/5 transition-colors group">
                                           <TableCell className="font-mono text-xs pl-8 text-white/60 font-bold">{app.id}</TableCell>
                                           <TableCell className="py-5">
@@ -389,7 +389,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                       ) : (
                           <div className="flex flex-col items-center justify-center p-24 text-center">
                               <Inbox className="h-16 w-16 text-secondary/20 mb-4 animate-pulse" />
-                              <p className="text-white/40 font-black uppercase tracking-widest">No leads found.</p>
+                              <p className="text-white/40 font-black uppercase tracking-widest">No submissions found.</p>
                           </div>
                       )}
                   </CardContent>

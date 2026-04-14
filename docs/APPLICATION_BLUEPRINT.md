@@ -7,13 +7,13 @@ This document provides a comprehensive technical blueprint for the InnBucks Agen
 
 ### Core Features:
 - **Role-Based Hierarchy**: 
-  - **Area Sales Leaders (ASL)**: Originate applications and claim customer leads.
+  - **Area Sales Leaders (ASL)**: Originate applications and claim customer portal accounts.
   - **Back Office Clerks**: Verify documents and perform FCB checks.
   - **Back Office Supervisors**: Audit clerical work and provide first-level approval.
   - **MANAGEMENT**: Unified oversight, bulk approvals, and regional analytics.
 - **AI-Powered Verification**: Document extraction and cross-validation using Gemini.
 - **Digital Archiving**: Camera-based scanning for legacy paper records.
-- **PDF Generation**: Automated agency agreements with digital signatures.
+- **PDF Generation**: Automated InnBucks agreements with digital signatures.
 
 ## 2. Technical Stack
 - **Framework**: Next.js 15 (App Router)
@@ -25,7 +25,7 @@ This document provides a comprehensive technical blueprint for the InnBucks Agen
 
 ## 3. Key Workflows
 ### 3.1. ASL Onboarding
-- Distinction between **"New Application"** (manual) and **"New Sign Up"** (customer lead).
+- Distinction between **"New Application"** (manual) and **"Customer Submissions"** (portal accounts).
 - Dynamic requirements based on 11+ account types (Personal, Trust, Company, etc.).
 
 ### 3.2. Verification & Archival
