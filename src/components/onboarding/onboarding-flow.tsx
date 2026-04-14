@@ -19,7 +19,7 @@ import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/review-step';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, AlertTriangle, Save, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertTriangle, Save, ShieldAlert, RotateCcw } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +77,8 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
   const [isCheckingDuplicates, setIsCheckingDuplicates] = React.useState(false);
   const [duplicateResult, setDuplicateResult] = React.useState<DuplicateCheckResult | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [lastSubmissionFailed, setLastSubmissionFailed] = React.useState(false);
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
@@ -123,8 +125,6 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       adlaPages: [],
     },
   });
-  
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const clientType = form.watch('clientType');
   
@@ -161,56 +161,74 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
   const currentStep = steps[currentStepIndex];
 
+  // Auto-save effect
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      if (type === 'change' && !isSubmitting) {
+        const timer = setTimeout(() => {
+          const data = form.getValues();
+          const appId = existingApplication?.id || generateAccountId();
+          const clientName = data.organisationLegalName || `${data.individualFirstName || ''} ${data.individualSurname || ''}`.trim() || 'Untitled Draft';
+          
+          setApplications((prev) => {
+            const exists = prev.find(a => a.id === appId);
+            if (exists && exists.status === 'Draft') {
+              return prev.map(a => a.id === appId ? { 
+                ...a, 
+                clientName, 
+                details: data, 
+                lastUpdated: new Date().toISOString() 
+              } : a);
+            }
+            return prev;
+          });
+        }, 3000); // 3 second debounce
+        return () => clearTimeout(timer);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch, isSubmitting, existingApplication, setApplications]);
+
   const performDuplicateCheck = async (): Promise<boolean> => {
     const data = form.getValues();
     const currentId = existingApplication?.id;
 
     setIsCheckingDuplicates(true);
-    // Artificial delay for regulatory "scanning" feel
-    await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+        await new Promise(resolve => setTimeout(resolve, 800));
 
-    const checkFields = [
-      { label: 'National ID', value: data.individualIdNumber, field: 'individualIdNumber' },
-      { label: 'Incorporation Number', value: data.certificateOfIncorporationNumber, field: 'certificateOfIncorporationNumber' },
-      { label: 'Email Address', value: data.email, field: 'email' },
-      { label: 'Phone Number', value: data.individualMobileNumber || data.businessTelNumber, field: 'phone' },
-    ];
+        const checkFields = [
+          { label: 'National ID', value: data.individualIdNumber, field: 'individualIdNumber' },
+          { label: 'Incorporation Number', value: data.certificateOfIncorporationNumber, field: 'certificateOfIncorporationNumber' },
+          { label: 'Email Address', value: data.email, field: 'email' },
+          { label: 'Phone Number', value: data.individualMobileNumber || data.businessTelNumber, field: 'phone' },
+        ];
 
-    for (const check of checkFields) {
-      if (!check.value) continue;
+        for (const check of checkFields) {
+          if (!check.value) continue;
 
-      const duplicate = applications.find(app => {
-        if (app.id === currentId) return false;
-        const details = app.details;
-        
-        switch (check.field) {
-          case 'individualIdNumber':
-            return details.individualIdNumber === check.value;
-          case 'certificateOfIncorporationNumber':
-            return details.certificateOfIncorporationNumber === check.value;
-          case 'email':
-            return details.email?.toLowerCase() === check.value.toLowerCase();
-          case 'phone':
-            return details.individualMobileNumber === check.value || details.businessTelNumber === check.value;
-          default:
+          const duplicate = applications.find(app => {
+            if (app.id === currentId) return false;
+            const details = app.details;
+            
+            switch (check.field) {
+              case 'individualIdNumber': return details.individualIdNumber === check.value;
+              case 'certificateOfIncorporationNumber': return details.certificateOfIncorporationNumber === check.value;
+              case 'email': return details.email?.toLowerCase() === check.value.toLowerCase();
+              case 'phone': return details.individualMobileNumber === check.value || details.businessTelNumber === check.value;
+              default: return false;
+            }
+          });
+
+          if (duplicate) {
+            setDuplicateResult({ isDuplicate: true, field: check.label, value: check.value, existingId: duplicate.id });
             return false;
+          }
         }
-      });
-
-      if (duplicate) {
-        setDuplicateResult({
-          isDuplicate: true,
-          field: check.label,
-          value: check.value,
-          existingId: duplicate.id
-        });
+        return true;
+    } finally {
         setIsCheckingDuplicates(false);
-        return false;
-      }
     }
-
-    setIsCheckingDuplicates(false);
-    return true;
   };
 
   const next = async () => {
@@ -218,15 +236,10 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     const isValid = await form.trigger(stepFields);
     
     if (!isValid) {
-      toast({
-        title: "Incomplete",
-        description: "Please fill in all required boxes.",
-        variant: "destructive",
-      });
+      toast({ title: "Incomplete", description: "Please fill in all required boxes.", variant: "destructive" });
       return;
     }
 
-    // Trigger duplicate check on info steps
     if (currentStep.id === 'individual-info' || currentStep.id === 'corporate-info') {
       const isUnique = await performDuplicateCheck();
       if (!isUnique) return;
@@ -237,11 +250,8 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     }
   };
 
-
   const prev = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex((step) => step - 1);
-    }
+    if (currentStepIndex > 0) setCurrentStepIndex((step) => step - 1);
   };
 
   const handleSaveDraft = () => {
@@ -275,23 +285,19 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       return [draftApp, ...prev];
     });
 
-    toast({
-      title: "Draft Saved",
-      description: "You can continue this later from your dashboard.",
-    });
-    
+    toast({ title: "Draft Saved", description: "You can continue this later from your dashboard." });
     onCancel();
   };
   
   const onSubmit = async (data: OnboardingFormData) => {
-    // Final duplicate check before commit
-    const isUnique = await performDuplicateCheck();
-    if (!isUnique) return;
-
     setIsSubmitting(true);
+    setLastSubmissionFailed(false);
+    
     try {
-        const appId = existingApplication?.id || generateAccountId();
+        const isUnique = await performDuplicateCheck();
+        if (!isUnique) return;
 
+        const appId = existingApplication?.id || generateAccountId();
         const newApplication: Application = {
           id: appId,
           clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
@@ -314,30 +320,24 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
         
         setApplications((prev) => {
           const exists = prev.find(a => a.id === appId);
-          if (exists) {
-            return prev.map(a => a.id === appId ? newApplication : a);
-          }
+          if (exists) return prev.map(a => a.id === appId ? newApplication : a);
           return [newApplication, ...prev];
         });
 
-        const logEntry = {
+        setActivityLogs(prev => [{
           id: `log-${Date.now()}`,
           userId: user.id,
           userName: user.name,
           action: 'Account Created' as const,
           timestamp: new Date().toISOString()
-        };
-        setActivityLogs(prev => [logEntry, ...prev]);
+        }, ...prev]);
 
-        toast({
-          title: "Finished!",
-          description: `Sent request for ${newApplication.clientName}.`,
-        });
-        
+        toast({ title: "Finished!", description: `Sent request for ${newApplication.clientName}.` });
         await new Promise(resolve => setTimeout(resolve, 800));
         onCancel();
     } catch (error) {
         console.error("Submission error:", error);
+        setLastSubmissionFailed(true);
         toast({
             variant: 'destructive',
             title: 'Submission failed',
@@ -363,33 +363,31 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       <div className="flex flex-col md:flex-row min-h-screen bg-background">
         <ProgressTracker steps={steps} currentStepIndex={currentStepIndex} />
         <div className="flex-1 p-4 md:p-8">
-            <form
-              onSubmit={form.handleSubmit(onSubmit, onInvalid)}
-              className="h-full"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="h-full">
               <Card className="h-full flex flex-col shadow-lg border-primary/10">
                 <CardContent className="flex-1 py-6">
                   { CurrentStepComponent ? <CurrentStepComponent /> : <div>Step not found</div> }
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4 justify-between bg-muted/10">
-                  <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev}>
+                  <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev} disabled={isSubmitting}>
                      {currentStepIndex > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
                     {currentStepIndex === 0 ? 'Cancel' : 'Back'}
                   </Button>
                   
                   <div className="flex gap-2">
-                    <Button variant="secondary" type="button" onClick={handleSaveDraft} className="font-bold border-primary/20">
+                    <Button variant="secondary" type="button" onClick={handleSaveDraft} className="font-bold border-primary/20" disabled={isSubmitting}>
                       <Save className="mr-2 h-4 w-4" /> Save Draft
                     </Button>
                     
                     {currentStepIndex < steps.length - 1 && (
-                      <Button type="button" onClick={next} disabled={isCheckingDuplicates} className="font-bold">
+                      <Button type="button" onClick={next} disabled={isCheckingDuplicates || isSubmitting} className="font-bold">
                         {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Next'}
                       </Button>
                     )}
                     {currentStepIndex === steps.length - 1 && (
                       <Button type="submit" disabled={isSubmitting || isCheckingDuplicates} className="font-black px-8">
-                        {isSubmitting || isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Finish'}
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {lastSubmissionFailed ? <><RotateCcw className="mr-2 h-4 w-4" /> Retry</> : 'Finish'}
                       </Button>
                     )}
                   </div>

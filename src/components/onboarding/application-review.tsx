@@ -111,6 +111,8 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [application, setApplication] = React.useState(initialApplication);
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
+  const [isProcessingAction, setIsProcessingAction] = React.useState(false);
+  
   const printRef = React.useRef<HTMLDivElement>(null);
   const checklistRef = React.useRef<HTMLDivElement>(null);
   const resolutionRef = React.useRef<HTMLDivElement>(null);
@@ -145,15 +147,10 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   // Tiered Approval Signature States
   const [isSupervisorSigning, setIsSupervisorSigning] = React.useState(false);
-  const [isExecutiveSigning, setIsExecutiveSigning] = React.useState(false);
 
   const isReadOnly = ['Locked', 'Dispatched'].includes(application.status);
 
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
-  const isForeign = application.clientType === 'Individual Accounts' && 
-    application.details.nationality && 
-    !['zimbabwe', 'zimbabwean'].includes(application.details.nationality.toLowerCase().trim());
-
   const isCorporate = !isPersonalOrIndividual;
   const needsMandate = application.clientType !== 'Individual Accounts' && application.clientType !== 'Minors';
   
@@ -168,37 +165,36 @@ export default function ApplicationReview({ application: initialApplication, onB
     setApplication(prev => ({...prev, ...newData, details: { ...prev.details, ...(newData.details || {}) }}));
   };
 
-  const handleStatusChange = (nextStatus: ApplicationStatus, notes?: string) => {
+  const handleStatusChange = async (nextStatus: ApplicationStatus, notes?: string) => {
     if (!isValidTransition(application.status, nextStatus)) {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Transition',
-            description: `Cannot move from ${application.status} to ${nextStatus}.`
-        });
+        toast({ variant: 'destructive', title: 'Invalid Transition', description: `Cannot move from ${application.status} to ${nextStatus}.` });
         return;
     }
 
-    const newHistoryLog: HistoryLog = {
-      action: nextStatus,
-      user: user.name,
-      timestamp: new Date().toISOString(),
-      notes: notes,
-    };
-    
-    const updateData: Partial<Application> = { 
-        status: nextStatus, 
-        history: [...application.history, newHistoryLog] 
-    };
+    setIsProcessingAction(true);
+    try {
+        const newHistoryLog: HistoryLog = {
+          action: nextStatus,
+          user: user.name,
+          timestamp: new Date().toISOString(),
+          notes: notes,
+        };
+        
+        const updateData: Partial<Application> = { 
+            status: nextStatus, 
+            history: [...application.history, newHistoryLog] 
+        };
 
-    handleUpdateApplication(updateData);
+        handleUpdateApplication(updateData);
+        toast({ title: `State Updated: ${getStateLabel(nextStatus)}`, description: `Update successful.` });
 
-    toast({
-        title: `State Updated: ${getStateLabel(nextStatus)}`,
-        description: `Update for ${application.clientName} is successful.`,
-    });
-
-    if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review'].includes(nextStatus)) {
-        setTimeout(() => onBack(), 500);
+        if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review'].includes(nextStatus)) {
+            setTimeout(() => onBack(), 500);
+        }
+    } catch (err) {
+        toast({ variant: 'destructive', title: 'Action Failed', description: 'Could not update application status.' });
+    } finally {
+        setIsProcessingAction(false);
     }
   };
 
@@ -209,12 +205,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     const reader = new FileReader();
     reader.onload = (event) => {
         const url = event.target?.result as string;
-        setFcbReport({
-            type: 'FCB Report',
-            fileName: file.name,
-            url: url,
-            pageCount: 1
-        });
+        setFcbReport({ type: 'FCB Report', fileName: file.name, url: url, pageCount: 1 });
         toast({ title: "Report Attached", description: `${file.name} is ready.` });
     };
     reader.readAsDataURL(file);
@@ -222,85 +213,77 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleReturnToAsl = () => {
     if (!returnComment.trim()) {
-        toast({ variant: 'destructive', title: 'Note Needed', description: 'Please say why.' });
+        toast({ variant: 'destructive', title: 'Note Needed', description: 'Please provide instructions.' });
         return;
     }
     handleStatusChange('Pending Documents', returnComment);
     setIsReturning(false);
   };
 
-  const handleDispatchAccount = () => {
+  const handleDispatchAccount = async () => {
     if (dispatchBrAccountNumber.length < 5 || dispatchWalletAccountNumber.length < 5) {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Account Numbers',
-            description: 'Please enter both BR and Wallet account numbers.'
+        toast({ variant: 'destructive', title: 'Invalid Account Numbers', description: 'Please enter both BR and Wallet identifiers.' });
+        return;
+    }
+
+    setIsProcessingAction(true);
+    try {
+        const timestamp = new Date().toISOString();
+        handleUpdateApplication({
+            status: 'Dispatched',
+            details: {
+                ...application.details,
+                brAccountNumber: dispatchBrAccountNumber,
+                walletAccountNumber: dispatchWalletAccountNumber,
+                isDispatched: true,
+                accountOpeningDate: timestamp
+            },
+            history: [
+                ...application.history,
+                { action: 'Dispatched', user: user.name, timestamp, notes: `BR: ${dispatchBrAccountNumber} | Wallet: ${dispatchWalletAccountNumber}.` }
+            ]
         });
-        return;
+
+        toast({ title: "Accounts Dispatched", description: `Process complete for ${application.clientName}.` });
+        setIsDispatching(false);
+        setTimeout(() => onBack(), 500);
+    } finally {
+        setIsProcessingAction(false);
     }
-
-    const timestamp = new Date().toISOString();
-    
-    if (!isValidTransition(application.status, 'Dispatched')) {
-        toast({ variant: 'destructive', title: 'Action Blocked', description: 'State machine forbids dispatching at this stage.' });
-        return;
-    }
-
-    handleUpdateApplication({
-        status: 'Dispatched',
-        details: {
-            ...application.details,
-            brAccountNumber: dispatchBrAccountNumber,
-            walletAccountNumber: dispatchWalletAccountNumber,
-            isDispatched: true,
-            accountOpeningDate: timestamp
-        },
-        history: [
-            ...application.history,
-            { 
-                action: 'Dispatched', 
-                user: user.name, 
-                timestamp,
-                notes: `BR: ${dispatchBrAccountNumber} | Wallet: ${dispatchWalletAccountNumber}.`
-            }
-        ]
-    });
-
-    toast({
-        title: "Accounts Dispatched",
-        description: `Dispatch complete for ${application.clientName}.`
-    });
-    setIsDispatching(false);
-    setTimeout(() => onBack(), 500);
   };
 
   const handleFinalLock = () => {
     handleStatusChange('Locked', 'Record moved to permanent regulatory vault.');
   };
 
-  const handleSupervisorApproval = (signature: string) => {
+  const handleSupervisorApproval = async (signature: string) => {
     if (!activationCode || !brIdentity) {
         toast({ variant: 'destructive', title: 'Data Missing', description: 'Enter BR ID and Code.' });
         return;
     }
     
-    const timestamp = new Date().toISOString();
-    const notes = `Audit OK. Supervisor signed. BR Client ID: ${brIdentity}.`;
-    
-    handleUpdateApplication({ 
-        status: 'Approved', 
-        details: { 
-            ...application.details, 
-            activationCode, 
-            brIdentity,
-            supervisorSignature: signature,
-            supervisorSignatureTimestamp: timestamp
-        },
-        history: [...application.history, { action: 'Approved', user: user.name, timestamp, notes }] 
-    });
-    toast({ title: "Approved", description: "Record is ready for dispatch." });
-    setIsSupervisorSigning(false);
-    setTimeout(() => onBack(), 500);
+    setIsProcessingAction(true);
+    try {
+        const timestamp = new Date().toISOString();
+        const notes = `Audit OK. Supervisor signed. BR Client ID: ${brIdentity}.`;
+        
+        handleUpdateApplication({ 
+            status: 'Approved', 
+            details: { 
+                ...application.details, 
+                activationCode, 
+                brIdentity,
+                supervisorSignature: signature,
+                supervisorSignatureTimestamp: timestamp
+            },
+            history: [...application.history, { action: 'Approved', user: user.name, timestamp, notes }] 
+        });
+        toast({ title: "Approved", description: "Record is ready for dispatch." });
+        setIsSupervisorSigning(false);
+        setTimeout(() => onBack(), 500);
+    } finally {
+        setIsProcessingAction(false);
+    }
   };
 
   const handleRejection = () => {
@@ -321,10 +304,7 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleDelete = () => {
     setApplications(prev => prev.filter(app => app.id !== application.id));
-    toast({
-        title: "Deleted",
-        description: `${application.clientName} has been removed.`,
-    });
+    toast({ title: "Deleted", description: `${application.clientName} has been removed.` });
     setIsDeletingConfirmOpen(false);
     onBack();
   };
@@ -334,34 +314,39 @@ export default function ApplicationReview({ application: initialApplication, onB
     if (!summaryElement) return;
     setIsPrinting(true);
     
-    const { jsPDF } = await import('jspdf');
-    const html2canvas = (await import('html2canvas')).default;
+    try {
+        const { jsPDF } = await import('jspdf');
+        const html2canvas = (await import('html2canvas')).default;
 
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    let isFirstPage = true;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        let isFirstPage = true;
 
-    const addCanvasToPdf = async (element: HTMLElement) => {
-        const canvas = await html2canvas(element, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const addCanvasToPdf = async (element: HTMLElement) => {
+            const canvas = await html2canvas(element, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+            
+            if (!isFirstPage) pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio);
+            isFirstPage = false;
+        };
         
-        if (!isFirstPage) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio);
-        isFirstPage = false;
-    };
-    
-    if (resolutionRef.current && needsMandate) await addCanvasToPdf(resolutionRef.current);
-    if (isCorporate && checklistRef.current) await addCanvasToPdf(checklistRef.current);
-    if (isCorporate && agencyAgreementRef.current) await addCanvasToPdf(agencyAgreementRef.current);
-    if (isCorporate && adlaRef.current) await addCanvasToPdf(adlaRef.current);
-    await addCanvasToPdf(summaryElement);
+        if (resolutionRef.current && needsMandate) await addCanvasToPdf(resolutionRef.current);
+        if (isCorporate && checklistRef.current) await addCanvasToPdf(checklistRef.current);
+        if (isCorporate && agencyAgreementRef.current) await addCanvasToPdf(agencyAgreementRef.current);
+        if (isCorporate && adlaRef.current) await addCanvasToPdf(adlaRef.current);
+        await addCanvasToPdf(summaryElement);
 
-    pdf.save(`Onboarding-${application.clientName.replace(/\s+/g, '_')}.pdf`);
-    setIsPrinting(false);
+        pdf.save(`Onboarding-${application.clientName.replace(/\s+/g, '_')}.pdf`);
+    } catch (err) {
+        toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate PDF.' });
+    } finally {
+        setIsPrinting(false);
+    }
   };
 
   const handleGeminiVerification = async () => {
@@ -405,17 +390,13 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const renderActions = () => {
+    if (isProcessingAction) return <Button disabled className="font-black px-8"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> WORKING...</Button>;
+
     switch (user.role) {
       case 'asl':
-        if (application.status === 'Draft') {
-            return <Button onClick={() => handleStatusChange('In Progress')} className="bg-primary font-black px-8">START PROCESSING</Button>;
-        }
-        if (application.status === 'In Progress') {
-            return <Button onClick={() => handleStatusChange('Pending Documents')} className="bg-primary font-black px-8">FINALIZE CAPTURE</Button>;
-        }
-        if (application.status === 'Pending Documents') {
-            return <Button onClick={() => handleStatusChange('Under Review')} className="bg-primary font-black px-8">SUBMIT FOR REVIEW</Button>;
-        }
+        if (application.status === 'Draft') return <Button onClick={() => handleStatusChange('In Progress')} className="bg-primary font-black px-8">START PROCESSING</Button>;
+        if (application.status === 'In Progress') return <Button onClick={() => handleStatusChange('Pending Documents')} className="bg-primary font-black px-8">FINALIZE CAPTURE</Button>;
+        if (application.status === 'Pending Documents') return <Button onClick={() => handleStatusChange('Under Review')} className="bg-primary font-black px-8">SUBMIT FOR REVIEW</Button>;
         return null;
       case 'back-office':
         if (application.status === 'Under Review') {
@@ -426,12 +407,8 @@ export default function ApplicationReview({ application: initialApplication, onB
                 </div>
             );
         }
-        if (application.status === 'Approved') {
-            return <Button onClick={() => setIsDispatching(true)} className="bg-primary font-black px-8"><Send className="mr-2 h-4 w-4" /> DISPATCH ACCOUNTS</Button>;
-        }
-        if (application.status === 'Dispatched') {
-            return <Button onClick={handleFinalLock} className="bg-foreground text-background font-black px-8"><ShieldCheck className="mr-2 h-4 w-4" /> LOCK RECORD</Button>;
-        }
+        if (application.status === 'Approved') return <Button onClick={() => setIsDispatching(true)} className="bg-primary font-black px-8"><Send className="mr-2 h-4 w-4" /> DISPATCH ACCOUNTS</Button>;
+        if (application.status === 'Dispatched') return <Button onClick={handleFinalLock} className="bg-foreground text-background font-black px-8"><ShieldCheck className="mr-2 h-4 w-4" /> LOCK RECORD</Button>;
         return null;
       case 'supervisor':
       case 'management':
@@ -456,14 +433,14 @@ export default function ApplicationReview({ application: initialApplication, onB
     <FormProvider {...form}>
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <Button variant="ghost" onClick={onBack} className="hover:bg-muted text-muted-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
+              <Button variant="ghost" onClick={onBack} className="hover:bg-muted text-muted-foreground" disabled={isProcessingAction}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
               <div className="flex items-center gap-3 w-full md:w-auto">
                   {canDelete && (
-                      <Button variant="destructive" onClick={() => setIsDeletingConfirmOpen(true)} className="font-bold shadow-md">
+                      <Button variant="destructive" onClick={() => setIsDeletingConfirmOpen(true)} className="font-bold shadow-md" disabled={isProcessingAction}>
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                       </Button>
                   )}
-                  <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting} className="font-bold border-primary/20"><Download className="mr-2 h-4 w-4" />{isPrinting ? 'Saving...' : 'Export'}</Button>
+                  <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting || isProcessingAction} className="font-bold border-primary/20"><Download className="mr-2 h-4 w-4" />{isPrinting ? 'Saving...' : 'Export'}</Button>
                   {renderActions()}
               </div>
           </div>
@@ -518,7 +495,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                             size="sm" 
                             className="bg-white text-primary font-black h-10 px-6"
                             onClick={handleGeminiVerification}
-                            disabled={isAiProcessing || application.documents.length < 2}
+                            disabled={isAiProcessing || application.documents.length < 2 || isProcessingAction}
                           >
                             {isAiProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-primary" />}
                             AI Check
@@ -527,7 +504,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-4">
                               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">FCB Status</Label>
-                              <Select value={selectedFcbStatus} onValueChange={(v: FcbStatus) => setSelectedFcbStatus(v)}>
+                              <Select value={selectedFcbStatus} onValueChange={(v: FcbStatus) => setSelectedFcbStatus(v)} disabled={isProcessingAction}>
                                   <SelectTrigger className="h-12 bg-background border-white/10 text-lg font-bold">
                                       <SelectValue placeholder="Set FCB Status..." />
                                   </SelectTrigger>
@@ -546,6 +523,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                                       variant="outline" 
                                       className="flex-1 h-12 font-black border-white/10"
                                       onClick={() => fileInputRef.current?.click()}
+                                      disabled={isProcessingAction}
                                   >
                                       <Upload className="mr-2 h-4 w-4" /> {fcbReport ? 'Replace Report' : 'Attach Report'}
                                   </Button>
@@ -577,8 +555,8 @@ export default function ApplicationReview({ application: initialApplication, onB
                                   <DetailItem label="Lifecycle State" value={getStateLabel(application.status)} />
                               </div>
                               <div className="space-y-10">
-                                {isPersonalOrIndividual ? <StepIndividualInfo disabled={isReadOnly} /> : <StepCorporateInfo disabled={isReadOnly} />}
-                                {needsMandate && <StepSignatories disabled={isReadOnly} />}
+                                {isPersonalOrIndividual ? <StepIndividualInfo disabled={isReadOnly || isProcessingAction} /> : <StepCorporateInfo disabled={isReadOnly || isProcessingAction} />}
+                                {needsMandate && <StepSignatories disabled={isReadOnly || isProcessingAction} />}
                               </div>
                           </CardContent>
                       </Card>
@@ -616,7 +594,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                                 </div>
                             </CardContent>
                         </Card>
-                        {!isReadOnly && <StepDocumentUpload disabled={isReadOnly} />}
+                        {!isReadOnly && <StepDocumentUpload disabled={isReadOnly || isProcessingAction} />}
                     </div>
                   </TabsContent>
                   
@@ -675,8 +653,8 @@ export default function ApplicationReview({ application: initialApplication, onB
                                   {application.status !== 'Locked' && (
                                       <div className="space-y-4 pt-8 border-t border-white/5 bg-muted/5 p-6 rounded-2xl">
                                           <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">New Audit Note</Label>
-                                          <Textarea placeholder="Type internal note..." value={newComment} onChange={(e) => setNewComment(e.target.value)} className="min-h-[120px] rounded-xl" />
-                                          <Button onClick={handleAddComment} className="w-full font-black uppercase tracking-widest h-12">Post Note</Button>
+                                          <Textarea placeholder="Type internal note..." value={newComment} onChange={(e) => setNewComment(e.target.value)} className="min-h-[120px] rounded-xl" disabled={isProcessingAction} />
+                                          <Button onClick={handleAddComment} className="w-full font-black uppercase tracking-widest h-12" disabled={isProcessingAction}>Post Note</Button>
                                       </div>
                                   )}
                               </div>
@@ -708,7 +686,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                 </div>
                 <AlertDialogFooter className="gap-3">
                     <AlertDialogCancel className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleRejection} className="h-12 rounded-xl bg-destructive text-destructive-foreground font-black px-8" disabled={!rejectionReason || !rejectionComment}>Reject</AlertDialogAction>
+                    <AlertDialogAction onClick={handleRejection} className="h-12 rounded-xl bg-destructive text-destructive-foreground font-black px-8" disabled={!rejectionReason || !rejectionComment || isProcessingAction}>Reject</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -727,7 +705,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                 </div>
                 <AlertDialogFooter className="gap-3">
                     <AlertDialogCancel onClick={() => { setIsReturning(false); setReturnComment(''); }} className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleReturnToAsl} className="h-12 rounded-xl bg-amber-600 text-white font-black px-8" disabled={!returnComment.trim()}>Send Back</AlertDialogAction>
+                    <AlertDialogAction onClick={handleReturnToAsl} className="h-12 rounded-xl bg-amber-600 text-white font-black px-8" disabled={!returnComment.trim() || isProcessingAction}>Send Back</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -776,8 +754,11 @@ export default function ApplicationReview({ application: initialApplication, onB
                     </div>
                 </div>
                 <DialogFooter className="gap-3 sm:flex-col">
-                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-black uppercase bg-primary text-primary-foreground">DISPATCH ACCOUNTS</Button>
-                    <Button variant="ghost" onClick={() => setIsDispatching(false)} className="w-full h-10 font-bold">Cancel</Button>
+                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-black uppercase bg-primary text-primary-foreground" disabled={isProcessingAction}>
+                        {isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        DISPATCH ACCOUNTS
+                    </Button>
+                    <Button variant="ghost" onClick={() => setIsDispatching(false)} className="w-full h-10 font-bold" disabled={isProcessingAction}>Cancel</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
