@@ -75,21 +75,26 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
 
       if (fileType === 'image') {
         setIsValidating(true);
-        const result = await validateImageQualityHeuristic(dataUri);
-        setIsValidating(false);
-
-        if (!result.isValid) {
-          toast({
-            variant: 'destructive',
-            title: 'Quality Check Failed',
-            description: result.reason || 'Image not clear. Please retake photo.',
-          });
-          return;
+        try {
+            const result = await validateImageQualityHeuristic(dataUri);
+            if (!result.isValid) {
+              toast({
+                variant: 'destructive',
+                title: 'Quality Check Failed',
+                description: result.reason || 'Image not clear. Please retake photo.',
+              });
+              return;
+            }
+        } finally {
+            setIsValidating(false);
         }
       } else {
         setIsValidating(true);
-        pageCount = await countPdfPages(dataUri);
-        setIsValidating(false);
+        try {
+            pageCount = await countPdfPages(dataUri);
+        } finally {
+            setIsValidating(false);
+        }
       }
 
       addPage({ source: 'upload', dataUri, file, type: fileType, documentType, pageCount });
@@ -146,19 +151,20 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
         
         stopScan();
         setIsValidating(true);
-        const result = await validateImageQualityHeuristic(dataUri);
-        setIsValidating(false);
-        
-        if (!result.isValid) {
-          toast({
-            variant: 'destructive',
-            title: 'Quality Check Failed',
-            description: result.reason || 'Image not clear. Please retake photo.',
-          });
-          return;
+        try {
+            const result = await validateImageQualityHeuristic(dataUri);
+            if (!result.isValid) {
+              toast({
+                variant: 'destructive',
+                title: 'Quality Check Failed',
+                description: result.reason || 'Image not clear. Please retake photo.',
+              });
+              return;
+            }
+            addPage({ source: 'scan', dataUri, type: 'image', documentType, pageCount: 1 });
+        } finally {
+            setIsValidating(false);
         }
-        
-        addPage({ source: 'scan', dataUri, type: 'image', documentType, pageCount: 1 });
       }
     }
   };
@@ -183,65 +189,74 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
 
     setIsSubmitting(true);
     
-    const groupedPages = pages.reduce((acc, page) => {
-        if (!acc[page.documentType]) acc[page.documentType] = [];
-        acc[page.documentType].push(page.dataUri);
-        return acc;
-    }, {} as Record<string, string[]>);
+    try {
+        const groupedPages = pages.reduce((acc, page) => {
+            if (!acc[page.documentType]) acc[page.documentType] = [];
+            acc[page.documentType].push(page.dataUri);
+            return acc;
+        }, {} as Record<string, string[]>);
 
-    const mergedDocuments = await Promise.all(
-        Object.entries(groupedPages).map(async ([type, typePages]) => {
-            const result = await mergeToPdf(typePages);
-            return {
-                type,
-                fileName: `${type.toLowerCase().replace(/\s/g, '_')}.pdf`,
-                url: result.url,
-                pages: typePages,
-                pageCount: result.count
-            };
-        })
-    );
-    
-    const newApplication = {
-      id: generateAccountId(),
-      clientName: clientName.trim(),
-      clientType: clientType,
-      status: 'Archived',
-      submittedDate: format(new Date(), 'yyyy-MM-dd'),
-      lastUpdated: new Date().toISOString(),
-      submittedBy: user.name,
-      region: 'N/A',
-      fcbStatus: 'Inclusive',
-      details: {
-        clientType: clientType,
-        region: 'N/A',
-        organisationLegalName: clientName,
-        individualFirstName: clientName,
-        physicalAddress: 'N/A',
-        individualAddress: 'N/A',
-        capturedDocuments: mergedDocuments,
-        agreedToTerms: true,
-        signature: user.name
-      },
-      signatories: [],
-      documents: mergedDocuments,
-      history: [
-        { action: 'Digitalized Application', user: user.name, timestamp: new Date().toISOString(), notes: `Digitalized Application from paper record. Account Type: ${clientType}` },
-      ],
-      comments: [],
-    } as Application;
+        const mergedDocuments = await Promise.all(
+            Object.entries(groupedPages).map(async ([type, typePages]) => {
+                const result = await mergeToPdf(typePages);
+                return {
+                    type,
+                    fileName: `${type.toLowerCase().replace(/\s/g, '_')}.pdf`,
+                    url: result.url,
+                    pages: typePages,
+                    pageCount: result.count
+                };
+            })
+        );
+        
+        const newApplication = {
+          id: generateAccountId(),
+          clientName: clientName.trim(),
+          clientType: clientType,
+          status: 'Archived',
+          submittedDate: format(new Date(), 'yyyy-MM-dd'),
+          lastUpdated: new Date().toISOString(),
+          submittedBy: user.name,
+          region: 'N/A',
+          fcbStatus: 'Inclusive',
+          details: {
+            clientType: clientType,
+            region: 'N/A',
+            organisationLegalName: clientName,
+            individualFirstName: clientName,
+            physicalAddress: 'N/A',
+            individualAddress: 'N/A',
+            capturedDocuments: mergedDocuments,
+            agreedToTerms: true,
+            signature: user.name
+          },
+          signatories: [],
+          documents: mergedDocuments,
+          history: [
+            { action: 'Digitalized Application', user: user.name, timestamp: new Date().toISOString(), notes: `Digitalized Application from paper record. Account Type: ${clientType}` },
+          ],
+          comments: [],
+        } as Application;
 
-    setApplications(prev => [newApplication, ...prev]);
+        setApplications(prev => [newApplication, ...prev]);
 
-    toast({
-      title: "Application Archived!",
-      description: `The application for ${clientName} has been successfully digitized and saved.`,
-    });
+        toast({
+          title: "Application Archived!",
+          description: `The application for ${clientName} has been successfully digitized and saved.`,
+        });
 
-    setTimeout(() => {
-        setIsSubmitting(false);
+        await new Promise(resolve => setTimeout(resolve, 800));
         onCancel();
-    }, 1000);
+    } catch (error) {
+        console.error("Digitization error:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Submission failed',
+            description: "Submission failed. Please try again or contact support.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const isRequirementMet = (reqName: string) => {
@@ -260,7 +275,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       />
 
       <div className="mb-6">
-          <Button variant="outline" type="button" onClick={onCancel} disabled={isValidating}>
+          <Button variant="outline" type="button" onClick={onCancel} disabled={isValidating || isSubmitting}>
              <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Button>
@@ -268,12 +283,12 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
             <Card className="relative overflow-hidden">
-                {isValidating && (
+                {(isValidating || isSubmitting) && (
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 text-center">
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                     <div className="space-y-1">
-                      <p className="text-xl font-black uppercase tracking-tight">Processing File</p>
-                      <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">Checking quality & detecting pages...</p>
+                      <p className="text-xl font-black uppercase tracking-tight">{isSubmitting ? 'Archiving...' : 'Processing File'}</p>
+                      <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">{isSubmitting ? 'Finalizing legal record...' : 'Checking quality & detecting pages...'}</p>
                     </div>
                   </div>
                 )}
@@ -287,7 +302,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="client-type">Account Type</Label>
-                        <Select value={clientType} onValueChange={setClientType} disabled={isValidating}>
+                        <Select value={clientType} onValueChange={setClientType} disabled={isValidating || isSubmitting}>
                             <SelectTrigger id="client-type">
                                 <SelectValue placeholder="Select account type..." />
                             </SelectTrigger>
@@ -305,7 +320,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                         placeholder="Enter name on application"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
-                        disabled={isValidating}
+                        disabled={isValidating || isSubmitting}
                         />
                     </div>
                 </div>
@@ -367,7 +382,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
                             <div className="space-y-2">
                                 <Label htmlFor="doc-type" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Document Type</Label>
-                                <Select value={documentType} onValueChange={setDocumentType} disabled={isValidating}>
+                                <Select value={documentType} onValueChange={setDocumentType} disabled={isValidating || isSubmitting}>
                                     <SelectTrigger id="doc-type" className="h-12 bg-background border-primary/20">
                                         <SelectValue placeholder="Select type..." />
                                     </SelectTrigger>
@@ -380,10 +395,10 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                 </Select>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={startScan} disabled={!clientType || isValidating}>
+                                <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={startScan} disabled={!clientType || isValidating || isSubmitting}>
                                     <Camera className="mr-2 h-4 w-4 text-primary"/>Add Scan
                                 </Button>
-                                <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => fileInputRef.current?.click()} disabled={!clientType || isValidating}>
+                                <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => fileInputRef.current?.click()} disabled={!clientType || isValidating || isSubmitting}>
                                     <Upload className="mr-2 h-4 w-4 text-primary"/>Add File
                                 </Button>
                             </div>
@@ -422,7 +437,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                         <div 
                                             key={req.document} 
                                             className={`p-4 rounded-xl border transition-all cursor-pointer shadow-sm ${met ? 'bg-green-500/5 border-green-500/20' : 'bg-card hover:border-primary/50'}`}
-                                            onClick={() => !isValidating && setDocumentType(req.document)}
+                                            onClick={() => !isValidating && !isSubmitting && setDocumentType(req.document)}
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex-1">

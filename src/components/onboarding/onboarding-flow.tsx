@@ -174,23 +174,26 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     }
 
     setIsCheckingDuplicates(true);
-    await new Promise(res => setTimeout(res, 600)); 
-    setIsCheckingDuplicates(false);
+    try {
+        await new Promise(res => setTimeout(res, 600)); 
+        const duplicate = applications.find(app => 
+          app.clientName.toLowerCase() === nameToCheck.toLowerCase() && 
+          app.id !== existingApplication?.id
+        );
 
-    const duplicate = applications.find(app => 
-      app.clientName.toLowerCase() === nameToCheck.toLowerCase() && 
-      app.id !== existingApplication?.id
-    );
-
-    if (duplicate) {
-        setDuplicateInfo({ 
-          isDuplicate: true, 
-          message: `'${nameToCheck}' is already in the system.` 
-        });
-        return false;
+        if (duplicate) {
+            setDuplicateInfo({ 
+              isDuplicate: true, 
+              message: `'${nameToCheck}' is already in the system.` 
+            });
+            return false;
+        }
+        return true;
+    } catch (e) {
+        return true;
+    } finally {
+        setIsCheckingDuplicates(false);
     }
-
-    return true;
 };
 
   const next = async () => {
@@ -200,7 +203,6 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     if (!isValid) {
       const errors = form.formState.errors;
       
-      // Strict Check: Display the specific document validation error if it exists
       if (currentStep.id === 'document-upload' && errors.capturedDocuments) {
         toast({
           variant: 'destructive',
@@ -275,56 +277,65 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     onCancel();
   };
   
-  const onSubmit = (data: OnboardingFormData) => {
+  const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
-    const appId = existingApplication?.id || generateAccountId();
+    try {
+        const appId = existingApplication?.id || generateAccountId();
 
-    const newApplication: Application = {
-      id: appId,
-      clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
-      clientType: data.clientType,
-      region: data.region,
-      status: 'Submitted',
-      submittedDate: existingApplication?.submittedDate || format(new Date(), 'yyyy-MM-dd'),
-      lastUpdated: new Date().toISOString(),
-      submittedBy: user.name,
-      fcbStatus: existingApplication?.fcbStatus || 'Inclusive',
-      details: data,
-      signatories: data.signatories || [],
-      documents: data.capturedDocuments || [],
-      history: [
-        ...(existingApplication?.history || []),
-        { action: 'Request Sent', user: user.name, timestamp: new Date().toISOString() },
-      ],
-      comments: existingApplication?.comments || [],
-    };
-    
-    setApplications((prev) => {
-      const exists = prev.find(a => a.id === appId);
-      if (exists) {
-        return prev.map(a => a.id === appId ? newApplication : a);
-      }
-      return [newApplication, ...prev];
-    });
+        const newApplication: Application = {
+          id: appId,
+          clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
+          clientType: data.clientType,
+          region: data.region,
+          status: 'Submitted',
+          submittedDate: existingApplication?.submittedDate || format(new Date(), 'yyyy-MM-dd'),
+          lastUpdated: new Date().toISOString(),
+          submittedBy: user.name,
+          fcbStatus: existingApplication?.fcbStatus || 'Inclusive',
+          details: data,
+          signatories: data.signatories || [],
+          documents: data.capturedDocuments || [],
+          history: [
+            ...(existingApplication?.history || []),
+            { action: 'Request Sent', user: user.name, timestamp: new Date().toISOString() },
+          ],
+          comments: existingApplication?.comments || [],
+        };
+        
+        setApplications((prev) => {
+          const exists = prev.find(a => a.id === appId);
+          if (exists) {
+            return prev.map(a => a.id === appId ? newApplication : a);
+          }
+          return [newApplication, ...prev];
+        });
 
-    const logEntry = {
-      id: `log-${Date.now()}`,
-      userId: user.id,
-      userName: user.name,
-      action: 'Account Created' as const,
-      timestamp: new Date().toISOString()
-    };
-    setActivityLogs(prev => [logEntry, ...prev]);
+        const logEntry = {
+          id: `log-${Date.now()}`,
+          userId: user.id,
+          userName: user.name,
+          action: 'Account Created' as const,
+          timestamp: new Date().toISOString()
+        };
+        setActivityLogs(prev => [logEntry, ...prev]);
 
-    toast({
-      title: "Finished!",
-      description: `Sent request for ${newApplication.clientName}.`,
-    });
-    
-     setTimeout(() => {
-        setIsSubmitting(false);
+        toast({
+          title: "Finished!",
+          description: `Sent request for ${newApplication.clientName}.`,
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 800));
         onCancel();
-    }, 1000);
+    } catch (error) {
+        console.error("Submission error:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Submission failed',
+            description: "Submission failed. Please try again or contact support.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const onInvalid = () => {
