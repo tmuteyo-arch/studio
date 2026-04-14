@@ -198,6 +198,18 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     const isValid = await form.trigger(stepFields);
     
     if (!isValid) {
+      const errors = form.formState.errors;
+      
+      // Strict Check: Display the specific document validation error if it exists
+      if (currentStep.id === 'document-upload' && errors.capturedDocuments) {
+        toast({
+          variant: 'destructive',
+          title: 'Documents Required',
+          description: "Please upload and complete scanning of all required documents before submission.",
+        });
+        return;
+      }
+
       toast({
         title: "Incomplete",
         description: "Please fill in all required boxes.",
@@ -316,11 +328,20 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   };
 
   const onInvalid = () => {
-    toast({
-      variant: 'destructive',
-      title: 'Missing Details',
-      description: 'Please check the review page for errors before finishing.',
-    });
+    const errors = form.formState.errors;
+    if (errors.capturedDocuments) {
+      toast({
+        variant: 'destructive',
+        title: 'Documents Missing',
+        description: "Please upload and complete scanning of all required documents before submission.",
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Details',
+        description: 'Please check the review page for errors before finishing.',
+      });
+    }
   };
 
   const CurrentStepComponent = StepComponents[currentStep.id];

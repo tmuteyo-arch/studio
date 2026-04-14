@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { type FormState as RHFFormState } from 'react-hook-form';
+import { getDocumentRequirements } from './document-requirements';
 
 export type FormState<TFieldValues extends Record<string, any>> = RHFFormState<TFieldValues>;
 
@@ -144,6 +145,23 @@ export const OnboardingFormSchema = z.object({
         code: z.ZodIssueCode.custom,
         path: ['tinNumber'],
         message: 'TIN Number is mandatory for all account types.',
+      });
+    }
+
+    // Document Validation Rule: All required documents must be present and have pages
+    const requiredDocs = getDocumentRequirements(data.clientType);
+    const capturedDocs = data.capturedDocuments || [];
+    
+    const missingDocs = requiredDocs.filter(req => {
+      const captured = capturedDocs.find(cd => cd.type === req.document);
+      return !captured || !captured.pages || captured.pages.length === 0;
+    });
+
+    if (missingDocs.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['capturedDocuments'],
+        message: 'Please upload and complete scanning of all required documents before submission.',
       });
     }
 
