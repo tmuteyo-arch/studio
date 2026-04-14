@@ -6,26 +6,13 @@ import type { OnboardingFormData, Signatory } from './types';
 
 export type ApplicationStatus =
   | 'Draft'
-  | 'Submitted'
-  | 'In Review'
-  | 'Pending Supervisor'
-  | 'Pending Compliance'
+  | 'In Progress'
+  | 'Pending Documents'
+  | 'Under Review'
   | 'Approved'
-  | 'Signed'
   | 'Rejected'
-  | 'Returned to ATL'
-  | 'Archived'
-  | 'Sent to Back Office'
-  | 'Claimed by ASL'
-  | 'Rejected by ASL'
-  | 'Sent to Supervisor'
-  | 'Returned to ASL'
-  | 'Returned to Back Office'
-  | 'Sent to Risk & Compliance'
-  | 'Approved by Supervisor'
-  | 'Rejected by Supervisor'
-  | 'Approved by Compliance'
-  | 'Pending Executive Signature';
+  | 'Dispatched'
+  | 'Locked';
   
 export type FcbStatus = 'Inclusive' | 'Good' | 'Adverse' | 'PEP' | 'Prior Adverse' | 'AML' | 'Green' | 'Fair';
 
@@ -34,6 +21,7 @@ export type Document = {
   fileName: string;
   url: string;
   pages?: string[]; // Array of data URIs for multi-page support
+  pageCount?: number;
 }
 
 export type HistoryLog = {
@@ -81,7 +69,7 @@ const initialApplications: Application[] = [
     id: 'CUS-X9J2K',
     clientName: 'A.J Madondo investments',
     clientType: 'Private Limited (Pvt) Company',
-    status: 'Pending Supervisor',
+    status: 'Under Review',
     submittedDate: '2024-05-15',
     lastUpdated: '2024-05-20T10:00:00Z',
     submittedBy: 'CHIDO',
@@ -103,6 +91,7 @@ const initialApplications: Application[] = [
         document2Type: 'CR14',
         agreedToTerms: true,
         signature: 'CHIDO ASL',
+        tinNumber: 'TIN-123456',
     },
     signatories: [{
         surname: 'Madondo',
@@ -112,13 +101,13 @@ const initialApplications: Application[] = [
         signature: 'A.J Madondo',
     }],
     documents: [
-      { type: 'Certificate of Incorporation', fileName: 'cert_incorp.pdf', url: '#' },
-      { type: 'CR14', fileName: 'cr14.pdf', url: '#' },
+      { type: 'Certificate of Incorporation', fileName: 'cert_incorp.pdf', url: '#', pageCount: 1 },
+      { type: 'CR14', fileName: 'cr14.pdf', url: '#', pageCount: 2 },
     ],
     history: [
-        { action: 'Submitted', user: 'CHIDO', timestamp: '2024-05-15T09:00:00Z' },
-        { action: 'BR Identity Created', user: 'TENDAI', timestamp: '2024-05-20T09:30:00Z', notes: 'BR Identity: BR-ID-99283' },
-        { action: 'Pending Supervisor', user: 'TENDAI', timestamp: '2024-05-20T10:00:00Z', notes: 'Documents verified. Escalating for final sign-off.' }
+        { action: 'Draft', user: 'CHIDO', timestamp: '2024-05-15T09:00:00Z' },
+        { action: 'In Progress', user: 'CHIDO', timestamp: '2024-05-15T09:30:00Z' },
+        { action: 'Under Review', user: 'CHIDO', timestamp: '2024-05-20T09:30:00Z', notes: 'Documents verified. Escalating for audit.' }
     ],
     comments: [],
     },
@@ -126,7 +115,7 @@ const initialApplications: Application[] = [
     id: 'CUS-B4L7M',
     clientName: 'Beloved T Garadzimba',
     clientType: 'Individual Accounts',
-    status: 'Submitted',
+    status: 'In Progress',
     submittedDate: '2024-05-21',
     lastUpdated: '2024-05-21T08:00:00Z',
     submittedBy: 'Customer',
@@ -146,10 +135,11 @@ const initialApplications: Application[] = [
         document2Type: 'Proof of Residence',
         agreedToTerms: true,
         signature: 'Beloved Garadzimba',
+        tinNumber: 'TIN-998877',
     },
     signatories: [],
     documents: [],
-    history: [{ action: 'Customer Portal Submission', user: 'Customer', timestamp: '2024-05-21T08:00:00Z' }],
+    history: [{ action: 'Draft', user: 'Customer', timestamp: '2024-05-21T08:00:00Z' }],
     comments: [],
     }
 ];
@@ -162,7 +152,7 @@ const safeStorage = createJSONStorage<any>(() =>
   }
 );
 
-export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v2', initialApplications, safeStorage);
+export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v3', initialApplications, safeStorage);
 export const activeUserAtom = atom<any>(null);
 export const activityLogsAtom = atomWithStorage<UserActivityLog[]>('innbucks_activity_logs_v1', [
   { id: 'log-1', userId: 'asl-1', userName: 'CHIDO', action: 'Login', timestamp: new Date(Date.now() - 3600000).toISOString() },
