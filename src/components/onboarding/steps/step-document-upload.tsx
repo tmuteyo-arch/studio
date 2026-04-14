@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus, ShieldAlert, Database } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -15,12 +15,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { mergeToPdf, countPdfPages } from '@/lib/pdf-utils';
+import { mergeToPdf, countPdfPages, validatePdf, getBase64Size } from '@/lib/pdf-utils';
 
 type DocumentState = {
   documentType: string;
   pages: string[]; // array of data URIs
   pageCounts: number[]; // track individual page counts for display
+  sizes: number[];
+  corruptionStatus: boolean[];
 };
 
 export default function StepDocumentUpload({ disabled }: { disabled?: boolean }) {
@@ -51,7 +53,9 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       initialDocs[req.document] = { 
         documentType: req.document, 
         pages: existing?.pages || (existing ? [existing.url] : []),
-        pageCounts: existing?.pages?.map(p => p.startsWith('data:application/pdf') ? (existing.pageCount || 1) : 1) || []
+        pageCounts: existing?.pages?.map(p => p.startsWith('data:application/pdf') ? (existing.pageCount || 1) : 1) || [],
+        sizes: existing?.pages?.map(p => getBase64Size(p)) || [],
+        corruptionStatus: existing?.pages?.map(() => false) || []
       };
     });
     setDocuments(initialDocs);
@@ -73,7 +77,8 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                         fileName: `${doc.documentType.toLowerCase().replace(/\s/g, '_')}.pdf`,
                         url: result.url,
                         pages: doc.pages,
-                        pageCount: result.count
+                        pageCount: result.count,
+                        fileSize: result.size
                     };
                 })
         );
@@ -112,36 +117,43 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       const dataUri = event.target?.result as string;
       const isImage = file.type.startsWith('image/');
       let pageCount = 1;
+      let corruptionError = null;
 
+      setIsValidating(documentType);
+      
       if (isImage) {
-        setIsValidating(documentType);
         const result = await validateImageQualityHeuristic(dataUri);
-        setIsValidating(null);
-
         if (!result.isValid) {
-          toast({
-            variant: 'destructive',
-            title: 'Quality Check Failed',
-            description: result.reason || 'Image not clear. Please retake photo.',
-          });
+          toast({ variant: 'destructive', title: 'Quality Check Failed', description: result.reason || 'Image not clear.' });
+          setIsValidating(null);
           return;
         }
       } else {
-        // PDF Auto-detection
-        setIsValidating(documentType);
+        const validation = await validatePdf(dataUri);
+        if (!validation.isValid) {
+          corruptionError = validation.error;
+          toast({ variant: 'destructive', title: 'Corruption Detected', description: validation.error });
+          setIsValidating(null);
+          return;
+        }
         pageCount = await countPdfPages(dataUri);
-        setIsValidating(null);
       }
 
+      const size = getBase64Size(dataUri);
+      
       setDocuments(prev => ({
         ...prev,
         [documentType]: { 
             ...prev[documentType], 
             pages: [...prev[documentType].pages, dataUri],
-            pageCounts: [...prev[documentType].pageCounts, pageCount]
+            pageCounts: [...prev[documentType].pageCounts, pageCount],
+            sizes: [...prev[documentType].sizes, size],
+            corruptionStatus: [...prev[documentType].corruptionStatus, !!corruptionError]
         }
       }));
-      toast({ title: 'Added', description: `Page(s) added successfully (${pageCount} total).` });
+      
+      setIsValidating(null);
+      toast({ title: 'Added', description: `Entry added successfully (${pageCount} total pages, ${(size / 1024).toFixed(1)} KB).` });
       
       if (fileInputRef.current) fileInputRef.current.value = '';
       setActiveUploadType(null);
@@ -156,15 +168,21 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
         [documentType]: { 
             ...prev[documentType], 
             pages: prev[documentType].pages.filter((_, i) => i !== pageIndex),
-            pageCounts: prev[documentType].pageCounts.filter((_, i) => i !== pageIndex)
+            pageCounts: prev[documentType].pageCounts.filter((_, i) => i !== pageIndex),
+            sizes: prev[documentType].sizes.filter((_, i) => i !== pageIndex),
+            corruptionStatus: prev[documentType].corruptionStatus.filter((_, i) => i !== pageIndex)
         }
     }));
   };
 
   const movePage = (documentType: string, from: number, to: number) => {
     if (disabled) return;
-    const pages = [...documents[documentType].pages];
-    const counts = [...documents[documentType].pageCounts];
+    const doc = documents[documentType];
+    const pages = [...doc.pages];
+    const counts = [...doc.pageCounts];
+    const sizes = [...doc.sizes];
+    const corrupts = [...doc.corruptionStatus];
+    
     if (to < 0 || to >= pages.length) return;
     
     const pageItem = pages.splice(from, 1)[0];
@@ -173,9 +191,15 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     const countItem = counts.splice(from, 1)[0];
     counts.splice(to, 0, countItem);
 
+    const sizeItem = sizes.splice(from, 1)[0];
+    sizes.splice(to, 0, sizeItem);
+
+    const corruptItem = corrupts.splice(from, 1)[0];
+    corrupts.splice(to, 0, corruptItem);
+
     setDocuments(prev => ({
         ...prev,
-        [documentType]: { ...prev[documentType], pages, pageCounts: counts }
+        [documentType]: { ...prev[documentType], pages, pageCounts: counts, sizes, corruptionStatus: corrupts }
     }));
   };
 
@@ -214,25 +238,25 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
             setIsValidating(docType);
             
             const result = await validateImageQualityHeuristic(dataUri);
-            setIsValidating(null);
-            
             if (!result.isValid) {
-              toast({
-                variant: 'destructive',
-                title: 'Quality Check Failed',
-                description: 'Image not clear. Please retake photo.',
-              });
+              toast({ variant: 'destructive', title: 'Quality Check Failed', description: 'Image not clear.' });
+              setIsValidating(null);
               return;
             }
+            
+            const size = getBase64Size(dataUri);
             
             setDocuments(prev => ({
                 ...prev,
                 [docType]: { 
                     ...prev[docType], 
                     pages: [...prev[docType].pages, dataUri],
-                    pageCounts: [...prev[docType].pageCounts, 1]
+                    pageCounts: [...prev[docType].pageCounts, 1],
+                    sizes: [...prev[docType].sizes, size],
+                    corruptionStatus: [...prev[docType].corruptionStatus, false]
                 }
             }));
+            setIsValidating(null);
             toast({ title: 'Capture OK', description: 'Photo added to document.' });
         }
     }
@@ -251,9 +275,9 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ScanLine className="h-6 w-6 text-primary" />
-          Documents
+          Regulatory Documents
         </CardTitle>
-        <CardDescription>{disabled ? 'View application documents.' : 'Capture multiple pages per document using camera or upload.'}</CardDescription>
+        <CardDescription>{disabled ? 'View application archives.' : 'Multi-page document capture with corruption scanning and metadata tracking.'}</CardDescription>
       </CardHeader>
       
       {!disabled && (
@@ -269,21 +293,21 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       <div className="space-y-6 px-6 pb-6">
         <Alert className="bg-primary/5 border-primary/20">
             <Info className="h-4 w-4" />
-            <AlertTitle>Required for {clientType}</AlertTitle>
+            <AlertTitle className="text-[10px] font-black uppercase tracking-widest">Requirement: {clientType}</AlertTitle>
             <AlertDescription>
                 <div className="max-h-48 overflow-auto mt-2">
                   <Table>
                       <TableHeader>
                           <TableRow>
-                              <TableHead>Document</TableHead>
-                              <TableHead>Format</TableHead>
+                              <TableHead className="text-[9px] uppercase font-black">Document Type</TableHead>
+                              <TableHead className="text-[9px] uppercase font-black">Mandatory Format</TableHead>
                           </TableRow>
                       </TableHeader>
                       <TableBody>
                           {documentRequirements.map((req) => (
                               <TableRow key={req.document}>
-                                  <TableCell className="font-medium text-xs">{req.document}</TableCell>
-                                  <TableCell className="text-xs">{req.comment}</TableCell>
+                                  <TableCell className="font-bold text-xs uppercase text-foreground/80">{req.document}</TableCell>
+                                  <TableCell className="text-xs text-muted-foreground">{req.comment}</TableCell>
                               </TableRow>
                           ))}
                       </TableBody>
@@ -293,57 +317,68 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
         </Alert>
 
         <div className="grid grid-cols-1 gap-6">
-          {Object.values(documents).map(({documentType, pages, pageCounts}) => {
+          {Object.values(documents).map(({documentType, pages, pageCounts, sizes, corruptionStatus}) => {
             const loading = isValidating === documentType;
             const totalPages = pageCounts.reduce((a, b) => a + b, 0);
+            const totalSize = sizes.reduce((a, b) => a + b, 0);
+            const hasCorruption = corruptionStatus.some(c => c);
+
             return (
-                <div key={documentType} className="p-6 border rounded-xl hover:border-primary/50 transition-colors bg-card shadow-sm relative overflow-hidden">
+                <div key={documentType} className={`p-6 border rounded-2xl transition-all bg-card shadow-sm relative overflow-hidden ${hasCorruption ? 'border-destructive/50' : 'hover:border-primary/50'}`}>
                     {loading && (
                       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <span className="text-xs font-black uppercase tracking-widest text-primary">Detecting Pages...</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-primary">Scanning Document Data...</span>
                       </div>
                     )}
-                    <div className='flex justify-between items-center mb-4'>
+                    <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6'>
                         <div>
-                            <h3 className="text-md font-bold truncate max-w-[250px]" title={documentType}>{documentType}</h3>
-                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1.5">{disabled ? 'Archive Read-Only' : 'Multi-Page Support Active'}</p>
+                            <h3 className="text-lg font-black uppercase tracking-tight truncate max-w-[300px]" title={documentType}>{documentType}</h3>
+                            <div className="flex items-center gap-3 mt-1.5">
+                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{disabled ? 'Archive State' : 'Metadata Engine Active'}</p>
+                                {totalSize > 0 && <Badge variant="outline" className="text-[9px] font-mono py-0 h-4">{(totalSize / 1024).toFixed(1)} KB</Badge>}
+                            </div>
                         </div>
-                        <Badge variant={totalPages > 0 ? 'success' : 'outline'} className="px-3 py-1 font-black">
-                            {totalPages} {totalPages === 1 ? 'PAGE' : 'PAGES'} DETECTED
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                            {hasCorruption && <Badge variant="destructive" className="font-black animate-pulse"><ShieldAlert className="mr-1 h-3 w-3" /> CORRUPT ENTRY</Badge>}
+                            <Badge variant={totalPages > 0 ? 'success' : 'outline'} className="px-4 py-1.5 font-black uppercase tracking-widest text-xs">
+                                {totalPages} {totalPages === 1 ? 'PAGE' : 'PAGES'} CAPTURED
+                            </Badge>
+                        </div>
                     </div>
                 
-                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div className="flex flex-col lg:flex-row gap-6 mb-2">
                         <div className="flex-1">
                             {pages.length > 0 ? (
-                                <ScrollArea className="w-full whitespace-nowrap rounded-lg border bg-muted/20 p-4">
+                                <ScrollArea className="w-full whitespace-nowrap rounded-xl border bg-muted/20 p-4 shadow-inner">
                                     <div className="flex w-max space-x-4">
                                         {pages.map((page, index) => (
-                                            <div key={index} className="relative w-32 h-44 rounded-md border bg-background overflow-hidden group shadow-sm">
+                                            <div key={index} className={`relative w-36 h-48 rounded-lg border bg-background overflow-hidden group shadow-md transition-transform hover:scale-[1.02] ${corruptionStatus[index] ? 'border-destructive' : ''}`}>
                                                 {page.startsWith('data:application/pdf') ? (
                                                     <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-muted/50">
-                                                        <File className="h-10 w-10 text-primary" />
-                                                        <span className="text-[8px] font-black uppercase">PDF Entry</span>
-                                                        <Badge variant="secondary" className="text-[8px] px-1 h-4">{pageCounts[index]} Pgs</Badge>
+                                                        <File className={`h-12 w-12 ${corruptionStatus[index] ? 'text-destructive' : 'text-primary'}`} />
+                                                        <div className="text-center">
+                                                            <span className="text-[8px] font-black uppercase block">Binary Stream</span>
+                                                            <Badge variant="secondary" className="text-[8px] px-1 h-4 font-mono">{pageCounts[index]} Pgs</Badge>
+                                                        </div>
                                                     </div>
                                                 ) : (
                                                     <img src={page} alt={`Page ${index+1}`} className="w-full h-full object-cover" />
                                                 )}
-                                                <div className="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded font-bold">
+                                                <div className="absolute top-2 left-2 bg-black/70 text-white text-[9px] px-2 py-0.5 rounded-full font-black border border-white/10">
                                                     #{index + 1}
                                                 </div>
                                                 {!disabled && (
-                                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
-                                                        <div className="flex gap-1">
-                                                            <Button variant="secondary" size="icon" className="h-6 w-6" onClick={() => movePage(documentType, index, index - 1)} disabled={index === 0}>
-                                                                <ChevronLeft className="h-3 w-3" />
+                                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity backdrop-blur-[2px]">
+                                                        <div className="flex gap-2">
+                                                            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => movePage(documentType, index, index - 1)} disabled={index === 0}>
+                                                                <ChevronLeft className="h-4 w-4" />
                                                             </Button>
-                                                            <Button variant="secondary" size="icon" className="h-6 w-6" onClick={() => movePage(documentType, index, index + 1)} disabled={index === pages.length - 1}>
-                                                                <ChevronRight className="h-3 w-3" />
+                                                            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => movePage(documentType, index, index + 1)} disabled={index === pages.length - 1}>
+                                                                <ChevronRight className="h-4 w-4" />
                                                             </Button>
                                                         </div>
-                                                        <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => removePage(documentType, index)}>
+                                                        <Button variant="destructive" size="icon" className="h-9 w-9 rounded-full shadow-lg" onClick={() => removePage(documentType, index)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </div>
@@ -351,51 +386,77 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                                             </div>
                                         ))}
                                         {!disabled && (
-                                            <div className="w-32 h-44 rounded-md border-2 border-dashed flex flex-col items-center justify-center bg-muted/10 text-muted-foreground gap-2">
-                                                <Plus className="h-6 w-6 opacity-20" />
-                                                <span className="text-[8px] font-black uppercase tracking-widest opacity-40">Add Page</span>
+                                            <div 
+                                                className="w-36 h-48 rounded-lg border-2 border-dashed flex flex-col items-center justify-center bg-muted/10 text-muted-foreground gap-3 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group"
+                                                onClick={() => handleUploadClick(documentType)}
+                                            >
+                                                <Plus className="h-8 w-8 opacity-20 group-hover:opacity-50 group-hover:scale-110 transition-all" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Add Stream</span>
                                             </div>
                                         )}
                                     </div>
                                     <ScrollBar orientation="horizontal" />
                                 </ScrollArea>
                             ) : (
-                                <div className="h-44 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-muted-foreground bg-muted/5 gap-3">
-                                    <File className="h-10 w-10 opacity-10" />
-                                    <p className="text-xs font-bold uppercase tracking-widest opacity-40">No pages added yet</p>
+                                <div className="h-48 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-muted-foreground bg-muted/5 gap-4 shadow-inner">
+                                    <Database className="h-12 w-12 opacity-10" />
+                                    <div className="text-center">
+                                        <p className="text-xs font-black uppercase tracking-[0.2em] opacity-40">Registry Block Empty</p>
+                                        <p className="text-[10px] mt-1 opacity-30">Awaiting multi-page ingestion</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
-                        <div className="w-full sm:w-48 space-y-2">
+                        <div className="w-full lg:w-56 flex flex-col gap-3">
                             {!disabled && (
                                 <>
-                                    <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => startScan(documentType)} disabled={loading}>
-                                        <Camera className="mr-2 h-4 w-4 text-primary"/>Scan Page
+                                    <Button 
+                                        variant="outline" 
+                                        className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5 rounded-xl shadow-sm" 
+                                        onClick={() => startScan(documentType)} 
+                                        disabled={loading}
+                                    >
+                                        <Camera className="mr-2 h-4 w-4 text-primary"/>Capture Photo
                                     </Button>
-                                    <Button variant="outline" className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5" onClick={() => handleUploadClick(documentType)} disabled={loading}>
-                                        <Upload className="mr-2 h-4 w-4 text-primary"/>Upload Page
+                                    <Button 
+                                        variant="outline" 
+                                        className="w-full h-12 font-black uppercase tracking-widest border-primary/20 hover:bg-primary/5 rounded-xl shadow-sm" 
+                                        onClick={() => handleUploadClick(documentType)} 
+                                        disabled={loading}
+                                    >
+                                        <Upload className="mr-2 h-4 w-4 text-primary"/>Injest Data
                                     </Button>
                                 </>
                             )}
                             {pages.length > 0 && (
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="secondary" className="w-full h-10 font-bold uppercase text-[10px] tracking-widest">
-                                            <Eye className="mr-2 h-3 w-3"/>Preview Doc
+                                        <Button variant="secondary" className="w-full h-10 font-black uppercase text-[10px] tracking-widest rounded-xl">
+                                            <Eye className="mr-2 h-3.5 w-3.5"/>Preview Forensic File
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="max-w-4xl h-[85vh] flex flex-col">
-                                        <DialogHeader>
-                                            <DialogTitle>Document Preview: {documentType}</DialogTitle>
+                                    <DialogContent className="max-w-5xl h-[90vh] flex flex-col rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+                                        <DialogHeader className="p-6 bg-background border-b flex flex-row justify-between items-center">
+                                            <div>
+                                                <DialogTitle className="text-xs font-black uppercase tracking-[0.2em] text-primary">Technical Registry: {documentType}</DialogTitle>
+                                                <p className="text-[10px] font-mono text-muted-foreground mt-1">Status: OK • Total Pages: {totalPages} • Total Volume: {(totalSize / 1024).toFixed(1)} KB</p>
+                                            </div>
                                         </DialogHeader>
-                                        <div className="flex-1 min-h-0 bg-black rounded-md overflow-hidden flex items-center justify-center relative">
+                                        <div className="flex-1 min-h-0 bg-black overflow-hidden flex items-center justify-center relative">
                                             {isMerging && (
-                                                <div className="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center text-white gap-4">
-                                                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                                    <p className="text-xs font-black uppercase tracking-widest">Generating PDF Preview...</p>
+                                                <div className="absolute inset-0 bg-black/90 z-20 flex flex-col items-center justify-center text-white gap-4">
+                                                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                                                    <div className="text-center">
+                                                        <p className="text-sm font-black uppercase tracking-widest">Generating Regulatory PDF...</p>
+                                                        <p className="text-[10px] text-white/40 mt-1 uppercase font-bold tracking-tighter">Merging multi-stream data points</p>
+                                                    </div>
                                                 </div>
                                             )}
-                                            <iframe src={form.getValues('capturedDocuments').find(d => d.type === documentType)?.url} className="w-full h-full" title="PDF Preview" />
+                                            <iframe 
+                                                src={form.getValues('capturedDocuments').find(d => d.type === documentType)?.url} 
+                                                className="w-full h-full border-none" 
+                                                title="Forensic PDF Preview" 
+                                            />
                                         </div>
                                     </DialogContent>
                                 </Dialog>
@@ -409,29 +470,32 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       </div>
 
        <Dialog open={!!isScanning} onOpenChange={(isOpen) => !isOpen && stopScan()}>
-            <DialogContent className="max-w-xl bg-background border-primary/20">
-                <DialogHeader>
-                    <DialogTitle>Scan Page: {isScanning}</DialogTitle>
+            <DialogContent className="max-w-2xl bg-background border-primary/20 rounded-3xl p-0 overflow-hidden">
+                <DialogHeader className="p-6 border-b bg-muted/20">
+                    <DialogTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                        <Camera className="h-6 w-6 text-primary" />
+                        Capture Page: {isScanning}
+                    </DialogTitle>
                 </DialogHeader>
-                <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 shadow-2xl">
-                    <video ref={videoRef} className="w-full aspect-video bg-black" autoPlay playsInline muted />
+                <div className="relative aspect-video bg-black shadow-inner">
+                    <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
                     <canvas ref={canvasRef} className="hidden" />
-                    <div className="absolute inset-0 pointer-events-none border-[40px] border-black/40 flex items-center justify-center">
-                        <div className="w-full h-full border-2 border-primary/50 border-dashed animate-pulse"></div>
+                    <div className="absolute inset-0 pointer-events-none border-[60px] border-black/40 flex items-center justify-center">
+                        <div className="w-full h-full border-2 border-primary/50 border-dashed animate-pulse rounded-sm"></div>
                     </div>
                     {hasCameraPermission === false && (
-                         <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                            <Alert variant="destructive" className="m-4 max-w-xs">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertTitle>Need Camera</AlertTitle>
-                                <AlertDescription>Please allow camera access in your browser settings.</AlertDescription>
+                         <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+                            <Alert variant="destructive" className="max-w-sm border-destructive/20 shadow-2xl">
+                                <AlertCircle className="h-5 w-5" />
+                                <AlertTitle className="font-black uppercase text-xs tracking-widest">Camera Denied</AlertTitle>
+                                <AlertDescription className="text-sm">Please allow hardware access in your browser to proceed with document scanning.</AlertDescription>
                             </Alert>
                         </div>
                     )}
                 </div>
-                <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={stopScan} className="font-bold">Cancel</Button>
-                    <Button onClick={captureImage} disabled={!hasCameraPermission} className="bg-primary text-primary-foreground font-black px-8">Take Photo</Button>
+                <div className="p-6 flex justify-between items-center bg-muted/10">
+                    <Button variant="ghost" onClick={stopScan} className="font-bold hover:bg-destructive/10 hover:text-destructive px-8">ABORT</Button>
+                    <Button onClick={captureImage} disabled={!hasCameraPermission} className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl shadow-xl hover:scale-[1.02] transition-transform active:scale-95">TAKE SNAPSHOT</Button>
                 </div>
             </DialogContent>
         </Dialog>

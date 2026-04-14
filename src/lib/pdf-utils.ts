@@ -18,8 +18,29 @@ export async function countPdfPages(dataUri: string): Promise<number> {
   }
 }
 
-export async function mergeToPdf(pages: string[]): Promise<{ url: string, count: number }> {
-  if (!pages || pages.length === 0) return { url: '', count: 0 };
+export async function validatePdf(dataUri: string): Promise<{ isValid: boolean; error?: string }> {
+  if (!dataUri || !dataUri.startsWith('data:application/pdf')) return { isValid: true };
+  try {
+    const { PDFDocument } = await import('pdf-lib');
+    const base64 = dataUri.split(',')[1];
+    const pdfBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    await PDFDocument.load(pdfBytes);
+    return { isValid: true };
+  } catch (e) {
+    console.error('PDF Validation error:', e);
+    return { isValid: false, error: 'The PDF file appears to be corrupted or invalid.' };
+  }
+}
+
+export function getBase64Size(dataUri: string): number {
+  const base64 = dataUri.split(',')[1];
+  const stringLength = base64.length;
+  const sizeInBytes = 4 * Math.ceil(stringLength / 3) * 0.5624896334383812; // Approx multiplier for actual binary size
+  return Math.round(sizeInBytes);
+}
+
+export async function mergeToPdf(pages: string[]): Promise<{ url: string, count: number, size: number }> {
+  if (!pages || pages.length === 0) return { url: '', count: 0, size: 0 };
   
   const { PDFDocument } = await import('pdf-lib');
   const mergedPdf = await PDFDocument.create();
@@ -52,13 +73,15 @@ export async function mergeToPdf(pages: string[]): Promise<{ url: string, count:
   
   const pdfBytes = await mergedPdf.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const size = pdfBytes.length;
   
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       resolve({ 
         url: reader.result as string, 
-        count: mergedPdf.getPageCount() 
+        count: mergedPdf.getPageCount(),
+        size: size
       });
     };
     reader.readAsDataURL(blob);

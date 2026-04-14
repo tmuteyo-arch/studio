@@ -33,12 +33,14 @@ import {
 import StepCorporateInfo from './steps/step-corporate-info';
 import StepSignatories from './steps/step-signatories';
 import StepAgreements from './steps/step-agreements';
+import StepUboInfo from './steps/step-ubo-info';
 
 
 const allSteps: Step[] = [
   { id: 'account-type', name: 'Account Type', fields: ['clientType', 'relationshipType', 'region', 'tinNumber'] },
   { id: 'individual-info', name: 'Personal', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber', 'nationality', 'gender', 'maritalStatus'] },
   { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
+  { id: 'ubo-info', name: 'Beneficial Owners', fields: ['beneficialOwners'] },
   { id: 'signatories', name: 'Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
   { id: 'document-upload', name: 'Documents', fields: ['capturedDocuments'] },
   { id: 'agreements', name: 'InnBucks Agreement', fields: ['agreement1Accepted', 'agreement1Signature', 'agreement1Pages', 'agreement2Accepted', 'agreement2Signature', 'agreement2Pages', 'adlaAccepted', 'adlaSignature', 'adlaPages'] },
@@ -49,6 +51,7 @@ const StepComponents: Record<string, React.ElementType> = {
   'account-type': StepAccountType,
   'individual-info': StepIndividualInfo,
   'corporate-info': StepCorporateInfo,
+  'ubo-info': StepUboInfo,
   'signatories': StepSignatories,
   'document-upload': StepDocumentUpload,
   'agreements': StepAgreements,
@@ -105,6 +108,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       dateOfIncorporation: '',
       certificateOfIncorporationNumber: '',
       signatories: [],
+      beneficialOwners: [],
       resolutionDate: '',
       signingInstruction: '',
       supervisorSignature: '',
@@ -147,12 +151,12 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     }
     
     if (isCorporate) {
-      const corporateSteps = ['account-type', 'corporate-info', 'signatories', 'document-upload', 'agreements', 'review-submit'];
+      const corporateSteps = ['account-type', 'corporate-info', 'ubo-info', 'signatories', 'document-upload', 'agreements', 'review-submit'];
       return allSteps.filter(step => corporateSteps.includes(step.id));
     }
 
     if (isInstitution) {
-      const institutionSteps = ['account-type', 'corporate-info', 'signatories', 'document-upload', 'review-submit'];
+      const institutionSteps = ['account-type', 'corporate-info', 'ubo-info', 'signatories', 'document-upload', 'review-submit'];
       return allSteps.filter(step => institutionSteps.includes(step.id));
     }
     

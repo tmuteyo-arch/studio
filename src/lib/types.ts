@@ -45,6 +45,14 @@ const SignatorySchema = z.object({
 });
 export type Signatory = z.infer<typeof SignatorySchema>;
 
+const BeneficialOwnerSchema = z.object({
+  fullName: z.string().min(1, "Full name is required."),
+  idNumber: z.string().min(5, "ID Number is required."),
+  percentage: z.number().min(0.01, "Percentage must be greater than 0").max(100, "Cannot exceed 100%"),
+  position: z.string().min(1, "Position is required."),
+});
+export type BeneficialOwner = z.infer<typeof BeneficialOwnerSchema>;
+
 export const OnboardingFormSchema = z.object({
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   relationshipType: z.enum(['Agency', 'Merchant']).default('Agency'),
@@ -94,6 +102,9 @@ export const OnboardingFormSchema = z.object({
   signingInstruction: z.string().optional(),
   signatories: z.array(SignatorySchema).default([]),
 
+  // Beneficial Owners
+  beneficialOwners: z.array(BeneficialOwnerSchema).default([]),
+
   // Agreements State
   agreement1Method: z.enum(['digital', 'physical']).default('physical'),
   agreement1Accepted: z.boolean().default(false),
@@ -119,7 +130,9 @@ export const OnboardingFormSchema = z.object({
     fileName: z.string(),
     url: z.string(),
     pages: z.array(z.string()).optional(),
-    pageCount: z.number().optional()
+    pageCount: z.number().optional(),
+    fileSize: z.number().optional(),
+    isCorrupt: z.boolean().optional(),
   })).optional().default([]),
   
   fcbStatus: z.string().optional(),
@@ -196,6 +209,24 @@ export const OnboardingFormSchema = z.object({
             path: ['signatories'],
             message: 'At least one authorized signatory is mandatory for this account type.',
         });
+      }
+
+      // UBO Validation for Societies/Corporate/Institutions
+      if (isCorporate || isInstitution) {
+        const totalOwnership = data.beneficialOwners.reduce((sum, ubo) => sum + ubo.percentage, 0);
+        if (data.beneficialOwners.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['beneficialOwners'],
+            message: 'Regulatory requirement: At least one Ultimate Beneficial Owner (UBO) must be declared.',
+          });
+        } else if (Math.abs(totalOwnership - 100) > 0.01) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['beneficialOwners'],
+            message: `Total ownership must equal 100% (Current: ${totalOwnership}%).`,
+          });
+        }
       }
     }
 
