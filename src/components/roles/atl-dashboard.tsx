@@ -255,6 +255,9 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                 <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('School')}>
                                     School
                                 </DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer py-4 px-4 font-bold text-md rounded-xl hover:bg-accent hover:text-background m-1 transition-colors" onClick={() => handleStartApplication('Societies')}>
+                                    Societies
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -273,7 +276,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                   <TabsTrigger value="leads" className="flex items-center gap-3 px-6 h-10 rounded-lg data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground font-black uppercase text-xs tracking-widest transition-all relative">
                       <Inbox className="h-4 w-4" />
                       CUSTOMER PORTAL ACCOUNTS ({filteredSubmissions.length})
-                      {filteredSubmissions.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full animate-pulse border-2 border-background" />}
+                      {filteredSubmissions.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full animate-pulse border-background border-2" />}
                   </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-80">

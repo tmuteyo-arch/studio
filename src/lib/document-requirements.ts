@@ -211,6 +211,19 @@ const institutionRequirements: DocumentRequirement[] = [
     }
 ];
 
+const societiesRequirements: DocumentRequirement[] = [
+    { document: 'Certified Bylaws', details: 'Bylaws governing the society operations.', comment: 'Must be a certified copy.' },
+    { document: 'Registrar Verification', details: 'Legal entity verification from the Registrar.', comment: 'Proof of legal existence.' },
+    { document: 'Foreign Certificate of Good Standing', details: 'For foreign-linked societies.', comment: 'Mandatory if applicable.' },
+    { document: 'Constitution', details: 'The founding constitution document.', comment: 'Certified copy required.' },
+    { document: 'Executive Committee List + IDs', details: 'List of members and copies of their National IDs.', comment: 'Regulatory mandate.' },
+    { document: 'Board Resolution + Certified Copy', details: 'Formal resolution to open bank account.', comment: 'Certified and signed.' },
+    { document: 'Signatory IDs + Proof of Residence', details: 'IDs and Utility bills for all account signatories.', comment: 'Not older than 3 months.' },
+    { document: 'Controlling Persons Verification', details: 'KYC for ultimate controlling persons.', comment: 'AML compliance check.' },
+    { document: 'Completed Internal Forms', details: 'Mandatory bank-issued application forms.', comment: 'Fully completed.' },
+    { document: 'Charges Documents', details: 'Registration of any charges or encumbrances.', comment: 'Legal requirement.' },
+];
+
 const requirementsMap: Record<string, DocumentRequirement[]> = {
     'Individual Accounts': personalAccountRequirements,
     'Sole Trader': soleTraderRequirements,
@@ -225,7 +238,7 @@ const requirementsMap: Record<string, DocumentRequirement[]> = {
     'NGO': institutionRequirements,
     'Church': institutionRequirements,
     'School': institutionRequirements,
-    'Society': institutionRequirements,
+    'Societies': societiesRequirements,
     'Club/ Association': institutionRequirements,
     'Government / Local Authority': institutionRequirements,
 };

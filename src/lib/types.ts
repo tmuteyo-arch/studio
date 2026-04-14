@@ -181,7 +181,7 @@ export const OnboardingFormSchema = z.object({
       'NGO', 
       'Church', 
       'School', 
-      'Society', 
+      'Societies', 
       'Club/ Association',
       'Trust'
     ].includes(data.clientType);
@@ -283,7 +283,7 @@ export const accountTypes = [
   'NGO',
   'Church',
   'School',
-  'Society',
+  'Societies',
   'Club/ Association',
 ];
 
