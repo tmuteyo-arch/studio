@@ -19,7 +19,7 @@ import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/review-step';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, AlertTriangle, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertTriangle, Save, ShieldAlert } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,10 +62,12 @@ interface OnboardingFlowProps {
   existingApplication?: Application | null;
 }
 
-type DuplicateInfo = {
+type DuplicateCheckResult = {
   isDuplicate: boolean;
-  message: string;
-}
+  field: string;
+  value: string;
+  existingId: string;
+};
 
 export default function OnboardingFlow({ onCancel, user, preselectedType, existingApplication }: OnboardingFlowProps) {
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
@@ -74,7 +76,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   const { toast } = useToast();
 
   const [isCheckingDuplicates, setIsCheckingDuplicates] = React.useState(false);
-  const [duplicateInfo, setDuplicateInfo] = React.useState<DuplicateInfo>({ isDuplicate: false, message: '' });
+  const [duplicateResult, setDuplicateResult] = React.useState<DuplicateCheckResult | null>(null);
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
@@ -159,59 +161,63 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
   const currentStep = steps[currentStepIndex];
 
-  const handleDuplicateCheck = async (): Promise<boolean> => {
+  const performDuplicateCheck = async (): Promise<boolean> => {
     const data = form.getValues();
-    let nameToCheck = '';
-    
-    if (currentStep.id === 'corporate-info') {
-        nameToCheck = data.organisationLegalName || '';
-    } else if (currentStep.id === 'individual-info') {
-         nameToCheck = `${data.individualFirstName || ''} ${data.individualSurname || ''}`.trim();
-    }
-    
-    if (!nameToCheck) {
-        return true;
-    }
+    const currentId = existingApplication?.id;
 
     setIsCheckingDuplicates(true);
-    try {
-        await new Promise(res => setTimeout(res, 600)); 
-        const duplicate = applications.find(app => 
-          app.clientName.toLowerCase() === nameToCheck.toLowerCase() && 
-          app.id !== existingApplication?.id
-        );
+    // Artificial delay for regulatory "scanning" feel
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-        if (duplicate) {
-            setDuplicateInfo({ 
-              isDuplicate: true, 
-              message: `'${nameToCheck}' is already in the system.` 
-            });
+    const checkFields = [
+      { label: 'National ID', value: data.individualIdNumber, field: 'individualIdNumber' },
+      { label: 'Incorporation Number', value: data.certificateOfIncorporationNumber, field: 'certificateOfIncorporationNumber' },
+      { label: 'Email Address', value: data.email, field: 'email' },
+      { label: 'Phone Number', value: data.individualMobileNumber || data.businessTelNumber, field: 'phone' },
+    ];
+
+    for (const check of checkFields) {
+      if (!check.value) continue;
+
+      const duplicate = applications.find(app => {
+        if (app.id === currentId) return false;
+        const details = app.details;
+        
+        switch (check.field) {
+          case 'individualIdNumber':
+            return details.individualIdNumber === check.value;
+          case 'certificateOfIncorporationNumber':
+            return details.certificateOfIncorporationNumber === check.value;
+          case 'email':
+            return details.email?.toLowerCase() === check.value.toLowerCase();
+          case 'phone':
+            return details.individualMobileNumber === check.value || details.businessTelNumber === check.value;
+          default:
             return false;
         }
-        return true;
-    } catch (e) {
-        return true;
-    } finally {
+      });
+
+      if (duplicate) {
+        setDuplicateResult({
+          isDuplicate: true,
+          field: check.label,
+          value: check.value,
+          existingId: duplicate.id
+        });
         setIsCheckingDuplicates(false);
+        return false;
+      }
     }
-};
+
+    setIsCheckingDuplicates(false);
+    return true;
+  };
 
   const next = async () => {
     const stepFields = currentStep.fields as FieldName<OnboardingFormData>[] | undefined;
     const isValid = await form.trigger(stepFields);
     
     if (!isValid) {
-      const errors = form.formState.errors;
-      
-      if (currentStep.id === 'document-upload' && errors.capturedDocuments) {
-        toast({
-          variant: 'destructive',
-          title: 'Documents Required',
-          description: "Please upload and complete scanning of all required documents before submission.",
-        });
-        return;
-      }
-
       toast({
         title: "Incomplete",
         description: "Please fill in all required boxes.",
@@ -219,12 +225,12 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       });
       return;
     }
-    
-    if (currentStep.id === 'corporate-info' || currentStep.id === 'individual-info') {
-      const canProceed = await handleDuplicateCheck();
-      if (!canProceed) return;
-    }
 
+    // Trigger duplicate check on info steps
+    if (currentStep.id === 'individual-info' || currentStep.id === 'corporate-info') {
+      const isUnique = await performDuplicateCheck();
+      if (!isUnique) return;
+    }
 
     if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex((step) => step + 1);
@@ -278,6 +284,10 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   };
   
   const onSubmit = async (data: OnboardingFormData) => {
+    // Final duplicate check before commit
+    const isUnique = await performDuplicateCheck();
+    if (!isUnique) return;
+
     setIsSubmitting(true);
     try {
         const appId = existingApplication?.id || generateAccountId();
@@ -287,7 +297,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
           clientType: data.clientType,
           region: data.region,
-          status: 'Submitted',
+          status: 'Under Review',
           submittedDate: existingApplication?.submittedDate || format(new Date(), 'yyyy-MM-dd'),
           lastUpdated: new Date().toISOString(),
           submittedBy: user.name,
@@ -297,7 +307,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           documents: data.capturedDocuments || [],
           history: [
             ...(existingApplication?.history || []),
-            { action: 'Request Sent', user: user.name, timestamp: new Date().toISOString() },
+            { action: 'Under Review', user: user.name, timestamp: new Date().toISOString(), notes: 'Application originated and submitted for review.' },
           ],
           comments: existingApplication?.comments || [],
         };
@@ -339,20 +349,11 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   };
 
   const onInvalid = () => {
-    const errors = form.formState.errors;
-    if (errors.capturedDocuments) {
-      toast({
-        variant: 'destructive',
-        title: 'Documents Missing',
-        description: "Please upload and complete scanning of all required documents before submission.",
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Missing Details',
-        description: 'Please check the review page for errors before finishing.',
-      });
-    }
+    toast({
+      variant: 'destructive',
+      title: 'Missing Details',
+      description: 'Please check the review page for errors before finishing.',
+    });
   };
 
   const CurrentStepComponent = StepComponents[currentStep.id];
@@ -387,8 +388,8 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
                       </Button>
                     )}
                     {currentStepIndex === steps.length - 1 && (
-                      <Button type="submit" disabled={isSubmitting} className="font-black px-8">
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Finish'}
+                      <Button type="submit" disabled={isSubmitting || isCheckingDuplicates} className="font-black px-8">
+                        {isSubmitting || isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Finish'}
                       </Button>
                     )}
                   </div>
@@ -397,29 +398,28 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
             </form>
         </div>
 
-         <AlertDialog open={duplicateInfo.isDuplicate} onOpenChange={(isOpen) => !isOpen && setDuplicateInfo({ isDuplicate: false, message: '' })}>
-          <AlertDialogContent>
+        <AlertDialog open={!!duplicateResult} onOpenChange={() => setDuplicateResult(null)}>
+          <AlertDialogContent className="border-destructive/20 rounded-2xl shadow-2xl">
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Duplicate Found
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-foreground">
-                {duplicateInfo.message}
-                <br /><br />
-                Continue anyway?
+              <div className="flex items-center gap-3 mb-2 text-destructive">
+                <ShieldAlert className="h-8 w-8" />
+                <AlertDialogTitle className="text-2xl font-black uppercase tracking-tight">Duplicate Record Blocked</AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="text-foreground text-base pt-2">
+                A regulatory conflict has been detected. The following information already exists in the registry:
+                <div className="mt-4 p-4 bg-muted/50 rounded-xl border border-border">
+                  <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">{duplicateResult?.field}</p>
+                  <p className="text-xl font-mono font-black text-foreground mt-1">{duplicateResult?.value}</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground mt-4">Linked to Active File:</p>
+                  <p className="text-xs font-mono font-bold text-primary">{duplicateResult?.existingId}</p>
+                </div>
+                <p className="mt-6 text-sm text-muted-foreground italic">
+                  Multiple records for the same legal entity or identity are strictly prohibited by compliance. Please review the existing file or contact the Supervisor.
+                </p>
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDuplicateInfo({ isDuplicate: false, message: '' })}>No</AlertDialogCancel>
-              <AlertDialogAction onClick={() => {
-                setDuplicateInfo({ isDuplicate: false, message: '' });
-                if (currentStepIndex < steps.length - 1) {
-                  setCurrentStepIndex((step) => step + 1);
-                }
-              }}>
-                Yes
-              </AlertDialogAction>
+            <AlertDialogFooter className="pt-4">
+              <AlertDialogAction onClick={() => setDuplicateResult(null)} className="h-12 bg-foreground text-background font-black uppercase tracking-widest px-8">Return to Form</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
