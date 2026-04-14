@@ -130,7 +130,9 @@ export const OnboardingFormSchema = z.object({
   executiveSignature: z.string().optional(),
   executiveSignatureTimestamp: z.string().optional(),
 
-  accountNumber: z.string().optional(),
+  // Dispatched Account Numbers
+  brAccountNumber: z.string().optional(),
+  walletAccountNumber: z.string().optional(),
   accountOpeningDate: z.string().optional(),
   isDispatched: z.boolean().optional().default(false),
 

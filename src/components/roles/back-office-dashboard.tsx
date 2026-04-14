@@ -54,7 +54,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const summaryStats = React.useMemo(() => ({
         pendingReview: applications.filter(a => a.status === 'Submitted' || a.status === 'Returned to ATL' || a.status === 'Returned to ASL' || a.status === 'Sent to Back Office' || a.status === 'Returned to Back Office').length,
         pendingSupervisor: applications.filter(a => a.status === 'Pending Supervisor' || a.status === 'Sent to Supervisor').length,
-        readyToFinalize: applications.filter(a => a.status === 'Approved by Supervisor' && !a.details.isDispatched).length,
+        readyToFinalize: applications.filter(a => (a.status === 'Approved' || a.status === 'Approved by Supervisor') && !a.details.isDispatched).length,
         archived: applications.filter(a => a.status === 'Archived').length,
     }), [applications]);
 
@@ -127,7 +127,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 </Card>
                 <Card className="bg-primary/10 border-primary/20 shadow-xl rounded-2xl overflow-hidden group hover:bg-primary/20 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Finish</CardTitle>
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Dispatch</CardTitle>
                         <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground group-hover:scale-110 transition-transform shadow-lg"><Key className="h-4 w-4" /></div>
                     </CardHeader>
                     <CardContent>
@@ -208,7 +208,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                                 </TableCell>
                                                 <TableCell className="text-right pr-8">
                                                     <Button variant="outline" size="sm" className="font-black uppercase tracking-widest h-9 border-white/10 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 px-6 rounded-lg shadow-lg" onClick={() => setSelectedApplication(app)}>
-                                                        {app.status === 'Approved by Supervisor' ? 'FINISH' : 'PROCESS'}
+                                                        {(app.status === 'Approved' || app.status === 'Approved by Supervisor') ? 'DISPATCH' : 'PROCESS'}
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -241,7 +241,8 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                         <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
                                             <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">REF</TableHead>
                                             <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">ACCOUNT #</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">BR ACCT</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">WALLET ACCT</TableHead>
                                             <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -250,7 +251,8 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                             <TableRow key={app.id} className="hover:bg-white/10 border-white/5 transition-colors">
                                                 <TableCell className="font-mono text-xs pl-8 text-white/40">{app.id}</TableCell>
                                                 <TableCell className="py-5 font-black text-white/80 uppercase tracking-tight">{app.clientName}</TableCell>
-                                                <TableCell className="font-mono text-md text-primary font-black tracking-tighter">{app.details.accountNumber}</TableCell>
+                                                <TableCell className="font-mono text-md text-primary font-black tracking-tighter">{app.details.brAccountNumber}</TableCell>
+                                                <TableCell className="font-mono text-md text-secondary font-black tracking-tighter">{app.details.walletAccountNumber}</TableCell>
                                                 <TableCell className="text-right pr-8">
                                                     <Button variant="ghost" size="sm" className="h-9 px-5 rounded-lg font-black uppercase tracking-widest text-[10px] hover:bg-white/10" onClick={() => setSelectedApplication(app)}>
                                                         <FileSearch className="mr-2 h-4 w-4" />

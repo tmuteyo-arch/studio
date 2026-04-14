@@ -141,7 +141,8 @@ export default function ApplicationReview({ application: initialApplication, onB
   // Workflow States
   const [brIdentity, setBrIdentity] = React.useState(application.details.brIdentity || '');
   const [activationCode, setActivationCode] = React.useState(application.details.activationCode || '');
-  const [dispatchAccountNumber, setDispatchAccountNumber] = React.useState('');
+  const [dispatchBrAccountNumber, setDispatchBrAccountNumber] = React.useState('');
+  const [dispatchWalletAccountNumber, setDispatchWalletAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
   const [isAiProcessing, setIsAiProcessing] = React.useState(false);
 
@@ -282,11 +283,11 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const handleDispatchAccount = () => {
-    if (dispatchAccountNumber.length !== 10) {
+    if (dispatchBrAccountNumber.length < 5 || dispatchWalletAccountNumber.length < 5) {
         toast({
             variant: 'destructive',
-            title: 'Invalid Account Number',
-            description: 'Please enter a 10-digit account number.'
+            title: 'Invalid Account Numbers',
+            description: 'Please enter both BR and Wallet account numbers.'
         });
         return;
     }
@@ -296,24 +297,25 @@ export default function ApplicationReview({ application: initialApplication, onB
         status: 'Archived',
         details: {
             ...application.details,
-            accountNumber: dispatchAccountNumber,
+            brAccountNumber: dispatchBrAccountNumber,
+            walletAccountNumber: dispatchWalletAccountNumber,
             isDispatched: true,
             accountOpeningDate: timestamp
         },
         history: [
             ...application.history,
             { 
-                action: 'Account Dispatched', 
+                action: 'Accounts Dispatched', 
                 user: user.name, 
                 timestamp,
-                notes: `Account Number: ${dispatchAccountNumber} issued and finalized.`
+                notes: `BR: ${dispatchBrAccountNumber} | Wallet: ${dispatchWalletAccountNumber}. Record Archived.`
             }
         ]
     });
 
     toast({
-        title: "Account Finalized",
-        description: `Account ${dispatchAccountNumber} has been successfully dispatched.`
+        title: "Accounts Finalized",
+        description: `Dispatch complete for ${application.clientName}.`
     });
     setIsDispatching(false);
     setTimeout(() => onBack(), 500);
@@ -350,9 +352,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   // Tiered Approval Logic: Management Final sign
   const handleExecutiveApproval = (signature: string) => {
     const timestamp = new Date().toISOString();
-    const notes = `Executive Final Sign-off complete. Application archived.`;
+    const notes = `Executive Final Sign-off complete. Application ready for final dispatch.`;
     handleUpdateApplication({ 
-        status: 'Archived', 
+        status: 'Approved', 
         details: { 
             ...application.details, 
             executiveSignature: signature,
@@ -360,7 +362,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         },
         history: [...application.history, { action: 'Final Management Sign-off', user: user.name, timestamp, notes }] 
     });
-    toast({ title: "Process Complete", description: "Management signature applied. Record archived." });
+    toast({ title: "Final Management Sign-off", description: "Executive signature applied. Back Office can now dispatch accounts." });
     setIsExecutiveSigning(false);
     setTimeout(() => onBack(), 500);
   };
@@ -511,7 +513,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         return null;
       case 'back-office':
         if (application.status === 'Approved' || application.status === 'Approved by Supervisor') {
-            return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg px-8 transition-all active:scale-95"><Send className="mr-2 h-4 w-4" /> Dispatch Account</Button>;
+            return <Button onClick={() => setIsDispatching(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-black shadow-lg px-8 transition-all active:scale-95"><Send className="mr-2 h-4 w-4" /> Dispatch Accounts</Button>;
         }
         if (application.status === 'Submitted' || application.status === 'Returned to ATL' || application.status === 'Returned to ASL' || application.status === 'Sent to Back Office' || application.status === 'Claimed by ASL' || application.status === 'Returned to Back Office') {
             return (
@@ -625,7 +627,7 @@ export default function ApplicationReview({ application: initialApplication, onB
           <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <Button variant="ghost" onClick={onBack} className="hover:bg-muted text-muted-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
               <div className="flex items-center gap-3 w-full md:w-auto">
-                  {canDelete && (
+                  {canDelete && !application.details.isDispatched && (
                       <Button variant="destructive" onClick={() => setIsDeletingConfirmOpen(true)} className="font-bold shadow-md transition-all active:scale-95">
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                       </Button>
@@ -918,21 +920,30 @@ export default function ApplicationReview({ application: initialApplication, onB
                                               <p className="text-[10px] text-primary/70 font-black uppercase tracking-[0.2em] mt-2">Processed & Sent</p>
                                           </div>
                                       </div>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                           <Card className="bg-background border-primary/20 shadow-md rounded-xl overflow-hidden">
                                               <CardContent className="p-6 flex items-center gap-5">
-                                                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Wallet className="h-6 w-6" /></div>
+                                                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Fingerprint className="h-6 w-6" /></div>
                                                   <div>
-                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Account #</p>
-                                                      <p className="text-2xl font-mono font-black text-foreground tracking-tighter">{application.details.accountNumber}</p>
+                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">BR Account #</p>
+                                                      <p className="text-2xl font-mono font-black text-foreground tracking-tighter">{application.details.brAccountNumber}</p>
                                                   </div>
                                               </CardContent>
                                           </Card>
                                           <Card className="bg-background border-primary/20 shadow-md rounded-xl overflow-hidden">
                                               <CardContent className="p-6 flex items-center gap-5">
-                                                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Fingerprint className="h-6 w-6" /></div>
+                                                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Wallet className="h-6 w-6" /></div>
                                                   <div>
-                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">BR Client ID</p>
+                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Wallet Account #</p>
+                                                      <p className="text-2xl font-mono font-black text-foreground tracking-tighter">{application.details.walletAccountNumber}</p>
+                                                  </div>
+                                              </CardContent>
+                                          </Card>
+                                          <Card className="bg-background border-primary/20 shadow-md rounded-xl overflow-hidden">
+                                              <CardContent className="p-6 flex items-center gap-5">
+                                                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Hash className="h-6 w-6" /></div>
+                                                  <div>
+                                                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">BR Registry ID</p>
                                                       <p className="text-2xl font-mono font-black text-foreground tracking-tighter">{application.details.brIdentity}</p>
                                                   </div>
                                               </CardContent>
@@ -1124,27 +1135,36 @@ export default function ApplicationReview({ application: initialApplication, onB
             <DialogContent className="bg-card border-primary/20 rounded-2xl shadow-2xl max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-primary">
-                        <Send className="h-6 w-6" /> Finish
+                        <Send className="h-6 w-6" /> Dual-Account Dispatch
                     </DialogTitle>
-                    <CardDescription className="text-base mt-2">Enter the final 10-digit Account Number.</CardDescription>
+                    <CardDescription className="text-base mt-2">Assign the permanent identifiers for this agent.</CardDescription>
                 </DialogHeader>
                 <div className="py-8 space-y-6">
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Account Number</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">BR Account Number</Label>
                         <Input 
-                            placeholder="e.g. 1002345678"
-                            value={dispatchAccountNumber}
-                            onChange={(e) => setDispatchAccountNumber(e.target.value)}
-                            className="h-14 text-2xl font-mono text-center tracking-[0.3em] font-black rounded-xl border-primary/30 focus:ring-primary shadow-inner"
+                            placeholder="e.g. BR-1002345"
+                            value={dispatchBrAccountNumber}
+                            onChange={(e) => setDispatchBrAccountNumber(e.target.value)}
+                            className="h-12 font-mono text-center font-black rounded-xl border-primary/30 focus:ring-primary shadow-inner"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Wallet Account Number</Label>
+                        <Input 
+                            placeholder="e.g. WL-9988776"
+                            value={dispatchWalletAccountNumber}
+                            onChange={(e) => setDispatchWalletAccountNumber(e.target.value)}
+                            className="h-12 font-mono text-center font-black rounded-xl border-primary/30 focus:ring-primary shadow-inner"
                         />
                     </div>
                     <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary leading-relaxed flex items-start gap-3">
                         <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
-                        <span>Done: Finishing this will archive the record.</span>
+                        <span>Regulatory Note: This action is permanent and will lock the record for all origination staff.</span>
                     </div>
                 </div>
                 <DialogFooter className="gap-3 sm:flex-col sm:gap-3">
-                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-black uppercase tracking-widest shadow-lg bg-primary text-primary-foreground hover:scale-[1.02] transition-transform">Finish</Button>
+                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-black uppercase tracking-widest shadow-lg bg-primary text-primary-foreground hover:scale-[1.02] transition-transform">COMPLETE DISPATCH</Button>
                     <Button variant="ghost" onClick={() => setIsDispatching(false)} className="w-full h-10 font-bold text-muted-foreground hover:bg-muted">Cancel</Button>
                 </DialogFooter>
             </DialogContent>
@@ -1164,7 +1184,7 @@ export default function ApplicationReview({ application: initialApplication, onB
             onClose={() => setIsExecutiveSigning(false)}
             onSign={handleExecutiveApproval}
             title="Final Management Sign-off"
-            description="You are providing the final Bank approval for this agency relationship. Archival will be automatic."
+            description="You are providing the final Bank approval for this agency relationship. The record will be ready for account dispatch."
         />
       </div>
     </FormProvider>
