@@ -20,7 +20,7 @@ export type Document = {
   type: string;
   fileName: string;
   url: string;
-  pages?: string[]; // Array of data URIs for multi-page support
+  pages?: string[]; 
   pageCount?: number;
 }
 
@@ -46,6 +46,18 @@ export type UserActivityLog = {
   action: 'Login' | 'Logout' | 'Account Created';
   timestamp: string;
 }
+
+export type Notification = {
+  id: string;
+  type: 'status_update' | 'document_required' | 'system_alert';
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  appId?: string;
+  targetUser?: string; // If specific to a user
+  targetRole?: string; // If specific to a role
+};
 
 export type Application = {
   id: string;
@@ -157,4 +169,15 @@ export const activeUserAtom = atom<any>(null);
 export const activityLogsAtom = atomWithStorage<UserActivityLog[]>('innbucks_activity_logs_v1', [
   { id: 'log-1', userId: 'asl-1', userName: 'CHIDO', action: 'Login', timestamp: new Date(Date.now() - 3600000).toISOString() },
   { id: 'log-2', userId: 'asl-1', userName: 'CHIDO', action: 'Account Created', timestamp: new Date(Date.now() - 1800000).toISOString() },
+], safeStorage);
+
+export const notificationsAtom = atomWithStorage<Notification[]>('innbucks_notifications_v1', [
+  {
+    id: 'n1',
+    type: 'system_alert',
+    title: 'Welcome to InnBucks Portal',
+    message: 'Regulatory oversight is active for your account.',
+    timestamp: new Date().toISOString(),
+    isRead: false
+  }
 ], safeStorage);

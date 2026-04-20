@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useAtom } from 'jotai';
-import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document as AppDocument, FcbStatus, ApplicationStatus } from '@/lib/mock-data';
+import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document as AppDocument, FcbStatus, ApplicationStatus, notificationsAtom, Notification } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -108,6 +108,7 @@ const InternalSignatureDialog = ({
 export default function ApplicationReview({ application: initialApplication, onBack, user }: ApplicationReviewProps) {
   const { toast } = useToast();
   const [applications, setApplications] = useAtom(applicationsAtom);
+  const [, setNotifications] = useAtom(notificationsAtom);
   const [application, setApplication] = React.useState(initialApplication);
   const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
@@ -156,6 +157,15 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
 
+  const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+    setNotifications(prev => [{
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        ...notif
+    }, ...prev]);
+  };
+
   const handleUpdateApplication = (newData: Partial<Application>) => {
     setApplications(prev => prev.map(app => 
       app.id === application.id 
@@ -186,6 +196,21 @@ export default function ApplicationReview({ application: initialApplication, onB
         };
 
         handleUpdateApplication(updateData);
+        
+        // Notify ASL on status update
+        addNotification({
+            type: nextStatus === 'Pending Documents' ? 'document_required' : 'status_update',
+            title: `App ${application.id}: ${getStateLabel(nextStatus)}`,
+            message: notes || `Your application for ${application.clientName} is now ${getStateLabel(nextStatus)}.`,
+            appId: application.id,
+            targetUser: application.submittedBy
+        });
+
+        // Simulate SMS for critical updates
+        if (['Dispatched', 'Rejected', 'Pending Documents'].includes(nextStatus)) {
+            console.log(`[SIMULATED SMS] Sent to ${application.submittedBy}: App ${application.id} is now ${nextStatus}. Note: ${notes || 'No notes'}`);
+        }
+
         toast({ title: `State Updated: ${getStateLabel(nextStatus)}`, description: `Update successful.` });
 
         if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review'].includes(nextStatus)) {
@@ -244,6 +269,15 @@ export default function ApplicationReview({ application: initialApplication, onB
             ]
         });
 
+        // Final Dispatch Notification
+        addNotification({
+            type: 'status_update',
+            title: `Account Dispatched: ${application.clientName}`,
+            message: `Accounts generated: BR: ${dispatchBrAccountNumber} | Wallet: ${dispatchWalletAccountNumber}`,
+            appId: application.id,
+            targetUser: application.submittedBy
+        });
+
         toast({ title: "Accounts Dispatched", description: `Process complete for ${application.clientName}.` });
         setIsDispatching(false);
         setTimeout(() => onBack(), 500);
@@ -278,6 +312,16 @@ export default function ApplicationReview({ application: initialApplication, onB
             },
             history: [...application.history, { action: 'Approved', user: user.name, timestamp, notes }] 
         });
+
+        // Notify Back Office to Dispatch
+        addNotification({
+            type: 'system_alert',
+            title: `Ready for Dispatch: ${application.clientName}`,
+            message: `Supervisor has signed off. Ready for account issuance.`,
+            appId: application.id,
+            targetRole: 'back-office'
+        });
+
         toast({ title: "Approved", description: "Record is ready for dispatch." });
         setIsSupervisorSigning(false);
         setTimeout(() => onBack(), 500);
@@ -518,7 +562,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                           <div className="space-y-4">
                               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">FCB Report Attachment</Label>
                               <div className="flex gap-2">
-                                  <input type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
+                                  <input type="file" type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
                                   <Button 
                                       variant="outline" 
                                       className="flex-1 h-12 font-black border-white/10"

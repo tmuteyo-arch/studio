@@ -1,20 +1,24 @@
 'use client';
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAtom } from 'jotai';
 
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Role, usersAtom } from '@/lib/users';
-import { activeUserAtom, activityLogsAtom } from '@/lib/mock-data';
+import { activeUserAtom, activityLogsAtom, notificationsAtom, Notification } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, ShieldAlert, Bell, CheckCircle2, MessageSquare, AlertCircle, X, ExternalLink } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 // Lazy load dashboards to improve initial compilation time
 const AtlDashboard = React.lazy(() => import('@/components/roles/atl-dashboard'));
@@ -23,6 +27,100 @@ const SupervisorDashboard = React.lazy(() => import('@/components/roles/supervis
 const RetailExecutiveDashboard = React.lazy(() => import('@/components/roles/retail-executive-dashboard'));
 const AdminDashboard = React.lazy(() => import('@/components/roles/admin-dashboard'));
 const ComplianceRiskDashboard = React.lazy(() => import('@/components/roles/compliance-risk-dashboard'));
+
+function NotificationTray({ user }: { user: any }) {
+  const [notifications, setNotifications] = useAtom(notificationsAtom);
+  
+  const userNotifications = notifications.filter(n => 
+    (!n.targetUser || n.targetUser === user.name) &&
+    (!n.targetRole || n.targetRole === user.role)
+  ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  const unreadCount = userNotifications.filter(n => !n.isRead).length;
+
+  const markAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  const markAllRead = () => {
+    setNotifications(prev => prev.map(n => n.targetRole === user.role || n.targetUser === user.name ? { ...n, isRead: true } : n));
+  };
+
+  const getIcon = (type: Notification['type']) => {
+    switch (type) {
+      case 'status_update': return <CheckCircle2 className="h-4 w-4 text-primary" />;
+      case 'document_required': return <AlertCircle className="h-4 w-4 text-destructive" />;
+      case 'system_alert': return <ShieldAlert className="h-4 w-4 text-secondary" />;
+      default: return <Bell className="h-4 w-4" />;
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative hover:bg-white/5 h-10 w-10">
+          <Bell className="h-5 w-5 text-white/70" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 h-4 w-4 bg-primary text-primary-foreground text-[10px] font-black rounded-full flex items-center justify-center border-2 border-background">
+              {unreadCount}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 sm:w-96 p-0 bg-[#1e1b4b]/95 backdrop-blur-xl border-white/10 shadow-2xl rounded-2xl overflow-hidden" align="end">
+        <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4 text-primary" />
+            <h3 className="text-xs font-black uppercase tracking-widest text-white">Registry Alerts</h3>
+          </div>
+          {unreadCount > 0 && (
+            <Button variant="link" size="sm" onClick={markAllRead} className="text-[10px] uppercase font-bold text-primary hover:text-white p-0 h-auto">Mark all read</Button>
+          )}
+        </div>
+        <ScrollArea className="h-[400px]">
+          {userNotifications.length > 0 ? (
+            <div className="divide-y divide-white/5">
+              {userNotifications.map((n) => (
+                <div 
+                  key={n.id} 
+                  className={`p-4 transition-colors relative group ${!n.isRead ? 'bg-primary/5' : 'hover:bg-white/5'}`}
+                  onClick={() => markAsRead(n.id)}
+                >
+                  <div className="flex gap-3">
+                    <div className="mt-0.5">{getIcon(n.type)}</div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <p className={`text-xs font-bold ${!n.isRead ? 'text-white' : 'text-white/60'}`}>{n.title}</p>
+                        <span className="text-[8px] font-mono text-white/30 whitespace-nowrap">{format(new Date(n.timestamp), 'HH:mm')}</span>
+                      </div>
+                      <p className="text-[11px] text-white/40 leading-relaxed">{n.message}</p>
+                      {n.appId && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <Badge variant="outline" className="text-[8px] h-4 font-mono border-white/10 text-white/40">{n.appId}</Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {!n.isRead && (
+                    <div className="absolute right-3 bottom-3 h-1.5 w-1.5 rounded-full bg-primary" />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-12 text-center">
+              <Bell className="h-10 w-10 text-white/5 mb-3" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/20">No notifications</p>
+            </div>
+          )}
+        </ScrollArea>
+        <div className="p-3 bg-black/20 text-center border-t border-white/5">
+            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/20">Regulatory Audit Real-time Feed</p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function AppContent() {
   const [loggedInUser, setLoggedInUser] = useAtom(activeUserAtom);
@@ -331,7 +429,8 @@ function AppContent() {
                             <p className="text-[10px] uppercase tracking-tighter text-secondary font-bold">Portal</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <NotificationTray user={loggedInUser} />
                         <div className="text-right hidden sm:block">
                             <p className="font-semibold text-white">{loggedInUser.name}</p>
                             <p className="text-[10px] text-white/50 uppercase font-bold">

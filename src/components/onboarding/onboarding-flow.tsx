@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { useAtom } from 'jotai';
 
 import { OnboardingFormData, OnboardingFormSchema, Step } from '@/lib/types';
-import { applicationsAtom, activityLogsAtom, Application } from '@/lib/mock-data';
+import { applicationsAtom, activityLogsAtom, Application, notificationsAtom, Notification } from '@/lib/mock-data';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressTracker } from './progress-tracker';
@@ -76,6 +76,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [applications, setApplications] = useAtom(applicationsAtom);
   const [, setActivityLogs] = useAtom(activityLogsAtom);
+  const [, setNotifications] = useAtom(notificationsAtom);
   const { toast } = useToast();
 
   const [isCheckingDuplicates, setIsCheckingDuplicates] = React.useState(false);
@@ -192,6 +193,15 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     });
     return () => subscription.unsubscribe();
   }, [form.watch, isSubmitting, existingApplication, setApplications]);
+
+  const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
+    setNotifications(prev => [{
+        id: `notif-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        ...notif
+    }, ...prev]);
+  };
 
   const performDuplicateCheck = async (): Promise<boolean> => {
     const data = form.getValues();
@@ -335,6 +345,15 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           action: 'Account Created' as const,
           timestamp: new Date().toISOString()
         }, ...prev]);
+
+        // Notify Clerks about new submission
+        addNotification({
+            type: 'status_update',
+            title: `New Application: ${newApplication.clientName}`,
+            message: `A new ${newApplication.clientType} application has been submitted by ${user.name} and is awaiting review.`,
+            appId: newApplication.id,
+            targetRole: 'back-office'
+        });
 
         toast({ title: "Finished!", description: `Sent request for ${newApplication.clientName}.` });
         await new Promise(resolve => setTimeout(resolve, 800));
