@@ -8,11 +8,11 @@ import { User, usersAtom } from '@/lib/users';
 import { CheckCircle2, AlertCircle, Inbox, BarChart, FileSignature, Edit, FileCheck2, Eraser, MapPin, Award, LayoutDashboard, History, TrendingUp } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Checkbox } from '../ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Label } from '../ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import SignatureCanvas from 'react-signature-canvas';
 import { useToast } from '@/hooks/use-toast';
 import { Bar, BarChart as ReChartsBarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
@@ -186,7 +186,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h2 className="text-3xl font-bold">Executive Boss Portal</h2>
+                  <h2 className="text-3xl font-bold">Management</h2>
                   <p className="text-muted-foreground">Final check and sign-off for all area requests.</p>
                 </div>
                 <div className="flex items-center gap-2">
