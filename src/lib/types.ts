@@ -110,16 +110,19 @@ export const OnboardingFormSchema = z.object({
   agreement1Accepted: z.boolean().default(false),
   agreement1Signature: z.string().optional(),
   agreement1Pages: z.array(z.string()).default([]),
+  agreement1PageCount: z.number().default(0),
 
   agreement2Method: z.enum(['digital', 'physical']).default('physical'),
   agreement2Accepted: z.boolean().default(false),
   agreement2Signature: z.string().optional(),
   agreement2Pages: z.array(z.string()).default([]),
+  agreement2PageCount: z.number().default(0),
 
   adlaMethod: z.enum(['digital', 'physical']).default('physical'),
   adlaAccepted: z.boolean().default(false),
   adlaSignature: z.string().optional(),
   adlaPages: z.array(z.string()).default([]),
+  adlaPageCount: z.number().default(0),
 
   // Document Registry
   document1Type: z.string().optional(),

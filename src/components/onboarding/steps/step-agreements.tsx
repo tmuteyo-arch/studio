@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { FileSignature, CheckCircle2, Upload, Camera, Trash2, File, Plus, AlertCircle } from 'lucide-react';
+import { FileSignature, CheckCircle2, Upload, Camera, Trash2, File, Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,27 +16,55 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
 import { Input } from '@/components/ui/input';
+import { countPdfPages } from '@/lib/pdf-utils';
 
 const MAX_PAGES = 12;
 
-const PhysicalCapture = ({ fieldName, disabled }: { fieldName: 'agreement1Pages' | 'agreement2Pages'; disabled?: boolean }) => {
+const PhysicalCapture = ({ fieldName, countFieldName, disabled }: { 
+    fieldName: 'agreement1Pages' | 'agreement2Pages' | 'adlaPages'; 
+    countFieldName: 'agreement1PageCount' | 'agreement2PageCount' | 'adlaPageCount';
+    disabled?: boolean 
+}) => {
     const { toast } = useToast();
     const { watch, setValue } = useFormContext<OnboardingFormData>();
     const pages = watch(fieldName) || [];
+    const totalPageCount = watch(countFieldName) || 0;
     
     const [isValidating, setIsValidating] = React.useState(false);
     const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
     const [isScanning, setIsScanning] = React.useState(false);
+    const [isCalculating, setIsCalculating] = React.useState(false);
     
     const videoRef = React.useRef<HTMLVideoElement>(null);
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+    // Auto-detect and store page count as metadata
+    React.useEffect(() => {
+        const calculateTotalPages = async () => {
+            if (pages.length === 0) {
+                setValue(countFieldName, 0);
+                return;
+            }
+            setIsCalculating(true);
+            try {
+                let total = 0;
+                for (const p of pages) {
+                    total += await countPdfPages(p);
+                }
+                setValue(countFieldName, total, { shouldValidate: true });
+            } finally {
+                setIsCalculating(false);
+            }
+        };
+        calculateTotalPages();
+    }, [pages, countFieldName, setValue]);
+
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         if (pages.length >= MAX_PAGES) {
-            toast({ variant: 'destructive', title: 'Limit Reached', description: `Maximum ${MAX_PAGES} pages allowed.` });
+            toast({ variant: 'destructive', title: 'Limit Reached', description: `Maximum ${MAX_PAGES} slots allowed.` });
             return;
         }
 
@@ -60,7 +88,7 @@ const PhysicalCapture = ({ fieldName, disabled }: { fieldName: 'agreement1Pages'
 
     const startScan = async () => {
         if (pages.length >= MAX_PAGES) {
-            toast({ variant: 'destructive', title: 'Limit Reached', description: `Maximum ${MAX_PAGES} pages allowed.` });
+            toast({ variant: 'destructive', title: 'Limit Reached', description: `Maximum ${MAX_PAGES} slots allowed.` });
             return;
         }
         setIsScanning(true);
@@ -116,7 +144,14 @@ const PhysicalCapture = ({ fieldName, disabled }: { fieldName: 'agreement1Pages'
                             <div className="flex w-max space-x-4">
                                 {pages.map((page, idx) => (
                                     <div key={idx} className="relative w-24 h-32 rounded-md border bg-background overflow-hidden group shadow-sm">
-                                        <img src={page} alt={`Page ${idx+1}`} className="w-full h-full object-cover" />
+                                        {page.startsWith('data:application/pdf') ? (
+                                            <div className="w-full h-full flex flex-col items-center justify-center bg-muted/50 gap-1">
+                                                <File className="h-8 w-8 text-primary" />
+                                                <span className="text-[8px] font-black uppercase">PDF Data</span>
+                                            </div>
+                                        ) : (
+                                            <img src={page} alt={`Page ${idx+1}`} className="w-full h-full object-cover" />
+                                        )}
                                         <div className="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1.5 py-0.5 rounded">#{idx+1}</div>
                                         {!disabled && (
                                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -146,17 +181,25 @@ const PhysicalCapture = ({ fieldName, disabled }: { fieldName: 'agreement1Pages'
                 <div className="flex flex-col gap-2">
                     {!disabled && (
                         <>
-                            <Button variant="outline" className="h-10 text-xs font-black uppercase border-primary/20" onClick={startScan} disabled={isValidating}>
+                            <Button variant="outline" className="h-10 text-xs font-black uppercase border-primary/20" onClick={startScan} disabled={isValidating || isCalculating}>
                                 <Camera className="mr-2 h-4 w-4" /> Scan Page
                             </Button>
-                            <Button variant="outline" className="h-10 text-xs font-black uppercase border-primary/20" onClick={() => fileInputRef.current?.click()} disabled={isValidating}>
+                            <Button variant="outline" className="h-10 text-xs font-black uppercase border-primary/20" onClick={() => fileInputRef.current?.click()} disabled={isValidating || isCalculating}>
                                 <Upload className="mr-2 h-4 w-4" /> Upload File
                             </Button>
                         </>
                     )}
-                    <Badge variant="outline" className="h-10 justify-center font-black uppercase text-[9px] tracking-widest">
-                        {pages.length} / {MAX_PAGES} Pages
-                    </Badge>
+                    <div className="flex flex-col gap-1.5">
+                        <Badge variant="outline" className="h-8 justify-center font-black uppercase text-[9px] tracking-widest">
+                            {pages.length} / {MAX_PAGES} Capture Slots
+                        </Badge>
+                        {totalPageCount > 0 && (
+                            <Badge variant="secondary" className="h-8 justify-center font-black uppercase text-[9px] tracking-widest bg-primary/10 text-primary border-primary/20">
+                                {isCalculating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                                Total Pages: {totalPageCount}
+                            </Badge>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -187,21 +230,24 @@ const AgreementSection = ({
     acceptedField, 
     signatureField,
     pagesField,
+    countField,
     disabled 
 }: { 
     title: string; 
     acceptedField: keyof OnboardingFormData; 
     signatureField: keyof OnboardingFormData; 
     pagesField: keyof OnboardingFormData;
+    countField: keyof OnboardingFormData;
     disabled?: boolean;
 }) => {
     const { control, watch } = useFormContext<OnboardingFormData>();
     
     const physicalPages = watch(pagesField) as string[] || [];
+    const totalPageCount = watch(countField) as number || 0;
     const isAccepted = watch(acceptedField) as boolean;
     const signOffName = watch(signatureField) as string;
 
-    const isComplete = physicalPages.length > 0 && isAccepted && (signOffName?.length || 0) >= 3;
+    const isComplete = totalPageCount > 0 && isAccepted && (signOffName?.length || 0) >= 3;
 
     return (
         <div className="space-y-6 p-6 border rounded-2xl bg-card shadow-sm mb-8">
@@ -220,7 +266,7 @@ const AgreementSection = ({
             <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Document Capture (Scan or Upload Existing Signed Contract)</Label>
-                    <PhysicalCapture fieldName={pagesField as any} disabled={disabled} />
+                    <PhysicalCapture fieldName={pagesField as any} countFieldName={countField as any} disabled={disabled} />
                 </div>
 
                 {physicalPages.length > 0 && (
@@ -305,6 +351,7 @@ export default function StepAgreements({ disabled }: { disabled?: boolean }) {
                         acceptedField="agreement1Accepted" 
                         signatureField="agreement1Signature"
                         pagesField="agreement1Pages"
+                        countField="agreement1PageCount"
                         disabled={disabled}
                     />
                 )}
@@ -315,6 +362,18 @@ export default function StepAgreements({ disabled }: { disabled?: boolean }) {
                         acceptedField="agreement2Accepted" 
                         signatureField="agreement2Signature"
                         pagesField="agreement2Pages"
+                        countField="agreement2PageCount"
+                        disabled={disabled}
+                    />
+                )}
+
+                {!isInstitution && (
+                    <AgreementSection 
+                        title="ADLA Declaration" 
+                        acceptedField="adlaAccepted" 
+                        signatureField="adlaSignature"
+                        pagesField="adlaPages"
+                        countField="adlaPageCount"
                         disabled={disabled}
                     />
                 )}
