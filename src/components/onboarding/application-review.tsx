@@ -6,7 +6,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, Wand2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Sparkles, Globe, Trash2, Info, FileSearch, Hash } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Globe, Trash2, Info, FileSearch, Hash } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -16,7 +16,6 @@ import AdlaDeclarationPrintView from './adla-declaration-print-view';
 import { useToast } from '@/hooks/use-toast';
 import { User as UserProfile } from '@/lib/users';
 import { Label } from '../ui/label';
-import { getDocumentRequirements } from '@/lib/document-requirements';
 import { FormProvider, useForm } from 'react-hook-form';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -29,7 +28,6 @@ import StepIndividualInfo from './steps/step-individual-info';
 import AccountResolutionPrintView from './account-resolution-print-view';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
-import { extractAndValidateData } from '@/ai/flows/extract-and-validate-data';
 import StepDocumentUpload from './steps/step-document-upload';
 import SignatureCanvas from 'react-signature-canvas';
 import { isValidTransition, getStateLabel } from '@/lib/state-machine';
@@ -144,7 +142,6 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [dispatchBrAccountNumber, setDispatchBrAccountNumber] = React.useState('');
   const [dispatchWalletAccountNumber, setDispatchWalletAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
-  const [isAiProcessing, setIsAiProcessing] = React.useState(false);
 
   // Tiered Approval Signature States
   const [isSupervisorSigning, setIsSupervisorSigning] = React.useState(false);
@@ -393,46 +390,6 @@ export default function ApplicationReview({ application: initialApplication, onB
     }
   };
 
-  const handleGeminiVerification = async () => {
-    if (application.documents.length < 2) {
-        toast({ variant: 'destructive', title: 'Documents Needed', description: 'AI check needs at least two documents.' });
-        return;
-    }
-
-    setIsAiProcessing(true);
-    try {
-        const result = await extractAndValidateData({
-            document1DataUri: application.documents[0].url,
-            document1Type: application.documents[0].type,
-            document2DataUri: application.documents[1].url,
-            document2Type: application.documents[1].type,
-            formDataFields: application.details as any,
-        });
-
-        if (result) {
-            handleUpdateApplication({
-                fcbStatus: result.fcbStatus as any,
-                comments: [
-                    ...application.comments,
-                    {
-                        id: `ai-${Date.now()}`,
-                        user: 'Gemini AI',
-                        role: 'compliance',
-                        timestamp: new Date().toISOString(),
-                        content: `AI Check OK. Result: ${result.fcbStatus}. Note: ${result.validationResult}`
-                    }
-                ]
-            });
-            toast({ title: 'AI Check OK', description: `Status: ${result.fcbStatus}.` });
-        }
-    } catch (error) {
-        console.error('AI Error:', error);
-        toast({ variant: 'destructive', title: 'AI Error', description: 'AI failed to check documents.' });
-    } finally {
-        setIsAiProcessing(false);
-    }
-  };
-
   const renderActions = () => {
     if (isProcessingAction) return <Button disabled className="font-black px-8"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> WORKING...</Button>;
 
@@ -534,16 +491,6 @@ export default function ApplicationReview({ application: initialApplication, onB
                           <h4 className="text-xs font-black uppercase text-secondary tracking-widest flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full shadow-sm">
                               <ShieldCheck className="h-4 w-4" /> Compliance Check: FCB Report
                           </h4>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="bg-white text-primary font-black h-10 px-6"
-                            onClick={handleGeminiVerification}
-                            disabled={isAiProcessing || application.documents.length < 2 || isProcessingAction}
-                          >
-                            {isAiProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-primary" />}
-                            AI Check
-                          </Button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-4">
