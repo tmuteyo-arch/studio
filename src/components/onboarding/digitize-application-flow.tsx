@@ -1,12 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { format } from 'date-fns';
+import { format, isAfter, startOfDay } from 'date-fns';
 import { useAtom } from 'jotai';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, FileUp, Camera, Upload, Trash2, File, ScanLine, Info, CheckCircle2, AlertCircle, Eye, Download, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Loader2, Camera, Upload, Trash2, File, ScanLine, Info, CheckCircle2, AlertCircle, Eye, ChevronLeft, ChevronRight, RotateCcw, UserCircle, Building2, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,8 +40,18 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   const { toast } = useToast();
   const [applications, setApplications] = useAtom(applicationsAtom);
 
-  const [clientName, setClientName] = React.useState('');
+  const [step, setStep] = React.useState(1);
   const [clientType, setClientType] = React.useState<string>('');
+  
+  // Profile Data Fields
+  const [fullName, setFullName] = React.useState('');
+  const [dob, setDob] = React.useState('');
+  const [idNumber, setIdNumber] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [address, setAddress] = React.useState('');
+  const [orgName, setOrgName] = React.useState('');
+
   const [documentType, setDocumentType] = React.useState('Other Document');
   const [pages, setPages] = React.useState<PageState[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -55,9 +65,41 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isScanning, setIsScanning] = React.useState<boolean>(false);
 
+  const isPersonal = ['Individual Accounts', 'Minors'].includes(clientType);
+  const isCorporate = ['Private Limited (Pvt) Company', 'Private Business Corporate (PBC)', 'Public Limited company', 'Partnerships', 'Investment Group', 'Parastatal'].includes(clientType);
+  const isOther = ['Trust', 'NGO', 'Church', 'School', 'Societies', 'Club/ Association', 'Government / Local Authority'].includes(clientType);
+
   const requirements = React.useMemo(() => {
     return clientType ? getDocumentRequirements(clientType) : [];
   }, [clientType]);
+
+  const validateStep1 = () => {
+    if (!clientType) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please select an account type.' });
+      return false;
+    }
+
+    if (isPersonal) {
+      if (!fullName) { toast({ variant: 'destructive', title: 'Error', description: 'Full Name is required.' }); return false; }
+      if (!dob) { toast({ variant: 'destructive', title: 'Error', description: 'Date of Birth is required.' }); return false; }
+      if (isAfter(new Date(dob), startOfDay(new Date()))) { toast({ variant: 'destructive', title: 'Error', description: 'Date of Birth cannot be in the future.' }); return false; }
+    } else {
+      if (!orgName) { toast({ variant: 'destructive', title: 'Error', description: 'Organisation Name is required.' }); return false; }
+      if (!fullName) { toast({ variant: 'destructive', title: 'Error', description: 'Representative Name is required.' }); return false; }
+    }
+
+    if (!idNumber) { toast({ variant: 'destructive', title: 'Error', description: 'National ID / Passport Number is required.' }); return false; }
+    if (!phone) { toast({ variant: 'destructive', title: 'Error', description: 'Phone Number is required.' }); return false; }
+    if (!address) { toast({ variant: 'destructive', title: 'Error', description: 'Physical Address is required.' }); return false; }
+
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep1()) {
+      setStep(2);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -176,8 +218,8 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   };
 
   const onSubmit = async () => {
-    if (!clientName.trim() || !clientType || pages.length === 0) {
-      toast({ variant: 'destructive', title: 'Incomplete Information', description: 'Please provide required details and capture pages.' });
+    if (pages.length === 0) {
+      toast({ variant: 'destructive', title: 'No Documents', description: 'Please capture at least one page for the archive.' });
       return;
     }
 
@@ -204,9 +246,11 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
             })
         );
         
+        const finalClientName = isPersonal ? fullName : orgName;
+
         const newApplication = {
           id: generateAccountId(),
-          clientName: clientName.trim(),
+          clientName: finalClientName.trim(),
           clientType: clientType,
           status: 'Locked',
           submittedDate: format(new Date(), 'yyyy-MM-dd'),
@@ -216,7 +260,14 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
           fcbStatus: 'Inclusive',
           details: {
             clientType: clientType,
-            organisationLegalName: clientName,
+            organisationLegalName: orgName,
+            individualFirstName: isPersonal ? fullName.split(' ')[0] : fullName,
+            individualSurname: isPersonal ? fullName.split(' ').slice(1).join(' ') : '',
+            individualDateOfBirth: dob,
+            individualIdNumber: idNumber,
+            individualMobileNumber: phone,
+            email: email,
+            physicalAddress: address,
             tinNumber: 'PAPER-ARCHIVE',
             capturedDocuments: mergedDocuments,
             agreedToTerms: true,
@@ -231,7 +282,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
         } as Application;
 
         setApplications(prev => [newApplication, ...prev]);
-        toast({ title: "Application Archived!", description: `${clientName} has been successfully digitized.` });
+        toast({ title: "Application Archived!", description: `${finalClientName} has been successfully digitized.` });
         await new Promise(resolve => setTimeout(resolve, 800));
         onCancel();
     } catch (error) {
@@ -256,143 +307,249 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,application/pdf" className="hidden" />
 
-      <div className="mb-6">
-          <Button variant="outline" type="button" onClick={onCancel} disabled={isValidating || isSubmitting}>
-             <ArrowLeft className="mr-2 h-4 w-4" /> Back
+      <div className="mb-6 flex items-center justify-between">
+          <Button variant="outline" type="button" onClick={step === 2 ? () => setStep(1) : onCancel} disabled={isValidating || isSubmitting}>
+             <ArrowLeft className="mr-2 h-4 w-4" /> {step === 2 ? 'Back to Profile' : 'Cancel'}
           </Button>
-        </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-            <Card className="relative overflow-hidden">
-                {(isValidating || isSubmitting) && (
-                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 text-center">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    <div className="space-y-1">
-                      <p className="text-xl font-black uppercase tracking-tight">{isSubmitting ? 'Archiving...' : 'Processing File'}</p>
-                      <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">Please wait...</p>
-                    </div>
-                  </div>
-                )}
-                <CardHeader>
-                <CardTitle>Digitize Paper Application</CardTitle>
-                <CardDescription>Create a new digital archive from legacy paper records.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="client-type">Account Type</Label>
-                        <Select value={clientType} onValueChange={setClientType} disabled={isValidating || isSubmitting}>
-                            <SelectTrigger id="client-type"><SelectValue placeholder="Select account type..." /></SelectTrigger>
-                            <SelectContent>{accountTypes.map(type => (<SelectItem key={type} value={type}>{type}</SelectItem>))}</SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="client-name">Client or Company Name</Label>
-                        <Input id="client-name" placeholder="Enter name" value={clientName} onChange={(e) => setClientName(e.target.value)} disabled={isValidating || isSubmitting} />
-                    </div>
-                </div>
+          <div className="flex gap-2">
+            <Badge variant={step === 1 ? 'default' : 'outline'} className="h-8 px-4 font-black">1. PROFILE</Badge>
+            <Badge variant={step === 2 ? 'default' : 'outline'} className="h-8 px-4 font-black">2. DOCUMENTS</Badge>
+          </div>
+      </div>
 
-                <div className="p-4 border rounded-lg space-y-4 bg-muted/5">
-                    <h3 className="font-semibold text-lg flex items-center gap-2">Captured Pages <Badge variant="secondary" className="ml-2">{pages.reduce((acc, p) => acc + p.pageCount, 0)} Total</Badge></h3>
-                    {pages.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-                        {pages.map((page, index) => (
-                            <div key={index} className="relative group border rounded-xl overflow-hidden h-40 bg-background shadow-sm">
-                            {page.type === 'image' ? (
-                                <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-cover" />
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+        {step === 1 ? (
+            <Card className="shadow-xl border-primary/10">
+                <CardHeader className="bg-primary/5 border-b">
+                    <CardTitle className="flex items-center gap-2">
+                        <UserCircle className="h-6 w-6 text-primary" />
+                        Step 1: Customer Data Entry
+                    </CardTitle>
+                    <CardDescription>Capture identity information for the regulatory record.</CardDescription>
+                </CardHeader>
+                <CardContent className="py-8 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Account Type</Label>
+                            <Select value={clientType} onValueChange={setClientType}>
+                                <SelectTrigger className="h-12 bg-background border-primary/20"><SelectValue placeholder="Select account type..." /></SelectTrigger>
+                                <SelectContent className="max-h-[300px]">{accountTypes.map(type => (<SelectItem key={type} value={type} className="font-bold py-3">{type}</SelectItem>))}</SelectContent>
+                            </Select>
+                        </div>
+
+                        {clientType && (
+                            <div className="space-y-2 animate-in zoom-in-95">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                                    {isPersonal ? 'Full Name' : 'Organisation Legal Name'}
+                                </Label>
+                                <Input 
+                                    placeholder={isPersonal ? "e.g. John Doe" : "e.g. Acme Corp (Pvt) Ltd"} 
+                                    className="h-12 border-primary/20 font-bold"
+                                    value={isPersonal ? fullName : orgName}
+                                    onChange={(e) => isPersonal ? setFullName(e.target.value) : setOrgName(e.target.value)}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {clientType && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2">
+                            {isPersonal ? (
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Date of Birth</Label>
+                                    <Input 
+                                        type="date" 
+                                        className="h-12 border-primary/20"
+                                        value={dob}
+                                        onChange={(e) => setDob(e.target.value)}
+                                        max={format(new Date(), 'yyyy-MM-dd')}
+                                    />
+                                </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center bg-muted h-full gap-2">
-                                    <File className="h-10 w-10 text-primary" />
-                                    <Badge variant="outline" className="text-[8px] h-4">{page.pageCount} Pgs</Badge>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Representative Name</Label>
+                                    <Input 
+                                        placeholder="Authorized Signatory Name" 
+                                        className="h-12 border-primary/20 font-bold"
+                                        value={fullName}
+                                        onChange={(e) => setFullName(e.target.value)}
+                                    />
                                 </div>
                             )}
-                            <div className="absolute top-1 left-1 flex flex-col gap-1">
-                                <Badge variant="secondary" className="text-[8px] px-1.5 py-0.5 uppercase font-black">{page.documentType}</Badge>
+
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">National ID / Passport</Label>
+                                <Input 
+                                    placeholder="Enter Registry ID" 
+                                    className="h-12 border-primary/20 font-mono font-bold"
+                                    value={idNumber}
+                                    onChange={(e) => setIdNumber(e.target.value)}
+                                />
                             </div>
-                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div className="flex gap-1">
-                                    <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => movePage(index, index - 1)} disabled={index === 0}><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => movePage(index, index + 1)} disabled={index === pages.length - 1}><ChevronRight className="h-4 w-4" /></Button>
-                                </div>
-                                <div className="flex gap-1">
-                                    <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setPreviewPage(page)}><Eye className="h-4 w-4" /></Button>
-                                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePage(index)}><Trash2 className="h-4 w-4" /></Button>
-                                </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Phone Number</Label>
+                                <Input 
+                                    placeholder="+263..." 
+                                    className="h-12 border-primary/20"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                />
                             </div>
-                            </div>
-                        ))}
-                        </div>
-                    ) : (
-                        <div className="text-center text-muted-foreground py-16 border-dashed border-2 rounded-xl bg-muted/10">
-                            <ScanLine className="mx-auto h-12 w-12 opacity-10" />
-                            <p className="mt-4 font-bold uppercase text-xs tracking-widest opacity-40">No pages captured</p>
                         </div>
                     )}
 
-                    <div className="space-y-4 bg-muted/20 p-6 rounded-xl border border-primary/10 shadow-inner">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                    {clientType && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Document Type</Label>
-                                <Select value={documentType} onValueChange={setDocumentType} disabled={isValidating || isSubmitting}>
-                                    <SelectTrigger className="h-12 bg-background"><SelectValue placeholder="Select type..." /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Other Document">Other Document</SelectItem>
-                                        {requirements.map(req => (<SelectItem key={req.document} value={req.document}>{req.document}</SelectItem>))}
-                                    </SelectContent>
-                                </Select>
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</Label>
+                                <Input 
+                                    type="email" 
+                                    placeholder="name@email.com" 
+                                    className="h-12 border-primary/20"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
                             </div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20" onClick={startScan} disabled={!clientType || isValidating || isSubmitting}>
-                                    <Camera className="mr-2 h-4 w-4 text-primary"/>Scan
-                                </Button>
-                                <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20" onClick={() => fileInputRef.current?.click()} disabled={!clientType || isValidating || isSubmitting}>
-                                    <Upload className="mr-2 h-4 w-4 text-primary"/>Upload
-                                </Button>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Physical Address</Label>
+                                <Input 
+                                    placeholder="Street, City, Province" 
+                                    className="h-12 border-primary/20"
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                />
                             </div>
                         </div>
-                    </div>
-                </div>
+                    )}
                 </CardContent>
-                <CardFooter className="border-t px-6 py-6 justify-end bg-muted/5">
-                <Button onClick={onSubmit} disabled={isSubmitting || isValidating || !clientName.trim() || !clientType || pages.length === 0} className="bg-primary text-primary-foreground font-black px-10 h-14 rounded-xl shadow-xl transition-all">
-                    {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
-                    {lastSubmissionFailed ? <><RotateCcw className="mr-2 h-4 w-4" /> RETRY ARCHIVE</> : 'ARCHIVE APPLICATION'}
-                </Button>
+                <CardFooter className="bg-muted/10 border-t p-6 justify-end">
+                    <Button onClick={handleNext} disabled={!clientType} className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl shadow-lg">
+                        NEXT: UPLOAD DOCUMENTS
+                        <ChevronRight className="ml-2 h-5 w-5" />
+                    </Button>
                 </CardFooter>
             </Card>
-        </div>
-
-        <div className="space-y-6">
-            <Card className="h-full flex flex-col shadow-lg border-primary/5">
-                <CardHeader className="pb-4 border-b">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary"><Info className="h-4 w-4" /> Checklist</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 p-0">
-                    <ScrollArea className="h-[600px]">
-                        <div className="p-4 space-y-3">
-                            {clientType ? (
-                                requirements.map((req) => {
-                                    const met = isRequirementMet(req.document);
-                                    return (
-                                        <div key={req.document} className={`p-4 rounded-xl border transition-all cursor-pointer ${met ? 'bg-green-500/5 border-green-500/20' : 'bg-card'}`} onClick={() => !isValidating && !isSubmitting && setDocumentType(req.document)}>
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="flex-1">
-                                                    <p className={`text-sm font-black uppercase tracking-tight ${met ? 'text-green-600' : 'text-foreground/80'}`}>{req.document}</p>
-                                                    <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight font-medium">{req.comment}</p>
-                                                </div>
-                                                {met ? <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" /> : <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 opacity-20" />}
+        ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    <Card className="relative overflow-hidden shadow-xl border-primary/10">
+                        {(isValidating || isSubmitting) && (
+                        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 text-center">
+                            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                            <div className="space-y-1">
+                            <p className="text-xl font-black uppercase tracking-tight">{isSubmitting ? 'Archiving...' : 'Processing File'}</p>
+                            <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">Please wait...</p>
+                            </div>
+                        </div>
+                        )}
+                        <CardHeader className="bg-primary/5 border-b">
+                            <CardTitle className="flex items-center gap-2">
+                                <ScanLine className="h-6 w-6 text-primary" />
+                                Step 2: Document Capture
+                            </CardTitle>
+                            <CardDescription>Archive paper records for <strong>{isPersonal ? fullName : orgName}</strong>.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6 py-8">
+                            <div className="p-4 border rounded-xl space-y-4 bg-muted/5">
+                                <h3 className="font-black uppercase tracking-widest text-xs flex items-center gap-2 text-primary">Captured Pages <Badge variant="secondary" className="ml-2 font-mono">{pages.reduce((acc, p) => acc + p.pageCount, 0)} Total</Badge></h3>
+                                {pages.length > 0 ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                                    {pages.map((page, index) => (
+                                        <div key={index} className="relative group border rounded-xl overflow-hidden h-40 bg-background shadow-sm">
+                                        {page.type === 'image' ? (
+                                            <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center bg-muted h-full gap-2">
+                                                <File className="h-10 w-10 text-primary" />
+                                                <Badge variant="outline" className="text-[8px] h-4">{page.pageCount} Pgs</Badge>
+                                            </div>
+                                        )}
+                                        <div className="absolute top-1 left-1 flex flex-col gap-1">
+                                            <Badge variant="secondary" className="text-[8px] px-1.5 py-0.5 uppercase font-black">{page.documentType}</Badge>
+                                        </div>
+                                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex gap-1">
+                                                <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => movePage(index, index - 1)} disabled={index === 0}><ChevronLeft className="h-4 w-4" /></Button>
+                                                <Button variant="secondary" size="icon" className="h-7 w-7" onClick={() => movePage(index, index + 1)} disabled={index === pages.length - 1}><ChevronRight className="h-4 w-4" /></Button>
+                                            </div>
+                                            <div className="flex gap-1">
+                                                <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => setPreviewPage(page)}><Eye className="h-4 w-4" /></Button>
+                                                <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => removePage(index)}><Trash2 className="h-4 w-4" /></Button>
                                             </div>
                                         </div>
-                                    );
-                                })
-                            ) : (
-                                <div className="text-center py-24 text-muted-foreground opacity-20"><ScanLine className="h-12 w-12 mx-auto mb-2" /><p className="text-[10px] font-black uppercase tracking-widest">Select Type</p></div>
-                            )}
-                        </div>
-                    </ScrollArea>
-                </CardContent>
-            </Card>
-        </div>
+                                        </div>
+                                    ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-muted-foreground py-16 border-dashed border-2 rounded-xl bg-muted/10">
+                                        <ScanLine className="mx-auto h-12 w-12 opacity-10" />
+                                        <p className="mt-4 font-bold uppercase text-xs tracking-widest opacity-40">No pages captured</p>
+                                    </div>
+                                )}
+
+                                <div className="space-y-4 bg-muted/20 p-6 rounded-xl border border-primary/10 shadow-inner">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Document Type</Label>
+                                            <Select value={documentType} onValueChange={setDocumentType} disabled={isValidating || isSubmitting}>
+                                                <SelectTrigger className="h-12 bg-background"><SelectValue placeholder="Select type..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Other Document">Other Document</SelectItem>
+                                                    {requirements.map(req => (<SelectItem key={req.document} value={req.document}>{req.document}</SelectItem>))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20" onClick={startScan} disabled={isValidating || isSubmitting}>
+                                                <Camera className="mr-2 h-4 w-4 text-primary"/>Scan
+                                            </Button>
+                                            <Button variant="outline" className="flex-1 h-12 font-black uppercase tracking-widest border-primary/20" onClick={() => fileInputRef.current?.click()} disabled={isValidating || isSubmitting}>
+                                                <Upload className="mr-2 h-4 w-4 text-primary"/>Upload
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="border-t px-6 py-6 justify-end bg-muted/5">
+                        <Button onClick={onSubmit} disabled={isSubmitting || isValidating || pages.length === 0} className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl shadow-xl transition-all">
+                            {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                            {lastSubmissionFailed ? <><RotateCcw className="mr-2 h-4 w-4" /> RETRY ARCHIVE</> : 'ARCHIVE APPLICATION'}
+                        </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+
+                <div className="space-y-6">
+                    <Card className="h-full flex flex-col shadow-lg border-primary/5">
+                        <CardHeader className="pb-4 border-b">
+                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-primary"><Info className="h-4 w-4" /> Checklist</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-1 p-0">
+                            <ScrollArea className="h-[600px]">
+                                <div className="p-4 space-y-3">
+                                    {requirements.map((req) => {
+                                        const met = isRequirementMet(req.document);
+                                        return (
+                                            <div key={req.document} className={`p-4 rounded-xl border transition-all cursor-pointer ${met ? 'bg-green-500/5 border-green-500/20' : 'bg-card'}`} onClick={() => !isValidating && !isSubmitting && setDocumentType(req.document)}>
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex-1">
+                                                        <p className={`text-sm font-black uppercase tracking-tight ${met ? 'text-green-600' : 'text-foreground/80'}`}>{req.document}</p>
+                                                        <p className="text-[10px] text-muted-foreground mt-1.5 leading-tight font-medium">{req.comment}</p>
+                                                    </div>
+                                                    {met ? <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" /> : <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 opacity-20" />}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </ScrollArea>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        )}
       </div>
 
       <Dialog open={isScanning} onOpenChange={(isOpen) => !isOpen && stopScan()}>
