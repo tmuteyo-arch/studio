@@ -92,7 +92,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 </div>
                 <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="h-14 px-10 font-black shadow-2xl rounded-xl border-2">
                     <ScanLine className="mr-2 h-6 w-6" />
-                    SCAN PAPER
+                    DIGITALIZE APPLICATION
                 </Button>
             </div>
             
