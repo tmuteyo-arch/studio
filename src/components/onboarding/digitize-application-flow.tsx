@@ -6,7 +6,7 @@ import { useAtom } from 'jotai';
 import { applicationsAtom, Application } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, Camera, Upload, Trash2, File, ScanLine, Info, CheckCircle2, AlertCircle, Eye, ChevronLeft, ChevronRight, RotateCcw, UserCircle, Building2, Landmark } from 'lucide-react';
+import { ArrowLeft, Loader2, Camera, Upload, Trash2, File, ScanLine, Info, CheckCircle2, AlertCircle, Eye, ChevronLeft, ChevronRight, RotateCcw, UserCircle, Building2, Landmark, Briefcase, Hash, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
 import { generateAccountId } from '@/lib/utils';
 import { mergeToPdf, countPdfPages } from '@/lib/pdf-utils';
+import { Separator } from '@/components/ui/separator';
 
 type PageState = {
   source: 'scan' | 'upload';
@@ -44,13 +45,14 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   const [clientType, setClientType] = React.useState<string>('');
   
   // Profile Data Fields
-  const [fullName, setFullName] = React.useState('');
-  const [dob, setDob] = React.useState('');
-  const [idNumber, setIdNumber] = React.useState('');
-  const [phone, setPhone] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [address, setAddress] = React.useState('');
-  const [orgName, setOrgName] = React.useState('');
+  const [fullName, setFullName] = React.useState(''); // Rep Name / Individual Name
+  const [dob, setDob] = React.useState(''); // Individual DOB
+  const [idNumber, setIdNumber] = React.useState(''); // Rep ID / Individual ID
+  const [phone, setPhone] = React.useState(''); // Rep Phone / Individual Phone
+  const [email, setEmail] = React.useState(''); // Rep Email / Individual Email
+  const [address, setAddress] = React.useState(''); // Business Address / Individual Address
+  const [orgName, setOrgName] = React.useState(''); // Company Name / Organization Name
+  const [regNumber, setRegNumber] = React.useState(''); // Registration Number / Details
 
   const [documentType, setDocumentType] = React.useState('Other Document');
   const [pages, setPages] = React.useState<PageState[]>([]);
@@ -65,7 +67,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isScanning, setIsScanning] = React.useState<boolean>(false);
 
-  const isPersonal = ['Individual Accounts', 'Minors'].includes(clientType);
+  const isPersonal = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(clientType);
   const isCorporate = ['Private Limited (Pvt) Company', 'Private Business Corporate (PBC)', 'Public Limited company', 'Partnerships', 'Investment Group', 'Parastatal'].includes(clientType);
   const isOther = ['Trust', 'NGO', 'Church', 'School', 'Societies', 'Club/ Association', 'Government / Local Authority'].includes(clientType);
 
@@ -83,12 +85,14 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
       if (!fullName) { toast({ variant: 'destructive', title: 'Error', description: 'Full Name is required.' }); return false; }
       if (!dob) { toast({ variant: 'destructive', title: 'Error', description: 'Date of Birth is required.' }); return false; }
       if (isAfter(new Date(dob), startOfDay(new Date()))) { toast({ variant: 'destructive', title: 'Error', description: 'Date of Birth cannot be in the future.' }); return false; }
+      if (!idNumber) { toast({ variant: 'destructive', title: 'Error', description: 'National ID / Passport Number is required.' }); return false; }
     } else {
-      if (!orgName) { toast({ variant: 'destructive', title: 'Error', description: 'Organisation Name is required.' }); return false; }
-      if (!fullName) { toast({ variant: 'destructive', title: 'Error', description: 'Representative Name is required.' }); return false; }
+      if (!orgName) { toast({ variant: 'destructive', title: 'Error', description: 'Organisation/Entity Name is required.' }); return false; }
+      if (!regNumber) { toast({ variant: 'destructive', title: 'Error', description: 'Registration number/details are required.' }); return false; }
+      if (!fullName) { toast({ variant: 'destructive', title: 'Error', description: 'Representative Full Name is required.' }); return false; }
+      if (!idNumber) { toast({ variant: 'destructive', title: 'Error', description: 'Representative National ID is required.' }); return false; }
     }
 
-    if (!idNumber) { toast({ variant: 'destructive', title: 'Error', description: 'National ID / Passport Number is required.' }); return false; }
     if (!phone) { toast({ variant: 'destructive', title: 'Error', description: 'Phone Number is required.' }); return false; }
     if (!address) { toast({ variant: 'destructive', title: 'Error', description: 'Physical Address is required.' }); return false; }
 
@@ -261,6 +265,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
           details: {
             clientType: clientType,
             organisationLegalName: orgName,
+            certificateOfIncorporationNumber: regNumber,
             individualFirstName: isPersonal ? fullName.split(' ')[0] : fullName,
             individualSurname: isPersonal ? fullName.split(' ').slice(1).join(' ') : '',
             individualDateOfBirth: dob,
@@ -336,96 +341,159 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                 <SelectContent className="max-h-[300px]">{accountTypes.map(type => (<SelectItem key={type} value={type} className="font-bold py-3">{type}</SelectItem>))}</SelectContent>
                             </Select>
                         </div>
-
-                        {clientType && (
-                            <div className="space-y-2 animate-in zoom-in-95">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
-                                    {isPersonal ? 'Full Name' : 'Organisation Legal Name'}
-                                </Label>
-                                <Input 
-                                    placeholder={isPersonal ? "e.g. John Doe" : "e.g. Acme Corp (Pvt) Ltd"} 
-                                    className="h-12 border-primary/20 font-bold"
-                                    value={isPersonal ? fullName : orgName}
-                                    onChange={(e) => isPersonal ? setFullName(e.target.value) : setOrgName(e.target.value)}
-                                />
-                            </div>
-                        )}
                     </div>
 
-                    {clientType && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2">
-                            {isPersonal ? (
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Date of Birth</Label>
-                                    <Input 
-                                        type="date" 
-                                        className="h-12 border-primary/20"
-                                        value={dob}
-                                        onChange={(e) => setDob(e.target.value)}
-                                        max={format(new Date(), 'yyyy-MM-dd')}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Representative Name</Label>
-                                    <Input 
-                                        placeholder="Authorized Signatory Name" 
-                                        className="h-12 border-primary/20 font-bold"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                    />
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">National ID / Passport</Label>
-                                <Input 
-                                    placeholder="Enter Registry ID" 
-                                    className="h-12 border-primary/20 font-mono font-bold"
-                                    value={idNumber}
-                                    onChange={(e) => setIdNumber(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Phone Number</Label>
-                                <Input 
-                                    placeholder="+263..." 
-                                    className="h-12 border-primary/20"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    )}
+                    <Separator className="opacity-50" />
 
                     {clientType && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2">
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</Label>
-                                <Input 
-                                    type="email" 
-                                    placeholder="name@email.com" 
-                                    className="h-12 border-primary/20"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
+                        <div className="space-y-8 animate-in fade-in duration-500">
+                            {/* Section: Entity Information */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                    {isPersonal ? <UserCircle className="h-4 w-4" /> : isCorporate ? <Building2 className="h-4 w-4" /> : <Landmark className="h-4 w-4" />}
+                                    {isPersonal ? 'Individual Identity' : isCorporate ? 'Corporate Entity Details' : 'Organization Details'}
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {!isPersonal && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{isCorporate ? 'Company Name' : 'Organization Name'}</Label>
+                                                <div className="relative">
+                                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                    <Input 
+                                                        placeholder={isCorporate ? "Legal Registered Name" : "Entity Name"} 
+                                                        className="pl-10 h-12 border-primary/20 font-bold"
+                                                        value={orgName}
+                                                        onChange={(e) => setOrgName(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{isCorporate ? 'Registration Number' : 'Registration Details'}</Label>
+                                                <div className="relative">
+                                                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                    <Input 
+                                                        placeholder="e.g. CI-12345 / REG-001" 
+                                                        className="pl-10 h-12 border-primary/20 font-mono"
+                                                        value={regNumber}
+                                                        onChange={(e) => setRegNumber(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {isPersonal && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
+                                                <div className="relative">
+                                                    <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                    <Input 
+                                                        placeholder="First Name & Surname" 
+                                                        className="pl-10 h-12 border-primary/20 font-bold"
+                                                        value={fullName}
+                                                        onChange={(e) => setFullName(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Date of Birth</Label>
+                                                <div className="relative">
+                                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                    <Input 
+                                                        type="date" 
+                                                        className="pl-10 h-12 border-primary/20"
+                                                        value={dob}
+                                                        onChange={(e) => setDob(e.target.value)}
+                                                        max={format(new Date(), 'yyyy-MM-dd')}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                    
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{isPersonal ? 'Residential Address' : 'Business Address'}</Label>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                placeholder="Street, City, Province" 
+                                                className="pl-10 h-12 border-primary/20"
+                                                value={address}
+                                                onChange={(e) => setAddress(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Physical Address</Label>
-                                <Input 
-                                    placeholder="Street, City, Province" 
-                                    className="h-12 border-primary/20"
-                                    value={address}
-                                    onChange={(e) => setAddress(e.target.value)}
-                                />
+
+                            {/* Section: Representative / Identity Details */}
+                            <div className="space-y-6 pt-4 border-t border-dashed">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                    {isPersonal ? <Hash className="h-4 w-4" /> : <Briefcase className="h-4 w-4" />}
+                                    {isPersonal ? 'Primary Identity' : 'Authorized Representative Details'}
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {!isPersonal && (
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Full Name</Label>
+                                            <div className="relative">
+                                                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input 
+                                                    placeholder="Representative Name" 
+                                                    className="pl-10 h-12 border-primary/20 font-bold"
+                                                    value={fullName}
+                                                    onChange={(e) => setFullName(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">National ID / Passport</Label>
+                                        <div className="relative">
+                                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                placeholder="Enter Registry ID" 
+                                                className="pl-10 h-12 border-primary/20 font-mono font-bold"
+                                                value={idNumber}
+                                                onChange={(e) => setIdNumber(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Phone Number</Label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                placeholder="+263..." 
+                                                className="pl-10 h-12 border-primary/20"
+                                                value={phone}
+                                                onChange={(e) => setPhone(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</Label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input 
+                                                type="email" 
+                                                placeholder="name@email.com" 
+                                                className="pl-10 h-12 border-primary/20"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
                 </CardContent>
                 <CardFooter className="bg-muted/10 border-t p-6 justify-end">
                     <Button onClick={handleNext} disabled={!clientType} className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl shadow-lg">
-                        NEXT: UPLOAD DOCUMENTS
+                        NEXT: CAPTURE DOCUMENTS
                         <ChevronRight className="ml-2 h-5 w-5" />
                     </Button>
                 </CardFooter>
@@ -456,7 +524,7 @@ export default function DigitizeApplicationFlow({ onCancel, user }: DigitizeAppl
                                 {pages.length > 0 ? (
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                                     {pages.map((page, index) => (
-                                        <div key={index} className="relative group border rounded-xl overflow-hidden h-40 bg-background shadow-sm">
+                                        <div key={index} className="relative w-full h-40 border rounded-xl overflow-hidden bg-background shadow-sm group">
                                         {page.type === 'image' ? (
                                             <img src={page.dataUri} alt={`Page ${index + 1}`} className="w-full h-full object-cover" />
                                         ) : (
