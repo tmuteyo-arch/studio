@@ -3,7 +3,7 @@
 This document provides a comprehensive technical blueprint for the InnBucks Agent Onboarding application.
 
 ## 1. High-Level Overview
-**InnBucks** is a digital platform for onboarding financial agents in Zimbabwe. It features a tiered workflow involving sales, clerical verification, and executive management.
+**InnBucks** is a digital platform for onboarding financial agents in Zimbabwe. It features a tiered workflow involving sales, clerical verification, and management.
 
 ### Core Features:
 - **Role-Based Hierarchy**: 
@@ -36,3 +36,5 @@ This document provides a comprehensive technical blueprint for the InnBucks Agen
 - Combined Finance and Executive dashboard.
 - Bulk approval functionality for multiple applications.
 - Regional trend analytics using Recharts.
+
+- **Tiered Approval Workflow**: Integrated digital signatures for Supervisors and Management.

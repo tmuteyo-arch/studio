@@ -20,6 +20,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getStateLabel } from '@/lib/state-machine';
+import { cn } from '@/lib/utils';
 
 interface RetailExecutiveDashboardProps {
     user: User;
@@ -158,7 +159,7 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                 <div>
                   <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
                     <Award className="h-10 w-10 text-primary" />
-                    Executive Management
+                    Management
                   </h2>
                   <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Board Audit and Signature Authority.</p>
                 </div>
