@@ -6,7 +6,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { zimRegions, OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, CheckCircle2, Hash, Briefcase, ShieldCheck } from 'lucide-react';
+import { MapPin, CheckCircle2, Briefcase, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -111,7 +111,7 @@ export default function StepAccountType() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+        <div className="max-w-md pt-4">
             {/* Operating Region Selection */}
             <div className="space-y-4">
                 <div className="space-y-1.5">
@@ -120,7 +120,7 @@ export default function StepAccountType() {
                     Region
                     </FormLabel>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                    Pick the province.
+                    Pick the operating province.
                     </p>
                 </div>
                 
@@ -143,36 +143,6 @@ export default function StepAccountType() {
                             ))}
                         </SelectContent>
                         </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-
-            {/* TIN Number Input */}
-            <div className="space-y-4">
-                <div className="space-y-1.5">
-                    <FormLabel className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                    <Hash className="h-3.5 w-3.5 text-primary" />
-                    TIN Number
-                    </FormLabel>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                    Taxpayer Identification Number.
-                    </p>
-                </div>
-                
-                <FormField
-                    control={form.control}
-                    name="tinNumber"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormControl>
-                            <Input 
-                                placeholder="Enter TIN Number..." 
-                                className="h-12 bg-background border-primary/20 font-mono font-bold" 
-                                {...field} 
-                            />
-                        </FormControl>
                         <FormMessage />
                     </FormItem>
                     )}

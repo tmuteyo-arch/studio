@@ -98,11 +98,10 @@ export default function ReviewStep() {
                 <Hash className="h-4 w-4" />
                 Account Type Settings
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <DetailItem label="Account Type" value={data.clientType} />
                 {!isPersonalOrIndividual && !isInstitution && <DetailItem label="Relationship" value={data.relationshipType} />}
                 <DetailItem label="Region" value={data.region} />
-                <DetailItem label="TIN Number" value={data.tinNumber} />
             </div>
         </div>
 
@@ -118,6 +117,7 @@ export default function ReviewStep() {
               <DetailItem label="Marital Status" value={data.maritalStatus} />
               <DetailItem label="Address" value={data.individualAddress} />
               <DetailItem label="Mobile Number" value={data.individualMobileNumber} />
+              {isSoleTrader && <DetailItem label="TIN Number" value={data.tinNumber} />}
             </div>
 
             {isForeign && (

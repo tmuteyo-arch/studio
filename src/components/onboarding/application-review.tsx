@@ -509,7 +509,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                           <div className="space-y-4">
                               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">FCB Report Attachment</Label>
                               <div className="flex gap-2">
-                                  <input type="file" type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
+                                  <input type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
                                   <Button 
                                       variant="outline" 
                                       className="flex-1 h-12 font-black border-white/10"

@@ -158,12 +158,33 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    // TIN Number is required for all
-    if (!data.tinNumber || data.tinNumber.trim() === '') {
+    // TIN Number is required for Business/Institutional types
+    const isPersonal = ['Individual Accounts', 'Minors'].includes(data.clientType);
+    const isSoleTrader = data.clientType === 'Sole Trader';
+    const isCorporate = [
+      'Private Limited (Pvt) Company', 
+      'Private Business Corporate (PBC)', 
+      'Public Limited company',
+      'Partnerships', 
+      'Investment Group', 
+      'Parastatal'
+    ].includes(data.clientType);
+    
+    const isInstitution = [
+      'NGO', 
+      'Church', 
+      'School', 
+      'Societies', 
+      'Club/ Association',
+      'Trust',
+      'Government / Local Authority'
+    ].includes(data.clientType);
+
+    if ((isCorporate || isInstitution || isSoleTrader) && (!data.tinNumber || data.tinNumber.trim() === '')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['tinNumber'],
-        message: 'TIN Number is mandatory for all account types.',
+        message: 'TIN Number is mandatory for business and institutional account types.',
       });
     }
 
@@ -183,28 +204,6 @@ export const OnboardingFormSchema = z.object({
         message: 'Please upload and complete scanning of all required documents before submission.',
       });
     }
-
-    const isPersonal = ['Individual Accounts', 'Minors'].includes(data.clientType);
-    const isSoleTrader = data.clientType === 'Sole Trader';
-    
-    const isCorporate = [
-      'Private Limited (Pvt) Company', 
-      'Private Business Corporate (PBC)', 
-      'Public Limited company',
-      'Partnerships', 
-      'Investment Group', 
-      'Parastatal'
-    ].includes(data.clientType);
-    
-    const isInstitution = [
-      'NGO', 
-      'Church', 
-      'School', 
-      'Societies', 
-      'Club/ Association',
-      'Trust',
-      'Government / Local Authority'
-    ].includes(data.clientType);
 
     if (data.clientType && !isPersonal) {
       if (!data.signatories || data.signatories.length === 0) {

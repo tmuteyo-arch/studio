@@ -19,7 +19,7 @@ import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/review-step';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, AlertTriangle, Save, ShieldAlert, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, ShieldAlert, RotateCcw } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,9 +37,9 @@ import StepUboInfo from './steps/step-ubo-info';
 
 
 const allSteps: Step[] = [
-  { id: 'account-type', name: 'Account Type', fields: ['clientType', 'relationshipType', 'region', 'tinNumber'] },
+  { id: 'account-type', name: 'Account Type', fields: ['clientType', 'relationshipType', 'region'] },
   { id: 'individual-info', name: 'Personal', fields: ['individualFirstName', 'individualSurname', 'individualDateOfBirth', 'individualIdNumber', 'individualAddress', 'individualMobileNumber', 'nationality', 'gender', 'maritalStatus'] },
-  { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email'] },
+  { id: 'corporate-info', name: 'Business', fields: ['organisationLegalName', 'natureOfBusiness', 'certificateOfIncorporationNumber', 'dateOfIncorporation', 'physicalAddress', 'businessTelNumber', 'email', 'tinNumber'] },
   { id: 'ubo-info', name: 'Beneficial Owners', fields: ['beneficialOwners'] },
   { id: 'signatories', name: 'Signatories', fields: ['signatories', 'resolutionDate', 'signingInstruction'] },
   { id: 'document-upload', name: 'Documents', fields: ['capturedDocuments'] },
