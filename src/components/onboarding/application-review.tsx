@@ -298,34 +298,59 @@ export default function ApplicationReview({ application: initialApplication, onB
     handleStatusChange('Approved', 'Final approval given. Ready to finish account setup.');
   };
 
-  const handleDispatchAccount = async () => {
-    if (dispatchBrAccountNumber.length < 5 || dispatchWalletAccountNumber.length < 5) {
-        toast({ variant: 'destructive', title: 'Invalid Details', description: 'Please enter valid account numbers.' });
-        return;
-    }
+  /**
+   * Validates a wallet or bank account string based on regulatory standards.
+   * Logic: Must be exactly 10 numeric digits.
+   */
+  const validateWallet = (account: string) => {
+    return /^\d{10}$/.test(account);
+  };
 
-    setIsProcessingAction(true);
-    try {
-        const timestamp = new Date().toISOString();
-        handleUpdateApplication({
-            status: 'Dispatched',
-            details: {
-                ...application.details,
-                brAccountNumber: dispatchBrAccountNumber,
-                walletAccountNumber: dispatchWalletAccountNumber,
-                isDispatched: true,
-                accountOpeningDate: timestamp
-            },
-            history: [
-                ...application.history,
-                { action: 'Dispatched', user: user.name, timestamp, notes: `Account setup finished.` }
-            ]
+  const handleDispatchAccount = async () => {
+    // Collect all accounts associated with this application to validate them
+    const accountsToValidate = [
+        { name: 'Core BR Account', value: dispatchBrAccountNumber },
+        { name: 'Primary Wallet', value: dispatchWalletAccountNumber }
+    ];
+
+    // Validation Loop: FOR each wallet_account IN application
+    const invalidAccounts = accountsToValidate.filter(acc => !validateWallet(acc.value));
+
+    // IF all_wallets_valid
+    if (invalidAccounts.length === 0) {
+        // dispatch_all_wallets_together()
+        setIsProcessingAction(true);
+        try {
+            const timestamp = new Date().toISOString();
+            handleUpdateApplication({
+                status: 'Dispatched',
+                details: {
+                    ...application.details,
+                    brAccountNumber: dispatchBrAccountNumber,
+                    walletAccountNumber: dispatchWalletAccountNumber,
+                    isDispatched: true,
+                    accountOpeningDate: timestamp
+                },
+                history: [
+                    ...application.history,
+                    { action: 'Dispatched', user: user.name, timestamp, notes: `Batch validation successful. All accounts dispatched together.` }
+                ]
+            });
+            
+            // set_status = "Dispatched"
+            toast({ title: "Dispatch Success", description: "All wallets validated and accounts activated together." });
+            setIsDispatching(false);
+            setTimeout(() => onBack(), 500);
+        } finally {
+            setIsProcessingAction(false);
+        }
+    } else {
+        // ELSE stop_dispatch() and return_error()
+        toast({ 
+            variant: 'destructive', 
+            title: 'Batch Dispatch Halted', 
+            description: `Validation failed for: ${invalidAccounts.map(a => a.name).join(', ')}. Accounts must be 10-digit numeric identifiers.` 
         });
-        toast({ title: "Success", description: "The account is now finished and active." });
-        setIsDispatching(false);
-        setTimeout(() => onBack(), 500);
-    } finally {
-        setIsProcessingAction(false);
     }
   };
 
@@ -723,20 +748,20 @@ export default function ApplicationReview({ application: initialApplication, onB
             <DialogContent className="bg-card border-primary/20 rounded-2xl shadow-2xl max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3 text-2xl font-bold uppercase tracking-tight text-primary"><Send className="h-6 w-6" /> Finish Setup</DialogTitle>
-                    <CardDescription className="text-base mt-2">Enter the final account details for the system.</CardDescription>
+                    <CardDescription className="text-base mt-2">Validate accounts and finish the registry update.</CardDescription>
                 </DialogHeader>
                 <div className="py-8 space-y-6">
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Bank Account Number</Label>
-                        <Input placeholder="Enter number..." value={dispatchBrAccountNumber} onChange={(e) => setDispatchBrAccountNumber(e.target.value)} className="h-12 font-mono text-center font-bold" />
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Bank Account Number (Core BR)</Label>
+                        <Input placeholder="Enter 10-digit number..." value={dispatchBrAccountNumber} onChange={(e) => setDispatchBrAccountNumber(e.target.value)} className="h-12 font-mono text-center font-bold" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Wallet Account Number</Label>
-                        <Input placeholder="Enter number..." value={dispatchWalletAccountNumber} onChange={(e) => setDispatchWalletAccountNumber(e.target.value)} className="h-12 font-mono text-center font-bold" />
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Wallet Account Number (Mobile)</Label>
+                        <Input placeholder="Enter 10-digit number..." value={dispatchWalletAccountNumber} onChange={(e) => setDispatchWalletAccountNumber(e.target.value)} className="h-12 font-mono text-center font-bold" />
                     </div>
                 </div>
                 <DialogFooter className="gap-3 sm:flex-col">
-                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-bold uppercase bg-primary text-primary-foreground">SAVE AND FINISH</Button>
+                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-bold uppercase bg-primary text-primary-foreground">VALIDATE & FINISH</Button>
                     <Button variant="ghost" onClick={() => setIsDispatching(false)} className="w-full h-10 font-bold">Cancel</Button>
                 </DialogFooter>
             </DialogContent>
