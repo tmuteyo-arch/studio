@@ -9,6 +9,9 @@ export type ApplicationStatus =
   | 'In Progress'
   | 'Pending Documents'
   | 'Under Review'
+  | 'Pending Supervisor'
+  | 'Pending Executive Signature'
+  | 'Approved by Management'
   | 'Approved'
   | 'Rejected'
   | 'Dispatched'
@@ -164,7 +167,7 @@ const safeStorage = createJSONStorage<any>(() =>
   }
 );
 
-export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v3', initialApplications, safeStorage);
+export const applicationsAtom = atomWithStorage<Application[]>('innbucks_applications_v4', initialApplications, safeStorage);
 export const activeUserAtom = atom<any>(null);
 export const activityLogsAtom = atomWithStorage<UserActivityLog[]>('innbucks_activity_logs_v1', [
   { id: 'log-1', userId: 'asl-1', userName: 'CHIDO', action: 'Login', timestamp: new Date(Date.now() - 3600000).toISOString() },

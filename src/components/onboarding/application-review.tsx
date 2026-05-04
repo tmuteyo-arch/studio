@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -7,7 +6,7 @@ import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData,
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Globe, Trash2, Info, FileSearch, Hash } from 'lucide-react';
+import { Archive, ArrowLeft, Check, FileText, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Globe, Trash2, Info, FileSearch, Hash, Gavel, ClipboardCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -144,8 +143,9 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [dispatchWalletAccountNumber, setDispatchWalletAccountNumber] = React.useState('');
   const [isDispatching, setIsDispatching] = React.useState(false);
 
-  // Tiered Approval Signature States
+  // Digital Signatures
   const [isSupervisorSigning, setIsSupervisorSigning] = React.useState(false);
+  const [isExecutiveSigning, setIsExecutiveSigning] = React.useState(false);
 
   const isReadOnly = ['Locked', 'Dispatched'].includes(application.status);
 
@@ -155,12 +155,11 @@ export default function ApplicationReview({ application: initialApplication, onB
   
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
 
-  // Role-based document visibility logic
+  // Role-based document visibility
   const visibleDocuments = React.useMemo(() => {
-    if (user.role === 'back-office' || user.role === 'supervisor' || user.role === 'management' || user.role === 'compliance') {
+    if (['back-office', 'supervisor', 'management', 'compliance'].includes(user.role)) {
         return application.documents;
     }
-    // ASL view: View allowed documents only (exclude internal audit reports)
     return application.documents.filter(doc => doc.type !== 'FCB Report' && doc.type !== 'Internal Audit');
   }, [application.documents, user.role]);
 
@@ -174,57 +173,50 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const handleUpdateApplication = (newData: Partial<Application>) => {
-    setApplications(prev => prev.map(app => 
+    const updatedApps = applications.map(app => 
       app.id === application.id 
-      ? { ...app, ...newData, lastUpdated: new Date().toISOString(), details: { ...app.details, ...form.getValues(), ...(newData.details || {}) } } 
+      ? { 
+          ...app, 
+          ...newData, 
+          lastUpdated: new Date().toISOString(), 
+          details: { 
+              ...app.details, 
+              ...form.getValues(), 
+              ...(newData.details || {}) 
+          } 
+        } 
       : app
-    ));
+    );
+    setApplications(updatedApps);
     setApplication(prev => ({...prev, ...newData, details: { ...prev.details, ...(newData.details || {}) }}));
   };
 
   const handleStatusChange = async (nextStatus: ApplicationStatus, notes?: string) => {
     if (!isValidTransition(application.status, nextStatus)) {
-        toast({ variant: 'destructive', title: 'Invalid Transition', description: `Cannot move from ${application.status} to ${nextStatus}.` });
+        toast({ variant: 'destructive', title: 'Transition Blocked', description: `Workflow requires sequential approval.` });
         return;
     }
 
     setIsProcessingAction(true);
     try {
+        const timestamp = new Date().toISOString();
         const newHistoryLog: HistoryLog = {
           action: nextStatus,
           user: user.name,
-          timestamp: new Date().toISOString(),
+          timestamp,
           notes: notes,
         };
         
-        const updateData: Partial<Application> = { 
+        handleUpdateApplication({ 
             status: nextStatus, 
             history: [...application.history, newHistoryLog] 
-        };
-
-        handleUpdateApplication(updateData);
-        
-        // Notify ASL on status update
-        addNotification({
-            type: nextStatus === 'Pending Documents' ? 'document_required' : 'status_update',
-            title: `App ${application.id}: ${getStateLabel(nextStatus)}`,
-            message: notes || `Your application for ${application.clientName} is now ${getStateLabel(nextStatus)}.`,
-            appId: application.id,
-            targetUser: application.submittedBy
         });
 
-        // Simulate SMS for critical updates
-        if (['Dispatched', 'Rejected', 'Pending Documents'].includes(nextStatus)) {
-            console.log(`[SIMULATED SMS] Sent to ${application.submittedBy}: App ${application.id} is now ${nextStatus}. Note: ${notes || 'No notes'}`);
-        }
-
-        toast({ title: `State Updated: ${getStateLabel(nextStatus)}`, description: `Update successful.` });
-
-        if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review'].includes(nextStatus)) {
+        toast({ title: `Record State: ${getStateLabel(nextStatus)}` });
+        
+        if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review', 'Pending Supervisor', 'Pending Executive Signature', 'Approved by Management'].includes(nextStatus)) {
             setTimeout(() => onBack(), 500);
         }
-    } catch (err) {
-        toast({ variant: 'destructive', title: 'Action Failed', description: 'Could not update application status.' });
     } finally {
         setIsProcessingAction(false);
     }
@@ -237,24 +229,69 @@ export default function ApplicationReview({ application: initialApplication, onB
     const reader = new FileReader();
     reader.onload = (event) => {
         const url = event.target?.result as string;
-        setFcbReport({ type: 'FCB Report', fileName: file.name, url: url, pageCount: 1 });
-        toast({ title: "Report Attached", description: `${file.name} is ready.` });
+        const newDoc: AppDocument = { type: 'FCB Report', fileName: file.name, url: url, pageCount: 1 };
+        setFcbReport(newDoc);
+        
+        // Add to permanent documents
+        handleUpdateApplication({
+            documents: [...application.documents.filter(d => d.type !== 'FCB Report'), newDoc],
+            fcbStatus: selectedFcbStatus
+        });
+
+        toast({ title: "FCB Report Linked", description: "Audit trail updated." });
     };
     reader.readAsDataURL(file);
   };
 
-  const handleReturnToAsl = () => {
-    if (!returnComment.trim()) {
-        toast({ variant: 'destructive', title: 'Note Needed', description: 'Please provide instructions.' });
+  // Step actions as defined in tiered workflow
+  const handleBackOfficeEscalate = () => {
+    if (!fcbReport) {
+        toast({ variant: 'destructive', title: 'FCB Required', description: 'Attach FCB report before escalating.' });
         return;
     }
-    handleStatusChange('Pending Documents', returnComment);
-    setIsReturning(false);
+    if (!brIdentity) {
+        toast({ variant: 'destructive', title: 'Registry ID Needed', description: 'Assign an Application ID.' });
+        return;
+    }
+    
+    handleUpdateApplication({ 
+        details: { ...application.details, brIdentity },
+        fcbStatus: selectedFcbStatus
+    });
+    
+    handleStatusChange('Pending Supervisor', 'BO Audit complete. FCB attached and Application ID assigned.');
+  };
+
+  const handleSupervisorReviewComplete = () => {
+    handleStatusChange('Pending Executive Signature', 'Supervisor audit OK. Requesting Executive Agreement sign-off.');
+  };
+
+  const handleExecutiveSignOff = (signature: string) => {
+    handleUpdateApplication({
+        details: { 
+            ...application.details, 
+            executiveSignature: signature, 
+            executiveSignatureTimestamp: new Date().toISOString() 
+        }
+    });
+    handleStatusChange('Approved by Management', 'Executive Agreement Signed. Returning to Supervisor for final code.');
+    setIsExecutiveSigning(false);
+  };
+
+  const handleSupervisorFinalApproval = () => {
+    if (!activationCode) {
+        toast({ variant: 'destructive', title: 'Activation Code Needed', description: 'Enter the Core Activation Code.' });
+        return;
+    }
+    handleUpdateApplication({
+        details: { ...application.details, activationCode }
+    });
+    handleStatusChange('Approved', 'Final Supervisor approval granted. Returning to BO for Dispatch.');
   };
 
   const handleDispatchAccount = async () => {
     if (dispatchBrAccountNumber.length < 5 || dispatchWalletAccountNumber.length < 5) {
-        toast({ variant: 'destructive', title: 'Invalid Account Numbers', description: 'Please enter both BR and Wallet identifiers.' });
+        toast({ variant: 'destructive', title: 'Invalid Inputs', description: 'Enter both BR and Wallet identifiers.' });
         return;
     }
 
@@ -272,65 +309,11 @@ export default function ApplicationReview({ application: initialApplication, onB
             },
             history: [
                 ...application.history,
-                { action: 'Dispatched', user: user.name, timestamp, notes: `BR: ${dispatchBrAccountNumber} | Wallet: ${dispatchWalletAccountNumber}.` }
+                { action: 'Dispatched', user: user.name, timestamp, notes: `Final issuance complete.` }
             ]
         });
-
-        // Final Dispatch Notification
-        addNotification({
-            type: 'status_update',
-            title: `Account Dispatched: ${application.clientName}`,
-            message: `Accounts generated: BR: ${dispatchBrAccountNumber} | Wallet: ${dispatchWalletAccountNumber}`,
-            appId: application.id,
-            targetUser: application.submittedBy
-        });
-
-        toast({ title: "Accounts Dispatched", description: `Process complete for ${application.clientName}.` });
+        toast({ title: "Process Complete" });
         setIsDispatching(false);
-        setTimeout(() => onBack(), 500);
-    } finally {
-        setIsProcessingAction(false);
-    }
-  };
-
-  const handleFinalLock = () => {
-    handleStatusChange('Locked', 'Record moved to permanent regulatory vault.');
-  };
-
-  const handleSupervisorApproval = async (signature: string) => {
-    if (!activationCode || !brIdentity) {
-        toast({ variant: 'destructive', title: 'Data Missing', description: 'Enter BR ID and Code.' });
-        return;
-    }
-    
-    setIsProcessingAction(true);
-    try {
-        const timestamp = new Date().toISOString();
-        const notes = `Audit OK. Supervisor signed. BR Client ID: ${brIdentity}.`;
-        
-        handleUpdateApplication({ 
-            status: 'Approved', 
-            details: { 
-                ...application.details, 
-                activationCode, 
-                brIdentity,
-                supervisorSignature: signature,
-                supervisorSignatureTimestamp: timestamp
-            },
-            history: [...application.history, { action: 'Approved', user: user.name, timestamp, notes }] 
-        });
-
-        // Notify Back Office to Dispatch
-        addNotification({
-            type: 'system_alert',
-            title: `Ready for Dispatch: ${application.clientName}`,
-            message: `Supervisor has signed off. Ready for account issuance.`,
-            appId: application.id,
-            targetRole: 'back-office'
-        });
-
-        toast({ title: "Approved", description: "Record is ready for dispatch." });
-        setIsSupervisorSigning(false);
         setTimeout(() => onBack(), 500);
     } finally {
         setIsProcessingAction(false);
@@ -339,25 +322,11 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleRejection = () => {
     if (!rejectionReason || !rejectionComment) {
-        toast({ variant: 'destructive', title: 'Reason Needed', description: 'Provide a reason.' });
+        toast({ variant: 'destructive', title: 'Audit Note Needed', description: 'Reason for rejection must be logged.' });
         return;
     }
     handleStatusChange('Rejected', `Reason: ${rejectionReason} - ${rejectionComment}`);
     setIsRejecting(false);
-  };
-
-  const handleAddComment = () => {
-    if (newComment.trim() === '') return;
-    const newCommentObject: Comment = { id: `c${Date.now()}`, user: user.name, role: user.role as any, timestamp: new Date().toISOString(), content: newComment.trim() };
-    handleUpdateApplication({ comments: [...application.comments, newCommentObject] });
-    setNewComment('');
-  };
-
-  const handleDelete = () => {
-    setApplications(prev => prev.filter(app => app.id !== application.id));
-    toast({ title: "Deleted", description: `${application.clientName} has been removed.` });
-    setIsDeletingConfirmOpen(false);
-    onBack();
   };
 
   const handleDownloadPdf = async () => {
@@ -392,78 +361,83 @@ export default function ApplicationReview({ application: initialApplication, onB
         if (isCorporate && adlaRef.current) await addCanvasToPdf(adlaRef.current);
         await addCanvasToPdf(summaryElement);
 
-        pdf.save(`Onboarding-${application.clientName.replace(/\s+/g, '_')}.pdf`);
-    } catch (err) {
-        toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not generate PDF.' });
+        pdf.save(`Forensic-Audit-${application.id}.pdf`);
     } finally {
         setIsPrinting(false);
     }
   };
 
   const renderActions = () => {
-    if (isProcessingAction) return <Button disabled className="font-black px-8"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> WORKING...</Button>;
+    if (isProcessingAction) return <Button disabled className="font-black px-8"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> PROCESSING...</Button>;
 
     switch (user.role) {
       case 'asl':
-        if (application.status === 'Draft') return <Button onClick={() => handleStatusChange('In Progress')} className="bg-primary font-black px-8">START PROCESSING</Button>;
-        if (application.status === 'In Progress') return <Button onClick={() => handleStatusChange('Pending Documents')} className="bg-primary font-black px-8">FINALIZE CAPTURE</Button>;
+        if (application.status === 'Draft') return <Button onClick={() => handleStatusChange('In Progress')} className="bg-primary font-black px-8">START</Button>;
+        if (application.status === 'In Progress') return <Button onClick={() => handleStatusChange('Pending Documents')} className="bg-primary font-black px-8">NEXT</Button>;
         if (application.status === 'Pending Documents') return <Button onClick={() => handleStatusChange('Under Review')} className="bg-primary font-black px-8">SUBMIT FOR REVIEW</Button>;
         return null;
+        
       case 'back-office':
         if (application.status === 'Under Review') {
             return (
                 <div className="flex gap-3">
-                    <Button variant="outline" className="border-amber-500 text-amber-600 font-bold" onClick={() => setIsReturning(true)}><CornerUpLeft className="mr-2 h-4 w-4" /> Send Back</Button>
-                    <Button className="bg-primary font-black px-8" onClick={() => handleStatusChange('Approved')}>PRE-APPROVE</Button>
+                    <Button variant="outline" className="text-amber-500 font-bold" onClick={() => setIsReturning(true)}>Return</Button>
+                    <Button className="bg-primary font-black px-8" onClick={handleBackOfficeEscalate}>SEND TO SUPERVISOR</Button>
                 </div>
             );
         }
-        if (application.status === 'Approved') return <Button onClick={() => setIsDispatching(true)} className="bg-primary font-black px-8"><Send className="mr-2 h-4 w-4" /> DISPATCH ACCOUNTS</Button>;
-        if (application.status === 'Dispatched') return <Button onClick={handleFinalLock} className="bg-foreground text-background font-black px-8"><ShieldCheck className="mr-2 h-4 w-4" /> LOCK RECORD</Button>;
+        if (application.status === 'Approved') return <Button onClick={() => setIsDispatching(true)} className="bg-primary font-black px-8"><Send className="mr-2 h-4 w-4" /> DISPATCH</Button>;
+        if (application.status === 'Dispatched') return <Button onClick={() => handleStatusChange('Locked')} className="bg-foreground text-background font-black px-8">ARCHIVE</Button>;
         return null;
+
       case 'supervisor':
-      case 'management':
-      case 'compliance':
-        if (application.status === 'Under Review') {
+        if (application.status === 'Pending Supervisor') {
             return (
                 <div className="flex gap-3">
-                    <Button variant="destructive" className="font-bold" onClick={() => setIsRejecting(true)}><X className="mr-2 h-4 w-4" /> Reject</Button>
-                    <Button className="bg-green-600 hover:bg-green-700 text-white font-black px-8" onClick={() => setIsSupervisorSigning(true)}><FileSignature className="mr-2 h-4 w-4" /> AUDIT & APPROVE</Button>
+                    <Button variant="destructive" onClick={() => setIsRejecting(true)}>Reject</Button>
+                    <Button className="bg-primary font-black px-8" onClick={handleSupervisorReviewComplete}>SEND TO MANAGEMENT</Button>
+                </div>
+            );
+        }
+        if (application.status === 'Approved by Management') {
+            return <Button className="bg-green-600 hover:bg-green-700 text-white font-black px-8" onClick={handleSupervisorFinalApproval}>FINAL APPROVAL</Button>;
+        }
+        return null;
+
+      case 'management':
+        if (application.status === 'Pending Executive Signature') {
+            return (
+                <div className="flex gap-3">
+                    <Button variant="destructive" onClick={() => setIsRejecting(true)}>Reject</Button>
+                    <Button className="bg-primary font-black px-8" onClick={() => setIsExecutiveSigning(true)}><FileSignature className="mr-2 h-4 w-4" /> SIGN AGREEMENT</Button>
                 </div>
             );
         }
         return null;
+
       default: return null;
     }
   };
-  
-  const applicationForPrint = { ...application, details: { ...application.details, ...form.getValues() }};
-  const canDelete = !['Locked', 'Dispatched'].includes(application.status);
 
   return (
     <FormProvider {...form}>
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <Button variant="ghost" onClick={onBack} className="hover:bg-muted text-muted-foreground" disabled={isProcessingAction}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
+              <Button variant="ghost" onClick={onBack} className="hover:bg-muted text-muted-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
               <div className="flex items-center gap-3 w-full md:w-auto">
-                  {canDelete && (
-                      <Button variant="destructive" onClick={() => setIsDeletingConfirmOpen(true)} className="font-bold shadow-md" disabled={isProcessingAction}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                      </Button>
-                  )}
-                  <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting || isProcessingAction} className="font-bold border-primary/20"><Download className="mr-2 h-4 w-4" />{isPrinting ? 'Saving...' : 'Export'}</Button>
+                  <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting} className="font-bold"><Download className="mr-2 h-4 w-4" />Export Audit</Button>
                   {renderActions()}
               </div>
           </div>
 
           <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1 }}>
-            <div ref={printRef}><ApplicationPrintView application={applicationForPrint} /></div>
-            {needsMandate && <div ref={resolutionRef}><AccountResolutionPrintView application={applicationForPrint} /></div>}
+            <div ref={printRef}><ApplicationPrintView application={application} /></div>
+            {needsMandate && <div ref={resolutionRef}><AccountResolutionPrintView application={application} /></div>}
             {isCorporate && (
                 <>
-                    <div ref={checklistRef}><CorporateChecklist application={applicationForPrint} /></div>
-                    <div ref={agencyAgreementRef}><AgencyAgreementPrintView data={applicationForPrint.details} /></div>
-                    <div ref={adlaRef}><AdlaDeclarationPrintView data={applicationForPrint.details} /></div>
+                    <div ref={checklistRef}><CorporateChecklist application={application} /></div>
+                    <div ref={agencyAgreementRef}><AgencyAgreementPrintView data={application.details} /></div>
+                    <div ref={adlaRef}><AdlaDeclarationPrintView data={application.details} /></div>
                 </>
             )}
           </div>
@@ -477,7 +451,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                     <Badge variant="outline" className="bg-muted text-[10px] font-mono uppercase">{application.id}</Badge>
                     <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">{application.clientType}</Badge>
                   </div>
-                  <CardTitle className="text-3xl font-black uppercase tracking-tight text-foreground">Review: {application.clientName}</CardTitle>
+                  <CardTitle className="text-3xl font-black uppercase tracking-tight text-foreground">{application.clientName}</CardTitle>
                   <CardDescription className="flex items-center gap-2 mt-1">
                     <MapPin className="h-3 w-3" /> Region: <strong className="text-foreground">{application.region}</strong>
                   </CardDescription>
@@ -486,27 +460,22 @@ export default function ApplicationReview({ application: initialApplication, onB
                 <Badge className="font-black px-4 py-1.5 uppercase tracking-widest text-xs shadow-sm bg-foreground text-background">
                     {getStateLabel(application.status)}
                 </Badge>
-                {application.details.isDispatched && (
-                    <Badge variant="success" className="font-black shadow-md">
-                        <CheckCircle2 className="mr-1.5 h-3 w-3" /> DISPATCHED
-                    </Badge>
-                )}
               </div>
             </div>
           </CardHeader>
           <CardContent className="px-8 pb-8">
-              {user.role !== 'asl' && application.status === 'Under Review' && (
+              
+              {/* Back Office Audit Form */}
+              {user.role === 'back-office' && application.status === 'Under Review' && (
                   <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                          <h4 className="text-xs font-black uppercase text-secondary tracking-widest flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full shadow-sm">
-                              <ShieldCheck className="h-4 w-4" /> Compliance Check: FCB Report
-                          </h4>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <h4 className="text-xs font-black uppercase text-secondary tracking-widest mb-6 flex items-center gap-2">
+                          <ClipboardCheck className="h-4 w-4" /> Back Office Audit Controls
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                           <div className="space-y-4">
-                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">FCB Status</Label>
-                              <Select value={selectedFcbStatus} onValueChange={(v: FcbStatus) => setSelectedFcbStatus(v)} disabled={isProcessingAction}>
-                                  <SelectTrigger className="h-12 bg-background border-white/10 text-lg font-bold">
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Financial Bureau (FCB) Status</Label>
+                              <Select value={selectedFcbStatus} onValueChange={(v: FcbStatus) => setSelectedFcbStatus(v)}>
+                                  <SelectTrigger className="h-12 bg-background border-white/10 font-bold">
                                       <SelectValue placeholder="Set FCB Status..." />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -517,16 +486,19 @@ export default function ApplicationReview({ application: initialApplication, onB
                               </Select>
                           </div>
                           <div className="space-y-4">
-                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider ml-1">FCB Report Attachment</Label>
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Assign Application Registry ID</Label>
+                              <Input placeholder="e.g. BR-APP-XXXXX" value={brIdentity} onChange={e => setBrIdentity(e.target.value)} className="h-12 bg-background border-white/10 font-mono font-bold" />
+                          </div>
+                          <div className="space-y-4">
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">FCB Audit Attachment</Label>
                               <div className="flex gap-2">
                                   <input type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
                                   <Button 
                                       variant="outline" 
                                       className="flex-1 h-12 font-black border-white/10"
                                       onClick={() => fileInputRef.current?.click()}
-                                      disabled={isProcessingAction}
                                   >
-                                      <Upload className="mr-2 h-4 w-4" /> {fcbReport ? 'Replace Report' : 'Attach Report'}
+                                      <Upload className="mr-2 h-4 w-4" /> {fcbReport ? 'Report Linked' : 'Attach FCB'}
                                   </Button>
                                   {fcbReport && (
                                       <Button variant="ghost" size="icon" className="h-12 w-12 border border-white/5" onClick={() => setPreviewDoc(fcbReport)}>
@@ -539,184 +511,148 @@ export default function ApplicationReview({ application: initialApplication, onB
                   </div>
               )}
 
+              {/* Supervisor Final Approval Form */}
+              {user.role === 'supervisor' && application.status === 'Approved by Management' && (
+                  <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95">
+                      <h4 className="text-xs font-black uppercase text-primary tracking-widest mb-6 flex items-center gap-2">
+                          <Key className="h-4 w-4" /> Registry Activation
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Core Registry Activation Code</Label>
+                              <Input 
+                                  placeholder="Enter final issuing code..." 
+                                  value={activationCode} 
+                                  onChange={e => setActivationCode(e.target.value)} 
+                                  className="h-14 bg-background border-primary/20 font-mono font-black text-xl text-center tracking-tighter" 
+                              />
+                          </div>
+                          <div className="flex items-center justify-center p-6 border-2 border-dashed border-primary/20 rounded-xl">
+                              <p className="text-xs text-muted-foreground text-center font-bold uppercase tracking-tight">
+                                  This code will finalize the application and return it to Back Office for issuance.
+                              </p>
+                          </div>
+                      </div>
+                  </div>
+              )}
+
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="bg-muted/50 p-1.5 mb-8 rounded-xl w-full sm:w-auto overflow-x-auto">
                       <TabsTrigger value="form-data" className="px-6 rounded-lg">Profile</TabsTrigger>
-                      <TabsTrigger value="documents" className="px-6 rounded-lg">Documents</TabsTrigger>
-                      <TabsTrigger value="comments" className="px-6 rounded-lg font-black"><Wallet className="mr-2 h-4 w-4"/>DISPATCH INFO</TabsTrigger>
+                      <TabsTrigger value="documents" className="px-6 rounded-lg">Vault</TabsTrigger>
+                      <TabsTrigger value="audit" className="px-6 rounded-lg font-black"><Gavel className="mr-2 h-4 w-4"/>AUDIT TRAIL</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="form-data" className="pt-2 animate-in fade-in-50 duration-300">
-                      <Card className="border-none shadow-none bg-transparent">
-                          <CardContent className="p-0 space-y-8">
-                              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 bg-muted/20 rounded-2xl border border-primary/5">
-                                  <DetailItem label="Account Type" value={application.clientType} />
-                                  <DetailItem label="Region" value={application.region} />
-                                  <DetailItem label="TIN Number" value={application.details.tinNumber} />
-                                  <DetailItem label="Lifecycle State" value={getStateLabel(application.status)} />
-                              </div>
-                              <div className="space-y-10">
-                                {isPersonalOrIndividual ? <StepIndividualInfo disabled={isReadOnly || isProcessingAction} /> : <StepCorporateInfo disabled={isReadOnly || isProcessingAction} />}
-                                {needsMandate && <StepSignatories disabled={isReadOnly || isProcessingAction} />}
-                              </div>
-                          </CardContent>
-                      </Card>
+                      <div className="space-y-10">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 bg-muted/20 rounded-2xl border border-primary/5">
+                            <DetailItem label="Account Type" value={application.clientType} />
+                            <DetailItem label="Registry ID" value={application.details.brIdentity || 'Not Assigned'} />
+                            <DetailItem label="FCB Risk" value={application.fcbStatus} />
+                            <DetailItem label="State" value={getStateLabel(application.status)} />
+                        </div>
+                        {isPersonalOrIndividual ? <StepIndividualInfo disabled={true} /> : <StepCorporateInfo disabled={true} />}
+                        {needsMandate && <StepSignatories disabled={true} />}
+                      </div>
                   </TabsContent>
 
                   <TabsContent value="documents" className="pt-2 animate-in fade-in-50 duration-300">
-                    <div className="space-y-10">
-                        <Card className="border-none shadow-none bg-transparent">
-                            <CardHeader className="px-0">
-                                <CardTitle className="text-xl font-black uppercase flex items-center gap-2">
-                                    <Archive className="h-5 w-5 text-primary" />
-                                    Document Repository
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="px-0">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {visibleDocuments.map((doc, i) => (
-                                        <Card key={i} className="bg-muted/10 border-white/5 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
-                                            <CardContent className="p-4 flex flex-col h-full">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><FileText className="h-5 w-5" /></div>
-                                                    <Badge variant="outline" className="text-[8px] font-black uppercase">{doc.type}</Badge>
-                                                </div>
-                                                <p className="text-sm font-black uppercase text-foreground leading-tight truncate mb-6">{doc.type}</p>
-                                                <Button 
-                                                    className="w-full h-10 font-black uppercase text-[10px]"
-                                                    variant="outline"
-                                                    onClick={() => setPreviewDoc(doc)}
-                                                >
-                                                    <Eye className="mr-2 h-3.5 w-3.5" /> Preview File
-                                                </Button>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                    {visibleDocuments.length === 0 && (
-                                        <div className="col-span-full py-12 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-muted-foreground bg-muted/5 opacity-50">
-                                            <ShieldQuestion className="h-10 w-10 mb-2" />
-                                            <p className="text-sm font-bold uppercase tracking-widest">No visible documents for this role.</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                        {!isReadOnly && user.role === 'asl' && <StepDocumentUpload disabled={isReadOnly || isProcessingAction} />}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {visibleDocuments.map((doc, i) => (
+                            <Card key={i} className="bg-muted/10 border-white/5 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
+                                <CardContent className="p-4 flex flex-col h-full">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><FileText className="h-5 w-5" /></div>
+                                        <Badge variant="outline" className="text-[8px] font-black uppercase">{doc.type}</Badge>
+                                    </div>
+                                    <p className="text-sm font-black uppercase text-foreground leading-tight truncate mb-6">{doc.type}</p>
+                                    <Button 
+                                        className="w-full h-10 font-black uppercase text-[10px]"
+                                        variant="outline"
+                                        onClick={() => setPreviewDoc(doc)}
+                                    >
+                                        <Eye className="mr-2 h-3.5 w-3.5" /> Preview
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="comments" className="pt-2 animate-in fade-in-50 duration-300">
-                      <Card className="border-none bg-transparent shadow-none">
-                          <CardContent className="p-0 space-y-10">
-                              {application.details.isDispatched ? (
-                                  <div className="p-8 bg-primary/10 rounded-2xl border border-primary/30 shadow-lg animate-in zoom-in-95 relative overflow-hidden">
-                                      <div className="flex items-center gap-5 mb-8">
-                                          <div className="h-14 w-14 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg border-4 border-white/20">
-                                              <CheckCircle2 className="h-7 w-7" />
-                                          </div>
-                                          <div>
-                                              <h4 className="text-2xl font-black uppercase tracking-tight text-primary leading-none">Account Active</h4>
-                                              <p className="text-[10px] text-primary/70 font-black uppercase mt-2">Dispatched to Core Systems</p>
-                                          </div>
-                                      </div>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                          <Card className="bg-background border-primary/20 shadow-md">
-                                              <CardContent className="p-6">
-                                                  <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">BR Account #</p>
-                                                  <p className="text-2xl font-mono font-black text-foreground">{application.details.brAccountNumber}</p>
-                                              </CardContent>
-                                          </Card>
-                                          <Card className="bg-background border-primary/20 shadow-md">
-                                              <CardContent className="p-6">
-                                                  <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Wallet Account #</p>
-                                                  <p className="text-2xl font-mono font-black text-foreground">{application.details.walletAccountNumber}</p>
-                                              </CardContent>
-                                          </Card>
-                                      </div>
-                                  </div>
-                              ) : (
-                                  <div className="p-12 border-dashed border-4 rounded-3xl flex flex-col items-center justify-center text-center bg-muted/5">
-                                      <ShieldAlert className="h-16 w-16 text-muted-foreground opacity-20 mb-6" />
-                                      <p className="text-lg font-black uppercase text-muted-foreground/60">Awaiting Dispatch</p>
-                                  </div>
-                              )}
-
-                              <div className="space-y-6 pt-10 border-t border-white/5">
-                                  <h4 className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Lifecycle Audit</h4>
-                                  <div className="space-y-6">
-                                      {application.comments.map((comment) => (
-                                          <div key={comment.id} className="flex items-start gap-4">
-                                              <Avatar className="h-10 w-10 border-2 border-white/10"><AvatarFallback className="text-[10px] font-black bg-primary/10 text-primary">{comment.user.substring(0,2)}</AvatarFallback></Avatar>
-                                              <div className="flex-1 rounded-2xl border border-white/5 bg-muted/10 p-5 shadow-sm">
-                                                  <div className="flex justify-between items-center mb-2">
-                                                      <p className="font-black text-xs uppercase text-foreground/80">{comment.user} <span className="text-[9px] font-bold text-muted-foreground ml-2 px-2 py-0.5 bg-muted rounded-full">{comment.role.toUpperCase()}</span></p>
-                                                      <p className="text-[10px] font-mono text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</p>
-                                                  </div>
-                                                  <p className="text-sm leading-relaxed text-foreground/70">{comment.content}</p>
+                  <TabsContent value="audit" className="pt-2 animate-in fade-in-50 duration-300">
+                      <div className="space-y-10">
+                          <div className="space-y-6">
+                              <h4 className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-2"><History className="h-4 w-4 text-primary" /> Forensic History</h4>
+                              <div className="space-y-4">
+                                  {application.history.map((log, idx) => (
+                                      <div key={idx} className="flex items-start gap-4 p-4 rounded-xl border border-white/5 bg-muted/10">
+                                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-black text-primary border border-primary/20">{log.user.substring(0,2)}</div>
+                                          <div className="flex-1">
+                                              <div className="flex justify-between items-center mb-1">
+                                                  <p className="text-xs font-black uppercase text-white/80">{log.action}</p>
+                                                  <span className="text-[10px] font-mono text-white/20">{new Date(log.timestamp).toLocaleString()}</span>
                                               </div>
+                                              <p className="text-[11px] text-white/40 italic">{log.notes || 'No comments logged.'}</p>
+                                              <p className="text-[9px] font-black uppercase text-primary/50 mt-1">Processed By: {log.user}</p>
                                           </div>
-                                      ))}
-                                  </div>
-                                  {application.status !== 'Locked' && (
-                                      <div className="space-y-4 pt-8 border-t border-white/5 bg-muted/5 p-6 rounded-2xl">
-                                          <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">New Audit Note</Label>
-                                          <Textarea placeholder="Type internal note..." value={newComment} onChange={(e) => setNewComment(e.target.value)} className="min-h-[120px] rounded-xl" disabled={isProcessingAction} />
-                                          <Button onClick={handleAddComment} className="w-full font-black uppercase tracking-widest h-12" disabled={isProcessingAction}>Post Note</Button>
                                       </div>
-                                  )}
+                                  ))}
                               </div>
-                          </CardContent>
-                      </Card>
+                          </div>
+                      </div>
                   </TabsContent>
               </Tabs>
           </CardContent>
         </Card>
 
+        {/* Rejection Dialog */}
         <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}>
             <AlertDialogContent className="rounded-2xl border-destructive/20 shadow-2xl">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-2xl font-black uppercase flex items-center gap-2 text-destructive"><ShieldAlert className="h-6 w-6" /> Reject</AlertDialogTitle>
-                    <AlertDialogDescription className="text-base">Select a reason for rejection.</AlertDialogDescription>
+                    <AlertDialogTitle className="text-2xl font-black uppercase flex items-center gap-2 text-destructive"><ShieldAlert className="h-6 w-6" /> Decline Application</AlertDialogTitle>
+                    <AlertDialogDescription className="text-base">Provide regulatory reasoning for declining this applicant.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="space-y-6 py-6">
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Reason</Label>
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Reason Code</Label>
                         <Select onValueChange={setRejectionReason} value={rejectionReason}>
                             <SelectTrigger className="h-12"><SelectValue placeholder="Select reason..." /></SelectTrigger>
                             <SelectContent className="rounded-xl">{rejectionReasons.map(reason => (<SelectItem key={reason} value={reason}>{reason}</SelectItem>))}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Note</Label>
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Audit Note</Label>
                         <Textarea placeholder="Type details..." value={rejectionComment} onChange={(e) => setRejectionComment(e.target.value)} className="min-h-[150px] rounded-xl" />
                     </div>
                 </div>
                 <AlertDialogFooter className="gap-3">
                     <AlertDialogCancel className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleRejection} className="h-12 rounded-xl bg-destructive text-destructive-foreground font-black px-8" disabled={!rejectionReason || !rejectionComment || isProcessingAction}>Reject</AlertDialogAction>
+                    <AlertDialogAction onClick={handleRejection} className="h-12 rounded-xl bg-destructive text-destructive-foreground font-black px-8" disabled={!rejectionReason || !rejectionComment}>DECLINE RECORD</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
 
+        {/* Return Dialog */}
         <AlertDialog open={isReturning} onOpenChange={setIsReturning}>
             <AlertDialogContent className="rounded-2xl border-amber-200">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-2xl font-black uppercase flex items-center gap-2 text-amber-600"><CornerUpLeft className="h-6 w-6" /> Return for Corrections</AlertDialogTitle>
-                    <AlertDialogDescription className="text-base">Provide instructions for the ASL.</AlertDialogDescription>
+                    <AlertDialogTitle className="text-2xl font-black uppercase flex items-center gap-2 text-amber-600"><CornerUpLeft className="h-6 w-6" /> Request Corrections</AlertDialogTitle>
+                    <AlertDialogDescription className="text-base">Provide instructions for the ASL to rectify this application.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="space-y-4 py-6">
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase text-muted-foreground">Fix Instructions</Label>
-                        <Textarea placeholder="What needs to be fixed?" value={returnComment} onChange={(e) => setReturnComment(e.target.value)} className="min-h-[150px] rounded-xl border-amber-200" />
+                        <Textarea placeholder="What needs to be changed?" value={returnComment} onChange={(e) => setReturnComment(e.target.value)} className="min-h-[150px] rounded-xl border-amber-200" />
                     </div>
                 </div>
                 <AlertDialogFooter className="gap-3">
                     <AlertDialogCancel onClick={() => { setIsReturning(false); setReturnComment(''); }} className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleReturnToAsl} className="h-12 rounded-xl bg-amber-600 text-white font-black px-8" disabled={!returnComment.trim() || isProcessingAction}>Send Back</AlertDialogAction>
+                    <AlertDialogAction onClick={() => { handleStatusChange('Pending Documents', returnComment); setIsReturning(false); }} className="h-12 rounded-xl bg-amber-600 text-white font-black px-8" disabled={!returnComment.trim()}>SEND BACK</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
 
+        {/* Document Preview */}
         <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
             <DialogContent className="max-w-5xl h-[90vh] flex flex-col rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
                 <div className="bg-primary/5 p-6 border-b flex justify-between items-center">
@@ -737,45 +673,43 @@ export default function ApplicationReview({ application: initialApplication, onB
                     ) : (
                         <div className="flex flex-col items-center gap-4 text-white/30 text-center max-w-xs">
                             <ShieldQuestion className="h-16 w-16 opacity-20" />
-                            <p className="text-sm font-black uppercase tracking-widest">Document data missing.</p>
+                            <p className="text-sm font-black uppercase tracking-widest">Binary stream missing.</p>
                         </div>
                     )}
                 </div>
             </DialogContent>
         </Dialog>
 
+        {/* Final Dispatch Dialog */}
         <Dialog open={isDispatching} onOpenChange={setIsDispatching}>
             <DialogContent className="bg-card border-primary/20 rounded-2xl shadow-2xl max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-primary"><Send className="h-6 w-6" /> Final Dispatch</DialogTitle>
-                    <CardDescription className="text-base mt-2">Assign identifiers for this agent.</CardDescription>
+                    <CardDescription className="text-base mt-2">Assign final core system identifiers.</CardDescription>
                 </DialogHeader>
                 <div className="py-8 space-y-6">
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase text-muted-foreground">BR Account Number</Label>
-                        <Input placeholder="e.g. BR-1002345" value={dispatchBrAccountNumber} onChange={(e) => setDispatchBrAccountNumber(e.target.value)} className="h-12 font-mono text-center font-black" />
+                        <Input placeholder="BR-XXXXXXX" value={dispatchBrAccountNumber} onChange={(e) => setDispatchBrAccountNumber(e.target.value)} className="h-12 font-mono text-center font-black" />
                     </div>
                     <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase text-muted-foreground">Wallet Account Number</Label>
-                        <Input placeholder="e.g. WL-9988776" value={dispatchWalletAccountNumber} onChange={(e) => setDispatchWalletAccountNumber(e.target.value)} className="h-12 font-mono text-center font-black" />
+                        <Input placeholder="WL-XXXXXXX" value={dispatchWalletAccountNumber} onChange={(e) => setDispatchWalletAccountNumber(e.target.value)} className="h-12 font-mono text-center font-black" />
                     </div>
                 </div>
                 <DialogFooter className="gap-3 sm:flex-col">
-                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-black uppercase bg-primary text-primary-foreground" disabled={isProcessingAction}>
-                        {isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        DISPATCH ACCOUNTS
-                    </Button>
-                    <Button variant="ghost" onClick={() => setIsDispatching(false)} className="w-full h-10 font-bold" disabled={isProcessingAction}>Cancel</Button>
+                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-black uppercase bg-primary text-primary-foreground">DISPATCH ACCOUNTS</Button>
+                    <Button variant="ghost" onClick={() => setIsDispatching(false)} className="w-full h-10 font-bold">Cancel</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
 
         <InternalSignatureDialog 
-            isOpen={isSupervisorSigning}
-            onClose={() => setIsSupervisorSigning(false)}
-            onSign={handleSupervisorApproval}
-            title="Supervisor Sign-off"
-            description="Authorize this application for final regulatory dispatch."
+            isOpen={isExecutiveSigning}
+            onClose={() => setIsExecutiveSigning(false)}
+            onSign={handleExecutiveSignOff}
+            title="Board Sign-off"
+            description="Authorize this agreement for final regulatory processing."
         />
       </div>
     </FormProvider>

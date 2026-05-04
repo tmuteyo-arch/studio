@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { applicationsAtom, ApplicationStatus, Application } from '@/lib/mock-data';
 import { zimRegions } from '@/lib/types';
 import { User, usersAtom } from '@/lib/users';
-import { CheckCircle2, AlertCircle, Inbox, BarChart, FileSignature, Edit, FileCheck2, Eraser, MapPin, Award, LayoutDashboard, History, TrendingUp } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Inbox, BarChart, FileSignature, Edit, FileCheck2, Eraser, MapPin, Award, LayoutDashboard, History, TrendingUp, ShieldCheck, Fingerprint } from 'lucide-react';
 import ApplicationReview from '../onboarding/application-review';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,6 +19,7 @@ import { Bar, BarChart as ReChartsBarChart, CartesianGrid, XAxis, YAxis, Respons
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getStateLabel } from '@/lib/state-machine';
 
 interface RetailExecutiveDashboardProps {
     user: User;
@@ -38,31 +39,31 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-[#1e1b4b] border-white/10 text-white rounded-3xl shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Group Approval</DialogTitle>
-          <DialogDescription>
-            You are adding your sign-off to <strong>{count}</strong> selected requests. This will finish them all at once.
+          <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-primary">
+            <FileSignature className="h-6 w-6" /> Batch Board Sign-off
+          </DialogTitle>
+          <DialogDescription className="text-white/50 mt-2">
+            You are authorizing <strong>{count}</strong> selected agreements in a single regulatory action.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <Label>Your Digital Sign-off</Label>
-          <div className="w-full border rounded-md bg-white p-2">
+        <div className="space-y-4 py-6">
+          <Label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1">Draw Board Signature</Label>
+          <div className="w-full h-40 border-2 border-primary/10 rounded-2xl bg-white overflow-hidden shadow-inner">
             <SignatureCanvas 
               ref={sigPadRef} 
               penColor="black" 
-              canvasProps={{ className: 'w-full h-32' }} 
+              canvasProps={{ className: 'w-full h-full' }} 
             />
           </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={handleClear}>
-              <Eraser className="mr-2 h-4 w-4" />Clear
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={handleClear} className="text-white/40 hover:text-primary">
+              <Eraser className="mr-2 h-4 w-4" /> Clear Canvas
+          </Button>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleConfirm}>Approve & Finish {count} Items</Button>
+        <DialogFooter className="gap-3 sm:flex-col">
+          <Button onClick={handleConfirm} className="w-full h-12 text-lg font-black uppercase tracking-widest bg-primary text-primary-foreground shadow-xl">APPROVE {count} RECORDS</Button>
+          <Button variant="ghost" onClick={onClose} className="w-full font-bold">Cancel</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -71,7 +72,7 @@ const BulkSignatureDialog = ({ isOpen, onClose, onSign, count }: { isOpen: boole
 
 const regionalChartConfig = {
   count: {
-    label: 'Requests',
+    label: 'Volume',
     color: 'hsl(var(--primary))',
   },
 } satisfies ChartConfig;
@@ -85,13 +86,11 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
     const [isBulkSignOpen, setIsBulkSignOpen] = React.useState(false);
 
     const summaryStats = React.useMemo(() => {
-        const pendingStatuses: ApplicationStatus[] = ['Submitted', 'In Review', 'Returned to ATL', 'Pending Supervisor', 'Pending Executive Signature'];
         return {
-            totalPending: applications.filter(a => pendingStatuses.includes(a.status)).length,
-            totalSigned: applications.filter(a => a.status === 'Signed').length,
+            totalToSign: applications.filter(a => a.status === 'Pending Executive Signature').length,
+            totalActive: applications.filter(a => !['Archived', 'Locked', 'Rejected'].includes(a.status)).length,
+            totalDone: applications.filter(a => ['Dispatched', 'Locked'].includes(a.status)).length,
             totalRejected: applications.filter(a => a.status === 'Rejected').length,
-            totalApplications: applications.length,
-            pendingAgreementSignature: applications.filter(a => a.status === 'Pending Executive Signature').length,
         };
     }, [applications]);
 
@@ -102,28 +101,9 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
         })).sort((a, b) => b.count - a.count);
     }, [applications]);
 
-    const atlPerformance = React.useMemo(() => {
-        const atlUsers = allUsers.filter(u => u.role === 'asl');
-        return atlUsers.map(atl => {
-            const atlApps = applications.filter(app => app.submittedBy === atl.name);
-            return {
-                name: atl.name,
-                initials: atl.initials,
-                total: atlApps.length,
-                signed: atlApps.filter(a => a.status === 'Signed').length,
-                rejected: atlApps.filter(a => a.status === 'Rejected').length,
-                pending: atlApps.filter(a => !['Signed', 'Rejected', 'Archived'].includes(a.status)).length,
-            };
-        }).sort((a, b) => b.total - a.total);
-    }, [applications, allUsers]);
-
     const agreementsToSign = React.useMemo(() => 
-        applications.filter(app => app.status === 'Pending Executive Signature'),
-    [applications]);
-
-    const signedAgreements = React.useMemo(() => 
-        applications.filter(app => app.status === 'Signed'),
-    [applications]);
+        applications.filter(app => app.status === 'Pending Executive Signature')
+    , [applications]);
 
     const toggleSelectAll = () => {
         if (selectedIds.length === agreementsToSign.length) {
@@ -141,11 +121,11 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
 
     const handleBulkSign = (signatureData: string) => {
         const timestamp = new Date().toISOString();
-        setApplications(prev => prev.map(app => {
+        const updatedApps = applications.map(app => {
             if (selectedIds.includes(app.id)) {
                 return {
                     ...app,
-                    status: 'Signed' as ApplicationStatus,
+                    status: 'Approved by Management' as ApplicationStatus,
                     lastUpdated: timestamp,
                     details: {
                         ...app.details,
@@ -154,171 +134,154 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                     },
                     history: [
                         ...app.history,
-                        { action: 'Approved by Executive (Group)', user: user.name, timestamp }
+                        { action: 'Approved by Management (Batch Sign-off)', user: user.name, timestamp }
                     ]
                 };
             }
             return app;
-        }));
-        
-        toast({
-            title: "Success",
-            description: `Finished ${selectedIds.length} requests.`,
         });
         
+        setApplications(updatedApps);
+        toast({ title: "Authorized", description: `${selectedIds.length} records signed and returned to Supervisors.` });
         setSelectedIds([]);
         setIsBulkSignOpen(false);
     };
 
-    const applicationForReview = selectedApplication 
-      ? applications.find(app => app.id === selectedApplication.id) 
-      : null;
-
-    if (applicationForReview) {
-        return <ApplicationReview 
-                  application={applicationForReview}
-                  onBack={() => setSelectedApplication(null)}
-                  user={user}
-               />;
+    if (selectedApplication) {
+        const appForReview = applications.find(a => a.id === selectedApplication.id) || selectedApplication;
+        return <ApplicationReview application={appForReview} onBack={() => setSelectedApplication(null)} user={user} />;
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4 border-b border-white/5 pb-8">
                 <div>
-                  <h2 className="text-3xl font-bold">Management</h2>
-                  <p className="text-muted-foreground">Final check and sign-off for all area requests.</p>
+                  <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
+                    <Award className="h-10 w-10 text-primary" />
+                    Executive Management
+                  </h2>
+                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Board Audit and Signature Authority.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="px-3 py-1 bg-primary/5 border-primary/20 text-primary font-bold">
-                        {summaryStats.pendingAgreementSignature} Waiting for Sign-off
+                    <Badge variant="outline" className="px-5 py-2 bg-primary/10 border-primary/20 text-primary font-black uppercase tracking-widest text-[10px] animate-pulse shadow-lg">
+                        <Fingerprint className="mr-2 h-4 w-4" /> {summaryStats.totalToSign} PENDING AUTHORIZATION
                     </Badge>
                 </div>
             </div>
             
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                <Card className="border-primary/50 bg-primary/5 shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary">To Finish</CardTitle>
-                        <FileSignature className="h-4 w-4 text-primary" />
+            <div className="grid gap-6 grid-cols-2 md:grid-cols-4">
+                <Card className="bg-primary/10 border-primary/20 rounded-2xl group hover:bg-primary/20 transition-all cursor-default">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">To Authorize</CardTitle>
+                        <FileSignature className="h-8 w-8 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.pendingAgreementSignature}</div>
+                        <div className="text-4xl font-black text-primary">{summaryStats.totalToSign}</div>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Queue</CardTitle>
-                        <Inbox className="h-4 w-4 text-muted-foreground" />
+                <Card className="bg-white/5 border-white/10 rounded-2xl">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Active Queue</CardTitle>
+                        <Inbox className="h-8 w-8 text-white/20" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.totalPending}</div>
+                        <div className="text-4xl font-black text-white">{summaryStats.totalActive}</div>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Done</CardTitle>
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <Card className="bg-white/5 border-white/10 rounded-2xl">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Success Volume</CardTitle>
+                        <CheckCircle2 className="h-8 w-8 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.totalSigned}</div>
+                        <div className="text-4xl font-black text-green-500">{summaryStats.totalDone}</div>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Declined</CardTitle>
-                        <AlertCircle className="h-4 w-4 text-destructive" />
+                <Card className="bg-white/5 border-white/10 rounded-2xl">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Regulatory Blocks</CardTitle>
+                        <AlertCircle className="h-8 w-8 text-destructive" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.totalRejected}</div>
-                    </CardContent>
-                </Card>
-                 <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Records</CardTitle>
-                        <BarChart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{summaryStats.totalApplications}</div>
+                        <div className="text-4xl font-black text-white">{summaryStats.totalRejected}</div>
                     </CardContent>
                 </Card>
             </div>
 
-            <Tabs defaultValue="operations" className="w-full">
-                <TabsList className="bg-muted/50 p-1 mb-6">
-                    <TabsTrigger value="operations" className="flex items-center gap-2">
-                        <LayoutDashboard className="h-4 w-4" />
-                        Daily Work
+            <Tabs defaultValue="sign-off" className="w-full">
+                <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5 mb-10">
+                    <TabsTrigger value="sign-off" className="px-10 h-10 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-black uppercase text-[10px] tracking-[0.2em] transition-all">
+                        <FileSignature className="mr-2 h-4 w-4" /> AUTHORIZATION DESK
                     </TabsTrigger>
-                    <TabsTrigger value="analytics" className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4" />
-                        Regional Stats
+                    <TabsTrigger value="analytics" className="px-10 h-10 rounded-lg data-[state=active]:bg-white/20 font-black uppercase text-[10px] tracking-[0.2em] transition-all">
+                        <TrendingUp className="mr-2 h-4 w-4" /> ANALYTICS
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="operations" className="space-y-6">
+                <TabsContent value="sign-off" className="animate-in fade-in duration-500">
                     {agreementsToSign.length > 0 ? (
-                        <Card className="border-primary/20 bg-primary/5 shadow-md">
-                            <CardHeader>
-                                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                        <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden">
+                            <CardHeader className="bg-white/5 border-b border-white/5 p-8">
+                                <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
                                     <div>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <Edit className="h-5 w-5 text-primary" />
-                                            Requests Waiting for Sign-off
-                                        </CardTitle>
-                                        <CardDescription>
-                                            Quickly approve items checked by the Back Office Supervisors.
-                                        </CardDescription>
+                                        <CardTitle className="text-2xl font-black uppercase tracking-tight">Pending Board Approval</CardTitle>
+                                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Authorize multiple records for final core registry activation.</p>
                                     </div>
                                     {selectedIds.length > 0 && (
-                                        <Button onClick={() => setIsBulkSignOpen(true)} className="bg-primary text-primary-foreground shadow-lg animate-in slide-in-from-right-2">
-                                            <FileSignature className="mr-2 h-4 w-4" />
-                                            Group Approval ({selectedIds.length})
+                                        <Button onClick={() => setIsBulkSignOpen(true)} className="h-14 px-8 bg-primary text-primary-foreground font-black uppercase tracking-widest shadow-xl animate-in slide-in-from-right-4">
+                                            <Fingerprint className="mr-2 h-6 w-6" /> AUTHORIZE BATCH ({selectedIds.length})
                                         </Button>
                                     )}
                                 </div>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-0">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow className="hover:bg-transparent">
-                                            <TableHead className="w-[50px]">
+                                        <TableRow className="bg-black/20 border-white/5">
+                                            <TableHead className="w-[80px] pl-8">
                                                 <Checkbox 
                                                     checked={selectedIds.length === agreementsToSign.length && agreementsToSign.length > 0}
                                                     onCheckedChange={toggleSelectAll}
+                                                    className="border-white/20 data-[state=checked]:bg-primary"
                                                 />
                                             </TableHead>
-                                            <TableHead>Customer Name</TableHead>
-                                            <TableHead>Place</TableHead>
-                                            <TableHead>Supervisor Check</TableHead>
-                                            <TableHead className="text-right">Action</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">APPLICANT</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">REGION</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">AUDIT TRAIL</TableHead>
+                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {agreementsToSign.map((app) => (
-                                            <TableRow key={app.id} className={selectedIds.includes(app.id) ? "bg-primary/10" : ""}>
-                                                <TableCell>
+                                            <TableRow key={app.id} className={cn("hover:bg-white/10 border-white/5 transition-colors group", selectedIds.includes(app.id) && "bg-primary/5")}>
+                                                <TableCell className="pl-8">
                                                     <Checkbox 
                                                         checked={selectedIds.includes(app.id)}
                                                         onCheckedChange={() => toggleSelect(app.id)}
+                                                        className="border-white/20 data-[state=checked]:bg-primary"
                                                     />
                                                 </TableCell>
-                                                <TableCell>
-                                                    <div className="font-medium">{app.clientName}</div>
-                                                    <div className="text-[10px] text-muted-foreground font-mono">{app.id}</div>
+                                                <TableCell className="py-6">
+                                                    <div className="font-black text-white text-lg uppercase tracking-tight group-hover:text-primary transition-colors">{app.clientName}</div>
+                                                    <div className="text-[10px] text-white/30 uppercase font-black tracking-widest mt-1">{app.clientType} • {app.id}</div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant="secondary" className="font-normal">{app.region}</Badge>
+                                                    <Badge variant="outline" className="border-white/10 text-white/50 font-bold uppercase text-[9px] tracking-widest px-3 py-1 bg-white/5">{app.region}</Badge>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                                            OK by {app.history.find(h => h.action.includes('Supervisor'))?.user || 'Supervisor'}
-                                                        </Badge>
+                                                    <div className="flex flex-col gap-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                                                            <span className="text-[9px] font-black uppercase text-white/40">AUDITED BY: {app.history.find(h => h.action.includes('Supervisor'))?.user || 'SUPERVISOR'}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                                                            <span className="text-[9px] font-black uppercase text-white/40">ID ASSIGNED: {app.details.brIdentity}</span>
+                                                        </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>Check & Sign</Button>
+                                                <TableCell className="text-right pr-8">
+                                                    <Button variant="outline" size="sm" className="font-black uppercase h-9 px-6 rounded-lg shadow-lg" onClick={() => setSelectedApplication(app)}>AUDIT & SIGN</Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -327,80 +290,29 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                             </CardContent>
                         </Card>
                     ) : (
-                        <Card className="border-dashed border-2">
-                            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-                                <CheckCircle2 className="h-12 w-12 text-muted-foreground opacity-20 mb-4" />
-                                <p className="text-lg font-medium text-muted-foreground">Queue is empty</p>
-                                <p className="text-sm text-muted-foreground">All waiting items have been finished.</p>
+                        <Card className="border-dashed border-2 border-white/5 bg-white/5 backdrop-blur-sm rounded-3xl">
+                            <CardContent className="flex flex-col items-center justify-center p-24 text-center">
+                                <CheckCircle2 className="h-20 w-20 text-white/10 mb-8" />
+                                <p className="text-2xl font-black uppercase tracking-tight text-white/40">Queue is clear</p>
+                                <p className="text-sm text-white/20 font-bold uppercase tracking-widest mt-2">All agreements have been processed.</p>
                             </CardContent>
                         </Card>
                     )}
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <History className="h-5 w-5" />
-                                Finished Requests
-                            </CardTitle>
-                            <CardDescription>
-                                A full list of all completed sign-ups across the network.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {signedAgreements.length > 0 ? (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Customer Name</TableHead>
-                                            <TableHead>Place</TableHead>
-                                            <TableHead>Date Finished</TableHead>
-                                            <TableHead className="text-right">Action</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {signedAgreements.map((app) => (
-                                            <TableRow key={app.id}>
-                                                <TableCell>
-                                                    <div className="font-medium">{app.clientName}</div>
-                                                    <div className="text-[10px] text-muted-foreground font-mono">{app.id}</div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline" className="font-normal">{app.region}</Badge>
-                                                </TableCell>
-                                                <TableCell className="text-sm text-muted-foreground">
-                                                    {app.details.executiveSignatureTimestamp ? new Date(app.details.executiveSignatureTimestamp).toLocaleDateString() : 'N/A'}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" onClick={() => setSelectedApplication(app)}>View</Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            ) : (
-                                <div className="text-center p-12 text-muted-foreground italic">
-                                    No finished requests found.
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
                 </TabsContent>
 
-                <TabsContent value="analytics" className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card className="lg:col-span-2 shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-primary">
-                                    <MapPin className="h-5 w-5" />
-                                    Regional Stats
+                <TabsContent value="analytics" className="animate-in fade-in duration-500">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <Card className="lg:col-span-2 border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden">
+                            <CardHeader className="bg-white/5 border-b border-white/5">
+                                <CardTitle className="flex items-center gap-3 text-xl font-black uppercase tracking-tight">
+                                    <MapPin className="h-6 w-6 text-primary" /> Regional Oversight
                                 </CardTitle>
-                                <CardDescription>Where the sign-ups are coming from.</CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                <ChartContainer config={regionalChartConfig} className="h-[350px] w-full">
+                            <CardContent className="p-8">
+                                <ChartContainer config={regionalChartConfig} className="h-[400px] w-full">
                                     <ResponsiveContainer>
-                                        <ReChartsBarChart data={regionalData} layout="vertical" margin={{ left: 50, right: 20 }}>
-                                            <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.1} />
+                                        <ReChartsBarChart data={regionalData} layout="vertical" margin={{ left: 50, right: 30 }}>
+                                            <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.05} />
                                             <XAxis type="number" hide />
                                             <YAxis 
                                                 dataKey="name" 
@@ -408,12 +320,12 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                                                 tickLine={false} 
                                                 axisLine={false} 
                                                 width={140}
-                                                className="text-xs font-medium"
+                                                className="text-[10px] font-black uppercase text-white/30"
                                             />
                                             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                                            <Bar dataKey="count" radius={4} barSize={20}>
+                                            <Bar dataKey="count" radius={6} barSize={24}>
                                                 {regionalData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--muted))'} />
+                                                    <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.05)'} />
                                                 ))}
                                             </Bar>
                                         </ReChartsBarChart>
@@ -422,75 +334,27 @@ export default function RetailExecutiveDashboard({ user }: RetailExecutiveDashbo
                             </CardContent>
                         </Card>
                         
-                        <Card className="shadow-sm">
-                            <CardHeader>
-                                <CardTitle>Top Places</CardTitle>
-                                <CardDescription>Ranking by volume.</CardDescription>
+                        <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden">
+                            <CardHeader className="bg-white/5 border-b border-white/5">
+                                <CardTitle className="text-sm font-black uppercase tracking-widest">Network Ranking</CardTitle>
                             </CardHeader>
-                            <CardContent>
+                            <CardContent className="p-6">
                                 <div className="space-y-4">
                                     {regionalData.slice(0, 10).map((region, index) => (
-                                        <div key={region.name} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-bold ${index < 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                        <div key={region.name} className="flex items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-all group">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`flex items-center justify-center h-8 w-8 rounded-full text-xs font-black shadow-lg ${index < 3 ? 'bg-primary text-primary-foreground' : 'bg-white/5 text-white/30'}`}>
                                                     {index + 1}
                                                 </div>
-                                                <span className="text-sm font-medium">{region.name}</span>
+                                                <span className="text-sm font-black uppercase tracking-tight text-white/70 group-hover:text-white">{region.name}</span>
                                             </div>
-                                            <Badge variant="secondary" className="font-mono">{region.count}</Badge>
+                                            <Badge variant="secondary" className="font-mono text-sm px-3 bg-white/5 text-white/40">{region.count}</Badge>
                                         </div>
                                     ))}
                                 </div>
                             </CardContent>
                         </Card>
                     </div>
-
-                    <Card className="shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-primary">
-                                <Award className="h-5 w-5" />
-                                Sales Leader (ASL) Results
-                            </CardTitle>
-                            <CardDescription>
-                                Performance and success rates for the Sales team.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/30">
-                                        <TableHead>ASL Name</TableHead>
-                                        <TableHead className="text-center">Total Sent</TableHead>
-                                        <TableHead className="text-center text-green-600">Done</TableHead>
-                                        <TableHead className="text-center text-destructive">Declined</TableHead>
-                                        <TableHead className="text-center text-amber-600">Active</TableHead>
-                                        <TableHead className="text-right">Success Rate</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {atlPerformance.map((atl) => (
-                                        <TableRow key={atl.name} className="hover:bg-muted/20">
-                                            <TableCell className="font-medium flex items-center gap-3">
-                                                <Avatar className="h-8 w-8">
-                                                    <AvatarFallback className="text-[10px]">{atl.initials}</AvatarFallback>
-                                                </Avatar>
-                                                {atl.name}
-                                            </TableCell>
-                                            <TableCell className="text-center font-bold">{atl.total}</TableCell>
-                                            <TableCell className="text-center">{atl.signed}</TableCell>
-                                            <TableCell className="text-center">{atl.rejected}</TableCell>
-                                            <TableCell className="text-center">{atl.pending}</TableCell>
-                                            <TableCell className="text-right">
-                                                <Badge variant={atl.total > 0 && (atl.signed / atl.total) > 0.8 ? 'success' : 'outline'} className="font-mono">
-                                                    {atl.total > 0 ? Math.round((atl.signed / atl.total) * 100) : 0}%
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
                 </TabsContent>
             </Tabs>
 
