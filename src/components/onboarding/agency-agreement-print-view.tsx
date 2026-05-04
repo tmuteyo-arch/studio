@@ -38,14 +38,15 @@ const AgencyAgreementPrintView = React.forwardRef<HTMLDivElement, AgencyAgreemen
 
                 <section>
                     <h2 className="font-bold underline uppercase mb-2">2. Scope of Services</h2>
-                    <p>The Agent is authorized to:
+                    <div>
+                        <p>The Agent is authorized to:</p>
                         <ul className="list-disc ml-6 mt-1">
                             <li>Facilitate customer account opening applications.</li>
                             <li>Perform KYC and due diligence on prospective customers.</li>
                             <li>Assist in document collection and verification.</li>
                             <li>Provide customer support for InnBucks wallet services.</li>
                         </ul>
-                    </p>
+                    </div>
                 </section>
 
                 <section>
