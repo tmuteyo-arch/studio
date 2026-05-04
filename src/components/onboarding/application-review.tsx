@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -153,6 +154,15 @@ export default function ApplicationReview({ application: initialApplication, onB
   const needsMandate = application.clientType !== 'Individual Accounts' && application.clientType !== 'Minors';
   
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
+
+  // Role-based document visibility logic
+  const visibleDocuments = React.useMemo(() => {
+    if (user.role === 'back-office' || user.role === 'supervisor' || user.role === 'management' || user.role === 'compliance') {
+        return application.documents;
+    }
+    // ASL view: View allowed documents only (exclude internal audit reports)
+    return application.documents.filter(doc => doc.type !== 'FCB Report' && doc.type !== 'Internal Audit');
+  }, [application.documents, user.role]);
 
   const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
     setNotifications(prev => [{
@@ -564,7 +574,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                             </CardHeader>
                             <CardContent className="px-0">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {application.documents.map((doc, i) => (
+                                    {visibleDocuments.map((doc, i) => (
                                         <Card key={i} className="bg-muted/10 border-white/5 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
                                             <CardContent className="p-4 flex flex-col h-full">
                                                 <div className="flex items-start justify-between mb-4">
@@ -582,10 +592,16 @@ export default function ApplicationReview({ application: initialApplication, onB
                                             </CardContent>
                                         </Card>
                                     ))}
+                                    {visibleDocuments.length === 0 && (
+                                        <div className="col-span-full py-12 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-muted-foreground bg-muted/5 opacity-50">
+                                            <ShieldQuestion className="h-10 w-10 mb-2" />
+                                            <p className="text-sm font-bold uppercase tracking-widest">No visible documents for this role.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
-                        {!isReadOnly && <StepDocumentUpload disabled={isReadOnly || isProcessingAction} />}
+                        {!isReadOnly && user.role === 'asl' && <StepDocumentUpload disabled={isReadOnly || isProcessingAction} />}
                     </div>
                   </TabsContent>
                   

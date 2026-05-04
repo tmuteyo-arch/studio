@@ -1,3 +1,4 @@
+
 'use client';
 import * as React from 'react';
 import { useAtom } from 'jotai';
@@ -9,7 +10,7 @@ import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-dat
 import ApplicationReview from '../onboarding/application-review';
 import { User } from '@/lib/users';
 import { Input } from '../ui/input';
-import { Search, Archive, ScanLine, Briefcase, FileSearch, Send, Fingerprint, Key } from 'lucide-react';
+import { Search, Archive, ScanLine, Briefcase, FileSearch, Send, Fingerprint, Key, FileArchive } from 'lucide-react';
 import DailyActivityTracker from './daily-activity-tracker';
 import DigitizeApplicationFlow from '../onboarding/digitize-application-flow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -169,6 +170,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                         <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
                                             <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black">ID</TableHead>
                                             <TableHead className="text-white/40 uppercase text-[10px] font-black">NAME</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-black">VAULT</TableHead>
                                             <TableHead className="text-white/40 uppercase text-[10px] font-black">STATE</TableHead>
                                             <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black">ACTION</TableHead>
                                         </TableRow>
@@ -180,6 +182,12 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                                 <TableCell className="py-5">
                                                     <div className="font-black text-white text-md uppercase group-hover:text-primary transition-colors">{app.clientName}</div>
                                                     <div className="text-[10px] text-white/40 uppercase font-black mt-1.5">{app.clientType}</div>
+                                                </TableCell>
+                                                <TableCell>
+                                                  <div className="flex items-center gap-1.5 text-white/60">
+                                                    <FileArchive className="h-3.5 w-3.5" />
+                                                    <span className="text-[10px] font-black">{app.documents.length} FILES</span>
+                                                  </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge variant={getStatusVariant(app.status)} className="px-3 py-1 uppercase text-[10px] font-black shadow-sm">{getStateLabel(app.status)}</Badge>

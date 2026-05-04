@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Application, applicationsAtom, ApplicationStatus } from '@/lib/mock-data';
-import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X, Sparkles, FileEdit, Eye } from 'lucide-react';
+import { PlusCircle, Search, Inbox, UserCheck, User, Building2, Landmark, ChevronDown, X, Sparkles, FileEdit, Eye, FileArchive } from 'lucide-react';
 import OnboardingFlow from '@/components/onboarding/onboarding-flow';
 import ApplicationReview from '../onboarding/application-review';
 import { User as UserProfile } from '@/lib/users';
@@ -232,6 +233,7 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                   <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
                                       <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black">ID</TableHead>
                                       <TableHead className="text-white/40 uppercase text-[10px] font-black">CLIENT</TableHead>
+                                      <TableHead className="text-white/40 uppercase text-[10px] font-black">VAULT</TableHead>
                                       <TableHead className="text-white/40 uppercase text-[10px] font-black">LIFECYCLE STATE</TableHead>
                                       <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black">ACTION</TableHead>
                                   </TableRow>
@@ -243,6 +245,12 @@ export default function AtlDashboard({ user }: AtlDashboardProps) {
                                           <TableCell className="py-5">
                                               <div className="font-black text-white text-md uppercase group-hover:text-primary">{app.clientName}</div>
                                               <div className="text-[10px] text-white/40 uppercase font-black mt-1.5">{app.clientType}</div>
+                                          </TableCell>
+                                          <TableCell>
+                                            <div className="flex items-center gap-1.5 text-white/60">
+                                              <FileArchive className="h-3.5 w-3.5" />
+                                              <span className="text-[10px] font-black">{app.documents.length} FILES</span>
+                                            </div>
                                           </TableCell>
                                           <TableCell>
                                               <Badge variant={getStatusVariant(app.status)} className="px-3 py-1 uppercase text-[10px] font-black">{getStateLabel(app.status)}</Badge>
