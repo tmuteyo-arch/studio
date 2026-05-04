@@ -83,18 +83,18 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     }
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-10 animate-in fade-in duration-700">
             <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4 border-b border-white/5 pb-8">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
                         <Briefcase className="h-10 w-10 text-primary" />
                         Office Dashboard
                     </h2>
-                    <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Regulatory Audit and Issuance Portal.</p>
+                    <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-2">Manage applications and finish setup.</p>
                 </div>
-                <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="h-14 px-10 font-black shadow-2xl rounded-xl border-2">
+                <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="h-14 px-10 font-bold shadow-2xl rounded-xl border-2">
                     <ScanLine className="mr-2 h-6 w-6" />
-                    DIGITALIZE RECORD
+                    ADD PAPER RECORD
                 </Button>
             </div>
             
@@ -103,7 +103,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white/5 border-white/10 rounded-2xl">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase text-white/40 tracking-widest">New Requests</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase text-white/40 tracking-widest">New Requests</CardTitle>
                         <Fingerprint className="h-8 w-8 text-primary" />
                     </CardHeader>
                     <CardContent>
@@ -112,7 +112,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 </Card>
                 <Card className="bg-primary/10 border-primary/20 rounded-2xl">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase text-primary tracking-widest">Ready to Issue</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase text-primary tracking-widest">Ready to Finish</CardTitle>
                         <Key className="h-8 w-8 text-primary" />
                     </CardHeader>
                     <CardContent>
@@ -121,7 +121,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 </Card>
                 <Card className="bg-white/5 border-white/10 rounded-2xl">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase text-white/40 tracking-widest">Dispatched</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Finished</CardTitle>
                         <Send className="h-8 w-8 text-white/20" />
                     </CardHeader>
                     <CardContent>
@@ -130,7 +130,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                 </Card>
                 <Card className="bg-white/5 border-white/10 rounded-2xl">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-black uppercase text-white/40 tracking-widest">Vaulted</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Saved Records</CardTitle>
                         <Archive className="h-8 w-8 text-white/20" />
                     </CardHeader>
                     <CardContent>
@@ -142,18 +142,18 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-6">
                     <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5">
-                        <TabsTrigger value="pending-review" className="flex items-center gap-3 px-8 h-10 font-black uppercase text-xs tracking-widest">
+                        <TabsTrigger value="pending-review" className="flex items-center gap-3 px-8 h-10 font-bold uppercase text-xs tracking-widest">
                             <ClipboardCheck className="h-4 w-4" />
-                            ACTIVE REGISTRY ({activeRegistryApps.length})
+                            WAITING TO CHECK ({activeRegistryApps.length})
                         </TabsTrigger>
-                        <TabsTrigger value="archive" className="flex items-center gap-3 px-8 h-10 font-black uppercase text-xs tracking-widest">
+                        <TabsTrigger value="archive" className="flex items-center gap-3 px-8 h-10 font-bold uppercase text-xs tracking-widest">
                             <Archive className="h-4 w-4" />
-                            VAULT ({archivedApplications.length})
+                            FINISHED RECORDS ({archivedApplications.length})
                         </TabsTrigger>
                     </TabsList>
                     <div className="relative w-full sm:w-80">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
-                        <Input placeholder="Search Registry..." className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                        <Input placeholder="Search records..." className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
                 </div>
 
@@ -164,11 +164,11 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-black/20 border-white/5">
-                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ID</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">FILES</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">LIFECYCLE STATE</TableHead>
-                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
+                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-bold tracking-widest">ID</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">NAME</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">FILES</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">STATUS</TableHead>
+                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-bold tracking-widest">ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -176,21 +176,21 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                             <TableRow key={app.id} className="hover:bg-white/5 border-white/5 transition-colors group">
                                                 <TableCell className="font-mono text-xs pl-8 text-white/60 font-bold">{app.id}</TableCell>
                                                 <TableCell className="py-5">
-                                                    <div className="font-black text-white text-md uppercase group-hover:text-primary transition-colors">{app.clientName}</div>
-                                                    <div className="text-[10px] text-white/40 uppercase font-black mt-1.5">{app.clientType}</div>
+                                                    <div className="font-bold text-white text-md uppercase group-hover:text-primary transition-colors">{app.clientName}</div>
+                                                    <div className="text-[10px] text-white/40 uppercase font-bold mt-1.5">{app.clientType}</div>
                                                 </TableCell>
                                                 <TableCell>
                                                   <div className="flex items-center gap-1.5 text-white/60">
                                                     <FileArchive className="h-3.5 w-3.5" />
-                                                    <span className="text-[10px] font-black">{app.documents.length}</span>
+                                                    <span className="text-[10px] font-bold">{app.documents.length}</span>
                                                   </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant={getStatusVariant(app.status)} className="px-3 py-1 uppercase text-[10px] font-black shadow-sm">{getStateLabel(app.status)}</Badge>
+                                                    <Badge variant={getStatusVariant(app.status)} className="px-3 py-1 uppercase text-[10px] font-bold shadow-sm">{getStateLabel(app.status)}</Badge>
                                                 </TableCell>
                                                 <TableCell className="text-right pr-8">
-                                                    <Button variant="outline" size="sm" className="font-black uppercase h-9 px-6 rounded-lg" onClick={() => setSelectedApplication(app)}>
-                                                        {app.status === 'Approved' ? 'FINALIZE' : 'REVIEW'}
+                                                    <Button variant="outline" size="sm" className="font-bold uppercase h-9 px-6 rounded-lg" onClick={() => setSelectedApplication(app)}>
+                                                        {app.status === 'Approved' ? 'FINISH' : 'CHECK'}
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -200,7 +200,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                             ) : (
                                 <div className="flex items-center justify-center p-24 text-center">
                                     <Briefcase className="h-16 w-16 text-white/10 mb-4" />
-                                    <p className="text-white/40 font-black uppercase tracking-widest italic">Registry is clear.</p>
+                                    <p className="text-white/40 font-bold uppercase tracking-widest italic">All caught up!</p>
                                 </div>
                             )}
                         </CardContent>
@@ -214,20 +214,20 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-black/20 border-white/5">
-                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-black tracking-widest">REF</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">NAME</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-black tracking-widest">BR ACCT</TableHead>
-                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-black tracking-widest">ACTION</TableHead>
+                                            <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-bold tracking-widest">REF</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">NAME</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">ACCT NUMBER</TableHead>
+                                            <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-bold tracking-widest">ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {archivedApplications.map((app) => (
                                             <TableRow key={app.id} className="hover:bg-white/10 border-white/5 group">
                                                 <TableCell className="font-mono text-xs pl-8 text-white/40">{app.id}</TableCell>
-                                                <TableCell className="py-5 font-black text-white/80 uppercase">{app.clientName}</TableCell>
-                                                <TableCell className="font-mono text-md text-primary font-black">{app.details.brAccountNumber || 'ARCHIVED'}</TableCell>
+                                                <TableCell className="py-5 font-bold text-white/80 uppercase">{app.clientName}</TableCell>
+                                                <TableCell className="font-mono text-md text-primary font-bold">{app.details.brAccountNumber || 'FINISHED'}</TableCell>
                                                 <TableCell className="text-right pr-8">
-                                                    <Button variant="ghost" size="sm" className="h-9 px-5 rounded-lg font-black uppercase text-[10px] hover:bg-white/10" onClick={() => setSelectedApplication(app)}>
+                                                    <Button variant="ghost" size="sm" className="h-9 px-5 rounded-lg font-bold uppercase text-[10px] hover:bg-white/10" onClick={() => setSelectedApplication(app)}>
                                                         <FileSearch className="mr-2 h-4 w-4" />
                                                         VIEW
                                                     </Button>
@@ -239,7 +239,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                             ) : (
                                 <div className="flex flex-col items-center justify-center p-24 text-center">
                                     <Archive className="h-16 w-16 opacity-5 text-white mb-4" />
-                                    <p className="text-white/20 font-black uppercase tracking-widest italic">Vault is empty.</p>
+                                    <p className="text-white/20 font-bold uppercase tracking-widest italic">No finished records yet.</p>
                                 </div>
                             )}
                         </CardContent>

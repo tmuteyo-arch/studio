@@ -35,15 +35,15 @@ export function getStateLabel(status: ApplicationStatus): string {
   switch (status) {
     case 'Draft': return 'Draft';
     case 'In Progress': return 'In Progress';
-    case 'Pending Documents': return 'Pending Documents';
-    case 'Under Review': return 'Pending Review';
-    case 'Pending Supervisor': return 'Audit: Supervisor';
-    case 'Pending Executive Signature': return 'Audit: Management';
+    case 'Pending Documents': return 'Waiting for Files';
+    case 'Under Review': return 'Waiting for Review';
+    case 'Pending Supervisor': return 'Checking: Supervisor';
+    case 'Pending Executive Signature': return 'Checking: Manager';
     case 'Approved by Management': return 'Final Check: Supervisor';
-    case 'Approved': return 'Ready for Dispatch';
-    case 'Rejected': return 'Rejected';
-    case 'Dispatched': return 'Account Dispatched';
-    case 'Locked': return 'Record Locked';
+    case 'Approved': return 'Ready to Finish';
+    case 'Rejected': return 'Returned/Rejected';
+    case 'Dispatched': return 'Account Finished';
+    case 'Locked': return 'Record Saved';
     default: return status;
   }
 }

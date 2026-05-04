@@ -2,11 +2,10 @@
 
 import * as React from 'react';
 import { useAtom } from 'jotai';
-import { Application, applicationsAtom, Comment, HistoryLog, OnboardingFormData, Document as AppDocument, FcbStatus, ApplicationStatus, notificationsAtom, Notification } from '@/lib/mock-data';
+import { Application, applicationsAtom, HistoryLog, OnboardingFormData, Document as AppDocument, FcbStatus, ApplicationStatus, notificationsAtom, Notification } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Archive, ArrowLeft, Check, FileText, User, X, MessageSquare, Download, CornerUpLeft, CheckCircle2, AlertCircle, Loader2, FileEdit, FileSignature, Eraser, UserCheck, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, Fingerprint, Wallet, MapPin, Globe, Trash2, Info, FileSearch, Hash, Gavel, ClipboardCheck } from 'lucide-react';
+import { Archive, ArrowLeft, FileText, X, Download, CornerUpLeft, Loader2, FileSignature, Eraser, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, MapPin, Gavel, ClipboardCheck, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -28,7 +27,6 @@ import StepIndividualInfo from './steps/step-individual-info';
 import AccountResolutionPrintView from './account-resolution-print-view';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '../ui/input';
-import StepDocumentUpload from './steps/step-document-upload';
 import SignatureCanvas from 'react-signature-canvas';
 import { isValidTransition, getStateLabel } from '@/lib/state-machine';
 
@@ -108,7 +106,6 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [applications, setApplications] = useAtom(applicationsAtom);
   const [, setNotifications] = useAtom(notificationsAtom);
   const [application, setApplication] = React.useState(initialApplication);
-  const [newComment, setNewComment] = React.useState('');
   const [isPrinting, setIsPrinting] = React.useState(false);
   const [isProcessingAction, setIsProcessingAction] = React.useState(false);
   
@@ -126,8 +123,6 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const [isReturning, setIsReturning] = React.useState(false);
   const [returnComment, setReturnComment] = React.useState('');
-
-  const [isDeletingConfirmOpen, setIsDeletingConfirmOpen] = React.useState(false);
   
   const [previewDoc, setPreviewDoc] = React.useState<AppDocument | null>(null);
 
@@ -144,14 +139,11 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [isDispatching, setIsDispatching] = React.useState(false);
 
   // Digital Signatures
-  const [isSupervisorSigning, setIsSupervisorSigning] = React.useState(false);
   const [isExecutiveSigning, setIsExecutiveSigning] = React.useState(false);
 
-  const isReadOnly = ['Locked', 'Dispatched'].includes(application.status);
-
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors', 'Sole Trader'].includes(application.clientType);
-  const isCorporate = !isPersonalOrIndividual;
   const needsMandate = application.clientType !== 'Individual Accounts' && application.clientType !== 'Minors';
+  const isCorporate = !isPersonalOrIndividual;
   
   const form = useForm<OnboardingFormData>({ defaultValues: application.details });
 
@@ -162,15 +154,6 @@ export default function ApplicationReview({ application: initialApplication, onB
     }
     return application.documents.filter(doc => doc.type !== 'FCB Report' && doc.type !== 'Internal Audit');
   }, [application.documents, user.role]);
-
-  const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-    setNotifications(prev => [{
-        id: `notif-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        isRead: false,
-        ...notif
-    }, ...prev]);
-  };
 
   const handleUpdateApplication = (newData: Partial<Application>) => {
     const updatedApps = applications.map(app => 
@@ -193,7 +176,7 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleStatusChange = async (nextStatus: ApplicationStatus, notes?: string) => {
     if (!isValidTransition(application.status, nextStatus)) {
-        toast({ variant: 'destructive', title: 'Transition Blocked', description: `Workflow requires sequential approval.` });
+        toast({ variant: 'destructive', title: 'Action Blocked', description: `This step cannot be skipped.` });
         return;
     }
 
@@ -212,7 +195,7 @@ export default function ApplicationReview({ application: initialApplication, onB
             history: [...application.history, newHistoryLog] 
         });
 
-        toast({ title: `Record State: ${getStateLabel(nextStatus)}` });
+        toast({ title: `Updated: ${getStateLabel(nextStatus)}` });
         
         if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review', 'Pending Supervisor', 'Pending Executive Signature', 'Approved by Management'].includes(nextStatus)) {
             setTimeout(() => onBack(), 500);
@@ -232,25 +215,23 @@ export default function ApplicationReview({ application: initialApplication, onB
         const newDoc: AppDocument = { type: 'FCB Report', fileName: file.name, url: url, pageCount: 1 };
         setFcbReport(newDoc);
         
-        // Add to permanent documents
         handleUpdateApplication({
             documents: [...application.documents.filter(d => d.type !== 'FCB Report'), newDoc],
             fcbStatus: selectedFcbStatus
         });
 
-        toast({ title: "FCB Report Linked", description: "Audit trail updated." });
+        toast({ title: "Check Report Saved", description: "The background check report is now attached." });
     };
     reader.readAsDataURL(file);
   };
 
-  // Step actions as defined in tiered workflow
   const handleBackOfficeEscalate = () => {
     if (!fcbReport) {
-        toast({ variant: 'destructive', title: 'FCB Required', description: 'Attach FCB report before escalating.' });
+        toast({ variant: 'destructive', title: 'File Missing', description: 'Please attach the background check report first.' });
         return;
     }
     if (!brIdentity) {
-        toast({ variant: 'destructive', title: 'Registry ID Needed', description: 'Assign an Application ID.' });
+        toast({ variant: 'destructive', title: 'ID Needed', description: 'Please assign a Reference ID.' });
         return;
     }
     
@@ -259,11 +240,11 @@ export default function ApplicationReview({ application: initialApplication, onB
         fcbStatus: selectedFcbStatus
     });
     
-    handleStatusChange('Pending Supervisor', 'BO Audit complete. FCB attached and Application ID assigned.');
+    handleStatusChange('Pending Supervisor', 'First check finished. Sent to Supervisor.');
   };
 
   const handleSupervisorReviewComplete = () => {
-    handleStatusChange('Pending Executive Signature', 'Supervisor audit OK. Requesting Executive Agreement sign-off.');
+    handleStatusChange('Pending Executive Signature', 'Supervisor check passed. Sent for Manager sign-off.');
   };
 
   const handleExecutiveSignOff = (signature: string) => {
@@ -274,24 +255,24 @@ export default function ApplicationReview({ application: initialApplication, onB
             executiveSignatureTimestamp: new Date().toISOString() 
         }
     });
-    handleStatusChange('Approved by Management', 'Executive Agreement Signed. Returning to Supervisor for final code.');
+    handleStatusChange('Approved by Management', 'Manager signed the agreement. Returned to Supervisor.');
     setIsExecutiveSigning(false);
   };
 
   const handleSupervisorFinalApproval = () => {
     if (!activationCode) {
-        toast({ variant: 'destructive', title: 'Activation Code Needed', description: 'Enter the Core Activation Code.' });
+        toast({ variant: 'destructive', title: 'Code Needed', description: 'Please enter the final approval code.' });
         return;
     }
     handleUpdateApplication({
         details: { ...application.details, activationCode }
     });
-    handleStatusChange('Approved', 'Final Supervisor approval granted. Returning to BO for Dispatch.');
+    handleStatusChange('Approved', 'Final approval given. Ready to finish account setup.');
   };
 
   const handleDispatchAccount = async () => {
     if (dispatchBrAccountNumber.length < 5 || dispatchWalletAccountNumber.length < 5) {
-        toast({ variant: 'destructive', title: 'Invalid Inputs', description: 'Enter both BR and Wallet identifiers.' });
+        toast({ variant: 'destructive', title: 'Invalid Details', description: 'Please enter valid account numbers.' });
         return;
     }
 
@@ -309,10 +290,10 @@ export default function ApplicationReview({ application: initialApplication, onB
             },
             history: [
                 ...application.history,
-                { action: 'Dispatched', user: user.name, timestamp, notes: `Final issuance complete.` }
+                { action: 'Dispatched', user: user.name, timestamp, notes: `Account setup finished.` }
             ]
         });
-        toast({ title: "Process Complete" });
+        toast({ title: "Success", description: "The account is now finished and active." });
         setIsDispatching(false);
         setTimeout(() => onBack(), 500);
     } finally {
@@ -322,7 +303,7 @@ export default function ApplicationReview({ application: initialApplication, onB
 
   const handleRejection = () => {
     if (!rejectionReason || !rejectionComment) {
-        toast({ variant: 'destructive', title: 'Audit Note Needed', description: 'Reason for rejection must be logged.' });
+        toast({ variant: 'destructive', title: 'Reason Needed', description: 'Please explain why this is being rejected.' });
         return;
     }
     handleStatusChange('Rejected', `Reason: ${rejectionReason} - ${rejectionComment}`);
@@ -361,33 +342,33 @@ export default function ApplicationReview({ application: initialApplication, onB
         if (isCorporate && adlaRef.current) await addCanvasToPdf(adlaRef.current);
         await addCanvasToPdf(summaryElement);
 
-        pdf.save(`Forensic-Audit-${application.id}.pdf`);
+        pdf.save(`Records-${application.id}.pdf`);
     } finally {
         setIsPrinting(false);
     }
   };
 
   const renderActions = () => {
-    if (isProcessingAction) return <Button disabled className="font-black px-8"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> PROCESSING...</Button>;
+    if (isProcessingAction) return <Button disabled className="font-bold px-8"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> WORKING...</Button>;
 
     switch (user.role) {
       case 'asl':
-        if (application.status === 'Draft') return <Button onClick={() => handleStatusChange('In Progress')} className="bg-primary font-black px-8">START</Button>;
-        if (application.status === 'In Progress') return <Button onClick={() => handleStatusChange('Pending Documents')} className="bg-primary font-black px-8">NEXT</Button>;
-        if (application.status === 'Pending Documents') return <Button onClick={() => handleStatusChange('Under Review')} className="bg-primary font-black px-8">SUBMIT FOR REVIEW</Button>;
+        if (application.status === 'Draft') return <Button onClick={() => handleStatusChange('In Progress')} className="bg-primary font-bold px-8">START</Button>;
+        if (application.status === 'In Progress') return <Button onClick={() => handleStatusChange('Pending Documents')} className="bg-primary font-bold px-8">NEXT</Button>;
+        if (application.status === 'Pending Documents') return <Button onClick={() => handleStatusChange('Under Review')} className="bg-primary font-bold px-8">SEND FOR REVIEW</Button>;
         return null;
         
       case 'back-office':
         if (application.status === 'Under Review') {
             return (
                 <div className="flex gap-3">
-                    <Button variant="outline" className="text-amber-500 font-bold" onClick={() => setIsReturning(true)}>Return</Button>
-                    <Button className="bg-primary font-black px-8" onClick={handleBackOfficeEscalate}>SEND TO SUPERVISOR</Button>
+                    <Button variant="outline" className="text-amber-500 font-bold" onClick={() => setIsReturning(true)}>Return to Sales</Button>
+                    <Button className="bg-primary font-bold px-8" onClick={handleBackOfficeEscalate}>SEND TO CHECK</Button>
                 </div>
             );
         }
-        if (application.status === 'Approved') return <Button onClick={() => setIsDispatching(true)} className="bg-primary font-black px-8"><Send className="mr-2 h-4 w-4" /> DISPATCH</Button>;
-        if (application.status === 'Dispatched') return <Button onClick={() => handleStatusChange('Locked')} className="bg-foreground text-background font-black px-8">ARCHIVE</Button>;
+        if (application.status === 'Approved') return <Button onClick={() => setIsDispatching(true)} className="bg-primary font-bold px-8"><Send className="mr-2 h-4 w-4" /> FINISH SETUP</Button>;
+        if (application.status === 'Dispatched') return <Button onClick={() => handleStatusChange('Locked')} className="bg-foreground text-background font-bold px-8">MOVE TO ARCHIVE</Button>;
         return null;
 
       case 'supervisor':
@@ -395,12 +376,12 @@ export default function ApplicationReview({ application: initialApplication, onB
             return (
                 <div className="flex gap-3">
                     <Button variant="destructive" onClick={() => setIsRejecting(true)}>Reject</Button>
-                    <Button className="bg-primary font-black px-8" onClick={handleSupervisorReviewComplete}>SEND TO MANAGEMENT</Button>
+                    <Button className="bg-primary font-bold px-8" onClick={handleSupervisorReviewComplete}>SEND TO MANAGER</Button>
                 </div>
             );
         }
         if (application.status === 'Approved by Management') {
-            return <Button className="bg-green-600 hover:bg-green-700 text-white font-black px-8" onClick={handleSupervisorFinalApproval}>FINAL APPROVAL</Button>;
+            return <Button className="bg-green-600 hover:bg-green-700 text-white font-bold px-8" onClick={handleSupervisorFinalApproval}>GIVE FINAL APPROVAL</Button>;
         }
         return null;
 
@@ -409,7 +390,7 @@ export default function ApplicationReview({ application: initialApplication, onB
             return (
                 <div className="flex gap-3">
                     <Button variant="destructive" onClick={() => setIsRejecting(true)}>Reject</Button>
-                    <Button className="bg-primary font-black px-8" onClick={() => setIsExecutiveSigning(true)}><FileSignature className="mr-2 h-4 w-4" /> SIGN AGREEMENT</Button>
+                    <Button className="bg-primary font-bold px-8" onClick={() => setIsExecutiveSigning(true)}><FileSignature className="mr-2 h-4 w-4" /> SIGN AGREEMENT</Button>
                 </div>
             );
         }
@@ -425,7 +406,7 @@ export default function ApplicationReview({ application: initialApplication, onB
           <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <Button variant="ghost" onClick={onBack} className="hover:bg-muted text-muted-foreground"><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
               <div className="flex items-center gap-3 w-full md:w-auto">
-                  <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting} className="font-bold"><Download className="mr-2 h-4 w-4" />Export Audit</Button>
+                  <Button variant="outline" onClick={handleDownloadPdf} disabled={isPrinting} className="font-bold"><Download className="mr-2 h-4 w-4" />Save as PDF</Button>
                   {renderActions()}
               </div>
           </div>
@@ -449,15 +430,15 @@ export default function ApplicationReview({ application: initialApplication, onB
               <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant="outline" className="bg-muted text-[10px] font-mono uppercase">{application.id}</Badge>
-                    <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">{application.clientType}</Badge>
+                    <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest">{application.clientType}</Badge>
                   </div>
-                  <CardTitle className="text-3xl font-black uppercase tracking-tight text-foreground">{application.clientName}</CardTitle>
+                  <CardTitle className="text-3xl font-bold uppercase tracking-tight text-foreground">{application.clientName}</CardTitle>
                   <CardDescription className="flex items-center gap-2 mt-1">
                     <MapPin className="h-3 w-3" /> Region: <strong className="text-foreground">{application.region}</strong>
                   </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <Badge className="font-black px-4 py-1.5 uppercase tracking-widest text-xs shadow-sm bg-foreground text-background">
+                <Badge className="font-bold px-4 py-1.5 uppercase tracking-widest text-xs shadow-sm bg-foreground text-background">
                     {getStateLabel(application.status)}
                 </Badge>
               </div>
@@ -465,18 +446,18 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardHeader>
           <CardContent className="px-8 pb-8">
               
-              {/* Back Office Audit Form */}
+              {/* Back Office Form */}
               {user.role === 'back-office' && application.status === 'Under Review' && (
                   <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95">
-                      <h4 className="text-xs font-black uppercase text-secondary tracking-widest mb-6 flex items-center gap-2">
-                          <ClipboardCheck className="h-4 w-4" /> Back Office Audit Controls
+                      <h4 className="text-xs font-bold uppercase text-secondary tracking-widest mb-6 flex items-center gap-2">
+                          <ClipboardCheck className="h-4 w-4" /> Staff Check Details
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                           <div className="space-y-4">
-                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Financial Bureau (FCB) Status</Label>
+                              <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Background Check Status</Label>
                               <Select value={selectedFcbStatus} onValueChange={(v: FcbStatus) => setSelectedFcbStatus(v)}>
                                   <SelectTrigger className="h-12 bg-background border-white/10 font-bold">
-                                      <SelectValue placeholder="Set FCB Status..." />
+                                      <SelectValue placeholder="Set Status..." />
                                   </SelectTrigger>
                                   <SelectContent>
                                       {fcbStatusOptions.map(status => (
@@ -486,19 +467,19 @@ export default function ApplicationReview({ application: initialApplication, onB
                               </Select>
                           </div>
                           <div className="space-y-4">
-                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Assign Application Registry ID</Label>
-                              <Input placeholder="e.g. BR-APP-XXXXX" value={brIdentity} onChange={e => setBrIdentity(e.target.value)} className="h-12 bg-background border-white/10 font-mono font-bold" />
+                              <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Reference ID Number</Label>
+                              <Input placeholder="e.g. APP-12345" value={brIdentity} onChange={e => setBrIdentity(e.target.value)} className="h-12 bg-background border-white/10 font-mono font-bold" />
                           </div>
                           <div className="space-y-4">
-                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">FCB Audit Attachment</Label>
+                              <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Attach Check Report</Label>
                               <div className="flex gap-2">
                                   <input type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
                                   <Button 
                                       variant="outline" 
-                                      className="flex-1 h-12 font-black border-white/10"
+                                      className="flex-1 h-12 font-bold border-white/10"
                                       onClick={() => fileInputRef.current?.click()}
                                   >
-                                      <Upload className="mr-2 h-4 w-4" /> {fcbReport ? 'Report Linked' : 'Attach FCB'}
+                                      <Upload className="mr-2 h-4 w-4" /> {fcbReport ? 'Report Added' : 'Upload Report'}
                                   </Button>
                                   {fcbReport && (
                                       <Button variant="ghost" size="icon" className="h-12 w-12 border border-white/5" onClick={() => setPreviewDoc(fcbReport)}>
@@ -511,25 +492,25 @@ export default function ApplicationReview({ application: initialApplication, onB
                   </div>
               )}
 
-              {/* Supervisor Final Approval Form */}
+              {/* Supervisor Approval Form */}
               {user.role === 'supervisor' && application.status === 'Approved by Management' && (
                   <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95">
-                      <h4 className="text-xs font-black uppercase text-primary tracking-widest mb-6 flex items-center gap-2">
-                          <Key className="h-4 w-4" /> Registry Activation
+                      <h4 className="text-xs font-bold uppercase text-primary tracking-widest mb-6 flex items-center gap-2">
+                          <Key className="h-4 w-4" /> Final Approval
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-4">
-                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Core Registry Activation Code</Label>
+                              <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Final Approval Code</Label>
                               <Input 
-                                  placeholder="Enter final issuing code..." 
+                                  placeholder="Enter final code..." 
                                   value={activationCode} 
                                   onChange={e => setActivationCode(e.target.value)} 
-                                  className="h-14 bg-background border-primary/20 font-mono font-black text-xl text-center tracking-tighter" 
+                                  className="h-14 bg-background border-primary/20 font-mono font-bold text-xl text-center tracking-tighter" 
                               />
                           </div>
                           <div className="flex items-center justify-center p-6 border-2 border-dashed border-primary/20 rounded-xl">
                               <p className="text-xs text-muted-foreground text-center font-bold uppercase tracking-tight">
-                                  This code will finalize the application and return it to Back Office for issuance.
+                                  This code will finish the application and allow account setup.
                               </p>
                           </div>
                       </div>
@@ -539,17 +520,17 @@ export default function ApplicationReview({ application: initialApplication, onB
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="bg-muted/50 p-1.5 mb-8 rounded-xl w-full sm:w-auto overflow-x-auto">
                       <TabsTrigger value="form-data" className="px-6 rounded-lg">Profile</TabsTrigger>
-                      <TabsTrigger value="documents" className="px-6 rounded-lg">Vault</TabsTrigger>
-                      <TabsTrigger value="audit" className="px-6 rounded-lg font-black"><Gavel className="mr-2 h-4 w-4"/>AUDIT TRAIL</TabsTrigger>
+                      <TabsTrigger value="documents" className="px-6 rounded-lg">Files</TabsTrigger>
+                      <TabsTrigger value="audit" className="px-6 rounded-lg font-bold"><History className="mr-2 h-4 w-4"/>HISTORY</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="form-data" className="pt-2 animate-in fade-in-50 duration-300">
                       <div className="space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 bg-muted/20 rounded-2xl border border-primary/5">
                             <DetailItem label="Account Type" value={application.clientType} />
-                            <DetailItem label="Registry ID" value={application.details.brIdentity || 'Not Assigned'} />
-                            <DetailItem label="FCB Risk" value={application.fcbStatus} />
-                            <DetailItem label="State" value={getStateLabel(application.status)} />
+                            <DetailItem label="Reference ID" value={application.details.brIdentity || 'Not Set'} />
+                            <DetailItem label="Check Status" value={application.fcbStatus} />
+                            <DetailItem label="Progress" value={getStateLabel(application.status)} />
                         </div>
                         {isPersonalOrIndividual ? <StepIndividualInfo disabled={true} /> : <StepCorporateInfo disabled={true} />}
                         {needsMandate && <StepSignatories disabled={true} />}
@@ -563,15 +544,15 @@ export default function ApplicationReview({ application: initialApplication, onB
                                 <CardContent className="p-4 flex flex-col h-full">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><FileText className="h-5 w-5" /></div>
-                                        <Badge variant="outline" className="text-[8px] font-black uppercase">{doc.type}</Badge>
+                                        <Badge variant="outline" className="text-[8px] font-bold uppercase">{doc.type}</Badge>
                                     </div>
-                                    <p className="text-sm font-black uppercase text-foreground leading-tight truncate mb-6">{doc.type}</p>
+                                    <p className="text-sm font-bold uppercase text-foreground leading-tight truncate mb-6">{doc.type}</p>
                                     <Button 
-                                        className="w-full h-10 font-black uppercase text-[10px]"
+                                        className="w-full h-10 font-bold uppercase text-[10px]"
                                         variant="outline"
                                         onClick={() => setPreviewDoc(doc)}
                                     >
-                                        <Eye className="mr-2 h-3.5 w-3.5" /> Preview
+                                        <Eye className="mr-2 h-3.5 w-3.5" /> View File
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -582,18 +563,18 @@ export default function ApplicationReview({ application: initialApplication, onB
                   <TabsContent value="audit" className="pt-2 animate-in fade-in-50 duration-300">
                       <div className="space-y-10">
                           <div className="space-y-6">
-                              <h4 className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-2"><History className="h-4 w-4 text-primary" /> Forensic History</h4>
+                              <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-2"><History className="h-4 w-4 text-primary" /> Action History</h4>
                               <div className="space-y-4">
                                   {application.history.map((log, idx) => (
                                       <div key={idx} className="flex items-start gap-4 p-4 rounded-xl border border-white/5 bg-muted/10">
-                                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-black text-primary border border-primary/20">{log.user.substring(0,2)}</div>
+                                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-bold text-primary border border-primary/20">{log.user.substring(0,2)}</div>
                                           <div className="flex-1">
                                               <div className="flex justify-between items-center mb-1">
-                                                  <p className="text-xs font-black uppercase text-white/80">{log.action}</p>
+                                                  <p className="text-xs font-bold uppercase text-white/80">{log.action}</p>
                                                   <span className="text-[10px] font-mono text-white/20">{new Date(log.timestamp).toLocaleString()}</span>
                                               </div>
-                                              <p className="text-[11px] text-white/40 italic">{log.notes || 'No comments logged.'}</p>
-                                              <p className="text-[9px] font-black uppercase text-primary/50 mt-1">Processed By: {log.user}</p>
+                                              <p className="text-[11px] text-white/40 italic">{log.notes || 'No notes.'}</p>
+                                              <p className="text-[9px] font-bold uppercase text-primary/50 mt-1">Person: {log.user}</p>
                                           </div>
                                       </div>
                                   ))}
@@ -609,25 +590,25 @@ export default function ApplicationReview({ application: initialApplication, onB
         <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}>
             <AlertDialogContent className="rounded-2xl border-destructive/20 shadow-2xl">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-2xl font-black uppercase flex items-center gap-2 text-destructive"><ShieldAlert className="h-6 w-6" /> Decline Application</AlertDialogTitle>
-                    <AlertDialogDescription className="text-base">Provide regulatory reasoning for declining this applicant.</AlertDialogDescription>
+                    <AlertDialogTitle className="text-2xl font-bold uppercase flex items-center gap-2 text-destructive"><ShieldAlert className="h-6 w-6" /> Reject Application</AlertDialogTitle>
+                    <AlertDialogDescription className="text-base">Please explain why this application is being rejected.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="space-y-6 py-6">
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Reason Code</Label>
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Reason Category</Label>
                         <Select onValueChange={setRejectionReason} value={rejectionReason}>
                             <SelectTrigger className="h-12"><SelectValue placeholder="Select reason..." /></SelectTrigger>
                             <SelectContent className="rounded-xl">{rejectionReasons.map(reason => (<SelectItem key={reason} value={reason}>{reason}</SelectItem>))}</SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Audit Note</Label>
-                        <Textarea placeholder="Type details..." value={rejectionComment} onChange={(e) => setRejectionComment(e.target.value)} className="min-h-[150px] rounded-xl" />
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Additional Notes</Label>
+                        <Textarea placeholder="Type details here..." value={rejectionComment} onChange={(e) => setRejectionComment(e.target.value)} className="min-h-[150px] rounded-xl" />
                     </div>
                 </div>
                 <AlertDialogFooter className="gap-3">
                     <AlertDialogCancel className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleRejection} className="h-12 rounded-xl bg-destructive text-destructive-foreground font-black px-8" disabled={!rejectionReason || !rejectionComment}>DECLINE RECORD</AlertDialogAction>
+                    <AlertDialogAction onClick={handleRejection} className="h-12 rounded-xl bg-destructive text-destructive-foreground font-bold px-8" disabled={!rejectionReason || !rejectionComment}>REJECT NOW</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -636,18 +617,18 @@ export default function ApplicationReview({ application: initialApplication, onB
         <AlertDialog open={isReturning} onOpenChange={setIsReturning}>
             <AlertDialogContent className="rounded-2xl border-amber-200">
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-2xl font-black uppercase flex items-center gap-2 text-amber-600"><CornerUpLeft className="h-6 w-6" /> Request Corrections</AlertDialogTitle>
-                    <AlertDialogDescription className="text-base">Provide instructions for the ASL to rectify this application.</AlertDialogDescription>
+                    <AlertDialogTitle className="text-2xl font-bold uppercase flex items-center gap-2 text-amber-600"><CornerUpLeft className="h-6 w-6" /> Need Fixes</AlertDialogTitle>
+                    <AlertDialogDescription className="text-base">Tell the Sales person what needs to be changed.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="space-y-4 py-6">
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Fix Instructions</Label>
-                        <Textarea placeholder="What needs to be changed?" value={returnComment} onChange={(e) => setReturnComment(e.target.value)} className="min-h-[150px] rounded-xl border-amber-200" />
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">What to fix?</Label>
+                        <Textarea placeholder="e.g. ID is blurry" value={returnComment} onChange={(e) => setReturnComment(e.target.value)} className="min-h-[150px] rounded-xl border-amber-200" />
                     </div>
                 </div>
                 <AlertDialogFooter className="gap-3">
                     <AlertDialogCancel onClick={() => { setIsReturning(false); setReturnComment(''); }} className="h-12 rounded-xl font-bold">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => { handleStatusChange('Pending Documents', returnComment); setIsReturning(false); }} className="h-12 rounded-xl bg-amber-600 text-white font-black px-8" disabled={!returnComment.trim()}>SEND BACK</AlertDialogAction>
+                    <AlertDialogAction onClick={() => { handleStatusChange('Pending Documents', returnComment); setIsReturning(false); }} className="h-12 rounded-xl bg-amber-600 text-white font-bold px-8" disabled={!returnComment.trim()}>SEND BACK</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -659,7 +640,7 @@ export default function ApplicationReview({ application: initialApplication, onB
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><FileText className="h-5 w-5" /></div>
                         <div>
-                            <DialogTitle className="text-xs uppercase font-black tracking-[0.2em] text-primary">{previewDoc?.type}</DialogTitle>
+                            <DialogTitle className="text-xs uppercase font-bold tracking-[0.2em] text-primary">{previewDoc?.type}</DialogTitle>
                             <p className="text-[10px] font-mono text-muted-foreground uppercase">{previewDoc?.fileName}</p>
                         </div>
                     </div>
@@ -668,37 +649,37 @@ export default function ApplicationReview({ application: initialApplication, onB
                 <div className="flex-1 bg-black/90 relative flex items-center justify-center overflow-hidden">
                     {previewDoc?.url && previewDoc.url !== '#' ? (
                         previewDoc.url.includes('application/pdf') || previewDoc.fileName.toLowerCase().endsWith('.pdf') ? (
-                            <iframe src={previewDoc.url} className="w-full h-full border-none" title="Doc" />
-                        ) : <img src={previewDoc.url} alt="Document" className="max-w-full max-h-full object-contain" />
+                            <iframe src={previewDoc.url} className="w-full h-full border-none" title="File View" />
+                        ) : <img src={previewDoc.url} alt="File" className="max-w-full max-h-full object-contain" />
                     ) : (
                         <div className="flex flex-col items-center gap-4 text-white/30 text-center max-w-xs">
                             <ShieldQuestion className="h-16 w-16 opacity-20" />
-                            <p className="text-sm font-black uppercase tracking-widest">Binary stream missing.</p>
+                            <p className="text-sm font-bold uppercase tracking-widest">File data not found.</p>
                         </div>
                     )}
                 </div>
             </DialogContent>
         </Dialog>
 
-        {/* Final Dispatch Dialog */}
+        {/* Final Completion Dialog */}
         <Dialog open={isDispatching} onOpenChange={setIsDispatching}>
             <DialogContent className="bg-card border-primary/20 rounded-2xl shadow-2xl max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-3 text-2xl font-black uppercase tracking-tight text-primary"><Send className="h-6 w-6" /> Final Dispatch</DialogTitle>
-                    <CardDescription className="text-base mt-2">Assign final core system identifiers.</CardDescription>
+                    <DialogTitle className="flex items-center gap-3 text-2xl font-bold uppercase tracking-tight text-primary"><Send className="h-6 w-6" /> Finish Setup</DialogTitle>
+                    <CardDescription className="text-base mt-2">Enter the final account details for the system.</CardDescription>
                 </DialogHeader>
                 <div className="py-8 space-y-6">
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">BR Account Number</Label>
-                        <Input placeholder="BR-XXXXXXX" value={dispatchBrAccountNumber} onChange={(e) => setDispatchBrAccountNumber(e.target.value)} className="h-12 font-mono text-center font-black" />
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Bank Account Number</Label>
+                        <Input placeholder="Enter number..." value={dispatchBrAccountNumber} onChange={(e) => setDispatchBrAccountNumber(e.target.value)} className="h-12 font-mono text-center font-bold" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Wallet Account Number</Label>
-                        <Input placeholder="WL-XXXXXXX" value={dispatchWalletAccountNumber} onChange={(e) => setDispatchWalletAccountNumber(e.target.value)} className="h-12 font-mono text-center font-black" />
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground">Wallet Account Number</Label>
+                        <Input placeholder="Enter number..." value={dispatchWalletAccountNumber} onChange={(e) => setDispatchWalletAccountNumber(e.target.value)} className="h-12 font-mono text-center font-bold" />
                     </div>
                 </div>
                 <DialogFooter className="gap-3 sm:flex-col">
-                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-black uppercase bg-primary text-primary-foreground">DISPATCH ACCOUNTS</Button>
+                    <Button onClick={handleDispatchAccount} className="w-full h-12 text-lg font-bold uppercase bg-primary text-primary-foreground">SAVE AND FINISH</Button>
                     <Button variant="ghost" onClick={() => setIsDispatching(false)} className="w-full h-10 font-bold">Cancel</Button>
                 </DialogFooter>
             </DialogContent>
@@ -708,8 +689,8 @@ export default function ApplicationReview({ application: initialApplication, onB
             isOpen={isExecutiveSigning}
             onClose={() => setIsExecutiveSigning(false)}
             onSign={handleExecutiveSignOff}
-            title="Board Sign-off"
-            description="Authorize this agreement for final regulatory processing."
+            title="Manager Sign-off"
+            description="Apply your signature to finish the approval."
         />
       </div>
     </FormProvider>
