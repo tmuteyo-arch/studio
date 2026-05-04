@@ -10,12 +10,14 @@ export const VALID_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> =
   'Draft': ['In Progress'],
   'In Progress': ['Pending Documents'],
   'Pending Documents': ['Under Review'],
-  'Under Review': ['Pending Supervisor', 'Rejected', 'Pending Documents'],
-  'Pending Supervisor': ['Pending Executive Signature', 'Rejected', 'Under Review'],
-  'Pending Executive Signature': ['Approved by Management', 'Rejected'],
-  'Approved by Management': ['Approved', 'Rejected'],
+  'Under Review': ['Safe to Continue', 'Not Safe to Proceed', 'Needs Review', 'Pending Documents'],
+  'Needs Review': ['Under Review', 'Pending Documents'],
+  'Safe to Continue': ['Pending Executive Signature', 'Not Safe to Proceed', 'Under Review'],
+  'Pending Executive Signature': ['Approved by Management', 'Not Safe to Proceed'],
+  'Approved by Management': ['Approved', 'Not Safe to Proceed'],
   'Approved': ['Dispatched'],
-  'Rejected': ['In Progress'], // Allow re-opening from rejection
+  'Rejected': ['In Progress'],
+  'Not Safe to Proceed': ['In Progress'],
   'Dispatched': ['Locked'],
   'Locked': [], // Final state
 };
@@ -37,11 +39,13 @@ export function getStateLabel(status: ApplicationStatus): string {
     case 'In Progress': return 'In Progress';
     case 'Pending Documents': return 'Waiting for Files';
     case 'Under Review': return 'Waiting for Review';
-    case 'Pending Supervisor': return 'Checking: Supervisor';
+    case 'Needs Review': return 'Needs Review';
+    case 'Safe to Continue': return 'Safe to Continue';
+    case 'Not Safe to Proceed': return 'Not Safe to Proceed';
     case 'Pending Executive Signature': return 'Checking: Manager';
     case 'Approved by Management': return 'Final Check: Supervisor';
     case 'Approved': return 'Ready to Finish';
-    case 'Rejected': return 'Returned/Rejected';
+    case 'Rejected': return 'Stopped';
     case 'Dispatched': return 'Account Finished';
     case 'Locked': return 'Record Saved';
     default: return status;

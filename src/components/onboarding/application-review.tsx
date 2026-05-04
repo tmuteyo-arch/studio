@@ -5,7 +5,7 @@ import { useAtom } from 'jotai';
 import { Application, applicationsAtom, HistoryLog, OnboardingFormData, Document as AppDocument, FcbStatus, ApplicationStatus, notificationsAtom, Notification } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Archive, ArrowLeft, FileText, X, Download, CornerUpLeft, Loader2, FileSignature, Eraser, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, MapPin, Gavel, ClipboardCheck, History } from 'lucide-react';
+import { Archive, ArrowLeft, FileText, X, Download, CornerUpLeft, Loader2, FileSignature, Eraser, Eye, ShieldCheck, ShieldAlert, Upload, ShieldQuestion, Send, Key, MapPin, Gavel, ClipboardCheck, History, AlertTriangle, ShieldX } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '../ui/textarea';
@@ -29,6 +29,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '../ui/input';
 import SignatureCanvas from 'react-signature-canvas';
 import { isValidTransition, getStateLabel } from '@/lib/state-machine';
+import { Switch } from '../ui/switch';
 
 interface ApplicationReviewProps {
   application: Application;
@@ -131,6 +132,14 @@ export default function ApplicationReview({ application: initialApplication, onB
   const [fcbReport, setFcbReport] = React.useState<AppDocument | null>(application.documents.find(d => d.type === 'FCB Report') || null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Safety Check Logic State
+  const [safetyCheck, setSafetyCheck] = React.useState({
+      problemReport: false,
+      highProfile: false,
+      securityIssue: false,
+      isSevere: false
+  });
+
   // Workflow States
   const [brIdentity, setBrIdentity] = React.useState(application.details.brIdentity || '');
   const [activationCode, setActivationCode] = React.useState(application.details.activationCode || '');
@@ -197,7 +206,7 @@ export default function ApplicationReview({ application: initialApplication, onB
 
         toast({ title: `Updated: ${getStateLabel(nextStatus)}` });
         
-        if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review', 'Pending Supervisor', 'Pending Executive Signature', 'Approved by Management'].includes(nextStatus)) {
+        if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review', 'Safe to Continue', 'Not Safe to Proceed', 'Needs Review', 'Pending Executive Signature', 'Approved by Management'].includes(nextStatus)) {
             setTimeout(() => onBack(), 500);
         }
     } finally {
@@ -225,7 +234,7 @@ export default function ApplicationReview({ application: initialApplication, onB
     reader.readAsDataURL(file);
   };
 
-  const handleBackOfficeEscalate = () => {
+  const handleBackOfficeApplicationCheck = () => {
     if (!fcbReport) {
         toast({ variant: 'destructive', title: 'File Missing', description: 'Please attach the background check report first.' });
         return;
@@ -234,13 +243,32 @@ export default function ApplicationReview({ application: initialApplication, onB
         toast({ variant: 'destructive', title: 'ID Needed', description: 'Please assign a Reference ID.' });
         return;
     }
+
+    const { problemReport, highProfile, securityIssue, isSevere } = safetyCheck;
+    const hasProblem = problemReport || highProfile || securityIssue;
+    
+    let nextStatus: ApplicationStatus;
+    let notes = `Safety Check - Problem: ${problemReport}, High Profile: ${highProfile}, Security Issue: ${securityIssue}, Severe: ${isSevere}.`;
+
+    if (hasProblem) {
+        if (isSevere) {
+            nextStatus = 'Not Safe to Proceed';
+            notes += ' Terminating application due to severe security flags.';
+        } else {
+            nextStatus = 'Needs Review';
+            notes += ' Returning for secondary internal review.';
+        }
+    } else {
+        nextStatus = 'Safe to Continue';
+        notes += ' Safety check passed. Sending to Supervisor.';
+    }
     
     handleUpdateApplication({ 
         details: { ...application.details, brIdentity },
         fcbStatus: selectedFcbStatus
     });
     
-    handleStatusChange('Pending Supervisor', 'First check finished. Sent to Supervisor.');
+    handleStatusChange(nextStatus, notes);
   };
 
   const handleSupervisorReviewComplete = () => {
@@ -359,11 +387,11 @@ export default function ApplicationReview({ application: initialApplication, onB
         return null;
         
       case 'back-office':
-        if (application.status === 'Under Review') {
+        if (application.status === 'Under Review' || application.status === 'Needs Review') {
             return (
                 <div className="flex gap-3">
                     <Button variant="outline" className="text-amber-500 font-bold" onClick={() => setIsReturning(true)}>Return to Sales</Button>
-                    <Button className="bg-primary font-bold px-8" onClick={handleBackOfficeEscalate}>SEND TO CHECK</Button>
+                    <Button className="bg-primary font-bold px-8" onClick={handleBackOfficeApplicationCheck}>APPLY CHECK</Button>
                 </div>
             );
         }
@@ -372,7 +400,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         return null;
 
       case 'supervisor':
-        if (application.status === 'Pending Supervisor') {
+        if (application.status === 'Safe to Continue') {
             return (
                 <div className="flex gap-3">
                     <Button variant="destructive" onClick={() => setIsRejecting(true)}>Reject</Button>
@@ -446,46 +474,75 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardHeader>
           <CardContent className="px-8 pb-8">
               
-              {/* Back Office Form */}
-              {user.role === 'back-office' && application.status === 'Under Review' && (
-                  <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95">
-                      <h4 className="text-xs font-bold uppercase text-secondary tracking-widest mb-6 flex items-center gap-2">
-                          <ClipboardCheck className="h-4 w-4" /> Staff Check Details
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                          <div className="space-y-4">
-                              <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Background Check Status</Label>
-                              <Select value={selectedFcbStatus} onValueChange={(v: FcbStatus) => setSelectedFcbStatus(v)}>
-                                  <SelectTrigger className="h-12 bg-background border-white/10 font-bold">
-                                      <SelectValue placeholder="Set Status..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                      {fcbStatusOptions.map(status => (
-                                          <SelectItem key={status} value={status} className="font-bold py-3">{status}</SelectItem>
-                                      ))}
-                                  </SelectContent>
-                              </Select>
-                          </div>
-                          <div className="space-y-4">
-                              <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Reference ID Number</Label>
-                              <Input placeholder="e.g. APP-12345" value={brIdentity} onChange={e => setBrIdentity(e.target.value)} className="h-12 bg-background border-white/10 font-mono font-bold" />
-                          </div>
-                          <div className="space-y-4">
-                              <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Attach Check Report</Label>
-                              <div className="flex gap-2">
-                                  <input type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
-                                  <Button 
-                                      variant="outline" 
-                                      className="flex-1 h-12 font-bold border-white/10"
-                                      onClick={() => fileInputRef.current?.click()}
-                                  >
-                                      <Upload className="mr-2 h-4 w-4" /> {fcbReport ? 'Report Added' : 'Upload Report'}
-                                  </Button>
-                                  {fcbReport && (
-                                      <Button variant="ghost" size="icon" className="h-12 w-12 border border-white/5" onClick={() => setPreviewDoc(fcbReport)}>
-                                          <Eye className="h-5 w-5" />
+              {/* Back Office Form & Safety Check */}
+              {user.role === 'back-office' && (application.status === 'Under Review' || application.status === 'Needs Review') && (
+                  <div className="mb-8 space-y-8">
+                      <div className="p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95">
+                          <h4 className="text-xs font-bold uppercase text-secondary tracking-widest mb-6 flex items-center gap-2">
+                              <ClipboardCheck className="h-4 w-4" /> Staff Check Details
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                              <div className="space-y-4">
+                                  <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Background Check Status</Label>
+                                  <Select value={selectedFcbStatus} onValueChange={(v: FcbStatus) => setSelectedFcbStatus(v)}>
+                                      <SelectTrigger className="h-12 bg-background border-white/10 font-bold">
+                                          <SelectValue placeholder="Set Status..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                          {fcbStatusOptions.map(status => (
+                                              <SelectItem key={status} value={status} className="font-bold py-3">{status}</SelectItem>
+                                          ))}
+                                      </SelectContent>
+                                  </Select>
+                              </div>
+                              <div className="space-y-4">
+                                  <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Reference ID Number</Label>
+                                  <Input placeholder="e.g. APP-12345" value={brIdentity} onChange={e => setBrIdentity(e.target.value)} className="h-12 bg-background border-white/10 font-mono font-bold" />
+                              </div>
+                              <div className="space-y-4">
+                                  <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Attach Check Report</Label>
+                                  <div className="flex gap-2">
+                                      <input type="file" ref={fileInputRef} onChange={handleFcbFileUpload} className="hidden" accept="application/pdf,image/*" />
+                                      <Button 
+                                          variant="outline" 
+                                          className="flex-1 h-12 font-bold border-white/10"
+                                          onClick={() => fileInputRef.current?.click()}
+                                      >
+                                          <Upload className="mr-2 h-4 w-4" /> {fcbReport ? 'Report Added' : 'Upload Report'}
                                       </Button>
-                                  )}
+                                      {fcbReport && (
+                                          <Button variant="ghost" size="icon" className="h-12 w-12 border border-white/5" onClick={() => setPreviewDoc(fcbReport)}>
+                                              <Eye className="h-5 w-5" />
+                                          </Button>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <div className="p-6 bg-primary/5 rounded-2xl border border-primary/20 animate-in slide-in-from-top-4">
+                          <h4 className="text-xs font-black uppercase text-primary tracking-widest mb-6 flex items-center gap-2">
+                              <ShieldCheck className="h-4 w-4" /> Mandatory Application Check
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                              <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5">
+                                  <Label className="text-[10px] font-bold uppercase cursor-pointer" htmlFor="prob-rep">Problem Report</Label>
+                                  <Switch id="prob-rep" checked={safetyCheck.problemReport} onCheckedChange={v => setSafetyCheck({...safetyCheck, problemReport: v})} />
+                              </div>
+                              <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5">
+                                  <Label className="text-[10px] font-bold uppercase cursor-pointer" htmlFor="high-prof">High Profile</Label>
+                                  <Switch id="high-prof" checked={safetyCheck.highProfile} onCheckedChange={v => setSafetyCheck({...safetyCheck, highProfile: v})} />
+                              </div>
+                              <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5">
+                                  <Label className="text-[10px] font-bold uppercase cursor-pointer" htmlFor="sec-issue">Security Issue</Label>
+                                  <Switch id="sec-issue" checked={safetyCheck.securityIssue} onCheckedChange={v => setSafetyCheck({...safetyCheck, securityIssue: v})} />
+                              </div>
+                              <div className="flex items-center justify-between p-4 bg-destructive/10 rounded-xl border border-destructive/20">
+                                  <div className="flex items-center gap-2">
+                                      <AlertTriangle className="h-3 w-3 text-destructive" />
+                                      <Label className="text-[10px] font-black uppercase text-destructive cursor-pointer" htmlFor="severe">Is Severe?</Label>
+                                  </div>
+                                  <Switch id="severe" checked={safetyCheck.isSevere} onCheckedChange={v => setSafetyCheck({...safetyCheck, isSevere: v})} />
                               </div>
                           </div>
                       </div>

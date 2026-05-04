@@ -31,10 +31,12 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Approved':
       return 'success';
     case 'Pending Supervisor':
+    case 'Safe to Continue':
     case 'Approved by Management':
     case 'Pending Executive Signature':
       return 'secondary';
     case 'Rejected':
+    case 'Not Safe to Proceed':
       return 'destructive';
     default:
       return 'outline';
@@ -52,7 +54,7 @@ export default function SupervisorDashboard({ user }: SupervisorDashboardProps) 
     [allUsers]);
 
     const myApprovalQueue = applications.filter(app => 
-        app.status === 'Pending Supervisor' || 
+        app.status === 'Safe to Continue' || 
         app.status === 'Approved by Management'
     ).sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     

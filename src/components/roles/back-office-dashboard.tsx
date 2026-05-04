@@ -24,9 +24,13 @@ const getStatusVariant = (status: ApplicationStatus) => {
     case 'Under Review':
     case 'Approved by Management':
     case 'Pending Documents':
+    case 'Safe to Continue':
       return 'secondary';
     case 'Rejected':
+    case 'Not Safe to Proceed':
       return 'destructive';
+    case 'Needs Review':
+      return 'outline';
     case 'Pending Supervisor':
     case 'Pending Executive Signature':
       return 'outline';
@@ -47,7 +51,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [isDigitizing, setIsDigitizing] = React.useState<boolean>(false);
 
     const summaryStats = React.useMemo(() => ({
-        pendingReview: applications.filter(a => a.status === 'Under Review').length,
+        pendingReview: applications.filter(a => a.status === 'Under Review' || a.status === 'Needs Review').length,
         readyToDispatch: applications.filter(a => a.status === 'Approved').length,
         dispatched: applications.filter(a => a.status === 'Dispatched').length,
         locked: applications.filter(a => a.status === 'Locked').length,
@@ -55,7 +59,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
 
     const activeRegistryApps = React.useMemo(() => {
         return applications.filter(app => 
-            ['Under Review', 'Approved', 'Rejected', 'Pending Documents', 'Pending Supervisor', 'Pending Executive Signature', 'Approved by Management'].includes(app.status) &&
+            ['Under Review', 'Needs Review', 'Safe to Continue', 'Approved', 'Rejected', 'Not Safe to Proceed', 'Pending Documents', 'Pending Supervisor', 'Pending Executive Signature', 'Approved by Management'].includes(app.status) &&
             (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
         ).sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     }, [applications, searchTerm]);
