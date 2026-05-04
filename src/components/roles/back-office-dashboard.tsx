@@ -43,7 +43,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
     const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
     const [applications] = useAtom(applicationsAtom);
     const [searchTerm, setSearchTerm] = React.useState('');
-    const [activeTab, setActiveTab] = React.useState<string>('pipeline');
+    const [activeTab, setActiveTab] = React.useState<string>('pending-review');
     const [isDigitizing, setIsDigitizing] = React.useState<boolean>(false);
 
     const summaryStats = React.useMemo(() => ({
@@ -53,7 +53,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
         locked: applications.filter(a => a.status === 'Locked').length,
     }), [applications]);
 
-    const pipelineApplications = React.useMemo(() => {
+    const pendingReviewApplications = React.useMemo(() => {
         return applications.filter(app => 
             ['Under Review', 'Approved', 'Rejected', 'Pending Documents'].includes(app.status) &&
             (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -143,9 +143,9 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-6">
                     <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5">
-                        <TabsTrigger value="pipeline" className="flex items-center gap-3 px-8 h-10 font-black uppercase text-xs">
+                        <TabsTrigger value="pending-review" className="flex items-center gap-3 px-8 h-10 font-black uppercase text-xs">
                             <Briefcase className="h-4 w-4" />
-                            LIFECYCLE PIPELINE ({pipelineApplications.length})
+                            PENDING REVIEW ({pendingReviewApplications.length})
                         </TabsTrigger>
                         <TabsTrigger value="archive" className="flex items-center gap-3 px-8 h-10 font-black uppercase text-xs">
                             <Archive className="h-4 w-4" />
@@ -158,13 +158,13 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     </div>
                 </div>
 
-                <TabsContent value="pipeline" className="animate-in fade-in duration-500">
+                <TabsContent value="pending-review" className="animate-in fade-in duration-500">
                     <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-2xl">
                         <CardHeader className="bg-white/5 py-6 px-8 border-b border-white/5">
                             <CardTitle className="text-xl font-black uppercase">Active Registry</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
-                            {pipelineApplications.length > 0 ? (
+                            {pendingReviewApplications.length > 0 ? (
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
@@ -176,7 +176,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {pipelineApplications.map((app) => (
+                                        {pendingReviewApplications.map((app) => (
                                             <TableRow key={app.id} className="hover:bg-white/5 border-white/5 transition-colors group">
                                                 <TableCell className="font-mono text-xs pl-8 text-white/60 font-bold">{app.id}</TableCell>
                                                 <TableCell className="py-5">
