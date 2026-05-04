@@ -402,7 +402,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                                     <Database className="h-12 w-12 opacity-10" />
                                     <div className="text-center">
                                         <p className="text-xs font-black uppercase tracking-[0.2em] opacity-40">Registry Block Empty</p>
-                                        <p className="text-[10px] mt-1 opacity-30">Awaiting multi-page ingestion</p>
+                                        <p className="text-[10px] mt-1 opacity-30">Awaiting multi-page upload</p>
                                     </div>
                                 </div>
                             )}
@@ -424,7 +424,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                                         onClick={() => handleUploadClick(documentType)} 
                                         disabled={loading}
                                     >
-                                        <Upload className="mr-2 h-4 w-4 text-primary"/>Injest Data
+                                        <Upload className="mr-2 h-4 w-4 text-primary"/>Upload Data
                                     </Button>
                                 </>
                             )}
