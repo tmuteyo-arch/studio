@@ -12,7 +12,7 @@ export type ApplicationStatus =
   | 'Needs Review'
   | 'Safe to Continue'
   | 'Not Safe to Proceed'
-  | 'Pending Executive Signature'
+  | 'Management Review'
   | 'Approved by Management'
   | 'Approved'
   | 'Rejected'

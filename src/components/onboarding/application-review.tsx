@@ -206,7 +206,7 @@ export default function ApplicationReview({ application: initialApplication, onB
 
         toast({ title: `Updated: ${getStateLabel(nextStatus)}` });
         
-        if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review', 'Safe to Continue', 'Not Safe to Proceed', 'Needs Review', 'Pending Executive Signature', 'Approved by Management'].includes(nextStatus)) {
+        if (['Locked', 'Rejected', 'Approved', 'Dispatched', 'Under Review', 'Safe to Continue', 'Not Safe to Proceed', 'Needs Review', 'Management Review', 'Approved by Management'].includes(nextStatus)) {
             setTimeout(() => onBack(), 500);
         }
     } finally {
@@ -272,7 +272,7 @@ export default function ApplicationReview({ application: initialApplication, onB
   };
 
   const handleSupervisorReviewComplete = () => {
-    handleStatusChange('Pending Executive Signature', 'Supervisor check passed. Sent for Manager sign-off.');
+    handleStatusChange('Management Review', 'Supervisor check passed. Sent for Manager sign-off.');
   };
 
   const handleExecutiveSignOff = (signature: string) => {
@@ -439,7 +439,7 @@ export default function ApplicationReview({ application: initialApplication, onB
         return null;
 
       case 'management':
-        if (application.status === 'Pending Executive Signature') {
+        if (application.status === 'Management Review') {
             return (
                 <div className="flex gap-3">
                     <Button variant="destructive" onClick={() => setIsRejecting(true)}>Reject</Button>

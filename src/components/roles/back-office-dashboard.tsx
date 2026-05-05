@@ -31,8 +31,7 @@ const getStatusVariant = (status: ApplicationStatus) => {
       return 'destructive';
     case 'Needs Review':
       return 'outline';
-    case 'Pending Supervisor':
-    case 'Pending Executive Signature':
+    case 'Management Review':
       return 'outline';
     default:
       return 'outline';
@@ -52,14 +51,14 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
 
     const summaryStats = React.useMemo(() => ({
         pendingReview: applications.filter(a => a.status === 'Under Review' || a.status === 'Needs Review').length,
-        readyToDispatch: applications.filter(a => a.status === 'Approved').length,
+        readyToFinish: applications.filter(a => a.status === 'Approved').length,
         dispatched: applications.filter(a => a.status === 'Dispatched').length,
         locked: applications.filter(a => a.status === 'Locked').length,
     }), [applications]);
 
     const activeRegistryApps = React.useMemo(() => {
         return applications.filter(app => 
-            ['Under Review', 'Needs Review', 'Safe to Continue', 'Approved', 'Rejected', 'Not Safe to Proceed', 'Pending Documents', 'Pending Supervisor', 'Pending Executive Signature', 'Approved by Management'].includes(app.status) &&
+            ['Under Review', 'Needs Review', 'Safe to Continue', 'Approved', 'Rejected', 'Not Safe to Proceed', 'Pending Documents', 'Management Review', 'Approved by Management'].includes(app.status) &&
             (app.id.toLowerCase().includes(searchTerm.toLowerCase()) || app.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
         ).sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
     }, [applications, searchTerm]);
@@ -94,7 +93,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                         <Briefcase className="h-10 w-10 text-primary" />
                         Office Dashboard
                     </h2>
-                    <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-2">Manage applications and finish setup.</p>
+                    <p className="text-muted-foreground font-bold uppercase tracking-widest text-[10px] mt-2">Manage requests and finish account setup.</p>
                 </div>
                 <Button onClick={() => setIsDigitizing(true)} variant="secondary" className="h-14 px-10 font-bold shadow-2xl rounded-xl border-2">
                     <ScanLine className="mr-2 h-6 w-6" />
@@ -107,7 +106,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white/5 border-white/10 rounded-2xl">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle className="text-[10px] font-bold uppercase text-white/40 tracking-widest">New Requests</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase text-white/40 tracking-widest">In Review</CardTitle>
                         <Fingerprint className="h-8 w-8 text-primary" />
                     </CardHeader>
                     <CardContent>
@@ -120,7 +119,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                         <Key className="h-8 w-8 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-black text-primary">{summaryStats.readyToDispatch}</div>
+                        <div className="text-4xl font-black text-primary">{summaryStats.readyToFinish}</div>
                     </CardContent>
                 </Card>
                 <Card className="bg-white/5 border-white/10 rounded-2xl">
@@ -148,7 +147,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5">
                         <TabsTrigger value="pending-review" className="flex items-center gap-3 px-8 h-10 font-bold uppercase text-xs tracking-widest">
                             <ClipboardCheck className="h-4 w-4" />
-                            WAITING TO CHECK ({activeRegistryApps.length})
+                            PENDING REVIEW ({activeRegistryApps.length})
                         </TabsTrigger>
                         <TabsTrigger value="archive" className="flex items-center gap-3 px-8 h-10 font-bold uppercase text-xs tracking-widest">
                             <Archive className="h-4 w-4" />
@@ -157,7 +156,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                     </TabsList>
                     <div className="relative w-full sm:w-80">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/30" />
-                        <Input placeholder="Search records..." className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                        <Input placeholder="Search name or ID..." className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
                 </div>
 
@@ -171,7 +170,7 @@ export default function BackOfficeDashboard({ user }: BackOfficeDashboardProps) 
                                             <TableHead className="pl-8 text-white/40 uppercase text-[10px] font-bold tracking-widest">ID</TableHead>
                                             <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">NAME</TableHead>
                                             <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">FILES</TableHead>
-                                            <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">STATUS</TableHead>
+                                            <TableHead className="text-white/40 uppercase text-[10px] font-bold tracking-widest">PROGRESS</TableHead>
                                             <TableHead className="text-right pr-8 text-white/40 uppercase text-[10px] font-bold tracking-widest">ACTION</TableHead>
                                         </TableRow>
                                     </TableHeader>

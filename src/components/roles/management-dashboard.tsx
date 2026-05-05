@@ -37,6 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 import { isToday, parseISO } from 'date-fns';
 import { getStateLabel } from '@/lib/state-machine';
 import ApplicationReview from '../onboarding/application-review';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const regionalChartConfig = {
@@ -106,7 +107,7 @@ export default function ManagementDashboard({ user }: { user: User }) {
     }, [applications]);
 
     const agreementsToSign = React.useMemo(() => 
-        applications.filter(app => app.status === 'Pending Executive Signature')
+        applications.filter(app => app.status === 'Management Review')
     , [applications]);
 
     const summaryStats = React.useMemo(() => {
@@ -187,7 +188,7 @@ export default function ManagementDashboard({ user }: { user: User }) {
                     <LayoutDashboard className="h-10 w-10 text-primary" />
                     Management Overview
                   </h2>
-                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Global System Metrics and Approval Desk.</p>
+                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Global metrics and board approvals.</p>
                 </div>
                 <div className="flex gap-2">
                     <Badge variant="outline" className="px-5 py-2 bg-primary/10 border-primary/20 text-primary font-black uppercase tracking-widest text-[10px] animate-pulse shadow-lg">
@@ -243,7 +244,7 @@ export default function ManagementDashboard({ user }: { user: User }) {
                             <CardHeader className="bg-white/5 border-b border-white/5 p-8">
                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
                                     <div>
-                                        <CardTitle className="text-2xl font-black uppercase tracking-tight">Pending Board Sign-off</CardTitle>
+                                        <CardTitle className="text-2xl font-black uppercase tracking-tight">Pending Manager Sign-off</CardTitle>
                                         <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Authorize multiple records for final activation.</p>
                                     </div>
                                     {selectedIds.length > 0 && (

@@ -6,27 +6,25 @@ import { useAtom } from 'jotai';
 
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Role, usersAtom } from '@/lib/users';
 import { activeUserAtom, activityLogsAtom, notificationsAtom, Notification } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
 import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, ShieldAlert, Bell, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
-// Lazy load dashboards to improve performance
-const AtlDashboard = React.lazy(() => import('@/components/roles/atl-dashboard'));
-const BackOfficeDashboard = React.lazy(() => import('@/components/roles/back-office-dashboard'));
-const SupervisorDashboard = React.lazy(() => import('@/components/roles/supervisor-dashboard'));
-const ManagementDashboard = React.lazy(() => import('@/components/roles/management-dashboard'));
-const AdminDashboard = React.lazy(() => import('@/components/roles/admin-dashboard'));
-const ComplianceRiskDashboard = React.lazy(() => import('@/components/roles/compliance-risk-dashboard'));
+// Direct imports to resolve chunk loading issues
+import AtlDashboard from '@/components/roles/atl-dashboard';
+import BackOfficeDashboard from '@/components/roles/back-office-dashboard';
+import SupervisorDashboard from '@/components/roles/supervisor-dashboard';
+import ManagementDashboard from '@/components/roles/management-dashboard';
+import AdminDashboard from '@/components/roles/admin-dashboard';
+import ComplianceRiskDashboard from '@/components/roles/compliance-risk-dashboard';
 
 function NotificationTray({ user }: { user: any }) {
   const [notifications, setNotifications] = useAtom(notificationsAtom);
@@ -127,9 +125,6 @@ function AppContent() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [mounted, setMounted] = React.useState(false);
-  const [isResetOpen, setIsResetOpen] = React.useState(false);
-  const [resetEmail, setResetEmail] = React.useState("");
-  const [isResetting, setIsResetting] = React.useState(false);
   
   const { toast } = useToast();
 
@@ -208,21 +203,15 @@ function AppContent() {
   const renderDashboard = () => {
     if (!loggedInUser) return null;
 
-    return (
-      <React.Suspense fallback={<div className="flex items-center justify-center p-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-        {(() => {
-          switch (loggedInUser.role) {
-            case 'asl': return <AtlDashboard user={loggedInUser} />;
-            case 'back-office': return <BackOfficeDashboard user={loggedInUser} />;
-            case 'supervisor': return <SupervisorDashboard user={loggedInUser} />;
-            case 'management': return <ManagementDashboard user={loggedInUser} />;
-            case 'admin': return <AdminDashboard user={loggedInUser} />;
-            case 'compliance': return <ComplianceRiskDashboard user={loggedInUser} />;
-            default: return null;
-          }
-        })()}
-      </React.Suspense>
-    );
+    switch (loggedInUser.role) {
+      case 'asl': return <AtlDashboard user={loggedInUser} />;
+      case 'back-office': return <BackOfficeDashboard user={loggedInUser} />;
+      case 'supervisor': return <SupervisorDashboard user={loggedInUser} />;
+      case 'management': return <ManagementDashboard user={loggedInUser} />;
+      case 'admin': return <AdminDashboard user={loggedInUser} />;
+      case 'compliance': return <ComplianceRiskDashboard user={loggedInUser} />;
+      default: return null;
+    }
   };
 
   const renderUnifiedLogin = () => (
