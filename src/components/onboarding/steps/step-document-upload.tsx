@@ -16,21 +16,27 @@ import { Badge } from '@/components/ui/badge';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { mergeToPdf, countPdfPages, validatePdf, getBase64Size } from '@/lib/pdf-utils';
+import { useFirestore, useStorage } from '@/firebase';
+import { DocumentPersistenceService } from '@/services/document-persistence';
 
 type DocumentState = {
   documentType: string;
-  pages: string[]; // array of data URIs
-  pageCounts: number[]; // track individual page counts for display
+  pages: string[]; 
+  pageCounts: number[]; 
   sizes: number[];
   corruptionStatus: boolean[];
 };
 
 export default function StepDocumentUpload({ disabled }: { disabled?: boolean }) {
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const storage = useStorage();
   const form = useFormContext<OnboardingFormData>();
+  
   const [documents, setDocuments] = React.useState<Record<string, DocumentState>>({});
   const [isValidating, setIsValidating] = React.useState<string | null>(null);
   const [isMerging, setIsMerging] = React.useState<boolean>(false);
+  const [isCloudSaving, setIsCloudSaving] = React.useState<boolean>(false);
   
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -45,7 +51,11 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   const capturedDocs = form.watch('capturedDocuments') || [];
   const documentRequirements = React.useMemo(() => getDocumentRequirements(clientType), [clientType]);
 
-  // Initialize state from form values
+  const persistenceService = React.useMemo(() => 
+    firestore && storage ? new DocumentPersistenceService(firestore, storage) : null
+  , [firestore, storage]);
+
+  // Initialize state
   React.useEffect(() => {
     const existingCaptured = form.getValues('capturedDocuments') || [];
     const initialDocs: Record<string, DocumentState> = {};
@@ -63,7 +73,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     setDocuments(initialDocs);
   }, [documentRequirements]);
 
-  // Sync local documents state to main form with accurate page counting
+  // Sync state and Save to Firebase immediately
   React.useEffect(() => {
     if (Object.keys(documents).length === 0) return;
 
@@ -95,6 +105,29 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     const timer = setTimeout(syncToForm, 800);
     return () => clearTimeout(timer);
   }, [documents, form]);
+
+  const handleCloudSave = async (docType: string, dataUri: string, fileName: string) => {
+    if (!persistenceService) return;
+    
+    setIsCloudSaving(true);
+    try {
+      // Immediate draft save to Firebase
+      await persistenceService.persistDocument({
+        appId: 'CURRENT_DRAFT_APP', // In real app, get from context
+        userId: 'STAFF_USER', // In real app, get from auth
+        documentType: docType,
+        fileName: fileName,
+        dataUri: dataUri,
+        isFinal: false
+      });
+      toast({ title: 'Cloud Sync OK', description: 'Draft record saved to Firebase.' });
+    } catch (err) {
+      console.error('Firebase save error:', err);
+      toast({ variant: 'destructive', title: 'Cloud Sync Failed', description: 'Document not saved to Firebase. Using local draft.' });
+    } finally {
+      setIsCloudSaving(false);
+    }
+  };
 
   const handleUploadClick = (docType: string) => {
     if (disabled) return;
@@ -155,7 +188,9 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       }));
       
       setIsValidating(null);
-      toast({ title: 'Added', description: `Entry added successfully (${pageCount} total pages, ${(size / 1024).toFixed(1)} KB).` });
+      
+      // Trigger cloud persistence
+      await handleCloudSave(documentType, dataUri, file.name);
       
       if (fileInputRef.current) fileInputRef.current.value = '';
       setActiveUploadType(null);
@@ -189,13 +224,10 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     
     const pageItem = pages.splice(from, 1)[0];
     pages.splice(to, 0, pageItem);
-    
     const countItem = counts.splice(from, 1)[0];
     counts.splice(to, 0, countItem);
-
     const sizeItem = sizes.splice(from, 1)[0];
     sizes.splice(to, 0, sizeItem);
-
     const corruptItem = corrupts.splice(from, 1)[0];
     corrupts.splice(to, 0, corruptItem);
 
@@ -212,12 +244,9 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       setHasCameraPermission(true);
       setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
+          if (videoRef.current) videoRef.current.srcObject = stream;
       }, 300);
     } catch (error) {
-      console.error('Camera Access Error:', error);
       setHasCameraPermission(false);
       setIsScanning(null);
       toast({ variant: 'destructive', title: 'Camera Error', description: 'Could not access the camera.' });
@@ -259,7 +288,9 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                 }
             }));
             setIsValidating(null);
-            toast({ title: 'Capture OK', description: 'Photo added to document.' });
+            
+            // Trigger cloud persistence
+            await handleCloudSave(docType, dataUri, `scan_${Date.now()}.jpg`);
         }
     }
   };
@@ -275,11 +306,20 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   return (
     <div className="space-y-6">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ScanLine className="h-6 w-6 text-primary" />
-          Regulatory Documents
-        </CardTitle>
-        <CardDescription>{disabled ? 'View application archives.' : 'Multi-page document capture with corruption scanning and metadata tracking.'}</CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <ScanLine className="h-6 w-6 text-primary" />
+              Regulatory Documents
+            </CardTitle>
+            <CardDescription>{disabled ? 'View application archives.' : 'Cloud-synced multi-page document capture.'}</CardDescription>
+          </div>
+          {isCloudSaving && (
+            <Badge variant="secondary" className="animate-pulse flex items-center gap-2">
+              <Loader2 className="h-3 w-3 animate-spin" /> Saving to Cloud...
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       
       {!disabled && (
@@ -331,14 +371,14 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                     {loading && (
                       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-2">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <span className="text-xs font-black uppercase tracking-widest text-primary">Scanning Document Data...</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-primary">Syncing with Registry...</span>
                       </div>
                     )}
                     <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6'>
                         <div>
                             <h3 className="text-lg font-black uppercase tracking-tight truncate max-w-[300px]" title={documentType}>{documentType}</h3>
                             <div className="flex items-center gap-3 mt-1.5">
-                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{disabled ? 'Archive State' : 'Metadata Engine Active'}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{disabled ? 'Archive State' : 'Live Cloud Sync Active'}</p>
                                 {totalSize > 0 && <Badge variant="outline" className="text-[9px] font-mono py-0 h-4">{(totalSize / 1024).toFixed(1)} KB</Badge>}
                             </div>
                         </div>
