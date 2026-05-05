@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus, ShieldAlert, Database } from 'lucide-react';
+import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus, ShieldAlert, Database, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -39,8 +39,10 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   
   const [isScanning, setIsScanning] = React.useState<string | null>(null);
   const [activeUploadType, setActiveUploadType] = React.useState<string | null>(null);
+  const [previewStream, setPreviewStream] = React.useState<{ url: string, type: string, name: string } | null>(null);
 
   const clientType = form.watch('clientType');
+  const capturedDocs = form.watch('capturedDocuments') || [];
   const documentRequirements = React.useMemo(() => getDocumentRequirements(clientType), [clientType]);
 
   // Initialize state from form values
@@ -67,7 +69,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
 
     const syncToForm = async () => {
         setIsMerging(true);
-        const capturedDocs = await Promise.all(
+        const newCapturedDocs = await Promise.all(
             Object.values(documents)
                 .filter(doc => doc.pages.length > 0)
                 .map(async (doc) => {
@@ -84,15 +86,15 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
         );
         
         const currentVal = form.getValues('capturedDocuments') || [];
-        if (JSON.stringify(currentVal) !== JSON.stringify(capturedDocs)) {
-            form.setValue('capturedDocuments', capturedDocs, { shouldValidate: true, shouldDirty: true });
+        if (JSON.stringify(currentVal) !== JSON.stringify(newCapturedDocs)) {
+            form.setValue('capturedDocuments', newCapturedDocs, { shouldValidate: true, shouldDirty: true });
         }
         setIsMerging(false);
     };
 
     const timer = setTimeout(syncToForm, 800);
     return () => clearTimeout(timer);
-  }, [documents]);
+  }, [documents, form]);
 
   const handleUploadClick = (docType: string) => {
     if (disabled) return;
@@ -322,6 +324,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
             const totalPages = pageCounts.reduce((a, b) => a + b, 0);
             const totalSize = sizes.reduce((a, b) => a + b, 0);
             const hasCorruption = corruptionStatus.some(c => c);
+            const mergedDoc = capturedDocs.find(d => d.type === documentType);
 
             return (
                 <div key={documentType} className={`p-6 border rounded-2xl transition-all bg-card shadow-sm relative overflow-hidden ${hasCorruption ? 'border-destructive/50' : 'hover:border-primary/50'}`}>
@@ -368,21 +371,28 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                                                 <div className="absolute top-2 left-2 bg-black/70 text-white text-[9px] px-2 py-0.5 rounded-full font-black border border-white/10">
                                                     #{index + 1}
                                                 </div>
-                                                {!disabled && (
-                                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity backdrop-blur-[2px]">
-                                                        <div className="flex gap-2">
-                                                            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => movePage(documentType, index, index - 1)} disabled={index === 0}>
-                                                                <ChevronLeft className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => movePage(documentType, index, index + 1)} disabled={index === pages.length - 1}>
-                                                                <ChevronRight className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-3 transition-opacity backdrop-blur-[2px]">
+                                                    <div className="flex gap-2">
+                                                        <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => setPreviewStream({ url: page, type: page.startsWith('data:application/pdf') ? 'pdf' : 'image', name: `Stream #${index + 1}: ${documentType}` })}>
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                        {!disabled && (
+                                                            <>
+                                                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => movePage(documentType, index, index - 1)} disabled={index === 0}>
+                                                                    <ChevronLeft className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full shadow-lg" onClick={() => movePage(documentType, index, index + 1)} disabled={index === pages.length - 1}>
+                                                                    <ChevronRight className="h-4 w-4" />
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    {!disabled && (
                                                         <Button variant="destructive" size="icon" className="h-9 w-9 rounded-full shadow-lg" onClick={() => removePage(documentType, index)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
                                         {!disabled && (
@@ -452,11 +462,18 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                                                     </div>
                                                 </div>
                                             )}
-                                            <iframe 
-                                                src={form.getValues('capturedDocuments').find(d => d.type === documentType)?.url} 
-                                                className="w-full h-full border-none" 
-                                                title="Forensic PDF Preview" 
-                                            />
+                                            {mergedDoc?.url ? (
+                                                <iframe 
+                                                    src={mergedDoc.url} 
+                                                    className="w-full h-full border-none" 
+                                                    title="Forensic PDF Preview" 
+                                                />
+                                            ) : (
+                                                <div className="text-center text-white/20">
+                                                    <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4" />
+                                                    <p className="font-black uppercase tracking-widest">Awaiting PDF Generation...</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </DialogContent>
                                 </Dialog>
@@ -496,6 +513,29 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
                 <div className="p-6 flex justify-between items-center bg-muted/10">
                     <Button variant="ghost" onClick={stopScan} className="font-bold hover:bg-destructive/10 hover:text-destructive px-8">ABORT</Button>
                     <Button onClick={captureImage} disabled={!hasCameraPermission} className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl shadow-xl hover:scale-[1.02] transition-transform active:scale-95">TAKE SNAPSHOT</Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        {/* Individual Stream Preview Dialog */}
+        <Dialog open={!!previewStream} onOpenChange={(open) => !open && setPreviewStream(null)}>
+            <DialogContent className="max-w-5xl h-[90vh] flex flex-col rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+                <div className="bg-primary/5 p-6 border-b flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><FileText className="h-5 w-5" /></div>
+                        <div>
+                            <DialogTitle className="text-xs uppercase font-bold tracking-[0.2em] text-primary">{previewStream?.name}</DialogTitle>
+                            <p className="text-[10px] font-mono text-muted-foreground uppercase">Immediate Post-Upload Preview</p>
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setPreviewStream(null)} className="rounded-full"><X className="h-5 w-5" /></Button>
+                </div>
+                <div className="flex-1 bg-black/90 relative flex items-center justify-center overflow-hidden">
+                    {previewStream?.url ? (
+                        previewStream.type === 'pdf' ? (
+                            <iframe src={previewStream.url} className="w-full h-full border-none" title="Stream View" />
+                        ) : <img src={previewStream.url} alt="Stream Data" className="max-w-full max-h-full object-contain" />
+                    ) : null}
                 </div>
             </DialogContent>
         </Dialog>
