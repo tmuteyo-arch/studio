@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus, ShieldAlert, Database, X } from 'lucide-react';
+import { Info, Eye, Camera, Trash2, Upload, File, ScanLine, Loader2, AlertCircle, ChevronLeft, ChevronRight, Plus, ShieldAlert, Database, X, FileText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
