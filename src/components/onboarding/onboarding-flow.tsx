@@ -19,7 +19,7 @@ import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/review-step';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, Save, ShieldAlert, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, ShieldAlert, RotateCcw, CheckCircle2, PartyPopper } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,6 +83,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   const [duplicateResult, setDuplicateResult] = React.useState<DuplicateCheckResult | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [lastSubmissionFailed, setLastSubmissionFailed] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
 
   // Unified application ID for all steps
   const activeAppId = React.useMemo(() => existingApplication?.id || generateAccountId(), [existingApplication]);
@@ -173,7 +174,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   // Auto-save effect for Drafts
   React.useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
-      if (type === 'change' && !isSubmitting) {
+      if (type === 'change' && !isSubmitting && !showSuccess) {
         const timer = setTimeout(() => {
           const data = form.getValues();
           const appId = activeAppId;
@@ -196,7 +197,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, isSubmitting, activeAppId, setApplications]);
+  }, [form.watch, isSubmitting, showSuccess, activeAppId, setApplications]);
 
   const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
     setNotifications(prev => [{
@@ -373,11 +374,13 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
         });
 
         // 6. Success Feedback & Redirect
+        setShowSuccess(true);
         toast({ title: "Application Submitted", description: `Reference ${appId} is now in the review queue.` });
-        await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Redirect back to dashboard
-        onCancel();
+        // Wait 2 seconds for user to see the success state before closing
+        setTimeout(() => {
+            onCancel();
+        }, 2000);
         
     } catch (error) {
         console.error("Submission failed:", error);
@@ -405,37 +408,53 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   return (
     <FormProvider {...form}>
       <div className="flex flex-col md:flex-row min-h-screen bg-background">
-        <ProgressTracker steps={steps} currentStepIndex={currentStepIndex} />
+        {!showSuccess && <ProgressTracker steps={steps} currentStepIndex={currentStepIndex} />}
         <div className="flex-1 p-4 md:p-8">
             <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="h-full">
               <Card className="h-full flex flex-col shadow-lg border-primary/10">
                 <CardContent className="flex-1 py-6">
-                  { CurrentStepComponent ? <CurrentStepComponent /> : <div>Step not found</div> }
+                  {showSuccess ? (
+                    <div className="text-center py-20 flex flex-col items-center justify-center h-full animate-in zoom-in-95 duration-500">
+                        <PartyPopper className="mx-auto h-24 w-24 text-green-500 mb-6" />
+                        <h2 className="text-4xl font-black uppercase tracking-tight">Application Submitted!</h2>
+                        <p className="text-muted-foreground mt-4 max-w-sm text-lg font-medium">
+                        The application for <strong className="text-foreground">{form.getValues('organisationLegalName') || `${form.getValues('individualFirstName')} ${form.getValues('individualSurname')}`.trim()}</strong> has been successfully submitted to the registry.
+                        </p>
+                        <div className="mt-10">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-2">Returning to Dashboard...</p>
+                        </div>
+                    </div>
+                  ) : (
+                    CurrentStepComponent ? <CurrentStepComponent /> : <div>Step not found</div>
+                  )}
                 </CardContent>
-                <CardFooter className="border-t px-6 py-4 justify-between bg-muted/10">
-                  <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev} disabled={isSubmitting}>
-                     {currentStepIndex > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
-                    {currentStepIndex === 0 ? 'Cancel' : 'Back'}
-                  </Button>
-                  
-                  <div className="flex gap-2">
-                    <Button variant="secondary" type="button" onClick={handleSaveDraft} className="font-bold border-primary/20" disabled={isSubmitting}>
-                      <Save className="mr-2 h-4 w-4" /> Save Draft
+                {!showSuccess && (
+                    <CardFooter className="border-t px-6 py-4 justify-between bg-muted/10">
+                    <Button variant="outline" type="button" onClick={currentStepIndex === 0 ? onCancel : prev} disabled={isSubmitting}>
+                        {currentStepIndex > 0 && <ArrowLeft className="mr-2 h-4 w-4" />}
+                        {currentStepIndex === 0 ? 'Cancel' : 'Back'}
                     </Button>
                     
-                    {currentStepIndex < steps.length - 1 && (
-                      <Button type="button" onClick={next} disabled={isCheckingDuplicates || isSubmitting} className="font-bold">
-                        {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Next'}
-                      </Button>
-                    )}
-                    {currentStepIndex === steps.length - 1 && (
-                      <Button type="submit" disabled={isSubmitting || isCheckingDuplicates} className="font-black px-8 bg-green-600 hover:bg-green-700 text-white">
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-                        {lastSubmissionFailed ? <><RotateCcw className="mr-2 h-4 w-4" /> Retry Submission</> : 'FINISH & SUBMIT'}
-                      </Button>
-                    )}
-                  </div>
-                </CardFooter>
+                    <div className="flex gap-2">
+                        <Button variant="secondary" type="button" onClick={handleSaveDraft} className="font-bold border-primary/20" disabled={isSubmitting}>
+                        <Save className="mr-2 h-4 w-4" /> Save Draft
+                        </Button>
+                        
+                        {currentStepIndex < steps.length - 1 && (
+                        <Button type="button" onClick={next} disabled={isCheckingDuplicates || isSubmitting} className="font-bold">
+                            {isCheckingDuplicates ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Next'}
+                        </Button>
+                        )}
+                        {currentStepIndex === steps.length - 1 && (
+                        <Button type="submit" disabled={isSubmitting || isCheckingDuplicates} className="font-black px-8 bg-green-600 hover:bg-green-700 text-white shadow-lg active:scale-95 transition-all">
+                            {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                            {lastSubmissionFailed ? <><RotateCcw className="mr-2 h-4 w-4" /> Retry Submission</> : 'FINISH & SUBMIT'}
+                        </Button>
+                        )}
+                    </div>
+                    </CardFooter>
+                )}
               </Card>
             </form>
         </div>

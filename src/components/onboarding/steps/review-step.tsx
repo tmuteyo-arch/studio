@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { OnboardingFormData } from '@/lib/types';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PartyPopper, FileText, Eye, CheckCircle2, Globe, Hash, ShieldCheck, Building2, MapPin, Briefcase, Camera } from 'lucide-react';
+import { FileText, Eye, CheckCircle2, Globe, Hash, ShieldCheck, Building2, MapPin, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,17 +36,9 @@ const DetailItem = ({ label, value }: { label: string; value: string | number | 
 
 
 export default function ReviewStep() {
-  const { control, getValues, formState } = useFormContext<OnboardingFormData>();
-  const [isSubmitted, setIsSubmitted] = React.useState(false);
+  const { control, getValues } = useFormContext<OnboardingFormData>();
   const data = getValues();
   
-  React.useEffect(() => {
-    if (formState.isSubmitting) {
-        setIsSubmitted(true);
-    }
-  }, [formState.isSubmitting]);
-  
-  const clientName = data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim();
   const isPersonalOrIndividual = ['Individual Accounts', 'Minors'].includes(data.clientType);
   const isSoleTrader = data.clientType === 'Sole Trader';
   const isInstitution = ['NGO', 'Church', 'School', 'Society', 'Club/ Association', 'Trust'].includes(data.clientType);
@@ -58,18 +50,6 @@ export default function ReviewStep() {
   const needsMandate = !isPersonalOrIndividual;
   const capturedDocs = data.capturedDocuments || [];
 
-
-  if (isSubmitted) {
-    return (
-      <div className="text-center py-12 flex flex-col items-center justify-center h-full">
-        <PartyPopper className="mx-auto h-16 w-16 text-green-500 mb-4" />
-        <h2 className="text-2xl font-bold">Application Submitted!</h2>
-        <p className="text-muted-foreground mt-2 max-w-sm">
-          The application for <strong>{clientName}</strong> has been successfully submitted.
-        </p>
-      </div>
-    );
-  }
 
   const renderAgreementStatus = (title: string, method: 'digital' | 'physical', isSigned: boolean, pagesCount: number) => (
     <div className="flex items-center justify-between p-4 border rounded-xl bg-background shadow-sm">
