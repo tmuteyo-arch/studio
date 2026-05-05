@@ -152,24 +152,27 @@ export default function StepSignatories({ disabled }: { disabled?: boolean }) {
         <Accordion type="multiple" defaultValue={['item-0']} className="w-full">
           {fields.map((field, index) => (
             <AccordionItem value={`item-${index}`} key={field.id} className="border rounded-md px-4 mb-2 bg-card">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex justify-between w-full items-center pr-4">
-                  <span className="font-semibold">Signatory {index + 1}: {form.watch(`signatories.${index}.firstName`)} {form.watch(`signatories.${index}.surname`)}</span>
-                   {!disabled && (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
+              <div className="flex items-center justify-between">
+                <AccordionTrigger className="hover:no-underline flex-1 py-4">
+                  <span className="font-semibold text-left">
+                    Signatory {index + 1}: {form.watch(`signatories.${index}.firstName`) || 'New'} {form.watch(`signatories.${index}.surname`) || ''}
+                  </span>
+                </AccordionTrigger>
+                {!disabled && (
+                  <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:bg-destructive/10 shrink-0 ml-2"
+                      onClick={(e) => {
                         e.stopPropagation();
                         remove(index);
-                        }}
-                    >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                   )}
-                </div>
-              </AccordionTrigger>
+                      }}
+                  >
+                      <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               <AccordionContent>
                 <div className="space-y-4 p-1">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
