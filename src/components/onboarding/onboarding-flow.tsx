@@ -19,7 +19,7 @@ import StepDocumentUpload from './steps/step-document-upload';
 import StepReview from './steps/review-step';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/lib/users';
-import { ArrowLeft, Loader2, Save, ShieldAlert, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, ShieldAlert, RotateCcw, CheckCircle2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -170,7 +170,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
   const currentStep = steps[currentStepIndex];
 
-  // Auto-save effect
+  // Auto-save effect for Drafts
   React.useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
       if (type === 'change' && !isSubmitting) {
@@ -191,7 +191,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
             }
             return prev;
           });
-        }, 3000); // 3 second debounce
+        }, 3000); 
         return () => clearTimeout(timer);
       }
     });
@@ -254,7 +254,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     const isValid = await form.trigger(stepFields);
     
     if (!isValid) {
-      toast({ title: "Incomplete", description: "Please fill in all required boxes.", variant: "destructive" });
+      toast({ title: "Incomplete Step", description: "Please provide all required evidence before proceeding.", variant: "destructive" });
       return;
     }
 
@@ -303,18 +303,29 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       return [draftApp, ...prev];
     });
 
-    toast({ title: "Draft Saved", description: "You can continue this later from your dashboard." });
+    toast({ title: "Draft Saved", description: "You can resume this application from your pipeline." });
     onCancel();
   };
   
+  /**
+   * Final finish handler that validates ALL conditions before submission.
+   */
   const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
     setLastSubmissionFailed(false);
     
     try {
+        // 1. Validate ALL mandatory fields and duplicate rules one last time
+        const isValidSubmission = await form.trigger();
+        if (!isValidSubmission) {
+           toast({ variant: 'destructive', title: 'Submission Blocked', description: 'Mandatory technical or regulatory data is missing.' });
+           return;
+        }
+
         const isUnique = await performDuplicateCheck();
         if (!isUnique) return;
 
+        // 2. Build the final application record
         const appId = activeAppId;
         const newApplication: Application = {
           id: appId,
@@ -336,12 +347,14 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           comments: existingApplication?.comments || [],
         };
         
+        // 3. Submit to core registry (Local Atom/Storage)
         setApplications((prev) => {
           const exists = prev.find(a => a.id === appId);
           if (exists) return prev.map(a => a.id === appId ? newApplication : a);
           return [newApplication, ...prev];
         });
 
+        // 4. Record technical activity
         setActivityLogs(prev => [{
           id: `log-${Date.now()}`,
           userId: user.id,
@@ -350,7 +363,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           timestamp: new Date().toISOString()
         }, ...prev]);
 
-        // Notify Clerks about new submission
+        // 5. Trigger workflow notifications
         addNotification({
             type: 'status_update',
             title: `New Application: ${newApplication.clientName}`,
@@ -359,16 +372,20 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
             targetRole: 'back-office'
         });
 
-        toast({ title: "Finished!", description: `Sent request for ${newApplication.clientName}.` });
+        // 6. Success Feedback & Redirect
+        toast({ title: "Application Submitted", description: `Reference ${appId} is now in the review queue.` });
         await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Redirect back to dashboard
         onCancel();
+        
     } catch (error) {
-        console.error("Submission error:", error);
+        console.error("Submission failed:", error);
         setLastSubmissionFailed(true);
         toast({
             variant: 'destructive',
-            title: 'Submission failed',
-            description: "Submission failed. Please try again or contact support.",
+            title: 'Registry Error',
+            description: "A technical error occurred during submission. Please try again.",
         });
     } finally {
         setIsSubmitting(false);
@@ -378,8 +395,8 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   const onInvalid = () => {
     toast({
       variant: 'destructive',
-      title: 'Missing Details',
-      description: 'Please check the review page for errors before finishing.',
+      title: 'Validation Errors',
+      description: 'Please correct the highlighted errors in the form before finishing.',
     });
   };
 
@@ -412,9 +429,9 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
                       </Button>
                     )}
                     {currentStepIndex === steps.length - 1 && (
-                      <Button type="submit" disabled={isSubmitting || isCheckingDuplicates} className="font-black px-8">
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        {lastSubmissionFailed ? <><RotateCcw className="mr-2 h-4 w-4" /> Retry</> : 'Finish'}
+                      <Button type="submit" disabled={isSubmitting || isCheckingDuplicates} className="font-black px-8 bg-green-600 hover:bg-green-700 text-white">
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                        {lastSubmissionFailed ? <><RotateCcw className="mr-2 h-4 w-4" /> Retry Submission</> : 'FINISH & SUBMIT'}
                       </Button>
                     )}
                   </div>

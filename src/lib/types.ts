@@ -159,7 +159,16 @@ export const OnboardingFormSchema = z.object({
     errorMap: () => ({ message: 'You must agree to the Terms & Conditions.' }),
   }),
 }).superRefine((data, ctx) => {
-    // TIN Number is required for Business/Institutional types
+    // 1. Email is mandatory for all regulatory submissions
+    if (!data.email || data.email.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['email'],
+        message: 'A valid email address is mandatory for the regulatory record.',
+      });
+    }
+
+    // 2. TIN Number is required for Business/Institutional types
     const isPersonal = ['Individual Accounts', 'Minors'].includes(data.clientType);
     const isSoleTrader = data.clientType === 'Sole Trader';
     const isCorporate = [
@@ -189,7 +198,7 @@ export const OnboardingFormSchema = z.object({
       });
     }
 
-    // Document Validation Rule: All required documents must be present and have pages
+    // 3. Document Validation Rule: All required documents must be present and have pages
     const requiredDocs = getDocumentRequirements(data.clientType);
     const capturedDocs = data.capturedDocuments || [];
     
@@ -234,7 +243,7 @@ export const OnboardingFormSchema = z.object({
       }
     }
 
-    // Agreements validation for Corporate/SoleTrader
+    // 4. Agreements validation for Corporate/SoleTrader
     if (isCorporate || isSoleTrader) {
       // Agreement 1 (Agency/Merchant) - Mandatory Upload + Acknowledge
       if (!data.agreement1Pages || data.agreement1Pages.length === 0) {
