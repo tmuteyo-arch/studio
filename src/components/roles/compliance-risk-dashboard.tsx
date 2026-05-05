@@ -2,32 +2,24 @@
 
 import * as React from 'react';
 import { useAtom } from 'jotai';
-import { format, parseISO, differenceInHours, differenceInDays, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
-import { applicationsAtom, Application, activityLogsAtom, UserActivityLog, HistoryLog } from '@/lib/mock-data';
+import { format, parseISO, differenceInHours, differenceInDays, startOfDay, endOfDay } from 'date-fns';
+import { applicationsAtom, Application, activityLogsAtom } from '@/lib/mock-data';
 import { User, usersAtom } from '@/lib/users';
 import { 
   ShieldCheck, 
   Search, 
   AlertTriangle,
-  UserSearch,
   History,
-  CheckCircle2,
   XCircle,
   CalendarDays,
   BarChart3,
   TrendingUp,
-  FileText,
-  PieChart,
   Archive,
   Eye,
   FileSearch,
   Wallet,
   Clock,
   Filter,
-  Users,
-  Calendar,
-  ChevronRight,
-  Download,
   ArrowRight,
   ShieldAlert
 } from 'lucide-react';
@@ -65,20 +57,17 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
   const [activityLogs] = useAtom(activityLogsAtom);
   const [allUsers] = useAtom(usersAtom);
   
-  // State for Navigation & Review
   const [selectedApplication, setSelectedApplication] = React.useState<Application | null>(null);
   
-  // Filter States
   const [searchTerm, setSearchTerm] = React.useState('');
   const [staffFilter, setStaffFilter] = React.useState('all');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [reasonFilter, setRejectionReasonFilter] = React.useState('all');
   const [dateRange, setDateRange] = React.useState({ start: '', end: '' });
 
-  // Calculate Application Duration (Turnaround Time)
   const getAppDuration = (app: Application) => {
     const start = parseISO(app.history[0]?.timestamp || app.submittedDate);
-    const end = app.status === 'Archived' ? parseISO(app.lastUpdated) : new Date();
+    const end = app.status === 'Locked' ? parseISO(app.lastUpdated) : new Date();
     
     const hours = differenceInHours(end, start);
     if (hours < 24) return `${hours}h`;
@@ -86,11 +75,9 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
     return `${days}d ${hours % 24}h`;
   };
 
-  // Logic for the full audit trail (System Logs + App History)
   const fullAuditTrail: AuditEntry[] = React.useMemo(() => {
     const entries: AuditEntry[] = [];
 
-    // Add activity logs (logins, etc)
     activityLogs.forEach(log => {
         entries.push({
             timestamp: log.timestamp,
@@ -100,7 +87,6 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
         });
     });
 
-    // Flatten application history
     applications.forEach(app => {
         app.history.forEach(log => {
             entries.push({
@@ -118,12 +104,11 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
     return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [applications, activityLogs]);
 
-  // Filter Logic for Network Archive
   const filteredArchive = React.useMemo(() => {
     return applications.filter(app => {
         const matchesSearch = app.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                              app.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             (app.details.accountNumber && app.details.accountNumber.includes(searchTerm));
+                             (app.details.brAccountNumber && app.details.brAccountNumber.includes(searchTerm));
         
         const matchesStaff = staffFilter === 'all' || 
                             app.submittedBy === staffFilter || 
@@ -157,12 +142,12 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
         
         summary[monthKey].total += 1;
         
-        if (app.status === 'Archived' || app.status === 'Signed') {
+        if (app.status === 'Locked' || app.status === 'Dispatched') {
             summary[monthKey].approved += 1;
             if (app.details.isDispatched) {
                 summary[monthKey].dispatched += 1;
             }
-        } else if (app.status === 'Rejected' || app.status === 'Rejected by Supervisor' || app.status === 'Rejected by ASL') {
+        } else if (app.status === 'Rejected' || app.status === 'Not Safe to Proceed') {
             summary[monthKey].rejected += 1;
         } else {
             summary[monthKey].pending += 1;
@@ -183,8 +168,8 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
 
   const stats = React.useMemo(() => {
     return {
-      pendingAudit: applications.filter(a => a.status === 'Pending Compliance' || a.status === 'Sent to Risk & Compliance').length,
-      totalRejections: applications.filter(a => a.status === 'Rejected' || a.status === 'Rejected by Supervisor').length,
+      pendingAudit: applications.filter(a => ['Under Review', 'Needs Review', 'Safe to Continue', 'Pending Executive Signature', 'Approved by Management'].includes(a.status)).length,
+      totalRejections: applications.filter(a => a.status === 'Rejected' || a.status === 'Not Safe to Proceed').length,
       totalDispatched: applications.filter(a => a.details.isDispatched).length,
       totalAccounts: applications.length
     };
@@ -302,10 +287,9 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
                                     <SelectTrigger className="bg-black/20 border-white/10"><SelectValue placeholder="All Statuses" /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Statuses</SelectItem>
-                                        <SelectItem value="Submitted">Originated</SelectItem>
-                                        <SelectItem value="Pending Supervisor">Pending Audit</SelectItem>
-                                        <SelectItem value="Archived">Dispatched</SelectItem>
-                                        <SelectItem value="Rejected">Declined</SelectItem>
+                                        <SelectItem value="Under Review">Under Review</SelectItem>
+                                        <SelectItem value="Locked">Archived</SelectItem>
+                                        <SelectItem value="Rejected">Rejected</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -363,10 +347,10 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {app.details.accountNumber ? (
+                        {app.details.walletAccountNumber ? (
                             <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-2 text-primary font-mono font-black tracking-tighter">
-                                    <Wallet className="h-3 w-3" /> {app.details.accountNumber}
+                                    <Wallet className="h-3 w-3" /> {app.details.walletAccountNumber}
                                 </div>
                                 <span className="text-[8px] font-black uppercase text-green-500 tracking-[0.2em]">Dispatched OK</span>
                             </div>
@@ -574,8 +558,8 @@ export default function ComplianceRiskDashboard({ user }: { user: User }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {applications.filter(a => (a.status === 'Rejected' || a.status === 'Rejected by Supervisor') && (reasonFilter === 'all' || a.history.some(h => h.notes && h.notes.includes(reasonFilter)))).map((app) => {
-                    const rejectionLog = app.history.find(h => h.action.includes('Rejected'));
+                  {applications.filter(a => (a.status === 'Rejected' || a.status === 'Not Safe to Proceed') && (reasonFilter === 'all' || a.history.some(h => h.notes && h.notes.includes(reasonFilter)))).map((app) => {
+                    const rejectionLog = app.history.find(h => h.action.includes('Rejected') || h.action.includes('Proceed'));
                     return (
                       <TableRow key={app.id} className="border-white/5 hover:bg-white/5 transition-colors group">
                         <TableCell className="pl-8 py-5">

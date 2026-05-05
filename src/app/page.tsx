@@ -11,7 +11,7 @@ import { Role, usersAtom } from '@/lib/users';
 import { activeUserAtom, activityLogsAtom, notificationsAtom, Notification } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, ShieldAlert, Bell, CheckCircle2, MessageSquare, AlertCircle, X, ExternalLink } from 'lucide-react';
+import { Mail, Lock, LogIn, ShieldCheck, LayoutDashboard, Loader2, ShieldAlert, Bell, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -20,11 +20,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
-// Lazy load dashboards to improve initial compilation time
+// Lazy load dashboards to improve performance
 const AtlDashboard = React.lazy(() => import('@/components/roles/atl-dashboard'));
 const BackOfficeDashboard = React.lazy(() => import('@/components/roles/back-office-dashboard'));
 const SupervisorDashboard = React.lazy(() => import('@/components/roles/supervisor-dashboard'));
-const RetailExecutiveDashboard = React.lazy(() => import('@/components/roles/retail-executive-dashboard'));
+const ManagementDashboard = React.lazy(() => import('@/components/roles/management-dashboard'));
 const AdminDashboard = React.lazy(() => import('@/components/roles/admin-dashboard'));
 const ComplianceRiskDashboard = React.lazy(() => import('@/components/roles/compliance-risk-dashboard'));
 
@@ -114,9 +114,6 @@ function NotificationTray({ user }: { user: any }) {
             </div>
           )}
         </ScrollArea>
-        <div className="p-3 bg-black/20 text-center border-t border-white/5">
-            <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/20">Regulatory Audit Real-time Feed</p>
-        </div>
       </PopoverContent>
     </Popover>
   );
@@ -144,11 +141,7 @@ function AppContent() {
     e.preventDefault();
     
     if (!selectedRole) {
-      toast({
-        variant: 'destructive',
-        title: 'Choose workspace',
-        description: 'Please select a workspace to enter.',
-      });
+      toast({ variant: 'destructive', title: 'Choose workspace' });
       return;
     }
 
@@ -159,78 +152,41 @@ function AppContent() {
     
     if (userToLogin) {
       if (userToLogin.status === 'disabled') {
-        toast({
-          variant: 'destructive',
-          title: 'No Access',
-          description: 'This account has been disabled.',
-        });
+        toast({ variant: 'destructive', title: 'No Access' });
         return;
       }
 
       const isValidPassword = userToLogin.password === password || password === "DemoPassword123!";
-      
       if (!isValidPassword) {
-        toast({
-          variant: 'destructive',
-          title: 'Wrong Password',
-          description: 'The password you entered is incorrect.',
-        });
+        toast({ variant: 'destructive', title: 'Wrong Password' });
         return;
       }
 
-      // Log Login Event
-      const logEntry = {
+      setActivityLogs(prev => [{
         id: `log-${Date.now()}`,
         userId: userToLogin.id,
         userName: userToLogin.name,
         action: 'Login' as const,
         timestamp: new Date().toISOString()
-      };
-      setActivityLogs(prev => [logEntry, ...prev]);
+      }, ...prev]);
 
       setLoggedInUser(userToLogin);
-      toast({
-        title: `Hi, ${userToLogin.name}!`,
-        description: `Welcome to the ${userToLogin.role.replace('-', ' ')} section.`,
-      });
+      toast({ title: `Hi, ${userToLogin.name}!` });
     } else {
-       toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: `Account not found.`,
-      });
+       toast({ variant: 'destructive', title: 'Login Failed' });
     }
-  };
-
-  const handleResetPassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetEmail) return;
-
-    setIsResetting(true);
-    setTimeout(() => {
-      setIsResetting(false);
-      setIsResetOpen(false);
-      setResetEmail("");
-      toast({
-        title: "Request Sent",
-        description: `A reset request has been sent to the Admin.`,
-      });
-    }, 2000);
   };
 
   const handleLogout = () => {
     if (loggedInUser) {
-      // Log Logout Event
-      const logEntry = {
+      setActivityLogs(prev => [{
         id: `log-${Date.now()}`,
         userId: loggedInUser.id,
         userName: loggedInUser.name,
         action: 'Logout' as const,
         timestamp: new Date().toISOString()
-      };
-      setActivityLogs(prev => [logEntry, ...prev]);
+      }, ...prev]);
     }
-
     setLoggedInUser(null);
     setSelectedRole("");
     setEmail("");
@@ -243,20 +199,11 @@ function AppContent() {
       if (u) {
         setEmail(u.email);
         setPassword(u.password || "DemoPassword123!");
-      } else {
-        setEmail("");
-        setPassword("");
       }
     }
   }, [selectedRole, systemUsers]);
 
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (!mounted) return null;
 
   const renderDashboard = () => {
     if (!loggedInUser) return null;
@@ -265,20 +212,13 @@ function AppContent() {
       <React.Suspense fallback={<div className="flex items-center justify-center p-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
         {(() => {
           switch (loggedInUser.role) {
-            case 'asl':
-              return <AtlDashboard user={loggedInUser} />;
-            case 'back-office':
-              return <BackOfficeDashboard user={loggedInUser} />;
-            case 'supervisor':
-              return <SupervisorDashboard user={loggedInUser} />;
-            case 'management':
-              return <RetailExecutiveDashboard user={loggedInUser} />;
-            case 'admin':
-              return <AdminDashboard user={loggedInUser} />;
-            case 'compliance':
-              return <ComplianceRiskDashboard user={loggedInUser} />;
-            default:
-              return null;
+            case 'asl': return <AtlDashboard user={loggedInUser} />;
+            case 'back-office': return <BackOfficeDashboard user={loggedInUser} />;
+            case 'supervisor': return <SupervisorDashboard user={loggedInUser} />;
+            case 'management': return <ManagementDashboard user={loggedInUser} />;
+            case 'admin': return <AdminDashboard user={loggedInUser} />;
+            case 'compliance': return <ComplianceRiskDashboard user={loggedInUser} />;
+            default: return null;
           }
         })()}
       </React.Suspense>
@@ -286,176 +226,82 @@ function AppContent() {
   };
 
   const renderUnifiedLogin = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#4c1d95] bg-gradient-to-br from-[#1e1b4b] via-[#7c3aed] to-[#1e1b4b] p-4">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-[450px]"
-      >
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#1e1b4b] bg-gradient-to-br from-[#1e1b4b] via-[#4c1d95] to-[#1e1b4b] p-4">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-[450px]">
         <div className="flex flex-col items-center gap-4 mb-8 text-center">
           <Logo className="h-20 w-20 drop-shadow-2xl" />
-          <div className="space-y-1">
-              <h1 className="text-4xl font-black tracking-tight text-white">InnBucks</h1>
-              <p className="text-white font-bold tracking-[0.2em] text-[10px] uppercase opacity-80">Portal</p>
-          </div>
+          <h1 className="text-4xl font-black tracking-tight text-white uppercase">InnBucks</h1>
         </div>
 
         <Card className="overflow-hidden shadow-2xl border-white/20 bg-white/10 backdrop-blur-xl text-white">
-          <CardHeader className="bg-black/20 p-8 text-center border-b border-white/10">
+          <CardHeader className="bg-black/20 p-8 text-center">
               <CardTitle className="text-2xl font-bold tracking-tight uppercase">LOGIN</CardTitle>
-              <CardDescription className="text-white/60">Enter details to enter.</CardDescription>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <form onSubmit={handleLogin} className='space-y-5'>
               <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2" htmlFor="email">
-                    <Mail className="h-3 w-3" /> Email
-                  </Label>
-                  <input 
-                    id="email" 
-                    type="email" 
-                    placeholder="name@inbucks.app" 
-                    className='w-full h-12 rounded-md bg-white/10 border border-white/20 px-3 text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#7c3aed] outline-none transition-all' 
-                    required 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/70">Email</Label>
+                  <input id="email" type="email" className='w-full h-12 rounded-md bg-white/10 border border-white/20 px-3 text-white' required value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2" htmlFor="password">
-                      <Lock className="h-3 w-3" /> Password
-                    </Label>
-                    <Button 
-                      type="button" 
-                      variant="link" 
-                      className="text-[10px] text-white/50 hover:text-white uppercase tracking-widest h-auto p-0 font-bold"
-                      onClick={() => setIsResetOpen(true)}
-                    >
-                      Forgot?
-                    </Button>
-                  </div>
-                  <input 
-                    id="password" 
-                    type="password" 
-                    placeholder="••••••••"
-                    className='w-full h-12 rounded-md bg-white/10 border border-white/20 px-3 text-white placeholder:text-white/30 focus:ring-2 focus:ring-[#7c3aed] outline-none transition-all' 
-                    required 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/70">Password</Label>
+                  <input id="password" type="password" className='w-full h-12 rounded-md bg-white/10 border border-white/20 px-3 text-white' required value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-white/70 flex items-center gap-2" htmlFor="role">
-                    <LayoutDashboard className="h-3 w-3" /> Workspace
-                  </Label>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-white/70">Workspace</Label>
                   <Select value={selectedRole} onValueChange={(v: Role) => setSelectedRole(v)}>
-                    <SelectTrigger className="h-12 bg-white/10 border-white/20 text-white focus:ring-2 focus:ring-[#7c3aed] transition-all">
+                    <SelectTrigger className="h-12 bg-white/10 border-white/20 text-white">
                       <SelectValue placeholder="Choose workspace..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#1e1b4b] border-white/20 text-white">
-                      <SelectItem value="asl">Sales Leader (ASL)</SelectItem>
+                    <SelectContent className="bg-[#1e1b4b] border-white/10 text-white">
+                      <SelectItem value="asl">Sales Leader</SelectItem>
                       <SelectItem value="back-office">Office Clerk</SelectItem>
                       <SelectItem value="supervisor">Supervisor</SelectItem>
-                      <SelectItem value="management">Manager</SelectItem>
-                      <SelectItem value="compliance">Risk & Compliance</SelectItem>
+                      <SelectItem value="management">Management</SelectItem>
+                      <SelectItem value="compliance">Compliance</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
               </div>
-              
-              <Button type="submit" className="w-full h-12 !mt-8 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold shadow-xl border-t border-white/20 transition-all active:scale-[0.98]">
-                <LogIn className="mr-2 h-5 w-5"/> Sign In
-              </Button>
+              <Button type="submit" className="w-full h-12 !mt-8 bg-[#7c3aed] hover:bg-[#6d28d9] font-black uppercase tracking-widest transition-all">Sign In</Button>
             </form>
           </CardContent>
           <CardFooter className="bg-black/30 p-4 text-center text-[10px] text-white/40 justify-center uppercase tracking-widest border-t border-white/5">
-            <ShieldCheck className="mr-2 h-3 w-3 text-accent/50"/> Secure Login
+            <ShieldCheck className="mr-2 h-3 w-3 text-accent/50"/> Secure Access
           </CardFooter>
         </Card>
-        
-        <p className="mt-12 text-center text-white/20 text-[9px] uppercase tracking-[0.4em] font-medium">InnBucks &copy; 2026</p>
       </motion.div>
-
-      <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
-        <DialogContent className="bg-[#1e1b4b] border-white/10 text-white backdrop-blur-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 uppercase tracking-tight">
-              <ShieldAlert className="h-5 w-5 text-primary" />
-              Reset Request
-            </DialogTitle>
-            <DialogDescription className="text-white/60">
-              Reset requests are sent to the Admin.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleResetPassword} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-email" className="text-xs font-bold uppercase tracking-wider text-white/70">Work Email</Label>
-              <Input 
-                id="reset-email" 
-                type="email" 
-                placeholder="name@inbucks.app" 
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                required
-              />
-            </div>
-            <DialogFooter>
-              <Button 
-                type="submit" 
-                className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] font-bold"
-                disabled={isResetting}
-              >
-                {isResetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Send Request"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 
-  const renderContent = () => {
-    if (loggedInUser) {
-        return (
-            <div className="p-4 sm:p-8 max-w-7xl mx-auto">
-                <header className="mb-8 flex items-center justify-between bg-card/50 p-4 rounded-xl border border-white/5 backdrop-blur-sm">
-                    <div className="flex items-center gap-3">
-                        <Logo className="h-8 w-8" />
-                        <div>
-                            <h1 className="text-xl font-bold text-white leading-tight">InnBucks</h1>
-                            <p className="text-[10px] uppercase tracking-tighter text-secondary font-bold">Portal</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <NotificationTray user={loggedInUser} />
-                        <div className="text-right hidden sm:block">
-                            <p className="font-semibold text-white">{loggedInUser.name}</p>
-                            <p className="text-[10px] text-white/50 uppercase font-bold">
-                                {loggedInUser.role.replace('-', ' ')}
-                            </p>
-                        </div>
-                        <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-white" onClick={handleLogout}>Logout</Button>
-                    </div>
-                </header>
-                <main className="animate-in fade-in slide-in-from-bottom-4 duration-500">{renderDashboard()}</main>
-            </div>
-        );
-    }
-    return renderUnifiedLogin();
-  }
-
   return (
-    <div className="w-full bg-background min-h-screen selection:bg-secondary selection:text-secondary-foreground">
-      {renderContent()}
+    <div className="w-full bg-background min-h-screen">
+      {loggedInUser ? (
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+            <header className="mb-8 flex items-center justify-between bg-card/50 p-4 rounded-xl border border-white/5 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                    <Logo className="h-8 w-8" />
+                    <div>
+                        <h1 className="text-xl font-bold text-white leading-tight">InnBucks</h1>
+                        <p className="text-[10px] uppercase font-bold text-secondary">Portal</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 sm:gap-4">
+                    <NotificationTray user={loggedInUser} />
+                    <div className="text-right hidden sm:block">
+                        <p className="font-semibold text-white">{loggedInUser.name}</p>
+                        <p className="text-[10px] text-white/50 uppercase font-bold">{loggedInUser.role}</p>
+                    </div>
+                    <Button variant="outline" size="sm" className="border-white/10 hover:bg-white/5 text-white" onClick={handleLogout}>Logout</Button>
+                </div>
+            </header>
+            <main className="animate-in fade-in duration-500">{renderDashboard()}</main>
+        </div>
+      ) : renderUnifiedLogin()}
     </div>
   );
 }
 
 export default function Home() {
-  return (
-      <AppContent />
-  );
+  return <AppContent />;
 }
