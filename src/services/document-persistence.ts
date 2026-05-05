@@ -17,9 +17,11 @@ import {
   getDownloadURL,
   FirebaseStorage
 } from 'firebase/storage';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 
 /**
- * Service to handle immediate cloud persistence of documents.
+ * Service to handle immediate cloud persistence of forensic streams.
  */
 export class DocumentPersistenceService {
   private firestore: Firestore;
@@ -31,7 +33,7 @@ export class DocumentPersistenceService {
   }
 
   /**
-   * Uploads a data URI (base64) to Storage and saves metadata to Firestore.
+   * Uploads a forensic stream (base64) to Storage and saves tracking metadata to Firestore.
    */
   async persistDocument(params: {
     appId: string;
@@ -43,17 +45,17 @@ export class DocumentPersistenceService {
   }) {
     const { appId, userId, documentType, fileName, dataUri, isFinal = false } = params;
 
-    // 1. Upload to Storage
+    // 1. Upload to Storage (Binary Stream)
+    // We await this because we need the resulting URL for the Firestore record
     const storagePath = `applications/${appId}/${documentType}/${Date.now()}_${fileName}`;
     const storageRef = ref(this.storage, storagePath);
     
-    // Check if it's base64/dataUri or just a raw string
     const format = dataUri.startsWith('data:') ? 'data_url' : 'raw';
     await uploadString(storageRef, dataUri, format as any);
     const downloadUrl = await getDownloadURL(storageRef);
 
-    // 2. Save metadata to Firestore
-    const docRef = await addDoc(collection(this.firestore, 'captured_documents'), {
+    // 2. Save Tracking Metadata to Firestore (Non-blocking write)
+    const payload = {
       appId,
       userId,
       documentType,
@@ -63,16 +65,30 @@ export class DocumentPersistenceService {
       uploadStatus: isFinal ? 'final' : 'draft',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    };
+
+    const captureCollection = collection(this.firestore, 'captured_documents');
+    
+    // We initiate the write without awaiting it, using the projects' optimistic UI strategy.
+    // Chained catch handles permissions and infrastructure failures.
+    addDoc(captureCollection, payload)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: captureCollection.path,
+          operation: 'create',
+          requestResourceData: payload,
+        } satisfies SecurityRuleContext);
+
+        errorEmitter.emit('permission-error', permissionError);
+      });
 
     return {
-      id: docRef.id,
       url: downloadUrl
     };
   }
 
   /**
-   * Retrieves all draft documents for a specific application.
+   * Retrieves forensic streams for an active application.
    */
   async getDraftDocuments(appId: string) {
     const q = query(
@@ -89,13 +105,24 @@ export class DocumentPersistenceService {
   }
 
   /**
-   * Marks a specific document record as final.
+   * Finalizes forensic stream metadata.
    */
   async finalizeDocument(documentRecordId: string) {
     const docRef = doc(this.firestore, 'captured_documents', documentRecordId);
-    await updateDoc(docRef, {
+    const updatePayload = {
       uploadStatus: 'final',
       updatedAt: serverTimestamp()
-    });
+    };
+
+    updateDoc(docRef, updatePayload)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'update',
+          requestResourceData: updatePayload,
+        } satisfies SecurityRuleContext);
+
+        errorEmitter.emit('permission-error', permissionError);
+      });
   }
 }

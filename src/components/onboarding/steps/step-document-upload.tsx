@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { validateImageQualityHeuristic } from '@/lib/image-validation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { mergeToPdf, countPdfPages, validatePdf, getBase64Size } from '@/lib/pdf-utils';
-import { useFirestore, useStorage } from '@/firebase';
+import { useFirestore, useStorage, useUser } from '@/firebase';
 import { DocumentPersistenceService } from '@/services/document-persistence';
 
 type DocumentState = {
@@ -31,6 +31,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   const { toast } = useToast();
   const firestore = useFirestore();
   const storage = useStorage();
+  const { user: firebaseUser } = useUser();
   const form = useFormContext<OnboardingFormData>();
   
   const [documents, setDocuments] = React.useState<Record<string, DocumentState>>({});
@@ -48,6 +49,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   const [previewStream, setPreviewStream] = React.useState<{ url: string, type: string, name: string } | null>(null);
 
   const clientType = form.watch('clientType');
+  const applicationId = form.watch('applicationId');
   const capturedDocs = form.watch('capturedDocuments') || [];
   const documentRequirements = React.useMemo(() => getDocumentRequirements(clientType), [clientType]);
 
@@ -55,7 +57,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     firestore && storage ? new DocumentPersistenceService(firestore, storage) : null
   , [firestore, storage]);
 
-  // Initialize state
+  // Initialize local state from form data
   React.useEffect(() => {
     const existingCaptured = form.getValues('capturedDocuments') || [];
     const initialDocs: Record<string, DocumentState> = {};
@@ -73,7 +75,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     setDocuments(initialDocs);
   }, [documentRequirements]);
 
-  // Sync state and Save to Firebase immediately
+  // Merge individual streams into a single Forensic PDF for the final record
   React.useEffect(() => {
     if (Object.keys(documents).length === 0) return;
 
@@ -107,23 +109,24 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   }, [documents, form]);
 
   const handleCloudSave = async (docType: string, dataUri: string, fileName: string) => {
-    if (!persistenceService) return;
+    if (!persistenceService || !firebaseUser || !applicationId) return;
     
     setIsCloudSaving(true);
     try {
-      // Immediate draft save to Firebase
+      // Immediate cloud persistence of the forensic stream
       await persistenceService.persistDocument({
-        appId: 'CURRENT_DRAFT_APP', // In real app, get from context
-        userId: 'STAFF_USER', // In real app, get from auth
+        appId: applicationId,
+        userId: firebaseUser.uid,
         documentType: docType,
         fileName: fileName,
         dataUri: dataUri,
         isFinal: false
       });
-      toast({ title: 'Cloud Sync OK', description: 'Draft record saved to Firebase.' });
+      toast({ title: 'Cloud Sync Successful', description: 'Forensic stream saved to registry.' });
     } catch (err) {
       console.error('Firebase save error:', err);
-      toast({ variant: 'destructive', title: 'Cloud Sync Failed', description: 'Document not saved to Firebase. Using local draft.' });
+      // Detailed error is emitted via DocumentPersistenceService chained catch
+      toast({ variant: 'destructive', title: 'Registry Sync Failed', description: 'Document not saved to cloud. Using local session draft.' });
     } finally {
       setIsCloudSaving(false);
     }
@@ -189,7 +192,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       
       setIsValidating(null);
       
-      // Trigger cloud persistence
+      // Trigger cloud persistence for instant auditability
       await handleCloudSave(documentType, dataUri, file.name);
       
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -316,7 +319,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
           </div>
           {isCloudSaving && (
             <Badge variant="secondary" className="animate-pulse flex items-center gap-2">
-              <Loader2 className="h-3 w-3 animate-spin" /> Saving to Cloud...
+              <Loader2 className="h-3 w-3 animate-spin" /> Syncing with Cloud...
             </Badge>
           )}
         </div>

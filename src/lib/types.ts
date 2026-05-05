@@ -54,6 +54,7 @@ const BeneficialOwnerSchema = z.object({
 export type BeneficialOwner = z.infer<typeof BeneficialOwnerSchema>;
 
 export const OnboardingFormSchema = z.object({
+  applicationId: z.string().min(1), // Unique ID for Firebase anchoring
   clientType: z.string().min(1, { message: 'Please select an account type.' }),
   relationshipType: z.enum(['Agency', 'Merchant']).default('Agency'),
   region: z.string().min(1, { message: 'Please select an operating region.' }),

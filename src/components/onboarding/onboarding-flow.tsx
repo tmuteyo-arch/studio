@@ -84,10 +84,14 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [lastSubmissionFailed, setLastSubmissionFailed] = React.useState(false);
 
+  // Unified application ID for all steps
+  const activeAppId = React.useMemo(() => existingApplication?.id || generateAccountId(), [existingApplication]);
+
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(OnboardingFormSchema),
     mode: 'onChange',
     defaultValues: existingApplication ? existingApplication.details : {
+      applicationId: activeAppId,
       clientType: preselectedType || '',
       relationshipType: 'Agency',
       region: '',
@@ -172,7 +176,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       if (type === 'change' && !isSubmitting) {
         const timer = setTimeout(() => {
           const data = form.getValues();
-          const appId = existingApplication?.id || generateAccountId();
+          const appId = activeAppId;
           const clientName = data.organisationLegalName || `${data.individualFirstName || ''} ${data.individualSurname || ''}`.trim() || 'Untitled Draft';
           
           setApplications((prev) => {
@@ -192,7 +196,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, isSubmitting, existingApplication, setApplications]);
+  }, [form.watch, isSubmitting, activeAppId, setApplications]);
 
   const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
     setNotifications(prev => [{
@@ -205,7 +209,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
   const performDuplicateCheck = async (): Promise<boolean> => {
     const data = form.getValues();
-    const currentId = existingApplication?.id;
+    const currentId = activeAppId;
 
     setIsCheckingDuplicates(true);
     try {
@@ -270,7 +274,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
   const handleSaveDraft = () => {
     const data = form.getValues();
-    const appId = existingApplication?.id || generateAccountId();
+    const appId = activeAppId;
     
     const draftApp: Application = {
       id: appId,
@@ -311,7 +315,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
         const isUnique = await performDuplicateCheck();
         if (!isUnique) return;
 
-        const appId = existingApplication?.id || generateAccountId();
+        const appId = activeAppId;
         const newApplication: Application = {
           id: appId,
           clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
