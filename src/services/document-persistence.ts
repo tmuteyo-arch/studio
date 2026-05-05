@@ -8,23 +8,24 @@ import {
   where, 
   getDocs,
   updateDoc,
-  doc
+  doc,
+  Firestore
 } from 'firebase/firestore';
 import { 
   ref, 
   uploadString, 
-  getDownloadURL 
+  getDownloadURL,
+  FirebaseStorage
 } from 'firebase/storage';
-import { Firestore, FirebaseStorage } from 'firebase/app';
 
 /**
  * Service to handle immediate cloud persistence of documents.
  */
 export class DocumentPersistenceService {
-  private firestore: any;
-  private storage: any;
+  private firestore: Firestore;
+  private storage: FirebaseStorage;
 
-  constructor(firestore: any, storage: any) {
+  constructor(firestore: Firestore, storage: FirebaseStorage) {
     this.firestore = firestore;
     this.storage = storage;
   }

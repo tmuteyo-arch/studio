@@ -33,13 +33,10 @@ export const FirebaseProvider: React.FC<{
 
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
-  if (!context) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
-  }
   return context;
 };
 
-export const useFirebaseApp = () => useFirebase().firebaseApp;
-export const useFirestore = () => useFirebase().firestore;
-export const useAuth = () => useFirebase().auth;
-export const useStorage = () => useFirebase().storage;
+export const useFirebaseApp = () => useFirebase()?.firebaseApp ?? null;
+export const useFirestore = () => useFirebase()?.firestore ?? null;
+export const useAuth = () => useFirebase()?.auth ?? null;
+export const useStorage = () => useFirebase()?.storage ?? null;
