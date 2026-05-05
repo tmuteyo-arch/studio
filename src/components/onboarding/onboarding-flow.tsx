@@ -310,27 +310,18 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   
   /**
    * Final finish handler that validates ALL conditions before submission.
+   * Note: Forced submission enabled - proceeds regardless of highlighted errors.
    */
   const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
     setLastSubmissionFailed(false);
     
     try {
-        // 1. Validate ALL mandatory fields and duplicate rules one last time
-        const isValidSubmission = await form.trigger();
-        if (!isValidSubmission) {
-           toast({ variant: 'destructive', title: 'Submission Blocked', description: 'Mandatory technical or regulatory data is missing.' });
-           return;
-        }
-
-        const isUnique = await performDuplicateCheck();
-        if (!isUnique) return;
-
-        // 2. Build the final application record
+        // Build the final application record regardless of highlights
         const appId = activeAppId;
         const newApplication: Application = {
           id: appId,
-          clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim(),
+          clientName: data.organisationLegalName || `${data.individualFirstName} ${data.individualSurname}`.trim() || 'Untitled Submission',
           clientType: data.clientType,
           region: data.region,
           status: 'Under Review',
@@ -343,19 +334,19 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           documents: data.capturedDocuments || [],
           history: [
             ...(existingApplication?.history || []),
-            { action: 'Under Review', user: user.name, timestamp: new Date().toISOString(), notes: 'Application originated and submitted for review.' },
+            { action: 'Under Review', user: user.name, timestamp: new Date().toISOString(), notes: 'Application forced submission from review.' },
           ],
           comments: existingApplication?.comments || [],
         };
         
-        // 3. Submit to core registry (Local Atom/Storage)
+        // Submit to core registry
         setApplications((prev) => {
           const exists = prev.find(a => a.id === appId);
           if (exists) return prev.map(a => a.id === appId ? newApplication : a);
           return [newApplication, ...prev];
         });
 
-        // 4. Record technical activity
+        // Record technical activity
         setActivityLogs(prev => [{
           id: `log-${Date.now()}`,
           userId: user.id,
@@ -364,7 +355,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           timestamp: new Date().toISOString()
         }, ...prev]);
 
-        // 5. Trigger workflow notifications
+        // Trigger workflow notifications
         addNotification({
             type: 'status_update',
             title: `New Application: ${newApplication.clientName}`,
@@ -373,11 +364,10 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
             targetRole: 'back-office'
         });
 
-        // 6. Success Feedback & Redirect
+        // Success Feedback & Redirect
         setShowSuccess(true);
         toast({ title: "Application Submitted", description: `Reference ${appId} is now in the review queue.` });
         
-        // Wait 2 seconds for user to see the success state before closing
         setTimeout(() => {
             onCancel();
         }, 2000);
@@ -395,12 +385,10 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     }
   };
 
-  const onInvalid = () => {
-    toast({
-      variant: 'destructive',
-      title: 'Validation Errors',
-      description: 'Please correct the highlighted errors in the form before finishing.',
-    });
+  const handleForcedSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const data = form.getValues();
+    onSubmit(data);
   };
 
   const CurrentStepComponent = StepComponents[currentStep.id];
@@ -410,7 +398,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       <div className="flex flex-col md:flex-row min-h-screen bg-background">
         {!showSuccess && <ProgressTracker steps={steps} currentStepIndex={currentStepIndex} />}
         <div className="flex-1 p-4 md:p-8">
-            <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="h-full">
+            <form onSubmit={currentStepIndex === steps.length - 1 ? handleForcedSubmit : (e) => e.preventDefault()} className="h-full">
               <Card className="h-full flex flex-col shadow-lg border-primary/10">
                 <CardContent className="flex-1 py-6">
                   {showSuccess ? (
