@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useAtom } from 'jotai';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { applicationsAtom, Application, ApplicationStatus, activityLogsAtom } from '@/lib/mock-data';
-import { zimRegions } from '@/lib/types';
+import { zimRegions, rejectionReasons } from '@/lib/types';
 import { User, usersAtom } from '@/lib/users';
 import { 
   TrendingUp,
@@ -21,7 +21,12 @@ import {
   ListFilter,
   FileSignature,
   Eraser,
-  Fingerprint
+  Fingerprint,
+  CalendarDays,
+  Filter,
+  Download,
+  FileSpreadsheet,
+  Search
 } from 'lucide-react';
 import { Bar, BarChart as ReChartsBarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
@@ -32,9 +37,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import SignatureCanvas from 'react-signature-canvas';
 import { useToast } from '@/hooks/use-toast';
-import { isToday, parseISO } from 'date-fns';
+import { isToday, parseISO, format, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { getStateLabel } from '@/lib/state-machine';
 import ApplicationReview from '../onboarding/application-review';
 import { Button } from '@/components/ui/button';
@@ -98,54 +106,67 @@ export default function ManagementDashboard({ user }: { user: User }) {
     const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
     const [isBulkSignOpen, setIsBulkSignOpen] = React.useState(false);
 
-    const statusTotals = React.useMemo(() => {
-        const counts: Record<string, number> = {};
-        applications.forEach(app => {
-            counts[app.status] = (counts[app.status] || 0) + 1;
+    // Reporting Filters
+    const [dateRange, setDateRange] = React.useState({ start: '', end: '' });
+    const [selectedAsl, setSelectedAsl] = React.useState('all');
+    const [selectedRegion, setSelectedRegion] = React.useState('all');
+
+    const filteredApps = React.useMemo(() => {
+        return applications.filter(app => {
+            let matches = true;
+            
+            if (dateRange.start || dateRange.end) {
+                const appDate = parseISO(app.submittedDate);
+                if (dateRange.start && appDate < startOfDay(parseISO(dateRange.start))) matches = false;
+                if (dateRange.end && appDate > endOfDay(parseISO(dateRange.end))) matches = false;
+            }
+            
+            if (selectedAsl !== 'all' && app.submittedBy !== selectedAsl) matches = false;
+            if (selectedRegion !== 'all' && app.region !== selectedRegion) matches = false;
+            
+            return matches;
         });
-        return counts;
-    }, [applications]);
+    }, [applications, dateRange, selectedAsl, selectedRegion]);
 
-    const agreementsToSign = React.useMemo(() => 
-        applications.filter(app => app.status === 'Management Review')
-    , [applications]);
-
-    const summaryStats = React.useMemo(() => {
-        const createdToday = activityLogs.filter(log => log.action === 'Account Created' && isToday(parseISO(log.timestamp))).length;
+    const stats = React.useMemo(() => {
+        const approved = filteredApps.filter(a => ['Locked', 'Dispatched', 'Approved'].includes(a.status)).length;
+        const rejected = filteredApps.filter(a => a.status === 'Rejected' || a.status === 'Not Safe to Proceed').length;
+        const pending = filteredApps.filter(a => !['Locked', 'Dispatched', 'Approved', 'Rejected', 'Not Safe to Proceed'].includes(a.status)).length;
+        
         return {
-            totalToSign: agreementsToSign.length,
-            totalActive: applications.filter(a => !['Locked', 'Rejected', 'Not Safe to Proceed'].includes(a.status)).length,
-            totalDone: applications.filter(a => ['Dispatched', 'Locked'].includes(a.status)).length,
-            totalRejected: applications.filter(a => a.status === 'Rejected' || a.status === 'Not Safe to Proceed').length,
-            createdToday,
+            created: filteredApps.length,
+            approved,
+            rejected,
+            pending,
+            processed: approved + rejected
         };
-    }, [applications, activityLogs, agreementsToSign]);
+    }, [filteredApps]);
 
     const regionalData = React.useMemo(() => {
         return zimRegions.map(region => ({
             name: region,
-            count: applications.filter(app => app.region === region).length,
+            count: filteredApps.filter(app => app.region === region).length,
         })).sort((a, b) => b.count - a.count);
-    }, [applications]);
+    }, [filteredApps]);
 
-    const atlPerformance = React.useMemo(() => {
+    const aslPerformance = React.useMemo(() => {
         const atlUsers = allUsers.filter(u => u.role === 'asl');
         return atlUsers.map(atl => {
-            const atlApps = applications.filter(app => app.submittedBy === atl.name);
-            const lastLog = activityLogs.find(l => l.userName === atl.name && (l.action === 'Login' || l.action === 'Logout'));
+            const atlApps = filteredApps.filter(app => app.submittedBy === atl.name);
+            const approved = atlApps.filter(a => ['Approved', 'Dispatched', 'Locked'].includes(a.status)).length;
+            const rejected = atlApps.filter(a => a.status === 'Rejected' || a.status === 'Not Safe to Proceed').length;
             
             return {
                 name: atl.name,
                 initials: atl.initials,
                 created: atlApps.length,
-                processed: atlApps.filter(a => !['Draft', 'In Progress', 'Under Review'].includes(a.status)).length,
-                approved: atlApps.filter(a => ['Approved', 'Dispatched', 'Locked'].includes(a.status)).length,
-                rejected: atlApps.filter(a => a.status === 'Rejected' || a.status === 'Not Safe to Proceed').length,
-                lastSeen: lastLog ? new Date(lastLog.timestamp).toLocaleTimeString() : 'N/A',
-                status: lastLog?.action === 'Login' ? 'active' : 'offline'
+                approved,
+                rejected,
+                processed: approved + rejected,
+                efficiency: atlApps.length > 0 ? Math.round((approved / atlApps.length) * 100) : 0
             };
         }).sort((a, b) => b.created - a.created);
-    }, [applications, allUsers, activityLogs]);
+    }, [filteredApps, allUsers]);
 
     const handleBulkSign = (signatureData: string) => {
         const timestamp = new Date().toISOString();
@@ -175,6 +196,32 @@ export default function ManagementDashboard({ user }: { user: User }) {
         setIsBulkSignOpen(false);
     };
 
+    const handleExportCSV = () => {
+        const headers = ['ID', 'CLIENT', 'TYPE', 'REGION', 'STATUS', 'SUBMITTED', 'STAFF'];
+        const rows = filteredApps.map(app => [
+            app.id,
+            app.clientName,
+            app.clientType,
+            app.region,
+            app.status,
+            app.submittedDate,
+            app.submittedBy
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Registry_Report_${format(new Date(), 'yyyyMMdd')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({ title: "Export Started", description: "Your CSV report is downloading." });
+    };
+
     if (selectedApplication) {
         const appForReview = applications.find(a => a.id === selectedApplication.id) || selectedApplication;
         return <ApplicationReview application={appForReview} onBack={() => setSelectedApplication(null)} user={user} />;
@@ -182,88 +229,127 @@ export default function ManagementDashboard({ user }: { user: User }) {
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4 border-b border-white/5 pb-8">
+            <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-6 border-b border-white/5 pb-8">
                 <div>
                   <h2 className="text-4xl font-black tracking-tight text-white flex items-center gap-3">
                     <LayoutDashboard className="h-10 w-10 text-primary" />
-                    Management Overview
+                    Management Oversight
                   </h2>
-                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Global metrics and board approvals.</p>
+                  <p className="text-muted-foreground font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Board Reporting and Network Performance.</p>
                 </div>
-                <div className="flex gap-2">
-                    <Badge variant="outline" className="px-5 py-2 bg-primary/10 border-primary/20 text-primary font-black uppercase tracking-widest text-[10px] animate-pulse shadow-lg">
-                        <Fingerprint className="mr-2 h-4 w-4" /> {summaryStats.totalToSign} PENDING APPROVAL
-                    </Badge>
+                
+                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="h-12 bg-white/5 border-white/10 text-white font-bold px-6 rounded-xl shadow-xl">
+                                <ListFilter className="mr-2 h-4 w-4 text-primary" /> Global Filters
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 bg-[#1e1b4b] border-white/10 p-6 space-y-6 shadow-2xl rounded-2xl" align="end">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Reporting Period</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({...prev, start: e.target.value}))} className="bg-black/20 border-white/10 text-[10px]" />
+                                    <Input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({...prev, end: e.target.value}))} className="bg-black/20 border-white/10 text-[10px]" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Sales Leader (ASL)</label>
+                                <Select value={selectedAsl} onValueChange={setSelectedAsl}>
+                                    <SelectTrigger className="bg-black/20 border-white/10"><SelectValue placeholder="All Staff" /></SelectTrigger>
+                                    <SelectContent className="bg-[#1e1b4b] text-white">
+                                        <SelectItem value="all">All Staff</SelectItem>
+                                        {allUsers.filter(u => u.role === 'asl').map(u => <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-white/40 tracking-widest">Province / Region</label>
+                                <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                                    <SelectTrigger className="bg-black/20 border-white/10"><SelectValue placeholder="All Regions" /></SelectTrigger>
+                                    <SelectContent className="bg-[#1e1b4b] text-white">
+                                        <SelectItem value="all">All Regions</SelectItem>
+                                        {zimRegions.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button className="w-full font-black uppercase tracking-widest bg-primary text-primary-foreground h-10" onClick={() => {
+                                setDateRange({start: '', end: ''});
+                                setSelectedAsl('all');
+                                setSelectedRegion('all');
+                            }}>Reset Filters</Button>
+                        </PopoverContent>
+                    </Popover>
+                    <Button onClick={handleExportCSV} variant="secondary" className="h-12 px-6 font-black rounded-xl border-2 shadow-2xl">
+                        <FileSpreadsheet className="mr-2 h-5 w-5" /> EXPORT EXCEL
+                    </Button>
                 </div>
             </div>
             
-            <div className="grid gap-6 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+            {/* KPI Overview Grid */}
+            <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                <Card className="bg-white/5 border-white/10 rounded-2xl shadow-xl">
+                    <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Created</CardTitle></CardHeader>
+                    <CardContent><div className="text-4xl font-black text-white">{stats.created}</div></CardContent>
+                </Card>
                 <Card className="bg-primary/10 border-primary/20 rounded-2xl shadow-xl">
-                    <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-primary tracking-[0.2em]">To Approve</CardTitle></CardHeader>
-                    <CardContent><div className="text-4xl font-black text-primary">{summaryStats.totalToSign}</div></CardContent>
-                </Card>
-                <Card className="bg-white/5 border-white/10 rounded-2xl shadow-xl">
-                    <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Active Queue</CardTitle></CardHeader>
-                    <CardContent><div className="text-4xl font-black text-white">{summaryStats.totalActive}</div></CardContent>
-                </Card>
-                <Card className="bg-white/5 border-white/10 rounded-2xl shadow-xl">
-                    <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-green-500 tracking-[0.2em]">Success</CardTitle></CardHeader>
-                    <CardContent><div className="text-4xl font-black text-green-500">{summaryStats.totalDone}</div></CardContent>
+                    <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-primary tracking-[0.2em]">Approved</CardTitle></CardHeader>
+                    <CardContent><div className="text-4xl font-black text-primary">{stats.approved}</div></CardContent>
                 </Card>
                 <Card className="bg-white/5 border-white/10 rounded-2xl shadow-xl">
                     <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-destructive tracking-[0.2em]">Rejected</CardTitle></CardHeader>
-                    <CardContent><div className="text-4xl font-black text-destructive">{summaryStats.totalRejected}</div></CardContent>
+                    <CardContent><div className="text-4xl font-black text-destructive">{stats.rejected}</div></CardContent>
                 </Card>
-                <Card className="bg-primary/10 border-primary/20 rounded-2xl shadow-xl md:col-span-2 lg:col-span-1">
-                    <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-primary tracking-[0.2em]">Daily Growth</CardTitle></CardHeader>
-                    <CardContent>
-                        <div className="text-4xl font-black text-primary">+{summaryStats.createdToday}</div>
-                    </CardContent>
+                <Card className="bg-white/5 border-white/10 rounded-2xl shadow-xl">
+                    <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Pending Review</CardTitle></CardHeader>
+                    <CardContent><div className="text-4xl font-black text-amber-500">{stats.pending}</div></CardContent>
+                </Card>
+                <Card className="bg-primary/5 border-white/5 rounded-2xl shadow-xl">
+                    <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Total Processed</CardTitle></CardHeader>
+                    <CardContent><div className="text-4xl font-black text-white/80">{stats.processed}</div></CardContent>
                 </Card>
             </div>
 
             <Tabs defaultValue="approval-desk" className="w-full">
-                <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5 mb-10 w-full sm:w-auto overflow-x-auto">
+                <TabsList className="bg-white/5 p-1.5 rounded-xl border border-white/5 mb-10 w-full sm:w-auto overflow-x-auto justify-start h-auto">
                     <TabsTrigger value="approval-desk" className="px-8 h-10 rounded-lg font-black uppercase text-[10px] tracking-[0.2em]">
-                        <FileSignature className="mr-2 h-4 w-4" /> APPROVAL DESK
+                        <FileSignature className="mr-2 h-4 w-4" /> BOARD SIGN-OFF
                     </TabsTrigger>
                     <TabsTrigger value="performance" className="px-8 h-10 rounded-lg font-black uppercase text-[10px] tracking-[0.2em]">
-                        <Award className="mr-2 h-4 w-4" /> SALES PERFORMANCE
-                    </TabsTrigger>
-                    <TabsTrigger value="monitoring" className="px-8 h-10 rounded-lg font-black uppercase text-[10px] tracking-[0.2em]">
-                        <ShieldCheck className="mr-2 h-4 w-4" /> STAFF LOGS
+                        <Award className="mr-2 h-4 w-4" /> ASL PERFORMANCE
                     </TabsTrigger>
                     <TabsTrigger value="analytics" className="px-8 h-10 rounded-lg font-black uppercase text-[10px] tracking-[0.2em]">
-                        <TrendingUp className="mr-2 h-4 w-4" /> ANALYTICS
+                        <TrendingUp className="mr-2 h-4 w-4" /> REGIONAL TRENDS
                     </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="approval-desk" className="animate-in fade-in duration-500">
-                    {agreementsToSign.length > 0 ? (
-                        <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden">
-                            <CardHeader className="bg-white/5 border-b border-white/5 p-8">
-                                <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-                                    <div>
-                                        <CardTitle className="text-2xl font-black uppercase tracking-tight">Pending Manager Sign-off</CardTitle>
-                                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Authorize multiple records for final activation.</p>
-                                    </div>
-                                    {selectedIds.length > 0 && (
-                                        <Button onClick={() => setIsBulkSignOpen(true)} className="h-14 px-8 bg-primary text-primary-foreground font-black uppercase tracking-widest shadow-xl">
-                                            <Fingerprint className="mr-2 h-6 w-6" /> AUTHORIZE BATCH ({selectedIds.length})
-                                        </Button>
-                                    )}
+                    <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-white/5 border-b border-white/5 p-8">
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+                                <div>
+                                    <CardTitle className="text-2xl font-black uppercase tracking-tight">Technical Authorization Queue</CardTitle>
+                                    <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-1">Review and sign finalized agent agreements.</p>
                                 </div>
-                            </CardHeader>
-                            <CardContent className="p-0">
+                                {selectedIds.length > 0 && (
+                                    <Button onClick={() => setIsBulkSignOpen(true)} className="h-14 px-8 bg-primary text-primary-foreground font-black uppercase tracking-widest shadow-xl">
+                                        <Fingerprint className="mr-2 h-6 w-6" /> BATCH AUTHORIZE ({selectedIds.length})
+                                    </Button>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {filteredApps.filter(a => a.status === 'Management Review').length > 0 ? (
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-black/20 border-white/5">
                                             <TableHead className="w-[80px] pl-8">
                                                 <Checkbox 
-                                                    checked={selectedIds.length === agreementsToSign.length}
+                                                    checked={selectedIds.length === filteredApps.filter(a => a.status === 'Management Review').length}
                                                     onCheckedChange={() => {
-                                                        if (selectedIds.length === agreementsToSign.length) setSelectedIds([]);
-                                                        else setSelectedIds(agreementsToSign.map(a => a.id));
+                                                        const signable = filteredApps.filter(a => a.status === 'Management Review');
+                                                        if (selectedIds.length === signable.length) setSelectedIds([]);
+                                                        else setSelectedIds(signable.map(a => a.id));
                                                     }}
                                                 />
                                             </TableHead>
@@ -273,7 +359,7 @@ export default function ManagementDashboard({ user }: { user: User }) {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {agreementsToSign.map((app) => (
+                                        {filteredApps.filter(a => a.status === 'Management Review').map((app) => (
                                             <TableRow key={app.id} className={cn("hover:bg-white/10 border-white/5", selectedIds.includes(app.id) && "bg-primary/5")}>
                                                 <TableCell className="pl-8">
                                                     <Checkbox 
@@ -285,66 +371,64 @@ export default function ManagementDashboard({ user }: { user: User }) {
                                                 </TableCell>
                                                 <TableCell className="py-6">
                                                     <div className="font-black text-white uppercase">{app.clientName}</div>
-                                                    <div className="text-[10px] text-white/30 uppercase">{app.clientType}</div>
+                                                    <div className="text-[10px] text-white/30 uppercase">{app.clientType} • {app.id}</div>
                                                 </TableCell>
-                                                <TableCell><Badge variant="outline" className="text-[9px]">{app.region}</Badge></TableCell>
+                                                <TableCell><Badge variant="outline" className="text-[9px] font-black">{app.region}</Badge></TableCell>
                                                 <TableCell className="text-right pr-8">
-                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>REVIEW</Button>
+                                                    <Button variant="outline" size="sm" onClick={() => setSelectedApplication(app)}>AUDIT</Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center p-24 text-center bg-white/5 rounded-3xl border-dashed border-2 border-white/10">
-                            <CheckCircle2 className="h-16 w-16 text-white/10 mb-4" />
-                            <p className="text-white/40 font-black uppercase tracking-widest">Queue is clear.</p>
-                        </div>
-                    )}
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-24 text-center">
+                                    <CheckCircle2 className="h-16 w-16 text-white/10 mb-4" />
+                                    <p className="text-white/40 font-black uppercase tracking-widest">Board queue is currently clear.</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 <TabsContent value="performance" className="animate-in fade-in duration-500">
                     <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-3xl overflow-hidden">
                         <CardHeader className="bg-white/5 py-8 px-10 border-b border-white/5">
                             <CardTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                <Award className="h-6 w-6 text-primary" /> Sales Performance Scorecard
+                                <Award className="h-6 w-6 text-primary" /> Staff Performance Scorecard
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-black/20 hover:bg-black/20 border-white/5">
-                                        <TableHead className="pl-10 text-[10px] font-black uppercase text-white/40">Leader</TableHead>
-                                        <TableHead className="text-center text-[10px] font-black uppercase text-white/40">Created</TableHead>
-                                        <TableHead className="text-center text-[10px] font-black uppercase text-white/40">Processed</TableHead>
+                                        <TableHead className="pl-10 text-[10px] font-black uppercase text-white/40">Sales Leader (ASL)</TableHead>
+                                        <TableHead className="text-center text-[10px] font-black uppercase text-white/40">Submissions</TableHead>
                                         <TableHead className="text-center text-[10px] font-black uppercase text-white/40">Approved</TableHead>
                                         <TableHead className="text-center text-[10px] font-black uppercase text-white/40">Rejected</TableHead>
-                                        <TableHead className="pr-10 text-right text-[10px] font-black uppercase text-white/40">Efficiency</TableHead>
+                                        <TableHead className="pr-10 text-right text-[10px] font-black uppercase text-white/40">Clearance Rate</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {atlPerformance.map((atl) => (
-                                        <TableRow key={atl.name} className="hover:bg-white/5 border-white/5 group">
+                                    {aslPerformance.map((atl) => (
+                                        <TableRow key={atl.name} className="hover:bg-white/5 border-white/5 transition-colors">
                                             <TableCell className="pl-10 py-6">
                                                 <div className="flex items-center gap-4">
                                                     <Avatar className="h-10 w-10 border-2 border-white/10 shadow-lg">
                                                         <AvatarFallback className="bg-primary/10 text-primary text-xs font-black">{atl.initials}</AvatarFallback>
                                                     </Avatar>
-                                                    <div>
-                                                        <p className="font-black text-white text-lg uppercase">{atl.name}</p>
-                                                        <span className="text-[10px] text-white/30 uppercase font-black">{atl.status}</span>
-                                                    </div>
+                                                    <span className="font-black text-white text-lg uppercase">{atl.name}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-center font-mono text-lg font-black text-white">{atl.created}</TableCell>
-                                            <TableCell className="text-center font-mono text-lg font-black text-white/60">{atl.processed}</TableCell>
                                             <TableCell className="text-center font-mono text-lg font-black text-green-500">{atl.approved}</TableCell>
                                             <TableCell className="text-center font-mono text-lg font-black text-destructive">{atl.rejected}</TableCell>
                                             <TableCell className="pr-10 text-right">
-                                                <Badge className="font-black text-sm px-4 shadow-lg bg-white/5 text-white">
-                                                    {atl.created > 0 ? Math.round((atl.approved / atl.created) * 100) : 0}%
+                                                <Badge className={cn(
+                                                    "font-black text-sm px-4 py-1 rounded-full",
+                                                    atl.efficiency > 75 ? "bg-green-500/20 text-green-500" : "bg-white/5 text-white/60"
+                                                )}>
+                                                    {atl.efficiency}%
                                                 </Badge>
                                             </TableCell>
                                         </TableRow>
@@ -355,54 +439,11 @@ export default function ManagementDashboard({ user }: { user: User }) {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="monitoring" className="animate-in fade-in duration-500">
-                    <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-3xl overflow-hidden">
-                        <CardHeader className="bg-white/5 border-b border-white/5 p-8">
-                            <CardTitle className="flex items-center gap-3 text-xl font-black uppercase">
-                                <History className="h-6 w-6 text-primary" /> System Activity Log
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="max-h-[500px] overflow-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-black/20 border-white/5">
-                                            <TableHead className="pl-8 text-[10px] font-black uppercase">Employee</TableHead>
-                                            <TableHead className="text-[10px] font-black uppercase">Action</TableHead>
-                                            <TableHead className="pr-8 text-right text-[10px] font-black uppercase">Time</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {activityLogs.slice(0, 50).map((log) => (
-                                            <TableRow key={log.id} className="hover:bg-white/5 border-white/5">
-                                                <TableCell className="pl-8 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-[9px] font-black text-primary">{log.userName.substring(0,2)}</div>
-                                                        <span className="font-black text-xs uppercase text-white/80">{log.userName}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline" className="text-[9px] uppercase font-black px-3 py-1">
-                                                        {log.action}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="pr-8 text-right text-[10px] text-white/20 font-mono">
-                                                    {new Date(log.timestamp).toLocaleString()}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
                 <TabsContent value="analytics" className="animate-in fade-in duration-500">
                     <Card className="border-none shadow-2xl bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden">
                         <CardHeader className="bg-white/5 border-b border-white/5 p-8">
                             <CardTitle className="flex items-center gap-3 text-xl font-black uppercase">
-                                <MapPin className="h-6 w-6 text-primary" /> Regional Volume
+                                <MapPin className="h-6 w-6 text-primary" /> Regional Volume Analysis
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-10">
@@ -435,3 +476,4 @@ export default function ManagementDashboard({ user }: { user: User }) {
         </div>
       );
 }
+

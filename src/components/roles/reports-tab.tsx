@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
-import { FileDown, FileSpreadsheet } from 'lucide-react';
+import { FileDown, FileSpreadsheet, FileText } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface ReportsTabProps {
   applications: Application[];
@@ -17,19 +18,19 @@ interface ReportsTabProps {
 
 const chartConfig = {
   count: {
-    label: 'Applications',
-    color: 'hsl(var(--chart-1))',
+    label: 'Volume',
+    color: 'hsl(var(--primary))',
   },
 } satisfies ChartConfig;
 
 export default function ReportsTab({ applications }: ReportsTabProps) {
-  const signedApplications = React.useMemo(() =>
-    applications.filter(app => app.status === 'Signed')
+  const processedApplications = React.useMemo(() =>
+    applications.filter(app => ['Locked', 'Dispatched', 'Approved', 'Rejected'].includes(app.status))
   , [applications]);
 
   const monthlyData = React.useMemo(() => {
     const months: Record<string, number> = {};
-    signedApplications.forEach(app => {
+    processedApplications.forEach(app => {
       const month = format(new Date(app.lastUpdated), 'MMM yyyy');
       months[month] = (months[month] || 0) + 1;
     });
@@ -37,26 +38,24 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
       month,
       count: months[month],
     })).sort((a, b) => new Date(a.month).valueOf() - new Date(b.month).valueOf());
-  }, [signedApplications]);
+  }, [processedApplications]);
   
   const handleDownloadCsv = () => {
-    const headers = ['DATE', 'CONTACT PERSON', 'REGION', 'ADDRESS'];
-    const rows = signedApplications.map(app => {
-        const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(app.clientType);
-        
-        const date = format(new Date(app.lastUpdated), 'yyyy-MM-dd');
-        const contactPerson = app.clientName;
-        const region = app.region;
-        const address = isCorporate ? app.details.physicalAddress : app.details.individualAddress;
-        
-        return [date, contactPerson, region, address].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(',');
-    });
+    const headers = ['APP_ID', 'CLIENT', 'TYPE', 'STATUS', 'DATE_FINALIZED', 'STAFF'];
+    const rows = processedApplications.map(app => [
+        app.id,
+        app.clientName,
+        app.clientType,
+        app.status,
+        format(new Date(app.lastUpdated), 'yyyy-MM-dd'),
+        app.submittedBy
+    ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(','));
 
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Final_Onboarding_Report_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.setAttribute("download", `Registry_Onboarding_Report_${format(new Date(), 'yyyyMMdd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -64,47 +63,53 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <Card className="border-none bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/5 p-8">
           <div>
-            <CardTitle className="flex items-center gap-2">
-                <FileSpreadsheet className="h-5 w-5 text-green-600" />
-                Final Onboarding Report
+            <CardTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
+                <FileSpreadsheet className="h-6 w-6 text-primary" />
+                Registry Final Report
             </CardTitle>
-            <CardDescription>Detailed export of finalized agent agreements for regulatory filing.</CardDescription>
+            <CardDescription className="text-xs uppercase font-bold tracking-widest text-white/40 mt-1">Official export of processed agent records for regulatory compliance.</CardDescription>
           </div>
-          <Button onClick={handleDownloadCsv} className="bg-green-600 hover:bg-green-700 text-white font-bold" disabled={signedApplications.length === 0}>
-            <FileDown className="mr-2 h-4 w-4" />
-            Download Final Report (Excel/CSV)
+          <Button onClick={handleDownloadCsv} className="h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest px-8 shadow-xl rounded-xl" disabled={processedApplications.length === 0}>
+            <Download className="mr-2 h-5 w-5" />
+            EXPORT REGISTRY (CSV)
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Date Finalized</TableHead>
-                <TableHead>Contact Person</TableHead>
-                <TableHead>Region</TableHead>
-                <TableHead>Address</TableHead>
+              <TableRow className="bg-black/20 border-white/5">
+                <TableHead className="pl-8 text-[10px] font-black uppercase text-white/40">Processed Date</TableHead>
+                <TableHead className="text-[10px] font-black uppercase text-white/40">Entity Name</TableHead>
+                <TableHead className="text-[10px] font-black uppercase text-white/40">Staff Member</TableHead>
+                <TableHead className="text-right pr-8 text-[10px] font-black uppercase text-white/40">Regulatory State</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {signedApplications.length > 0 ? signedApplications.map(app => {
-                const isCorporate = !['Personal Account', 'Proprietorship / Sole Trader'].includes(app.clientType);
-                return (
-                  <TableRow key={app.id}>
-                    <TableCell className="font-medium">{format(new Date(app.lastUpdated), 'yyyy-MM-dd')}</TableCell>
-                    <TableCell>{app.clientName}</TableCell>
-                    <TableCell>{app.region}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground truncate max-w-[250px]">
-                        {isCorporate ? app.details.physicalAddress : app.details.individualAddress}
-                    </TableCell>
-                  </TableRow>
-                );
-              }) : (
+              {processedApplications.length > 0 ? processedApplications.map(app => (
+                <TableRow key={app.id} className="border-white/5 hover:bg-white/5 transition-colors group">
+                  <TableCell className="pl-8 py-5 text-xs text-white/40 font-mono">
+                      {format(new Date(app.lastUpdated), 'yyyy-MM-dd')}
+                  </TableCell>
+                  <TableCell>
+                      <div className="font-black text-white uppercase group-hover:text-primary transition-colors">{app.clientName}</div>
+                      <div className="text-[10px] text-white/20 font-mono uppercase">{app.id}</div>
+                  </TableCell>
+                  <TableCell>
+                      <Badge variant="outline" className="text-[9px] border-white/10 uppercase text-white/40">{app.submittedBy}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right pr-8">
+                      <Badge variant={app.status === 'Rejected' ? 'destructive' : 'success'} className="font-black uppercase text-[9px] tracking-widest px-3 py-1">
+                          {app.status}
+                      </Badge>
+                  </TableCell>
+                </TableRow>
+              )) : (
                 <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
-                        No signed applications to report.
+                    <TableCell colSpan={4} className="h-48 text-center text-white/20 font-black uppercase tracking-widest">
+                        No processed records for this period.
                     </TableCell>
                 </TableRow>
               )}
@@ -113,27 +118,29 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Bar Graphs</CardTitle>
-          <CardDescription>Visual summary of finalized onboarding per month.</CardDescription>
+      <Card className="border-none bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl">
+        <CardHeader className="bg-white/5 p-8 border-b border-white/5">
+          <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" /> Onboarding Volume Trend
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-10">
             {monthlyData.length > 0 ? (
                 <ChartContainer config={chartConfig} className="h-64 w-full">
                     <ResponsiveContainer>
                         <BarChart data={monthlyData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
-                            <CartesianGrid vertical={false} />
-                            <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} />
-                            <YAxis />
-                            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                            <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+                            <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.05} />
+                            <XAxis dataKey="month" tickLine={false} tickMargin={10} axisLine={false} className="text-[10px] font-black uppercase text-white/30" />
+                            <YAxis tickLine={false} axisLine={false} className="text-[10px] font-black text-white/30" />
+                            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                            <Bar dataKey="count" fill="hsl(var(--primary))" radius={6} barSize={40} />
                         </BarChart>
                     </ResponsiveContainer>
                 </ChartContainer>
             ) : (
-                <div className="flex items-center justify-center p-12 text-center">
-                  <p className="text-muted-foreground">No data available for chart.</p>
+                <div className="flex flex-col items-center justify-center p-12 text-center text-white/10">
+                  <TrendingUp className="h-12 w-12 mb-4" />
+                  <p className="font-black uppercase tracking-widest">Awaiting technical growth data.</p>
               </div>
             )}
         </CardContent>
@@ -141,3 +148,4 @@ export default function ReportsTab({ applications }: ReportsTabProps) {
     </div>
   );
 }
+
