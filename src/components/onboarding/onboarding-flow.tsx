@@ -137,6 +137,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
   });
 
   const clientType = form.watch('clientType');
+  const stableFormWatch = form.watch;
   
   const steps = React.useMemo(() => {
     if (!clientType) return [allSteps.find(s => s.id === 'account-type')!];
@@ -171,9 +172,9 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
 
   const currentStep = steps[currentStepIndex];
 
-  // Auto-save effect for Drafts
+  // Auto-save effect for Drafts - Stabilized dependencies
   React.useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
+    const subscription = stableFormWatch((value, { name, type }) => {
       if (type === 'change' && !isSubmitting && !showSuccess) {
         const timer = setTimeout(() => {
           const data = form.getValues();
@@ -197,7 +198,7 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, isSubmitting, showSuccess, activeAppId, setApplications]);
+  }, [stableFormWatch, isSubmitting, showSuccess, activeAppId, setApplications, form]);
 
   const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
     setNotifications(prev => [{
@@ -308,16 +309,11 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
     onCancel();
   };
   
-  /**
-   * Final finish handler that validates ALL conditions before submission.
-   * Note: Forced submission enabled - proceeds regardless of highlighted errors.
-   */
   const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
     setLastSubmissionFailed(false);
     
     try {
-        // Build the final application record regardless of highlights
         const appId = activeAppId;
         const newApplication: Application = {
           id: appId,
@@ -339,14 +335,12 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           comments: existingApplication?.comments || [],
         };
         
-        // Submit to core registry
         setApplications((prev) => {
           const exists = prev.find(a => a.id === appId);
           if (exists) return prev.map(a => a.id === appId ? newApplication : a);
           return [newApplication, ...prev];
         });
 
-        // Record technical activity
         setActivityLogs(prev => [{
           id: `log-${Date.now()}`,
           userId: user.id,
@@ -355,7 +349,6 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
           timestamp: new Date().toISOString()
         }, ...prev]);
 
-        // Trigger workflow notifications
         addNotification({
             type: 'status_update',
             title: `New Application: ${newApplication.clientName}`,
@@ -364,7 +357,6 @@ export default function OnboardingFlow({ onCancel, user, preselectedType, existi
             targetRole: 'back-office'
         });
 
-        // Success Feedback & Redirect
         setShowSuccess(true);
         toast({ title: "Application Submitted", description: `Reference ${appId} is now in the review queue.` });
         

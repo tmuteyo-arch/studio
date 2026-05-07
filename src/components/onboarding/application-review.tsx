@@ -64,6 +64,12 @@ const InternalSignatureDialog = ({
     description: string 
 }) => {
     const sigPadRef = React.useRef<SignatureCanvas | null>(null);
+    const [mounted, setMounted] = React.useState(false);
+    
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const handleClear = () => sigPadRef.current?.clear();
     const handleConfirm = () => {
         if (sigPadRef.current && !sigPadRef.current.isEmpty()) {
@@ -83,11 +89,13 @@ const InternalSignatureDialog = ({
                 <div className="py-6 space-y-4">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Draw Digital Signature</Label>
                     <div className="w-full h-40 border-2 border-primary/10 rounded-xl bg-white overflow-hidden shadow-inner">
-                        <SignatureCanvas 
-                            ref={sigPadRef} 
-                            penColor="black" 
-                            canvasProps={{ className: 'w-full h-full' }} 
-                        />
+                        {mounted && (
+                            <SignatureCanvas 
+                                ref={sigPadRef} 
+                                penColor="black" 
+                                canvasProps={{ className: 'w-full h-full' }} 
+                            />
+                        )}
                     </div>
                     <Button variant="ghost" size="sm" onClick={handleClear} className="text-muted-foreground hover:text-primary">
                         <Eraser className="mr-2 h-4 w-4" /> Clear Canvas
@@ -298,27 +306,19 @@ export default function ApplicationReview({ application: initialApplication, onB
     handleStatusChange('Approved', 'Final approval given. Ready to finish account setup.');
   };
 
-  /**
-   * Validates a wallet or bank account string based on regulatory standards.
-   * Logic: Must be exactly 10 numeric digits.
-   */
   const validateWallet = (account: string) => {
     return /^\d{10}$/.test(account);
   };
 
   const handleDispatchAccount = async () => {
-    // Collect all accounts associated with this application to validate them
     const accountsToValidate = [
         { name: 'Core BR Account', value: dispatchBrAccountNumber },
         { name: 'Primary Wallet', value: dispatchWalletAccountNumber }
     ];
 
-    // Validation Loop: FOR each wallet_account IN application
     const invalidAccounts = accountsToValidate.filter(acc => !validateWallet(acc.value));
 
-    // IF all_wallets_valid
     if (invalidAccounts.length === 0) {
-        // dispatch_all_wallets_together()
         setIsProcessingAction(true);
         try {
             const timestamp = new Date().toISOString();
@@ -337,7 +337,6 @@ export default function ApplicationReview({ application: initialApplication, onB
                 ]
             });
             
-            // set_status = "Dispatched"
             toast({ title: "Dispatch Success", description: "All wallets validated and accounts activated together." });
             setIsDispatching(false);
             setTimeout(() => onBack(), 500);
@@ -345,7 +344,6 @@ export default function ApplicationReview({ application: initialApplication, onB
             setIsProcessingAction(false);
         }
     } else {
-        // ELSE stop_dispatch() and return_error()
         toast({ 
             variant: 'destructive', 
             title: 'Batch Dispatch Halted', 
@@ -499,7 +497,6 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardHeader>
           <CardContent className="px-8 pb-8">
               
-              {/* Back Office Form & Safety Check */}
               {user.role === 'back-office' && (application.status === 'Under Review' || application.status === 'Needs Review') && (
                   <div className="mb-8 space-y-8">
                       <div className="p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95">
@@ -574,7 +571,6 @@ export default function ApplicationReview({ application: initialApplication, onB
                   </div>
               )}
 
-              {/* Supervisor Approval Form */}
               {user.role === 'supervisor' && application.status === 'Approved by Management' && (
                   <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-white/10 animate-in zoom-in-95">
                       <h4 className="text-xs font-bold uppercase text-primary tracking-widest mb-6 flex items-center gap-2">
@@ -668,7 +664,6 @@ export default function ApplicationReview({ application: initialApplication, onB
           </CardContent>
         </Card>
 
-        {/* Rejection Dialog */}
         <AlertDialog open={isRejecting} onOpenChange={setIsRejecting}>
             <AlertDialogContent className="rounded-2xl border-destructive/20 shadow-2xl">
                 <AlertDialogHeader>
@@ -695,7 +690,6 @@ export default function ApplicationReview({ application: initialApplication, onB
             </AlertDialogContent>
         </AlertDialog>
 
-        {/* Return Dialog */}
         <AlertDialog open={isReturning} onOpenChange={setIsReturning}>
             <AlertDialogContent className="rounded-2xl border-amber-200">
                 <AlertDialogHeader>
@@ -715,7 +709,6 @@ export default function ApplicationReview({ application: initialApplication, onB
             </AlertDialogContent>
         </AlertDialog>
 
-        {/* Document Preview */}
         <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
             <DialogContent className="max-w-5xl h-[90vh] flex flex-col rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
                 <div className="bg-primary/5 p-6 border-b flex justify-between items-center">
@@ -743,7 +736,6 @@ export default function ApplicationReview({ application: initialApplication, onB
             </DialogContent>
         </Dialog>
 
-        {/* Final Completion Dialog */}
         <Dialog open={isDispatching} onOpenChange={setIsDispatching}>
             <DialogContent className="bg-card border-primary/20 rounded-2xl shadow-2xl max-w-md">
                 <DialogHeader>

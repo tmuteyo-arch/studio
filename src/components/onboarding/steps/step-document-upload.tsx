@@ -57,7 +57,7 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     firestore && storage ? new DocumentPersistenceService(firestore, storage) : null
   , [firestore, storage]);
 
-  // Initialize local state from form data
+  // Initialize local state from form data ONLY ONCE on mount or clientType change
   React.useEffect(() => {
     const existingCaptured = form.getValues('capturedDocuments') || [];
     const initialDocs: Record<string, DocumentState> = {};
@@ -75,45 +75,36 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     setDocuments(initialDocs);
   }, [documentRequirements]);
 
-  // Merge individual streams into a single Forensic PDF for the final record
-  React.useEffect(() => {
-    if (Object.keys(documents).length === 0) return;
-
-    const syncToForm = async () => {
-        setIsMerging(true);
-        const newCapturedDocs = await Promise.all(
-            Object.values(documents)
-                .filter(doc => doc.pages.length > 0)
-                .map(async (doc) => {
-                    const result = await mergeToPdf(doc.pages);
-                    return {
-                        type: doc.documentType,
-                        fileName: `${doc.documentType.toLowerCase().replace(/\s/g, '_')}.pdf`,
-                        url: result.url,
-                        pages: doc.pages,
-                        pageCount: result.count,
-                        fileSize: result.size
-                    };
-                })
-        );
-        
-        const currentVal = form.getValues('capturedDocuments') || [];
-        if (JSON.stringify(currentVal) !== JSON.stringify(newCapturedDocs)) {
-            form.setValue('capturedDocuments', newCapturedDocs, { shouldValidate: true, shouldDirty: true });
-        }
-        setIsMerging(false);
-    };
-
-    const timer = setTimeout(syncToForm, 800);
-    return () => clearTimeout(timer);
-  }, [documents, form]);
+  // Direct sync function to avoid loops in useEffect
+  const syncVaultToForm = async (currentDocs: Record<string, DocumentState>) => {
+      setIsMerging(true);
+      try {
+          const newCapturedDocs = await Promise.all(
+              Object.values(currentDocs)
+                  .filter(doc => doc.pages.length > 0)
+                  .map(async (doc) => {
+                      const result = await mergeToPdf(doc.pages);
+                      return {
+                          type: doc.documentType,
+                          fileName: `${doc.documentType.toLowerCase().replace(/\s/g, '_')}.pdf`,
+                          url: result.url,
+                          pages: doc.pages,
+                          pageCount: result.count,
+                          fileSize: result.size
+                      };
+                  })
+          );
+          form.setValue('capturedDocuments', newCapturedDocs, { shouldValidate: true, shouldDirty: true });
+      } finally {
+          setIsMerging(false);
+      }
+  };
 
   const handleCloudSave = async (docType: string, dataUri: string, fileName: string) => {
     if (!persistenceService || !firebaseUser || !applicationId) return;
     
     setIsCloudSaving(true);
     try {
-      // Immediate cloud persistence of the forensic stream
       await persistenceService.persistDocument({
         appId: applicationId,
         userId: firebaseUser.uid,
@@ -122,11 +113,8 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
         dataUri: dataUri,
         isFinal: false
       });
-      toast({ title: 'Cloud Sync Successful', description: 'Forensic stream saved to registry.' });
     } catch (err) {
       console.error('Firebase save error:', err);
-      // Detailed error is emitted via DocumentPersistenceService chained catch
-      toast({ variant: 'destructive', title: 'Registry Sync Failed', description: 'Document not saved to cloud. Using local session draft.' });
     } finally {
       setIsCloudSaving(false);
     }
@@ -155,7 +143,6 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       const dataUri = event.target?.result as string;
       const isImage = file.type.startsWith('image/');
       let pageCount = 1;
-      let corruptionError = null;
 
       setIsValidating(documentType);
       
@@ -169,7 +156,6 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
       } else {
         const validation = await validatePdf(dataUri);
         if (!validation.isValid) {
-          corruptionError = validation.error;
           toast({ variant: 'destructive', title: 'Corruption Detected', description: validation.error });
           setIsValidating(null);
           return;
@@ -179,20 +165,22 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
 
       const size = getBase64Size(dataUri);
       
-      setDocuments(prev => ({
-        ...prev,
-        [documentType]: { 
-            ...prev[documentType], 
-            pages: [...prev[documentType].pages, dataUri],
-            pageCounts: [...prev[documentType].pageCounts, pageCount],
-            sizes: [...prev[documentType].sizes, size],
-            corruptionStatus: [...prev[documentType].corruptionStatus, !!corruptionError]
-        }
-      }));
+      setDocuments(prev => {
+        const next = {
+            ...prev,
+            [documentType]: { 
+                ...prev[documentType], 
+                pages: [...prev[documentType].pages, dataUri],
+                pageCounts: [...prev[documentType].pageCounts, pageCount],
+                sizes: [...prev[documentType].sizes, size],
+                corruptionStatus: [...prev[documentType].corruptionStatus, false]
+            }
+        };
+        syncVaultToForm(next);
+        return next;
+      });
       
       setIsValidating(null);
-      
-      // Trigger cloud persistence for instant auditability
       await handleCloudSave(documentType, dataUri, file.name);
       
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -203,16 +191,20 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
   
   const removePage = (documentType: string, pageIndex: number) => {
     if (disabled) return;
-    setDocuments(prev => ({
-        ...prev,
-        [documentType]: { 
-            ...prev[documentType], 
-            pages: prev[documentType].pages.filter((_, i) => i !== pageIndex),
-            pageCounts: prev[documentType].pageCounts.filter((_, i) => i !== pageIndex),
-            sizes: prev[documentType].sizes.filter((_, i) => i !== pageIndex),
-            corruptionStatus: prev[documentType].corruptionStatus.filter((_, i) => i !== pageIndex)
-        }
-    }));
+    setDocuments(prev => {
+        const next = {
+            ...prev,
+            [documentType]: { 
+                ...prev[documentType], 
+                pages: prev[documentType].pages.filter((_, i) => i !== pageIndex),
+                pageCounts: prev[documentType].pageCounts.filter((_, i) => i !== pageIndex),
+                sizes: prev[documentType].sizes.filter((_, i) => i !== pageIndex),
+                corruptionStatus: prev[documentType].corruptionStatus.filter((_, i) => i !== pageIndex)
+            }
+        };
+        syncVaultToForm(next);
+        return next;
+    });
   };
 
   const movePage = (documentType: string, from: number, to: number) => {
@@ -234,10 +226,14 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
     const corruptItem = corrupts.splice(from, 1)[0];
     corrupts.splice(to, 0, corruptItem);
 
-    setDocuments(prev => ({
-        ...prev,
-        [documentType]: { ...prev[documentType], pages, pageCounts: counts, sizes, corruptionStatus: corrupts }
-    }));
+    setDocuments(prev => {
+        const next = {
+            ...prev,
+            [documentType]: { ...prev[documentType], pages, pageCounts: counts, sizes, corruptionStatus: corrupts }
+        };
+        syncVaultToForm(next);
+        return next;
+    });
   };
 
   const startScan = async (docType: string) => {
@@ -273,26 +269,28 @@ export default function StepDocumentUpload({ disabled }: { disabled?: boolean })
             
             const result = await validateImageQualityHeuristic(dataUri);
             if (!result.isValid) {
-              toast({ variant: 'destructive', title: 'Quality Check Failed', description: 'Image not clear.' });
+              toast({ variant: 'destructive', title: 'Quality Check Failed', description: result.reason || 'Image not clear.' });
               setIsValidating(null);
               return;
             }
             
             const size = getBase64Size(dataUri);
             
-            setDocuments(prev => ({
-                ...prev,
-                [docType]: { 
-                    ...prev[docType], 
-                    pages: [...prev[docType].pages, dataUri],
-                    pageCounts: [...prev[docType].pageCounts, 1],
-                    sizes: [...prev[docType].sizes, size],
-                    corruptionStatus: [...prev[docType].corruptionStatus, false]
-                }
-            }));
+            setDocuments(prev => {
+                const next = {
+                    ...prev,
+                    [docType]: { 
+                        ...prev[docType], 
+                        pages: [...prev[docType].pages, dataUri],
+                        pageCounts: [...prev[docType].pageCounts, 1],
+                        sizes: [...prev[docType].sizes, size],
+                        corruptionStatus: [...prev[docType].corruptionStatus, false]
+                    }
+                };
+                syncVaultToForm(next);
+                return next;
+            });
             setIsValidating(null);
-            
-            // Trigger cloud persistence
             await handleCloudSave(docType, dataUri, `scan_${Date.now()}.jpg`);
         }
     }
