@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'InnBucks Agent Onboarding App',
+  title: 'InnBucks Agent Onboarding App v1',
   description: 'A digital account onboarding application.',
 };
 
